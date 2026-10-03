@@ -1,10 +1,9 @@
 {
   "_about": "Every string a player reads, written before the build against TONE.md. Implement each string exactly as written. Values in braces are placeholders that the page fills from core or from data; _placeholders says where each comes from. Keys that begin with an underscore are instructions and are never shown to a player.",
-
   "_placeholders": {
     "game": "game.name in this file",
     "hash": "the build hash stamped by packaging/package-web.sh",
-    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right, key.jump, key.dodge": "the current binding for that action, from data/controls.json or the player's saved bindings",
+    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right, key.jump, key.dodge, key.stand": "the current binding for that action, from data/controls.json or the player's saved bindings",
     "left_keys, right_keys": "the bound keys for that seat, joined in binding order",
     "left_name, right_name, winner, loser": "fighters.left.name or fighters.right.name",
     "opponent": "opponents.<id>.name, for the start of a sentence or a heading",
@@ -20,7 +19,6 @@
     "file_name, error": "reported by the browser",
     "key, action": "the key pressed and settings.keys.actions.<id>"
   },
-
   "_depends": {
     "how.control.body": "D6, D7",
     "how.control.legs": "D6, D8 (decided by Sam, brief 0.7)",
@@ -38,7 +36,8 @@
     "practice.step.roll": "ROLL_SPEED; a_roll_carries_a_fighter_along_the_ground",
     "practice.step.air_dodge": "an_air_dodge_spends_the_air_jump",
     "practice.step.cooldown": "DODGE_COOLDOWN; a_dodge_cannot_be_repeated_until_its_cooldown_ends",
-    "practice.step.own_blade": "D11 and SELF_CUT_POINT (SECOND-ORDER-M3 row 2)",
+    "practice.step.air_jump": "the elastic air jump Sam asked for; an_air_jump_reflects_a_fall_into_a_rise",
+    "practice.step.stand": "the stand key Sam asked for; a_knocked_down_fighter_stands_up_on_the_key",
     "practice.step.block": "D10",
     "practice.step.ink": "D12",
     "results.draw": "D13",
@@ -51,26 +50,78 @@
     "game.content_note": "Part I questions 2 and 3",
     "game.about_link": "Part I question 5"
   },
-
   "_universals": {},
-
   "_review": {
     "_about": "Strings the agent wrote for the build and Sam has not yet accepted (PLANNING-BRIEF 0.6). settings.keys.solo.heading carries its own marker.",
     "settings.keys.actions.jump": "new",
-    "settings.keys.actions.dodge": "new"
+    "settings.keys.actions.dodge": "new",
+    "settings.keys.actions.stand": "new",
+    "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)"
   },
-
   "_glossary": {
-    "ink": { "means": "what a fighter spills when cut, and loses the round by running out of", "not": ["health", "HP", "hit points", "life", "energy"], "note": "The word blood appears once, in game.content_note, and nowhere else." },
-    "round": { "means": "one exchange, ended by a fighter who cannot continue", "not": ["bout", "set"] },
-    "match": { "means": "rounds played until one fighter has won enough of them", "not": ["bout", "duel"] },
-    "replay": { "means": "a file that plays a match back", "not": ["recording", "demo"] },
-    "save file": { "means": "a file holding road progress and settings", "not": ["savegame", "save game"] },
-    "room code": { "means": "the short code a host sends a friend", "not": ["lobby code", "room ID"] },
-    "input delay": { "means": "the time between a key press and its effect in an online match", "not": ["lag", "latency", "ping"] },
-    "the road": { "means": "story mode", "not": ["campaign", "story mode", "ladder"] }
+    "ink": {
+      "means": "what a fighter spills when cut, and loses the round by running out of",
+      "not": [
+        "health",
+        "HP",
+        "hit points",
+        "life",
+        "energy"
+      ],
+      "note": "The word blood appears once, in game.content_note, and nowhere else."
+    },
+    "round": {
+      "means": "one exchange, ended by a fighter who cannot continue",
+      "not": [
+        "bout",
+        "set"
+      ]
+    },
+    "match": {
+      "means": "rounds played until one fighter has won enough of them",
+      "not": [
+        "bout",
+        "duel"
+      ]
+    },
+    "replay": {
+      "means": "a file that plays a match back",
+      "not": [
+        "recording",
+        "demo"
+      ]
+    },
+    "save file": {
+      "means": "a file holding road progress and settings",
+      "not": [
+        "savegame",
+        "save game"
+      ]
+    },
+    "room code": {
+      "means": "the short code a host sends a friend",
+      "not": [
+        "lobby code",
+        "room ID"
+      ]
+    },
+    "input delay": {
+      "means": "the time between a key press and its effect in an online match",
+      "not": [
+        "lag",
+        "latency",
+        "ping"
+      ]
+    },
+    "the road": {
+      "means": "story mode",
+      "not": [
+        "campaign",
+        "story mode",
+        "ladder"
+      ]
+    }
   },
-
   "game": {
     "name": "Vagrancy",
     "description": "A physics sword-fighting game for two players, in which you move your fighter's arms one joint at a time.",
@@ -83,18 +134,37 @@
     "back_link": "Tools and games",
     "build": "Build {hash}"
   },
-
   "menu": {
-    "road": { "label": "Walk the road", "desc": "Fight the opponents on the road in order, from the easiest to the hardest." },
-    "local": { "label": "Play at one keyboard", "desc": "Two players share this keyboard and fight each other." },
-    "online": { "label": "Play a friend online", "desc": "One of you hosts a match and the other joins it." },
-    "practice": { "label": "Practice in the yard", "desc": "Swing at a post that does not fight back. This is the place to learn the keys." },
-    "replay": { "label": "Load a replay", "desc": "Open a replay file and watch that match again." },
-    "how": { "label": "Read how to play" },
-    "settings": { "label": "Open settings" },
-    "back": { "label": "Go back to the menu" }
+    "road": {
+      "label": "Walk the road",
+      "desc": "Fight the opponents on the road in order, from the easiest to the hardest."
+    },
+    "local": {
+      "label": "Play at one keyboard",
+      "desc": "Two players share this keyboard and fight each other."
+    },
+    "online": {
+      "label": "Play a friend online",
+      "desc": "One of you hosts a match and the other joins it."
+    },
+    "practice": {
+      "label": "Practice in the yard",
+      "desc": "Swing at a post that does not fight back. This is the place to learn the keys."
+    },
+    "replay": {
+      "label": "Load a replay",
+      "desc": "Open a replay file and watch that match again."
+    },
+    "how": {
+      "label": "Read how to play"
+    },
+    "settings": {
+      "label": "Open settings"
+    },
+    "back": {
+      "label": "Go back to the menu"
+    }
   },
-
   "how": {
     "control": {
       "title": "What you control",
@@ -130,7 +200,6 @@
       "body": "You can download a match as a replay. Loading that file plays the same match again, input for input. You can download your progress on the road as a save file in Settings."
     }
   },
-
   "practice": {
     "intro": "The post does not fight back, so you can take as long as you need. The steps below go in order, and you can repeat any of them.",
     "step": {
@@ -141,32 +210,38 @@
       "swing": "Build speed. Swing in one direction several times without stopping. A swing adds to the one before it, which is how you cross the yard quickly or leave the ground.",
       "move": "Move. Hold {key.step_left} or {key.step_right} and the ground carries your fighter that way. The legs stay straight and keep your fighter upright, so your attention can stay on the sword.",
       "jump": "Jump. Press {key.jump} to leave the ground. You can press it once more while you are in the air, and you get that second jump back when you land.",
+      "air_jump": "Push off the air. Your second jump works as if your fighter bounced off a wall you cannot see: hold {key.step_left} or {key.step_right} as you press {key.jump} to push off toward that side, or neither to push straight up. A fall turns into a rise at the same speed, so a jump late in a fall goes higher than one at the top.",
+      "stand": "Get up. If your fighter is knocked off its feet but still has both legs, press {key.stand} to stand back up where you are.",
       "dodge": "Dodge. Press {key.dodge} and for a moment no blade can cut your fighter, so you can let an attack pass through you. Your own blade cuts nothing during that moment either.",
       "roll": "Roll. Hold {key.step_left} or {key.step_right} as you press {key.dodge} and your fighter rolls that way along the ground. With neither held, your fighter dodges in place.",
       "air_dodge": "Dodge in the air. Press {key.dodge} while you are off the ground and your fighter is carried sideways in the direction you hold. It uses up your jump in the air, so save it for when you need to get out of the way.",
       "cooldown": "After a dodge there is a short wait before you can dodge again, so a dodge is a choice and not something to press over and over.",
-      "own_blade": "Mind your own point. Your own blade can cut your fighter when its point is driven into you, as in a thrust toward yourself or a fall onto your sword. A swing passes beside you.",
       "block": "Block. Swords are solid, so a blade that meets yours stops. Holding your sword in front of you is a way to stop a swing before it reaches you.",
       "ink": "Watch the ink. A cut that does not end the round leaves a stump that spills ink until the round ends. The meters at the top show how much ink each fighter has left."
     },
-    "review": "new: practice.step.move, jump, dodge, roll, air_dodge, cooldown, own_blade, block, ink, and hud.keys",
+    "review": "new: practice.step.move, jump, air_jump, stand, dodge, roll, air_dodge, cooldown, block, ink, and hud.keys",
     "done": "Those are the controls. The road teaches the rest, one opponent at a time.",
-    "reset": { "label": "Stand the post back up" }
+    "reset": {
+      "label": "Stand the post back up"
+    }
   },
-
   "hud": {
     "ink": "Ink",
     "round": "Round {round}",
     "score": "{left_name} {left_wins}, {right_name} {right_wins}",
     "delay": "Input delay: {delay_ms} ms",
-    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps and {key.dodge} dodges."
+    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps, {key.dodge} dodges and {key.stand} stands you up."
   },
-
   "fighters": {
-    "left": { "name": "Indigo", "described": "Indigo, the solid figure on the left" },
-    "right": { "name": "Ochre", "described": "Ochre, the striped figure on the right" }
+    "left": {
+      "name": "Indigo",
+      "described": "Indigo, the solid figure on the left"
+    },
+    "right": {
+      "name": "Ochre",
+      "described": "Ochre, the striped figure on the right"
+    }
   },
-
   "parts": {
     "head": "head",
     "neck": "neck",
@@ -176,7 +251,6 @@
     "hand": "hand",
     "leg": "leg"
   },
-
   "results": {
     "road": {
       "win_neck": "You won the round. Your blade cut across {opponent_mid}'s {part}.",
@@ -198,23 +272,33 @@
       "match": "{winner} won the match, {wins} rounds to {losses}."
     },
     "draw": "Nobody won the round. Both fighters stopped at the same moment, so the round is played again.",
-    "next_round": { "label": "Play the next round" },
-    "again": { "label": "Play this opponent again" },
-    "rematch": { "label": "Play another match" },
-    "to_road": { "label": "Go back to the road" },
-    "replay": { "label": "Download replay" }
+    "next_round": {
+      "label": "Play the next round"
+    },
+    "again": {
+      "label": "Play this opponent again"
+    },
+    "rematch": {
+      "label": "Play another match"
+    },
+    "to_road": {
+      "label": "Go back to the road"
+    },
+    "replay": {
+      "label": "Download replay"
+    }
   },
-
   "road": {
     "intro": "You are walking a road with a sword you are still learning to use. The people who stop you fight in different ways. Before a fight you are told what that opponent does and one thing you could try. The suggestion is a starting point, and there are other answers.",
     "does_heading": "What this opponent does",
     "try_heading": "One thing to try",
-    "fight": { "label": "Fight {opponent_mid}" },
+    "fight": {
+      "label": "Fight {opponent_mid}"
+    },
     "locked": "You reach this stop after you win at the one before it.",
     "cleared": "You have won here. You can fight {opponent_mid} again.",
     "end": "That was the last opponent on the road. You can fight any of them again from this screen. If you found an approach that the suggestions did not mention, the suggestions were incomplete."
   },
-
   "opponents": {
     "scarecrow": {
       "name": "The Scarecrow",
@@ -271,15 +355,85 @@
       "place": "The end of the road, at a gate that is already open.",
       "does": "The reader tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
       "try": "She does not check further ahead than that. A move that looks harmless at first and changes late is one she has not seen coming."
+    },
+    "drover": {
+      "name": "The Drover",
+      "name_mid": "the drover",
+      "place": "A cattle track between two stone walls.",
+      "does": "The drover walks straight at you and swings low, at your legs, as soon as you are in reach. He does not guard.",
+      "try": "Meet him above the sweep. A jump or a high cut lands while his blade is still low."
+    },
+    "lamplighter": {
+      "name": "The Lamplighter",
+      "name_mid": "the lamplighter",
+      "place": "A street of iron lamps that are lit at noon.",
+      "does": "The lamplighter keeps her sword high and waits. When you come close she thrusts, and if you come closer still she steps back.",
+      "try": "Draw the thrust, step out of its way, and come in under the high blade while her arm is still out."
+    },
+    "cooper": {
+      "name": "The Cooper",
+      "name_mid": "the cooper",
+      "place": "A yard full of barrels, with a bicycle leaning on one of them.",
+      "does": "The cooper jumps at you and cuts as he comes down. If he lands badly, he gets up again before he does anything else.",
+      "try": "Step aside as he leaves the ground, and cut as he lands."
+    },
+    "bellringer": {
+      "name": "The Bellringer",
+      "name_mid": "the bellringer",
+      "place": "A bell tower whose bell has been replaced by a loudspeaker.",
+      "does": "The bellringer spins his sword and walks into you with it turning. When your point comes near his head, he dodges away and starts again.",
+      "try": "A dodge leaves him a moment with a still blade. Strike as he comes back in, not while the sword is turning."
+    },
+    "courier": {
+      "name": "The Courier",
+      "name_mid": "the courier",
+      "place": "A relay station with a pile of parcels and a pager on a nail.",
+      "does": "The courier keeps her distance and backs away when you come close. Now and then she rolls straight through your guard and cuts as she comes out of the roll.",
+      "try": "Her roll ends close to you. Keep your blade where she will be standing when it ends."
+    },
+    "ropewalker": {
+      "name": "The Ropewalker",
+      "name_mid": "the ropewalker",
+      "place": "A rope strung between two poles over a dry ditch.",
+      "does": "The ropewalker fights from the air. She jumps, pushes off the air toward you, and cuts downward as she falls.",
+      "try": "Hold your sword above you as she comes down, because a blade that meets yours stops."
+    },
+    "salt_trader": {
+      "name": "The Salt Trader",
+      "name_mid": "the salt trader",
+      "place": "A salt warehouse with a cash register on a crate.",
+      "does": "The salt trader waits behind a high guard. When your point comes near her body she dodges through you and cuts, and when you dodge she cuts where you are.",
+      "try": "She answers your attacks rather than starting her own. Bring your point close to draw her dodge, then strike as it ends."
+    },
+    "smith": {
+      "name": "The Smith",
+      "name_mid": "the smith",
+      "place": "A forge whose bellows run on an electric motor.",
+      "does": "The smith plants his sword and vaults over you, or jumps and pushes off the air to cut down at you. When your point comes at his head he dodges, and when he is knocked down he stands up at once.",
+      "try": "He spends a lot of his time in the air. Cut at him as he lands, when his second jump is used up."
+    },
+    "archivist": {
+      "name": "The Archivist",
+      "name_mid": "the archivist",
+      "place": "A record office where the shelves hold vinyl next to the ledgers.",
+      "does": "The archivist tries several moves a short way ahead before she chooses, and she dodges most attacks that come at her head. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Attack her legs and body rather than her head, because those are the cuts she does not dodge."
+    },
+    "watchman": {
+      "name": "The Watchman",
+      "name_mid": "the watchman",
+      "place": "A gatehouse at the end of a bridge, with a television left on inside.",
+      "does": "The watchman dodges attacks at his head, cuts at you when you leave the ground, jumps and pushes off the air, and stands up at once when knocked down. Between those he tries moves a short way ahead. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "He punishes a jump. Stay on the ground, keep your guard up, and make him come to you."
     }
   },
-
   "local": {
     "intro": "Two players share this keyboard. {left_name} is on the left and uses {left_keys}. {right_name} is on the right and uses {right_keys}.",
     "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding while both of you are pressing keys, that is the likely cause. Changing the key bindings in Settings sometimes helps.",
-    "start": { "label": "Start the match" }
+    "start": {
+      "label": "Start the match"
+    }
   },
-
   "online": {
     "intro": "One of you hosts and the other joins. The match then runs directly between your two browsers.",
     "privacy": "A direct connection means your friend's browser learns your IP address, and yours learns theirs. Play online with people you are willing to share that with.",
@@ -315,7 +469,9 @@
       "host": "Your friend has joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back.",
       "join": "You have joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back. The host starts the match."
     },
-    "start": { "label": "Start the match" },
+    "start": {
+      "label": "Start the match"
+    },
     "error": {
       "no_relay": "No relay answered, so your two browsers could not be introduced. Try hosting with a pasted code, which does not need a relay.",
       "no_path": "Your two browsers found each other but could not open a direct connection. This usually means one of you is on a network that blocks direct connections, and a pasted code would fail the same way. Trying from a different network is the next step.",
@@ -329,33 +485,45 @@
       "desync": "The two copies of the match disagreed at tick {tick}. The match has stopped so that it does not continue as two different fights. You can download the replay to report it."
     }
   },
-
   "settings": {
     "music": {
       "title": "Music",
       "desc": "The game does not include a music track. You can load one from this device, and it loops during fights.",
-      "load": { "label": "Load a track from this device" },
+      "load": {
+        "label": "Load a track from this device"
+      },
       "privacy": "The file is read by your browser and is not uploaded. In an online match your friend does not hear it.",
       "remember": {
         "label": "Remember this track on this device",
         "desc": "This keeps a copy of the file in this browser's storage for this site. Clearing the site's data removes it."
       },
-      "remove": { "label": "Remove the track" },
+      "remove": {
+        "label": "Remove the track"
+      },
       "loaded": "The loaded track is {file_name}.",
       "none": "No track is loaded.",
-      "volume": { "label": "Music volume" },
+      "volume": {
+        "label": "Music volume"
+      },
       "error": "This file could not be played. Your browser reported: {error}",
       "formats": "MP3, Ogg and WAV files play in most browsers."
     },
     "sound": {
-      "volume": { "label": "Sound effects volume" }
+      "volume": {
+        "label": "Sound effects volume"
+      }
     },
     "keys": {
       "title": "Key bindings",
       "desc": "Choose a key for each action. Two actions cannot share a key.",
       "conflict": "{key} is already used for {action}. Choose a different key, or change that binding first.",
-      "reset": { "label": "Restore the default keys" },
-      "solo": { "heading": "Keys for the road, the practice yard and online matches", "review": "new" },
+      "reset": {
+        "label": "Restore the default keys"
+      },
+      "solo": {
+        "heading": "Keys for the road, the practice yard and online matches",
+        "review": "new"
+      },
       "actions": {
         "shoulder_up": "Raise the arm at the shoulder",
         "shoulder_down": "Lower the arm at the shoulder",
@@ -364,7 +532,8 @@
         "step_left": "Step left",
         "step_right": "Step right",
         "jump": "Jump",
-        "dodge": "Dodge"
+        "dodge": "Dodge",
+        "stand": "Stand up"
       }
     },
     "motion": {
@@ -377,7 +546,9 @@
         "label": "Download save file",
         "desc": "This writes your progress on the road and your settings to a file that you keep."
       },
-      "load": { "label": "Load save file" },
+      "load": {
+        "label": "Load save file"
+      },
       "loaded": "The save file was loaded.",
       "autosave": "The game also keeps a copy in this browser so that you can continue after a reload. That copy is a convenience. Clearing the site's data removes it, so download a save file if you want to keep your progress.",
       "error": {
@@ -387,12 +558,17 @@
       }
     }
   },
-
   "replay": {
-    "download": { "label": "Download replay" },
-    "load": { "label": "Load a replay" },
+    "download": {
+      "label": "Download replay"
+    },
+    "load": {
+      "label": "Load a replay"
+    },
     "playing": "You are watching a replay. Pressing keys does not change it.",
-    "stop": { "label": "Stop the replay" },
+    "stop": {
+      "label": "Stop the replay"
+    },
     "error": {
       "format": "This file is not a {game} replay, so nothing was loaded.",
       "sim": "This replay was recorded with simulation version {theirs}, and this build runs version {ours}. The same inputs would not produce the same match, so the replay was not loaded.",

@@ -51,11 +51,11 @@ fn every_number_in_an_introduction_comes_from_the_pilot_data() {
             }
         }
     }
-    // Derived, never typed: 90 ticks is 1.5 s; a 125 cm sword against the
-    // default 95 cm is round(100 · 30 / 95) = 32 % longer; 18 and 12 ticks
+    // Derived, never typed: 90 ticks is 1.5 s; a 138 cm sword against the
+    // default 104 cm is round(100 · 34 / 104) = 33 % longer; 18 and 12 ticks
     // are 300 and 200 ms.
     assert_eq!(intro_numbers("thresher")["pause_s"], "1.5");
-    assert_eq!(intro_numbers("ferryman")["reach_pct"], "32");
+    assert_eq!(intro_numbers("ferryman")["reach_pct"], "33");
     assert_eq!(intro_numbers("reader")["horizon_ms"], "300");
     assert_eq!(intro_numbers("reader")["reaction_ms"], "200");
     // And they move when the data does.
@@ -213,4 +213,47 @@ fn every_opponent_can_be_beaten() {
     });
     let unbeaten: Vec<&String> = beaten.iter().filter(|(_, w)| w.is_none()).map(|(id, _)| id).collect();
     assert!(unbeaten.is_empty(), "the yardstick at its strongest never beat {unbeaten:?}");
+}
+
+/// Each tree opponent's inputs over a few matches against the yardstick.
+fn keys_pressed(id: &str) -> Vec<Input> {
+    let mut all = Vec::new();
+    for seed in 0..2u64 {
+        let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
+        let mut me = build(&pilot("yardstick"));
+        let mut them = build(&pilot(id));
+        let mut last = [Input::NONE; 2];
+        while w.tick < 1800 && !matches!(w.phase, Phase::MatchOver { .. }) {
+            me.observe(last[1]);
+            them.observe(last[0]);
+            let i = [me.input(&w, 0), them.input(&w, 1)];
+            if matches!(w.phase, Phase::Fight) {
+                all.push(i[1]);
+            }
+            w.step(i);
+            last = i;
+        }
+    }
+    all
+}
+
+#[test]
+fn each_new_opponent_uses_the_moves_its_introduction_names() {
+    let uses = |id: &str, bit: u16| keys_pressed(id).iter().any(|i| i.has(bit));
+    // "walks straight at you and swings low … He does not guard."
+    let drover = keys_pressed("drover");
+    assert!(drover.iter().any(|i| i.has(Input::SHOULDER_DOWN)), "the drover never swung low");
+    assert!(!drover.iter().any(|i| i.has(Input::JUMP) || i.has(Input::DODGE)), "the drover jumped or dodged");
+    // Jumps: the cooper, the ropewalker (twice, the second in the air).
+    assert!(uses("cooper", Input::JUMP), "the cooper never jumped");
+    let rope = keys_pressed("ropewalker");
+    let presses = rope.windows(2).filter(|w| w[1].has(Input::JUMP) && !w[0].has(Input::JUMP)).count();
+    assert!(presses >= 4, "the ropewalker jumped {presses} times; her bounce takes two presses");
+    // Dodges: the bellringer, the courier, the salt trader, the smith, the
+    // archivist and the watchman.
+    for id in ["bellringer", "courier", "salt_trader", "smith", "archivist", "watchman"] {
+        assert!(uses(id, Input::DODGE), "the {id} never dodged");
+    }
+    // The lamplighter thrusts: the elbow bends and straightens.
+    assert!(uses("lamplighter", Input::ELBOW_OUT), "the lamplighter never thrust");
 }

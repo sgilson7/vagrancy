@@ -25,14 +25,17 @@ impl Input {
     /// A Melee-style dodge: a roll or spot dodge on the ground, an air dodge
     /// in the air; briefly uncuttable (Sam, 2026-10-03).
     pub const DODGE: u16 = 1 << 8;
+    /// Stand back up when knocked off one's feet with both legs (Sam,
+    /// 2026-10-03).
+    pub const STAND: u16 = 1 << 9;
     /// Every other bit is spare and must be zero; a replay that sets one is
     /// refused.
-    pub const SPARE: u16 = !0x01FF;
+    pub const SPARE: u16 = !0x03FF;
 
     /// The actions a key can be bound to, in the order Settings lists them.
     /// The page reads these names and bits from here rather than keeping a
     /// copy (CLAUDE.md: the page keeps no constant of its own).
-    pub const ACTIONS: [(&'static str, u16); 8] = [
+    pub const ACTIONS: [(&'static str, u16); 9] = [
         ("shoulder_up", Self::SHOULDER_UP),
         ("shoulder_down", Self::SHOULDER_DOWN),
         ("elbow_in", Self::ELBOW_IN),
@@ -41,6 +44,7 @@ impl Input {
         ("step_right", Self::STEP_RIGHT),
         ("jump", Self::JUMP),
         ("dodge", Self::DODGE),
+        ("stand", Self::STAND),
     ];
 
     pub const fn has(self, bit: u16) -> bool {

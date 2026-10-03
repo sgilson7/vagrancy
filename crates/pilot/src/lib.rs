@@ -18,12 +18,17 @@ use std::collections::VecDeque;
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Spec {
-    Still,
+    /// Does nothing. `unarmed`: stands in the arena without a sword.
+    Still {
+        #[serde(default)]
+        unarmed: bool,
+    },
     Pose { shoulder: i32, elbow: i32 },
     Loop { pattern: String, #[serde(default)] pause_ticks: u32, #[serde(default)] drift: bool },
     Machine { script: String, #[serde(default)] sword_len: Option<i32> },
     Replayer { first_round: String, mirror: bool },
     Search { horizon_ticks: u32, reaction_ticks: u32, branches: u32, #[serde(default = "default_period")] period: u32 },
+    Tree { reaction_ticks: u32, rules: Vec<Rule>, #[serde(default)] salt: u64 },
 }
 
 fn default_period() -> u32 {
@@ -39,7 +44,7 @@ pub trait Pilot {
 
 pub fn build(spec: &Spec) -> Box<dyn Pilot> {
     match spec.clone() {
-        Spec::Still => Box::new(Still),
+        Spec::Still { .. } => Box::new(Still),
         Spec::Pose { shoulder, elbow } => Box::new(Pose { shoulder, elbow }),
         Spec::Loop { pattern, pause_ticks, drift } => Box::new(Looper::new(&pattern, pause_ticks, drift)),
         Spec::Machine { script, .. } => Box::new(Machine::new(&script)),
@@ -47,6 +52,7 @@ pub fn build(spec: &Spec) -> Box<dyn Pilot> {
         Spec::Search { horizon_ticks, reaction_ticks, branches, period } => {
             Box::new(Search::new(horizon_ticks, reaction_ticks, branches, period))
         }
+        Spec::Tree { reaction_ticks, rules, salt } => Box::new(Tree::new(rules, reaction_ticks, salt)),
     }
 }
 
@@ -514,6 +520,195 @@ pub fn numbers(spec: &Spec, default_sword_len: i32) -> Vec<(&'static str, String
         Spec::Search { horizon_ticks, reaction_ticks, .. } => {
             vec![("horizon_ms", ms(*horizon_ticks).to_string()), ("reaction_ms", ms(*reaction_ticks).to_string())]
         }
+        Spec::Tree { reaction_ticks, .. } => vec![("reaction_ms", ms(*reaction_ticks).to_string())],
         _ => vec![],
+    }
+}
+
+// --- behavior trees (Sam, 2026-10-03: "about 10 more battles with enemies with
+// different behavior trees, getting increasingly skilled / dangerous") -------------
+//
+// A tree pilot is data: an ordered list of rules, each a set of conditions and
+// a move. The first rule whose conditions hold starts its move, and the pilot
+// commits to it until it ends, as a person commits to a swing; a rule marked
+// `interrupt` may break in. It reads the world as it was `reaction_ticks`
+// ago, which is most of what separates a slow opponent from a quick one.
+
+/// One condition on what the pilot sees.
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Cond {
+    /// The fighters are farther apart than this, cm.
+    GapAbove(i32),
+    GapBelow(i32),
+    /// The other's sword point is within this of my head, cm.
+    TipNearHead(i32),
+    /// … or of my pelvis.
+    TipNearBody(i32),
+    MeAirborne,
+    MeGrounded,
+    OppAirborne,
+    MeDown,
+    OppDodging,
+    /// My ink is below this share, in percent.
+    MyInkBelow(i32),
+    /// A seeded chance, in percent, drawn when the rule is considered.
+    Chance(u32),
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub struct Rule {
+    #[serde(default, rename = "if")]
+    pub when: Vec<Cond>,
+    #[serde(rename = "do")]
+    pub act: String,
+    #[serde(default)]
+    pub interrupt: bool,
+}
+
+pub struct Tree {
+    rules: Vec<Rule>,
+    reaction: u32,
+    seen: VecDeque<World>,
+    rng: sim::rng::Rng,
+    current: Option<(String, u32)>,
+    search: Option<Search>,
+}
+
+impl Tree {
+    pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
+        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None }
+    }
+
+    fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
+        let them = 1 - me;
+        let near = |a: Option<V2>, b: Option<V2>, cm: i32| match (a, b) {
+            (Some(a), Some(b)) => (a - b).len().trunc() < cm,
+            _ => false,
+        };
+        let airborne = |s: usize| w.fighters[s].as_ref().is_some_and(|_| {
+            let f = w.fighters[s].as_ref().unwrap();
+            let def = &w.setup.bodies[f.body as usize];
+            !def.roles.feet.iter().any(|&i| {
+                let p = &w.particles[(f.base + i as u16) as usize];
+                p.owner == Owner::Body(s as u8) && p.p.y <= p.rad + ONE
+            })
+        });
+        match c {
+            Cond::GapAbove(cm) => gap(w, me) > *cm,
+            Cond::GapBelow(cm) => gap(w, me) < *cm,
+            Cond::TipNearHead(cm) => near(tip(w, them), head(w, me), *cm),
+            Cond::TipNearBody(cm) => near(tip(w, them), pelvis(w, me), *cm),
+            Cond::MeAirborne => airborne(me),
+            Cond::MeGrounded => !airborne(me),
+            Cond::OppAirborne => airborne(them),
+            Cond::MeDown => w.knocked_down(me),
+            Cond::OppDodging => w.dodging(them),
+            Cond::MyInkBelow(pct) => w.fighters[me].as_ref().is_some_and(|f| {
+                let max = w.setup.bodies[f.body as usize].ink.max(1);
+                f.ink * 100 < max * pct
+            }),
+            Cond::Chance(pct) => self.rng.below(100) < *pct,
+        }
+    }
+
+    fn pick(&mut self, w: &World, me: usize, interrupts_only: bool) -> Option<String> {
+        for i in 0..self.rules.len() {
+            let r = self.rules[i].clone();
+            if interrupts_only && !r.interrupt {
+                continue;
+            }
+            if r.when.iter().all(|c| self.holds(c, w, me)) {
+                return Some(r.act);
+            }
+        }
+        None
+    }
+
+    /// One tick of a move, or `None` when it has finished.
+    fn play(&mut self, name: &str, t: u32, w: &World, me: usize) -> Option<u16> {
+        let to = step_toward(w, me, true);
+        let away = step_toward(w, me, false);
+        use Input as I;
+        Some(match (name, t) {
+            ("approach", 0..=7) => to,
+            ("retreat", 0..=7) => away,
+            ("guard", 0..=9) => pose_keys(w, me, 10, 10),
+            ("high_guard", 0..=9) => pose_keys(w, me, 70, 20),
+            ("low_guard", 0..=9) => pose_keys(w, me, -30, 10),
+            ("overhead", 0..=15) => I::SHOULDER_UP,
+            ("overhead", 16..=33) => I::SHOULDER_DOWN | I::ELBOW_OUT,
+            ("low_sweep", 0..=19) => I::SHOULDER_DOWN | to,
+            ("thrust", 0..=7) => I::ELBOW_IN,
+            ("thrust", 8..=17) => I::ELBOW_OUT | to,
+            ("spin", 0..=23) => I::SHOULDER_UP | to,
+            ("jump_strike", 0) => I::JUMP | to,
+            ("jump_strike", 1..=9) => I::SHOULDER_UP | to,
+            ("jump_strike", 10..=29) => I::SHOULDER_DOWN | to,
+            ("bounce_strike", 0) => I::JUMP,
+            ("bounce_strike", 1..=13) => I::SHOULDER_UP,
+            ("bounce_strike", 14) => I::JUMP | to,
+            ("bounce_strike", 15..=35) => I::SHOULDER_DOWN | to,
+            ("dodge_away", 0) => I::DODGE | away,
+            ("dodge_away", 1..=17) => 0,
+            ("dodge_in", 0) => I::DODGE | to,
+            ("dodge_in", 1..=17) => 0,
+            ("dodge_in", 18..=35) => I::SHOULDER_DOWN | I::ELBOW_OUT,
+            ("pogo", 0..=12) => I::ELBOW_IN | to,
+            ("pogo", 13..=21) => to,
+            ("pogo", 22..=55) => I::SHOULDER_DOWN | I::ELBOW_OUT | to,
+            ("stand", 0) => I::STAND,
+            ("wait", 0..=9) => 0,
+            ("search", 0..=11) => {
+                // The search sees the world as old as the tree does: built
+                // with a reaction of zero it read the present, and the
+                // archivist won every match in about a second.
+                let reaction = self.reaction;
+                let s = self.search.get_or_insert_with(|| Search::new(18, reaction, 11, 3));
+                s.input(w, me).0
+            }
+            _ => return None,
+        })
+    }
+}
+
+impl Pilot for Tree {
+    fn observe(&mut self, other: Input) {
+        if let Some(s) = self.search.as_mut() {
+            s.observe(other);
+        }
+    }
+
+    fn input(&mut self, w: &World, seat: usize) -> Input {
+        self.seen.push_back(w.clone());
+        while self.seen.len() as u32 > self.reaction + 1 {
+            self.seen.pop_front();
+        }
+        if let Some(i) = between(w) {
+            self.current = None;
+            return i;
+        }
+        // Decide on what was seen; act on the world as it is.
+        let seen = self.seen.front().unwrap().clone();
+        let interrupt = if self.current.is_some() { self.pick(&seen, seat, true) } else { None };
+        if let Some(name) = interrupt {
+            if self.current.as_ref().map(|(n, _)| n != &name).unwrap_or(true) {
+                self.current = Some((name, 0));
+            }
+        }
+        if self.current.is_none() {
+            self.current = self.pick(&seen, seat, false).map(|n| (n, 0));
+        }
+        let Some((name, t)) = self.current.clone() else { return Input::NONE };
+        match self.play(&name, t, w, seat) {
+            Some(b) => {
+                self.current = Some((name, t + 1));
+                Input(b)
+            }
+            None => {
+                self.current = None;
+                Input::NONE
+            }
+        }
     }
 }

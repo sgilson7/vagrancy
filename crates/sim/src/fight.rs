@@ -84,21 +84,17 @@ impl World {
     }
 
     /// Whether sword `si` can cut part `pi` at all: the sword is held (Q15),
-    /// and the part is not a hand on the hilt of that same sword (D11). An
+    /// the part is not its own fighter's, and neither side is dodging. An
     /// opponent's blade cuts a hand (Q14). `cuts` reads this; so do the tests.
     pub fn may_cut(&self, si: usize, pi: usize) -> bool {
         let part = &self.parts[pi];
         let owner = self.swords[si].fighter;
         // A dodging fighter cannot be cut, and its blade cuts nothing.
         let dodged = part.attached && self.dodging(part.fighter as usize);
-        self.held(si) && !self.dodging(owner as usize) && !dodged && !self.holds_own_sword(part, owner)
-    }
-
-    /// A hand on the hilt of its own fighter's sword (D11).
-    fn holds_own_sword(&self, part: &Part, owner: u8) -> bool {
-        part.fighter == owner
-            && self.setup.bodies[self.fighter_body(part.fighter)].parts[part.def as usize].hand
-            && self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, hand } if fighter == owner && hand == part.b))
+        // And a fighter's own blade never cuts that fighter: Sam removed
+        // self-cuts on 2026-10-03, reversing his answer in brief 0.7, because
+        // why one happened was too hard to see.
+        part.fighter != owner && self.held(si) && !self.dodging(owner as usize) && !dodged
     }
 
     fn fighter_body(&self, seat: u8) -> usize {
@@ -141,22 +137,8 @@ impl World {
                 // A blade that drifts into a part rests against it; a blade
                 // that arrives at speed cuts it. Without this every fighter
                 // cut itself within a second of standing still (M3.0).
-                // A fighter's own blade reaches that fighter only with its
-                // point. In a side view every slash crosses the body's own
-                // plane, and in three dimensions it would pass beside it; the
-                // point can still go in, as a thrust or a fall onto it.
-                // (`lab self-cuts`: with the whole edge, every run of random
-                // input cut itself within a third of a second; SECOND-ORDER-M3.)
-                if part.fighter == owner && hit.g < balance::SELF_CUT_POINT {
-                    continue;
-                }
-                let (speed, thrust) = self.contact_speed(si, &part, hit);
-                // Against its own fighter the point must be driven point-first
-                // (a thrust, or a fall onto it): the touching point's motion
-                // against the part, along the blade toward the tip. A body
-                // running past its own trailing sword is not that.
-                let fast_enough = if part.fighter == owner { thrust >= balance::MIN_SELF_CUT_SPEED } else { speed >= balance::MIN_CUT_SPEED };
-                if !fast_enough {
+                let (speed, _) = self.contact_speed(si, &part, hit);
+                if speed < balance::MIN_CUT_SPEED {
                     continue;
                 }
                 let f = hit.f.clamp(Fx::ratio(1, 20), Fx::ratio(19, 20));

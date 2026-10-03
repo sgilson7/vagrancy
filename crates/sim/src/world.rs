@@ -550,15 +550,52 @@ impl World {
         }
     }
 
-    // --- the jump and the dodge (Sam, 2026-10-03) ------------------------------------
+    // --- the jump, the dodge and getting up (Sam, 2026-10-03) ------------------------
 
-    /// Act on a jump or dodge press, count down a dodge, and return the input
-    /// the rest of the tick should see: while dodging, a fighter's arm and
-    /// step keys do nothing, as in Melee, where a dodge is a commitment.
+    /// The fighter's own points and its sword's while a hand holds it.
+    fn moving_with(&self, seat: usize) -> Vec<usize> {
+        let held = self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat));
+        (0..self.particles.len())
+            .filter(|&i| {
+                let p = &self.particles[i];
+                p.m != 0 && (p.owner == Owner::Body(seat as u8) || (held && p.owner == Owner::Sword(seat as u8)))
+            })
+            .collect()
+    }
+
+    /// The velocity of those points' center of mass.
+    fn com_velocity(&self, pts: &[usize]) -> V2 {
+        let (mut x, mut y, mut m) = (0i64, 0i64, 0i64);
+        for &i in pts {
+            let p = &self.particles[i];
+            let v = p.p - p.q;
+            x += p.m as i64 * v.x.0 as i64;
+            y += p.m as i64 * v.y.0 as i64;
+            m += p.m as i64;
+        }
+        if m == 0 {
+            return V2::ZERO;
+        }
+        V2::new(Fx(crate::fx::narrow(x / m)), Fx(crate::fx::narrow(y / m)))
+    }
+
+    /// Change every point's velocity by the same amount, so the fighter's
+    /// center of mass changes by `dv` and its arm keeps swinging as it was.
+    fn add_velocity(&mut self, pts: &[usize], dv: V2) {
+        for &i in pts {
+            self.particles[i].q -= dv;
+        }
+    }
+
+    /// Act on a jump, dodge or stand press, count down a dodge, and return
+    /// the input the rest of the tick should see: while dodging, a fighter's
+    /// arm and step keys do nothing, as in Melee, where a dodge is a
+    /// commitment.
     fn jump_and_dodge(&mut self, seat: usize, input: Input) -> Input {
         let grounded = self.feet(seat).iter().any(|&i| self.grounded(i)) && self.balanced(seat);
+        let down = self.knocked_down(seat);
         let f = self.fighters[seat].as_mut().unwrap();
-        let buttons = Input::JUMP | Input::DODGE;
+        let buttons = Input::JUMP | Input::DODGE | Input::STAND;
         let pressed = input.0 & !f.held & buttons;
         f.held = input.0 & buttons;
         if grounded {
@@ -566,50 +603,146 @@ impl World {
         }
         f.dodge = f.dodge.saturating_sub(1);
         f.dodge_cooldown = f.dodge_cooldown.saturating_sub(1);
-        let mut set_v: Option<(Option<Fx>, Option<Fx>)> = None;
-        if pressed & Input::DODGE != 0 && f.dodge == 0 && f.dodge_cooldown == 0 {
+        let dir = input.axis(Input::STEP_RIGHT, Input::STEP_LEFT);
+        enum Act {
+            None,
+            AirDodge,
+            GroundJump,
+            AirJump,
+            Stand,
+        }
+        let mut act = Act::None;
+        if pressed & Input::STAND != 0 && down && f.dodge == 0 {
+            act = Act::Stand;
+        } else if pressed & Input::DODGE != 0 && f.dodge == 0 && f.dodge_cooldown == 0 {
             f.dodge = balance::DODGE_TICKS;
             f.dodge_cooldown = balance::DODGE_COOLDOWN;
-            f.dodge_dir = input.axis(Input::STEP_RIGHT, Input::STEP_LEFT);
+            f.dodge_dir = dir;
             if !grounded {
                 // An air dodge: a burst the way the step keys point, the
                 // fall stopped for the moment, and no air jump until landing.
                 f.air_jumps = 0;
-                set_v = Some((Some(balance::AIR_DODGE_SPEED * f.dodge_dir), Some(Fx(0))));
+                act = Act::AirDodge;
             }
         } else if pressed & Input::JUMP != 0 && f.dodge == 0 {
             if grounded {
-                set_v = Some((None, Some(balance::JUMP_SPEED)));
+                act = Act::GroundJump;
             } else if f.air_jumps > 0 {
                 f.air_jumps -= 1;
-                set_v = Some((None, Some(balance::AIR_JUMP_SPEED)));
+                act = Act::AirJump;
             }
         }
         let dodging = f.dodge > 0;
-        if let Some((vx, vy)) = set_v {
-            // The whole fighter, its held sword with it. From the ground the
-            // ground pushes; in the air the push comes from nowhere, like a
-            // swing (D9).
-            let held = self.swords.iter().any(|s| s.fighter as usize == seat) && self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat));
-            for p in self.particles.iter_mut() {
-                let mine = p.owner == Owner::Body(seat as u8) || (held && p.owner == Owner::Sword(seat as u8));
-                if !mine || p.m == 0 {
-                    continue;
+        let pts = self.moving_with(seat);
+        let v = self.com_velocity(&pts);
+        match act {
+            Act::None => {}
+            Act::Stand => self.stand_up(seat),
+            Act::AirDodge => {
+                let want = V2::new(balance::AIR_DODGE_SPEED * dir, Fx(0));
+                self.add_velocity(&pts, want - v);
+            }
+            Act::GroundJump => {
+                // The ground pushes: the fighter rises at the jump speed, or
+                // faster if it was already rising faster.
+                let up = (balance::JUMP_SPEED - v.y).max(Fx(0));
+                self.add_velocity(&pts, V2::new(Fx(0), up));
+            }
+            Act::AirJump => {
+                // As an elastic collision off a corner you cannot see (Sam,
+                // 2026-10-03): a fall is reflected into a rise at the same
+                // speed, and with a step key held, motion away from that side
+                // is reflected toward it. Reflection keeps speed; then the
+                // jump itself pushes at least AIR_JUMP_SPEED up and
+                // AIR_JUMP_SIDE toward a held side.
+                let mut w = v;
+                if w.y.0 < 0 {
+                    w.y = -w.y;
                 }
-                let mut v = p.p - p.q;
-                if let Some(x) = vx {
-                    v.x = x;
+                w.y = w.y.max(balance::AIR_JUMP_SPEED);
+                if dir != 0 {
+                    if w.x.signum() == -dir {
+                        w.x = -w.x;
+                    }
+                    if (w.x * dir) < balance::AIR_JUMP_SIDE {
+                        w.x = balance::AIR_JUMP_SIDE * dir;
+                    }
                 }
-                if let Some(y) = vy {
-                    v.y = y;
-                }
-                p.q = p.p - v;
+                self.add_velocity(&pts, w - v);
             }
         }
         if dodging {
             Input(input.0 & Input::READY)
         } else {
             input
+        }
+    }
+
+    /// Off its feet but with both legs: what the stand key can mend. The
+    /// torso leans more than about 45° or the pelvis is below 60 % of its
+    /// standing height.
+    pub fn knocked_down(&self, seat: usize) -> bool {
+        let Some(f) = self.fighters[seat].as_ref() else { return false };
+        if !matches!(self.phase, crate::fight::Phase::Fight) || f.dodge > 0 {
+            return false;
+        }
+        let def = &self.setup.bodies[f.body as usize];
+        let both_feet = def.roles.feet.len() == 2 && self.feet(seat).len() == 2;
+        let (Some(pe), Some(sh)) = (self.role(seat, |r| r.pelvis), self.role(seat, |r| r.shoulder)) else { return false };
+        if !both_feet {
+            return false;
+        }
+        let (pp, sp) = (self.particles[pe as usize].p, self.particles[sh as usize].p);
+        let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at.y;
+        let upright = (sp.y - pp.y).scale(10, 7) >= f.torso;
+        let tall = pp.y.scale(10, 6) >= rest_pelvis;
+        !(upright && tall)
+    }
+
+    /// Stand the fighter back up where its pelvis is, in its rest pose, still.
+    /// Parts already cut stay cut: a stump keeps its length along its part.
+    fn stand_up(&mut self, seat: usize) {
+        let f = self.fighters[seat].clone().unwrap();
+        let def = self.setup.bodies[f.body as usize].clone();
+        let pe = (f.base + def.roles.pelvis.unwrap() as u16) as usize;
+        let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at;
+        let lim = balance::ARENA_HALF - Fx::int(60);
+        let x = (self.particles[pe].p.x - rest_pelvis.x * f.facing).clamp(-lim, lim);
+        let place = |at: V2| V2::new(x + at.x * f.facing, at.y);
+        let mine = |w: &World, i: usize| w.particles[i].owner == Owner::Body(seat as u8);
+        for (k, pt) in def.points.iter().enumerate() {
+            let i = (f.base + k as u16) as usize;
+            if mine(self, i) {
+                let p = place(pt.at);
+                self.particles[i].p = p;
+                self.particles[i].q = p;
+            }
+        }
+        // The cut end of a stump, along its part at the stump's length.
+        for k in 0..self.parts.len() {
+            let part = self.parts[k].clone();
+            if part.fighter as usize != seat || !mine(self, part.b as usize) || (part.b as usize) < f.base as usize + def.points.len() && part.b >= f.base {
+                continue;
+            }
+            let d = &def.parts[part.def as usize];
+            let (a, b) = (place(def.points[d.near as usize].at), place(def.points[d.far as usize].at));
+            let whole = (b - a).len();
+            if whole.0 == 0 {
+                continue;
+            }
+            let p = self.particles[part.a as usize].p + (b - a).scale(part.len.0 as i64, whole.0 as i64);
+            self.particles[part.b as usize].p = p;
+            self.particles[part.b as usize].q = p;
+        }
+        if let (Some(sd), Some(si)) = (def.sword.as_ref(), f.sword) {
+            let s = self.swords[si as usize].clone();
+            if self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat)) {
+                for (i, at) in [(s.butt, sd.butt), (s.tip, sd.tip)] {
+                    let p = place(at);
+                    self.particles[i as usize].p = p;
+                    self.particles[i as usize].q = p;
+                }
+            }
         }
     }
 

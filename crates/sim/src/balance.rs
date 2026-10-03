@@ -78,20 +78,19 @@ pub const DEFAULT_TUNING: u8 = 2;
 /// (SECOND-ORDER-M5). A swing's tip moves at about 20. PLANNING-BRIEF Part C
 /// made this Sam's question; the agent set it and carries it.
 pub const MIN_CUT_SPEED: Fx = Fx::int(6);
-/// A fighter's own blade needs more speed to cut that fighter. *(M3.0)*
-pub const MIN_SELF_CUT_SPEED: Fx = Fx::int(12);
-/// The share of the cutting edge, from the tip, with which a fighter's own
-/// blade can cut that fighter: the point. *(M3.0)*
-pub const SELF_CUT_POINT: Fx = Fx::ratio(85, 100);
 
-/// The jump, the air jump and the dodge (Sam, 2026-10-03). *(guesses until
-/// Sam plays them)* A jump sets the fighter's upward speed: 7 cm/tick at
-/// 0.2725 cm/tick² rises 7² / (2 · 0.2725) = 90 cm; the air jump's 6 rises 66.
-pub const JUMP_SPEED: Fx = Fx::int(7);
-pub const AIR_JUMP_SPEED: Fx = Fx::int(6);
-/// A dodge lasts this many ticks (a quarter second), uncuttable and with a
-/// harmless blade, and the next cannot start for this many after it began.
-pub const DODGE_TICKS: u8 = 16;
+/// The jump, the air jump and the dodge (Sam, 2026-10-03; both jumps raised at
+/// his request). A jump raises the fighter's upward speed to 8.5 cm/tick,
+/// which at 0.2725 cm/tick² rises 8.5² / (2 · 0.2725) = 133 cm; the air jump
+/// pushes at least 8, which rises 117. *(guesses until Sam plays them)*
+pub const JUMP_SPEED: Fx = Fx::ratio(17, 2);
+pub const AIR_JUMP_SPEED: Fx = Fx::int(8);
+/// An air jump with a step key held pushes at least this fast toward it.
+pub const AIR_JUMP_SIDE: Fx = Fx::int(4);
+/// A dodge lasts this many ticks, uncuttable and with a harmless blade (18:
+/// 10 % longer than the first 16, at Sam's request), and the next cannot
+/// start for this many after it began.
+pub const DODGE_TICKS: u8 = 18;
 pub const DODGE_COOLDOWN: u8 = 45;
 /// A roll on the ground: the ground carries the fighter this fast.
 pub const ROLL_SPEED: Fx = Fx::int(7);

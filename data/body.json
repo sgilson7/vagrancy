@@ -1,4 +1,5 @@
 {
+  "_sword": "The sword is 104 cm from butt to tip: 10 % longer than the first 95, at Sam's request (2026-10-03).",
   "_legs": "The legs are a rigid frame (Sam, 2026-10-03: rigid legs, quick movement; the arms fully simulated). The extra sticks among pelvis, knees and feet hold it; a cut through a leg removes them.",
   "_about": "The bodies, in centimeters, facing +x, feet on the ground and x = 0 between them (D4, D7, D11, D12). Every value here is a guess until the recon of the milestone that uses it. A part runs from `near` (toward the heart) to `far`; a cut drops everything beyond it. `copy` is the parts.<id> key a result names the part by.",
   "fighter": {
@@ -42,7 +43,7 @@
     "roles": { "shoulder": "shoulder", "pelvis": "pelvis", "head": "head", "feet": ["foot_back", "foot_front"] },
     "balance": true,
     "sword": {
-      "butt": [44, 121], "tip": [105, 194], "hilt": 20, "mass": 2,
+      "butt": [44, 121], "tip": [111, 201], "hilt": 20, "mass": 2,
       "grips": [{ "hand": "hand_lead", "stiff": "wrist_lead" }, { "hand": "hand_rear" }]
     }
   },

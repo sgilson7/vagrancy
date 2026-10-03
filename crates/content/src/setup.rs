@@ -46,6 +46,15 @@ pub fn versus(seed: u64, tuning: u8) -> Setup {
 pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
     let mut bodies = crate::body::bodies();
     let mut seat1 = FIGHTER;
+    // An unarmed opponent (the scarecrow) stands without a sword: with the
+    // longer swords a runner's arm met its still blade fast enough to be cut,
+    // which made "your first cut costs you nothing" false (SECOND-ORDER-M5).
+    if let pilot::Spec::Still { unarmed: true } = crate::road::pilot(opponent) {
+        let mut bare = bodies[0].clone();
+        bare.sword = None;
+        bodies.push(bare);
+        seat1 = (bodies.len() - 1) as u8;
+    }
     if let pilot::Spec::Machine { sword_len: Some(len), .. } = crate::road::pilot(opponent) {
         let mut long = bodies[0].clone();
         let s = long.sword.as_mut().expect("the fighter has a sword");

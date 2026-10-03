@@ -1,12 +1,427 @@
 {
   "_about": "Each opponent's pilot (D16). A pilot returns an Input and nothing else. The numbers an introduction states ({pause_s}, {reach_pct}, {horizon_ms}, {reaction_ms}) are derived from these by pilot::numbers and never typed. The yardstick is not on the road; make ladder plays it against every stop.",
-  "scarecrow": { "kind": "still" },
-  "gatekeeper": { "kind": "pose", "shoulder": 10, "elbow": 10 },
-  "thresher": { "kind": "loop", "pattern": "overhead", "pause_ticks": 90 },
-  "ferryman": { "kind": "machine", "script": "late_heavy", "sword_len": 125 },
-  "vaulter": { "kind": "machine", "script": "vault" },
-  "windmill": { "kind": "loop", "pattern": "spin", "drift": true },
-  "sampler": { "kind": "replayer", "first_round": "still", "mirror": true },
-  "reader": { "kind": "search", "horizon_ticks": 18, "reaction_ticks": 12, "branches": 9, "period": 6 },
-  "yardstick": { "kind": "search", "horizon_ticks": 20, "reaction_ticks": 10, "branches": 11, "period": 5 }
+  "scarecrow": {
+    "kind": "still",
+    "unarmed": true
+  },
+  "gatekeeper": {
+    "kind": "pose",
+    "shoulder": 10,
+    "elbow": 10
+  },
+  "thresher": {
+    "kind": "loop",
+    "pattern": "overhead",
+    "pause_ticks": 90
+  },
+  "ferryman": {
+    "kind": "machine",
+    "script": "late_heavy",
+    "sword_len": 138
+  },
+  "vaulter": {
+    "kind": "machine",
+    "script": "vault"
+  },
+  "windmill": {
+    "kind": "loop",
+    "pattern": "spin",
+    "drift": true
+  },
+  "sampler": {
+    "kind": "replayer",
+    "first_round": "still",
+    "mirror": true
+  },
+  "reader": {
+    "kind": "search",
+    "horizon_ticks": 18,
+    "reaction_ticks": 12,
+    "branches": 9,
+    "period": 6
+  },
+  "yardstick": {
+    "kind": "search",
+    "horizon_ticks": 20,
+    "reaction_ticks": 10,
+    "branches": 11,
+    "period": 5
+  },
+  "drover": {
+    "kind": "tree",
+    "reaction_ticks": 20,
+    "salt": 1,
+    "rules": [
+      {
+        "if": [
+          {
+            "gap_above": 170
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "do": "low_sweep"
+      }
+    ]
+  },
+  "lamplighter": {
+    "kind": "tree",
+    "reaction_ticks": 18,
+    "salt": 2,
+    "rules": [
+      {
+        "if": [
+          {
+            "gap_below": 110
+          }
+        ],
+        "do": "retreat"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 190
+          }
+        ],
+        "do": "thrust"
+      },
+      {
+        "if": [
+          {
+            "gap_above": 260
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "do": "high_guard"
+      }
+    ]
+  },
+  "cooper": {
+    "kind": "tree",
+    "reaction_ticks": 16,
+    "salt": 3,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand"
+      },
+      {
+        "if": [
+          {
+            "gap_above": 260
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 230
+          },
+          "me_grounded"
+        ],
+        "do": "jump_strike"
+      },
+      {
+        "do": "guard"
+      }
+    ]
+  },
+  "bellringer": {
+    "kind": "tree",
+    "reaction_ticks": 14,
+    "salt": 4,
+    "rules": [
+      {
+        "if": [
+          {
+            "tip_near_head": 70
+          }
+        ],
+        "do": "dodge_away",
+        "interrupt": true
+      },
+      {
+        "do": "spin"
+      }
+    ]
+  },
+  "courier": {
+    "kind": "tree",
+    "reaction_ticks": 13,
+    "salt": 5,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 120
+          }
+        ],
+        "do": "retreat"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 230
+          },
+          {
+            "chance": 30
+          }
+        ],
+        "do": "dodge_in"
+      },
+      {
+        "if": [
+          {
+            "gap_above": 300
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "do": "low_guard"
+      }
+    ]
+  },
+  "ropewalker": {
+    "kind": "tree",
+    "reaction_ticks": 12,
+    "salt": 6,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand"
+      },
+      {
+        "if": [
+          {
+            "gap_above": 280
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "if": [
+          "me_grounded",
+          {
+            "gap_below": 260
+          }
+        ],
+        "do": "bounce_strike"
+      },
+      {
+        "do": "guard"
+      }
+    ]
+  },
+  "salt_trader": {
+    "kind": "tree",
+    "reaction_ticks": 10,
+    "salt": 7,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "tip_near_body": 90
+          }
+        ],
+        "do": "dodge_in",
+        "interrupt": true
+      },
+      {
+        "if": [
+          "opp_dodging"
+        ],
+        "do": "overhead"
+      },
+      {
+        "if": [
+          {
+            "gap_above": 230
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "do": "high_guard"
+      }
+    ]
+  },
+  "smith": {
+    "kind": "tree",
+    "reaction_ticks": 8,
+    "salt": 8,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "tip_near_head": 60
+          }
+        ],
+        "do": "dodge_away",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "gap_above": 300
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 250
+          },
+          {
+            "chance": 40
+          },
+          "me_grounded"
+        ],
+        "do": "pogo"
+      },
+      {
+        "if": [
+          {
+            "gap_below": 250
+          },
+          "me_grounded"
+        ],
+        "do": "bounce_strike"
+      },
+      {
+        "do": "guard"
+      }
+    ]
+  },
+  "archivist": {
+    "kind": "tree",
+    "reaction_ticks": 6,
+    "salt": 9,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "tip_near_head": 70
+          },
+          {
+            "chance": 70
+          }
+        ],
+        "do": "dodge_away",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "gap_above": 320
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "do": "search"
+      }
+    ]
+  },
+  "watchman": {
+    "kind": "tree",
+    "reaction_ticks": 4,
+    "salt": 10,
+    "rules": [
+      {
+        "if": [
+          "me_down"
+        ],
+        "do": "stand",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "tip_near_head": 80
+          }
+        ],
+        "do": "dodge_away",
+        "interrupt": true
+      },
+      {
+        "if": [
+          "opp_airborne",
+          {
+            "gap_below": 220
+          }
+        ],
+        "do": "overhead",
+        "interrupt": true
+      },
+      {
+        "if": [
+          {
+            "gap_above": 300
+          }
+        ],
+        "do": "approach"
+      },
+      {
+        "if": [
+          {
+            "my_ink_below": 40
+          }
+        ],
+        "do": "retreat"
+      },
+      {
+        "if": [
+          {
+            "chance": 25
+          },
+          {
+            "gap_below": 260
+          },
+          "me_grounded"
+        ],
+        "do": "bounce_strike"
+      },
+      {
+        "do": "search"
+      }
+    ]
+  },
+  "_trees": "The ten behavior-tree opponents Sam asked for (2026-10-03). Each rule is conditions and a move; the first rule that holds starts its move and the pilot commits to it, unless a rule marked interrupt breaks in. reaction_ticks is how old the world it decides on is."
 }

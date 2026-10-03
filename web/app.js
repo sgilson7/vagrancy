@@ -223,8 +223,8 @@ function practice() {
   const vars = keyVars(binding);
   // Every control, in the order it is easiest to learn: the arm, moving,
   // the jump and the dodge, then what a blade does, then the tricks.
-  const steps = ['shoulder', 'elbow', 'move', 'jump', 'dodge', 'roll', 'air_dodge', 'cooldown',
-    'cut', 'own_blade', 'block', 'plant', 'swing', 'ink'];
+  const steps = ['shoulder', 'elbow', 'move', 'jump', 'air_jump', 'stand', 'dodge', 'roll', 'air_dodge', 'cooldown',
+    'cut', 'block', 'plant', 'swing', 'ink'];
   show(
     say('practice.intro'),
     keysLine(binding),
