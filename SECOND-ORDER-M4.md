@@ -1,0 +1,15 @@
+# Second-order notebook, M4
+
+`B3 Build in self-questioning` · `C3 Interrogate the claim`
+
+| # | row | kind | status |
+|---|---|---|---|
+| 1 | **The lockstep is a state machine the page feeds, not Floodline's `Peer` trait.** In Floodline a Rust `Lockstep` polled a Rust `Peer` that wrapped the plugin (`net-web`). Here the page owns the transport (D2), so `net::Session` takes bytes and the time in milliseconds and hands bytes back. Nothing in Rust reads a clock or a socket, and `cargo test` drives it with a clock the test owns. | divergence | done |
+| 2 | **Three parts of D14 are new, as PLAN.md §7 said.** The delay is measured from 20 pings and the 90th percentile (`delay_for`; checked by hand: 30 ms gives 3 ticks, 80 ms gives 6). `Welcome` carries the delay and the whole `Setup`. `Loopback` has jitter, and keeps reliable delivery in order (each message arrives no earlier than the one before it). | finding | done |
+| 3 | **Both sides check every tick, so both can name the first bad one.** The joiner's `Input` carries its latest checksum; the host's `Bundle` carries the host's. Whichever side first finds a disagreement stops and sends `Stop{tick}`, and both show that tick (`a_mismatch_stops_both_peers_on_the_same_tick_and_names_it`). In Floodline only the host could tell (§7 item 7). | finding | done |
+| 4 | **My own percentile test was wrong.** It claimed two slow trips in twenty move the 90th percentile; they do not, three do. The test was fixed to the arithmetic, not the code. *A5: spatial/counting miscount (off by one in a rank).* | divergence | done |
+| 5 | **Headless Firefox would not connect two tabs on one machine.** It hides host addresses behind mDNS names and avoids loopback. `testing/online.py` sets Firefox's own test preferences (`media.peerconnection.ice.obfuscate_host_addresses`, `…loopback`); the page is unchanged. A player's browser connects through STUN. | finding | done |
+| 6 | **Two tabs in each engine play one match by pasted codes, with `?ice=none` and nothing off the origin.** Chromium played 372 ticks, Firefox 367, WebKit 360 and 361, every checksum agreeing; the measured delay was 34 ms (2 ticks) on one machine. The room-code path goes through public relays, so it is off the origin by nature and is not in any automated gate (Q18). | finding | done |
+| 7 | **M4.0 recon needs Sam and a friend:** the round trip and stall rate between two home networks, and one real match across two networks. The agent cannot run it. The thresholds `WARN_MS` (1 s) and `DROP_MS` (10 s) are guesses until then. | worklist | the human's |
+| 8 | **The room-code path has not been seen working end to end** (Trystero over the public relays). `web/echo.html?role=host&mode=room&room=TEST` and its joiner are the manual check, for Sam. | worklist | the human's |
+| 9 | **Every new test was broken once and seen failing.** The cases: the delay a tick long (4 against 3); an input a tick late; a missing input predicted instead of waited for (the jitter test caught it, which is the rollback reflex the brief warns about); a mismatch ignored; a silent peer never dropped; the joiner swapping the seats. | finding | done |

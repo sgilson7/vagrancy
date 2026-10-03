@@ -39,3 +39,16 @@ Reliance, revisited: "jointed bodies in integers" stays **low**. Four first answ
 | new strings | awaiting Sam | 1 | | | |
 
 Reliance, revisited: "a fast blade meeting a limb" and "cutting a body" stay **low**. The sweep and the cut passed their hand cases on the first run. The world-level consequences (self-cuts everywhere, a hinge in a piece, blades that glued) were each found only by measuring, and none was in the brief's list of traps.
+
+## After M4 (2026-10-03)
+
+| # | milestone | deliverables | tests | commit | state |
+|---|---|---|---|---|---|
+| M0–M2 | foundation; a body; a free swing | (see above) | 45 | c496085 | done; gates 1–3 live |
+| M3 | Cuts, ink, and two fighters at one keyboard | cuts, ink, rounds, match, clash, results, versus, key bindings | 60 (+15) | 7d25e6d | done; gate 4 live at 4f3289f4 |
+| M4 | Lockstep, on a loopback and then between two browsers | net::Session (measured delay, Welcome with Setup, both-sides desync stop, silence drop), Loopback with jitter, rtc.js (room codes and pasted codes), vendored Trystero, online lobby and match, echo.html, online.py, the referee | 68 (+8) | this commit | done once gate 5 is live; the two-network match is Sam's |
+| M5 | The road | | | | next |
+| notebook | rows open / done / the human's | 2 / 39 / 14 | | | |
+| new strings | awaiting Sam | 1 | | | |
+
+Reliance, revisited: "lockstep for two" was **medium-high for the port, low for the new parts**. The new parts passed their tests on the first run; the surprises were in the browser (Firefox's mDNS on loopback) and in my own arithmetic (row 4).

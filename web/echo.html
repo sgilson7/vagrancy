@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>echo</title>
+</head>
+<body>
+<!-- The transport with no game in it (Floodline web/echo.html): rtc.js
+     alone, so a networking fault is never mistaken for a lockstep one. A
+     developer's page, not a player's: it shows values, not sentences.
+       echo.html?role=host&mode=code&ice=none   prints an invitation
+       echo.html?role=join&mode=code&ice=none   paste it, prints a reply
+       echo.html?role=host&mode=room&room=TEST  over the public relays
+     Every message received is sent straight back; the round trips are
+     logged below in milliseconds. -->
+<textarea id="in" rows="4" cols="80"></textarea>
+<textarea id="out" rows="4" cols="80" readonly></textarea>
+<pre id="log"></pre>
+<script type="module">
+import * as rtc from './rtc.js';
+const q = new URLSearchParams(location.search);
+const isHost = q.get('role') !== 'join';
+const mode = q.get('mode') === 'room' ? 'room' : 'code';
+const log = (x) => { document.getElementById('log').textContent += x + '\n'; };
+let peer = null;
+const link = rtc.open({
+  isHost, mode, room: q.get('room') || 'echo', build: 'echo',
+  onPeer: (id) => { peer = id; log('peer ' + id); if (isHost) ping(); },
+  onLeft: (id) => log('left ' + id),
+  onMessage: (id, b) => {
+    if (isHost) { log('rtt ' + Math.round(performance.now() - new Float64Array(b.buffer.slice(0, 8))[0])); setTimeout(ping, 200); }
+    else link.send(id, b);
+  },
+  onError: (key) => log('error ' + key),
+});
+function ping() { link.send(peer, new Uint8Array(new Float64Array([performance.now()]).buffer)); }
+const input = document.getElementById('in');
+const output = document.getElementById('out');
+if (mode === 'code' && isHost) link.invitation().then((c) => { output.value = c; });
+input.addEventListener('input', () => {
+  if (isHost) link.accept(input.value).catch((e) => log('error ' + e));
+  else link.reply(input.value).then((c) => { output.value = c; }).catch((e) => log('error ' + e));
+});
+window.echo = { log: () => document.getElementById('log').textContent };
+</script>
+</body>
+</html>

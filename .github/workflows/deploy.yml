@@ -62,6 +62,11 @@ jobs:
           ./.venv-test/bin/playwright install --with-deps chromium firefox webkit
           ./.venv-test/bin/python testing/drive.py chromium firefox webkit
 
+      # Two tabs, one match, by pasted codes and host candidates only: the
+      # transport and the lockstep in the browser, with nothing off the origin.
+      - name: Play one match online between two tabs
+        run: ./.venv-test/bin/python testing/online.py chromium firefox webkit
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/web

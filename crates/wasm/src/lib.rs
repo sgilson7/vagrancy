@@ -126,3 +126,83 @@ impl Game {
         self.play.as_ref().map(|p| format!("{:016x}", p.replay.checksum)).unwrap_or_default()
     }
 }
+
+/// One end of an online match (D14). The page carries the bytes and the
+/// time; `net::Session` decides everything.
+#[wasm_bindgen]
+pub struct Online {
+    s: net::Session,
+}
+
+#[wasm_bindgen]
+impl Online {
+    pub fn host(seed: u32, tuning: u8, build: &str) -> Online {
+        Online { s: net::Session::host(content::setup::versus(seed as u64, tuning), build) }
+    }
+    pub fn join(build: &str) -> Online {
+        Online { s: net::Session::join(build) }
+    }
+    pub fn receive(&mut self, now: f64, bytes: &[u8]) {
+        self.s.receive(now as u64, bytes);
+    }
+    pub fn poll(&mut self, now: f64) {
+        self.s.poll(now as u64);
+    }
+    pub fn start(&mut self, now: f64) {
+        self.s.start(now as u64);
+    }
+    /// One tick of the page's clock with this side's input. True if the
+    /// world stepped.
+    pub fn step(&mut self, now: f64, mine: u8) -> bool {
+        self.s.tick(now as u64, Input(mine)).is_some()
+    }
+    /// Everything to send, as [u32 length, little-endian][bytes]…
+    pub fn outbox(&mut self) -> Vec<u8> {
+        let mut out = Vec::new();
+        for m in self.s.take_outbox() {
+            out.extend_from_slice(&(m.len() as u32).to_le_bytes());
+            out.extend_from_slice(&m);
+        }
+        out
+    }
+    pub fn refusal_full() -> Vec<u8> {
+        net::Session::refusal_full()
+    }
+    pub fn seat(&self) -> u32 {
+        self.s.seat() as u32
+    }
+    /// `{ "kind": …, "delay_ms": …, "tick": … }` for the lobby and the HUD.
+    pub fn status(&self) -> String {
+        use net::session::Status;
+        let (kind, tick) = match &self.s.status {
+            Status::Waiting => ("waiting", 0),
+            Status::Measuring => ("measuring", 0),
+            Status::Connected { .. } => ("connected", 0),
+            Status::Playing => ("playing", 0),
+            Status::WaitingOn => ("waiting_on", 0),
+            Status::Desync { tick } => ("desync", *tick),
+            Status::Left => ("left", 0),
+            Status::Refused(net::wire::Bye::Full) => ("full", 0),
+            Status::Refused(_) => ("build", 0),
+        };
+        json!({ "kind": kind, "delay_ms": net::session::delay_ms(self.s.delay()), "tick": tick }).to_string()
+    }
+    pub fn playing(&self) -> bool {
+        self.s.world().is_some()
+    }
+    pub fn frame(&self) -> String {
+        self.s.world().map(|w| serde_json::to_string(&frame::frame(w)).unwrap()).unwrap_or_default()
+    }
+    pub fn phase_text(&self) -> String {
+        self.s.world().map(|w| content::messages::phase_text(w, content::messages::Audience::Versus).to_string()).unwrap_or_default()
+    }
+    pub fn checksum(&self) -> String {
+        self.s.world().map(|w| format!("{:016x}", w.checksum())).unwrap_or_default()
+    }
+    pub fn tick(&self) -> u32 {
+        self.s.world().map(|w| w.tick).unwrap_or(0)
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.s.recording().map(|r| r.bytes()).unwrap_or_default()
+    }
+}

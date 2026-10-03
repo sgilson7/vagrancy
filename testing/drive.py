@@ -409,6 +409,16 @@ def a_key_can_be_rebound_and_a_clash_is_refused(page, name):
     return fails
 
 
+@check
+def the_online_lobby_says_only_its_own_words(page, name):
+    # Opening the lobby connects to nothing; only hosting or joining does.
+    click_copy(page, "menu.online.label")
+    page.wait_for_selector('[data-copy="online.intro"]')
+    fails = every_visible_line_is_a_copy_string(page, name + " (online lobby)")
+    click_copy(page, "menu.back.label")
+    return fails
+
+
 def walk(browser, name):
     fails = []
     ctx, page, problems, offsite = open_page(browser)

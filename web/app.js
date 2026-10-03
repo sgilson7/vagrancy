@@ -3,8 +3,9 @@
 // data/copy.en.json, which reaches it through the wasm module; which sentence
 // to show for an outcome is chosen by core (content::messages).
 import init, {
-  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game,
+  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online,
 } from './pkg/vagrancy_wasm.js';
+import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 import { download, pick } from './files.js';
@@ -175,10 +176,12 @@ function withReady(fn) {
 
 function menu() {
   stop();
+  hangUpOnline();
   delete document.body.dataset.phase;
   const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, {}, { class: 'desc' }));
   show(
     item('menu.local', local),
+    item('menu.online', online),
     item('menu.practice', practice),
     item('menu.replay', loadReplay),
     el('div', { class: 'item' }, button('menu.settings.label', settings)),
@@ -258,6 +261,201 @@ function seed() {
   // A fresh match gets a fresh spawn jitter. The seed travels in the replay,
   // so playback does not depend on this.
   return (Date.now() & 0x7fffffff) >>> 0;
+}
+
+// --- online (D14) -------------------------------------------------------------------
+
+let NET = null; // { sess, link, peer, timer }
+
+function hangUpOnline() {
+  if (!NET) return;
+  clearInterval(NET.timer);
+  NET.link.close();
+  NET = null;
+}
+
+function online() {
+  stop();
+  hangUpOnline();
+  const field = el('input', { id: 'room-code', type: 'text', autocomplete: 'off', spellcheck: 'false' });
+  show(
+    say('online.intro'),
+    say('online.privacy', {}, { class: 'desc' }),
+    say('online.music', {}, { class: 'desc' }),
+    el('div', { class: 'item' }, button('online.host_room.label', () => hostRoom()), say('online.host_room.desc', {}, { class: 'desc' })),
+    el('div', { class: 'item' },
+      button('online.join_room.label', () => field.value.trim() && joinRoom(field.value.trim().toUpperCase())),
+      say('online.join_room.desc', {}, { class: 'desc' }),
+      el('p', {}, el('label', { for: 'room-code', 'data-copy': 'online.join_room.field' }, t('online.join_room.field')), ' ', field)),
+    el('div', { class: 'item' }, button('online.host_paste.label', hostPaste), say('online.host_paste.desc', {}, { class: 'desc' })),
+    el('div', { class: 'item' }, button('online.join_paste.label', joinPaste)),
+    button('menu.back.label', menu),
+  );
+}
+
+function roomCode() {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const r = crypto.getRandomValues(new Uint8Array(6));
+  return Array.from(r, (b) => alphabet[b % alphabet.length]).join('');
+}
+
+// Open the transport and the session together. `paint` redraws the lobby.
+function openNet(isHost, mode, code, paint) {
+  hangUpOnline();
+  const sess = isHost ? Online.host(seed(), tuning(), BUILD) : Online.join(BUILD);
+  const net = { sess, peer: null, error: null, link: null, timer: null, started: false };
+  NET = net;
+  const flush = () => {
+    if (net.peer === null) return;
+    const out = net.sess.outbox();
+    const view = new DataView(out.buffer, out.byteOffset, out.byteLength);
+    for (let i = 0; i < out.length;) {
+      const n = view.getUint32(i, true);
+      net.link.send(net.peer, out.slice(i + 4, i + 4 + n));
+      i += 4 + n;
+    }
+  };
+  net.flush = flush;
+  net.link = rtc.open({
+    isHost, mode, room: code, build: BUILD,
+    onPeer: (id) => {
+      if (net.peer === null) { net.peer = id; flush(); paint(); } else net.link.send(id, Online.refusal_full());
+    },
+    onLeft: (id) => { if (id === net.peer) { net.left = true; paint(); } },
+    onMessage: (id, bytes) => {
+      if (id !== net.peer) return;
+      sess.receive(performance.now(), bytes);
+      flush();
+      if (!net.started && JSON.parse(sess.status()).kind === 'playing') beginOnline(net);
+      paint();
+    },
+    onError: (key) => { net.error = key; paint(); },
+  });
+  net.timer = setInterval(() => { sess.poll(performance.now()); flush(); if (!net.started) paint(); }, 100);
+  return net;
+}
+
+function copyButton(text) {
+  const done = el('span', { 'aria-live': 'polite' });
+  const b = button('online.copy.label', async () => {
+    try {
+      await navigator.clipboard.writeText(text());
+      done.replaceChildren(say('online.copy.done', {}, { class: 'desc' }));
+    } catch (e) {
+      done.replaceChildren(say('online.copy.failed', {}, { class: 'desc', role: 'alert' }));
+    }
+  });
+  return el('div', {}, b, done);
+}
+
+// The lobby's lines for a session's state, or its refusal.
+function lobbyLines(net, waitingKey, vars) {
+  if (net.error) return [say(net.error, {}, { role: 'alert' })];
+  const st = JSON.parse(net.sess.status());
+  if (st.kind === 'full') return [say('online.error.full', {}, { role: 'alert' })];
+  if (st.kind === 'build') return [say('online.error.build', {}, { role: 'alert' })];
+  if (net.left || st.kind === 'left') return [say('online.status.left', {}, { role: 'alert' })];
+  if (st.kind === 'connected') {
+    if (net.sess.seat() === 0) {
+      return [say('online.connected.host', { delay_ms: st.delay_ms }),
+        button('online.start.label', () => { net.sess.start(performance.now()); net.flush(); beginOnline(net); })];
+    }
+    return [say('online.connected.join', { delay_ms: st.delay_ms })];
+  }
+  return waitingKey ? [say(waitingKey, vars)] : [];
+}
+
+function hostRoom() {
+  const code = roomCode();
+  const link = `${location.origin}${location.pathname}#room=${code}`;
+  const box = el('div', { id: 'lobby' });
+  const paint = () => box.replaceChildren(...lobbyLines(net, 'online.waiting', { code }));
+  show(box, el('p', {}, fillText(link)), copyButton(() => link), button('menu.back.label', online));
+  const net = openNet(true, 'room', code, paint);
+  paint();
+}
+
+function joinRoom(code) {
+  const box = el('div', { id: 'lobby' });
+  const paint = () => box.replaceChildren(...lobbyLines(net, 'online.joining', { code }));
+  show(box, button('menu.back.label', online));
+  const net = openNet(false, 'room', code, paint);
+  paint();
+}
+
+function hostPaste() {
+  const invite = el('textarea', { id: 'invite', readonly: '', rows: '4', cols: '60' });
+  const reply = el('textarea', { id: 'reply', rows: '4', cols: '60' });
+  const box = el('div', { id: 'lobby' });
+  const paint = () => box.replaceChildren(...lobbyLines(net, null, {}));
+  show(
+    say('online.host_paste.step_copy'), invite, copyButton(() => invite.value),
+    say('online.host_paste.step_reply'), reply, box, button('menu.back.label', online),
+  );
+  const net = openNet(true, 'code', '', paint);
+  net.link.invitation().then((code) => { invite.value = code; document.body.dataset.invite = '1'; });
+  reply.addEventListener('input', () => {
+    net.link.accept(reply.value).catch(() => { net.error = 'online.error.bad_code'; paint(); });
+  });
+  paint();
+}
+
+function joinPaste() {
+  const invite = el('textarea', { id: 'invite', rows: '4', cols: '60' });
+  const out = el('div', { id: 'reply-box' });
+  const box = el('div', { id: 'lobby' });
+  const paint = () => box.replaceChildren(...lobbyLines(net, null, {}));
+  show(say('online.join_paste.step_paste'), invite, out, box, button('menu.back.label', online));
+  const net = openNet(false, 'code', '', paint);
+  invite.addEventListener('input', () => {
+    net.link.reply(invite.value).then((code) => {
+      const reply = el('textarea', { id: 'reply', readonly: '', rows: '4', cols: '60' });
+      reply.value = code;
+      out.replaceChildren(say('online.join_paste.step_reply'), reply, copyButton(() => code));
+      document.body.dataset.reply = '1';
+    }).catch(() => { net.error = 'online.error.bad_code'; paint(); });
+  });
+  paint();
+}
+
+// The match itself: the shared loop drives an adapter over the session, so
+// the page draws online play exactly as it draws a local match.
+function beginOnline(net) {
+  if (net.started) return;
+  net.started = true;
+  READY = false;
+  const sess = net.sess;
+  const adapter = {
+    step: (a) => { sess.step(performance.now(), a); net.flush(); },
+    frame: () => sess.frame(),
+    phase_text: () => sess.phase_text(),
+    checksum: () => sess.checksum(),
+    tick: () => sess.tick(),
+    is_replay: () => false,
+    done: () => false,
+    replay_bytes: () => sess.replay_bytes(),
+    recorded_checksum: () => '',
+  };
+  const status = el('div', { id: 'net-status', role: 'status' });
+  const watch = matchWatcher('', () => [el('div', { class: 'actions' },
+    button('results.replay.label', () => download(sess.replay_bytes(), 'vagrancy.replay')),
+    button('menu.back.label', online))]);
+  show(watch.panel, status, el('div', { class: 'actions' }, button('menu.back.label', online)));
+  const delay = JSON.parse(sess.status()).delay_ms;
+  let shown = '';
+  start(adapter, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+    watch.tick(f);
+    $('hud').append(el('span', { 'data-copy': 'hud.delay' }, t('hud.delay', { delay_ms: delay })));
+    const st = JSON.parse(sess.status());
+    if (st.kind === shown) return;
+    shown = st.kind;
+    if (st.kind === 'waiting_on') status.replaceChildren(say('online.status.waiting_on'));
+    else if (st.kind === 'left' || net.left) status.replaceChildren(say('online.status.left', {}, { role: 'alert' }));
+    else if (st.kind === 'desync') status.replaceChildren(say('online.status.desync', { tick: st.tick }, { role: 'alert' }),
+      button('results.replay.label', () => download(sess.replay_bytes(), 'vagrancy.replay')));
+    else status.replaceChildren();
+  });
+  document.body.dataset.online = 'playing';
 }
 
 // --- settings ------------------------------------------------------------------------
@@ -402,8 +600,10 @@ async function main() {
     recordedChecksum: () => game && game.recorded_checksum(),
     music: () => music.current(),
     phase: () => curFrame && curFrame.phase,
+    online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };
-  menu();
+  const m = location.hash.match(/^#room=([A-Z0-9]{4,12})$/);
+  if (m) joinRoom(m[1]); else menu();
   requestAnimationFrame(loop);
   document.body.dataset.ready = '1';
 }

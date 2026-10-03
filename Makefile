@@ -1,7 +1,7 @@
 ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 PY := $(ROOT)/.venv-test/bin/python
 
-.PHONY: help test check web serve test-ui test-ui-setup ladder count publish clean
+.PHONY: help test check web serve test-ui test-ui-online referee test-ui-setup ladder count publish clean
 
 ## test: the whole suite, native, no window and no network
 test:
@@ -23,6 +23,14 @@ serve: web
 ## test-ui: walk the gate in Chromium, Firefox and WebKit
 test-ui: web
 	@$(PY) $(ROOT)/testing/drive.py chromium firefox webkit
+
+## test-ui-online: two tabs play one match online, by pasted codes, in three engines
+test-ui-online: web
+	@$(PY) $(ROOT)/testing/online.py chromium firefox webkit
+
+## referee: a scripted three-minute online match, written to analysis/referee.md
+referee: web
+	@$(PY) $(ROOT)/testing/online.py chromium --seconds 180
 
 ## test-ui-setup: one-time install of Playwright and its three engines
 test-ui-setup:

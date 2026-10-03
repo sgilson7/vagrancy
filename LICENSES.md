@@ -7,3 +7,4 @@ it first. Adding an audio row is Sam's decision (PLANNING-BRIEF 0.4 and 0.5).
 
 | file | what it is | source | license |
 |---|---|---|---|
+| `web/vendor/trystero-nostr-0.25.4.js` | Trystero 0.25.4, Nostr strategy, bundled with its dependencies by esm.sh | npm `@trystero-p2p/nostr@0.25.4` via esm.sh; the same pinned file Floodline ships | MIT (Trystero, Dan Motzenbecker; bundled noble libraries, MIT) |
