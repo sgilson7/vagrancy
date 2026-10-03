@@ -7,6 +7,7 @@ import init, {
 import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 import { download, pick } from './files.js';
+import * as music from './music.js';
 
 const BUILD = '__BUILD__';
 const $ = (id) => document.getElementById(id);
@@ -76,11 +77,13 @@ function start(g, seatFn, tickFn = null) {
   prevFrame = null;
   acc = 0;
   $('stage').hidden = false;
+  music.fight(!game.is_replay());
 }
 
 function stop() {
   game = null;
   $('stage').hidden = true;
+  music.fight(false);
 }
 
 function loop(now) {
@@ -114,24 +117,75 @@ function menu() {
   show(
     item('menu.practice', practice),
     item('menu.replay', loadReplay),
+    el('div', { class: 'item' }, button('menu.settings.label', settings)),
   );
 }
 
 function practice() {
   const binding = CONTROLS.solo;
   const vars = keyVars(binding);
+  const steps = ['shoulder', 'elbow', 'cut', 'plant', 'swing'];
   show(
     say('practice.intro'),
-    el('ol', { id: 'steps' },
-      el('li', {}, say('practice.step.shoulder', vars)),
-      el('li', {}, say('practice.step.elbow', vars))),
+    el('ol', { id: 'steps' }, ...steps.map((k) => el('li', {}, say(`practice.step.${k}`, vars)))),
+    say('practice.done'),
     el('div', { class: 'actions' },
+      button('practice.reset.label', practice),
       button('replay.download.label', () => download(game.replay_bytes(), 'vagrancy.replay')),
       button('replay.load.label', loadReplay),
       button('menu.back.label', menu)),
   );
-  start(Game.alone(seed(), N.default_tuning), () => [bits(binding, ACTION_BITS), 0]);
+  start(Game.practice(seed(), tuning()), () => [bits(binding, ACTION_BITS), 0]);
 }
+
+// `?tuning=0|1|2` picks one of the candidate tunings in sim::balance, so Sam
+// can play them side by side (M2.0). Any other value takes the default.
+function tuning() {
+  const v = Number(new URLSearchParams(location.search).get('tuning'));
+  return Number.isInteger(v) && v >= 0 && v < N.tunings ? v : N.default_tuning;
+}
+
+// --- settings ------------------------------------------------------------------------
+
+function settings() {
+  stop();
+  show(musicSection(), button('menu.back.label', menu));
+}
+
+function musicSection() {
+  const state = music.current();
+  const status = state.name
+    ? say('settings.music.loaded', { file_name: state.name }, { id: 'music-status' })
+    : say('settings.music.none', {}, { id: 'music-status' });
+  const remember = el('input', { type: 'checkbox', id: 'music-remember' });
+  remember.checked = REMEMBER;
+  remember.addEventListener('change', async () => {
+    REMEMBER = remember.checked;
+    await music.setRemember(REMEMBER);
+  });
+  const vol = el('input', { type: 'range', id: 'music-volume', min: '0', max: '100', value: String(Math.round(state.volume * 100)) });
+  vol.addEventListener('input', () => music.setVolume(Number(vol.value) / 100));
+  return el('section', { id: 'music' },
+    el('h2', { 'data-copy': 'settings.music.title' }, t('settings.music.title')),
+    say('settings.music.desc'),
+    el('div', { class: 'actions' },
+      button('settings.music.load.label', async () => {
+        const file = await pick('audio/*');
+        if (file) music.load(file, REMEMBER);
+      }),
+      state.name ? button('settings.music.remove.label', () => music.remove()) : null),
+    status,
+    MUSIC_ERROR ? say('settings.music.error', { error: MUSIC_ERROR }, { role: 'alert' }) : null,
+    say('settings.music.privacy'),
+    el('p', {}, remember, ' ', el('label', { for: 'music-remember', 'data-copy': 'settings.music.remember.label' }, t('settings.music.remember.label'))),
+    say('settings.music.remember.desc', {}, { class: 'desc' }),
+    el('p', {}, el('label', { for: 'music-volume', 'data-copy': 'settings.music.volume.label' }, t('settings.music.volume.label')), ' ', vol),
+    say('settings.music.formats', {}, { class: 'desc' }),
+  );
+}
+
+let REMEMBER = false;
+let MUSIC_ERROR = null;
 
 async function loadReplay() {
   const file = await pick('.replay');
@@ -175,6 +229,15 @@ async function main() {
   const bound = new Set(Object.values(CONTROLS.solo));
   listen((code) => game && bound.has(code));
   draw = renderer($('stage'), PALETTE, N);
+  music.subscribe(({ error }) => {
+    MUSIC_ERROR = error || null;
+    if (document.getElementById('music')) settings();
+  });
+  const kept = await music.remembered();
+  if (kept) {
+    REMEMBER = true;
+    music.load(kept, false);
+  }
   $('build').textContent = t('game.build');
   $('status').hidden = true;
   // Hooks for testing/drive.py. They read core; they change nothing.
@@ -183,6 +246,7 @@ async function main() {
     checksum: () => game && game.checksum(),
     tick: () => game && game.tick(),
     recordedChecksum: () => game && game.recorded_checksum(),
+    music: () => music.current(),
   };
   menu();
   requestAnimationFrame(loop);

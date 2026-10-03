@@ -114,6 +114,19 @@ pub struct Sword {
     pub hilt: Fx,
 }
 
+/// A held joint key this tick: the servo's target and who it turns.
+/// Transient: built at the start of `step` and dropped at its end.
+#[derive(Clone, Debug)]
+struct Drive {
+    seat: usize,
+    pivot: u16,
+    limb: u16,
+    set: Vec<u16>,
+    dir: i32,
+    /// The angular speed the joint should reach this tick, rad/tick.
+    target: Fx,
+}
+
 /// The whole state of a match. `checksum()` hashes all of it.
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct World {
@@ -246,16 +259,18 @@ impl World {
     /// The only way the world changes.
     pub fn step(&mut self, inputs: [Input; 2]) {
         let mut acc = vec![V2::ZERO; self.particles.len()];
+        let mut drives = Vec::new();
         for seat in 0..2 {
             if self.fighters[seat].is_some() {
-                self.drive_motors(seat, inputs[seat], &mut acc);
+                drives.extend(self.drive_motors(seat, inputs[seat], &mut acc));
                 self.set_drive(seat, inputs[seat]);
             }
         }
         self.integrate(&acc);
         for _ in 0..ITERATIONS {
-            self.relax();
+            self.relax(&drives);
         }
+        self.hold_to_cap();
         self.tick += 1;
     }
 
@@ -317,7 +332,8 @@ impl World {
         set
     }
 
-    fn drive_motors(&self, seat: usize, input: Input, acc: &mut [V2]) {
+    fn drive_motors(&self, seat: usize, input: Input, acc: &mut [V2]) -> Vec<Drive> {
+        let mut drives = Vec::new();
         let t = self.setup.physics.tuning;
         let facing = self.fighters[seat].as_ref().map(|f| f.facing).unwrap_or(1);
         for (motor, dir, pivot, set) in self.motor_plan(seat, input) {
@@ -331,18 +347,89 @@ impl World {
             }
             // Angular speed of the limb about its joint, rad/tick as Fx.
             let omega = Fx(crate::fx::narrow(r_prev.cross_raw(r) * ONE.0 as i64 / len_sq));
-            if omega * dir >= t.motor_speed {
+            // A servo, not a constant push: the joint is driven as hard as
+            // `motor_accel` allows until it turns at `motor_speed`. A free
+            // swing tops out at that speed; a blocked one (a planted tip)
+            // keeps pushing at full strength, which is what lifts a pogo.
+            // M2.0 found a constant push about twenty times too weak to lift
+            // the body (SECOND-ORDER-M2).
+            let room = t.motor_speed - omega * dir;
+            if room.0 <= 0 {
                 continue;
             }
             // An elbow that is already straight does not push past straight.
             if motor == Motor::Elbow && dir * facing < 0 && self.elbow_is_straight(pivot, set[0], facing) {
                 continue;
             }
-            let a = t.motor_accel * dir;
+            let a = room.min(t.motor_accel) * dir;
             for &k in &set {
                 let arm = self.particles[k as usize].p - pv.p;
                 acc[k as usize] += arm.perp() * a;
             }
+            drives.push(Drive { seat, pivot, limb: set[0], set, dir, target: omega * dir + room.min(t.motor_accel) });
+        }
+        drives
+    }
+
+    /// A held joint that is blocked — the tip planted, the blade against the
+    /// other blade — makes up what it could not turn as an exact pair shift
+    /// against the rest of its body. Free, the push above has already reached
+    /// the target and this does nothing, so a swing in the air still adds
+    /// momentum from nowhere (H5). Blocked by the ground, the body is pushed
+    /// instead, and the ground pushes back: "The sword cannot go into the
+    /// ground, so the push lifts your fighter instead" (practice.step.plant).
+    fn drive_joint(&mut self, d: &Drive) {
+        let pv = &self.particles[d.pivot as usize];
+        let lb = &self.particles[d.limb as usize];
+        let r = lb.p - pv.p;
+        let r0 = lb.q - pv.q;
+        let len_sq = r.len_sq_raw();
+        if len_sq == 0 {
+            return;
+        }
+        let omega = Fx(crate::fx::narrow(r0.cross_raw(r) * ONE.0 as i64 / len_sq)) * d.dir;
+        let short = d.target - omega;
+        if short.0 <= 0 {
+            return;
+        }
+        let turn = (short * balance::DRIVE_K) * d.dir;
+        let pivot = self.particles[d.pivot as usize].p;
+        // The far side turns by `turn` about the pivot; the near side (every
+        // other attached point of the body) moves together the other way, so
+        // that Σ m·Δp is zero to the raw unit.
+        let near: Vec<u16> = (0..self.particles.len() as u16)
+            .filter(|&i| self.particles[i as usize].owner == Owner::Body(d.seat as u8) && !d.set.contains(&i))
+            .collect();
+        let m_near: i32 = near.iter().map(|&i| self.particles[i as usize].m).sum();
+        if m_near == 0 {
+            return;
+        }
+        let mut moved = (0i64, 0i64);
+        for &k in &d.set {
+            let pt = &mut self.particles[k as usize];
+            let step = (pt.p - pivot).perp() * turn;
+            pt.p += step;
+            moved.0 += pt.m as i64 * step.x.0 as i64;
+            moved.1 += pt.m as i64 * step.y.0 as i64;
+        }
+        // Spread −moved over the near side by mass, in whole raw units per unit
+        // mass, and give the rounding remainder back to the far side's first
+        // point so the sum is exact.
+        let kx = moved.0 / m_near as i64;
+        let ky = moved.1 / m_near as i64;
+        for &i in &near {
+            let pt = &mut self.particles[i as usize];
+            pt.p.x.0 -= crate::fx::narrow(kx);
+            pt.p.y.0 -= crate::fx::narrow(ky);
+        }
+        let first = d.set[0] as usize;
+        let m_first = self.particles[first].m as i64;
+        let (rx, ry) = (moved.0 - kx * m_near as i64, moved.1 - ky * m_near as i64);
+        if m_first > 0 {
+            // Whatever does not divide evenly stays unbalanced by under one raw
+            // unit of the first point's travel; record it there.
+            self.particles[first].p.x.0 -= crate::fx::narrow(rx / m_first);
+            self.particles[first].p.y.0 -= crate::fx::narrow(ry / m_first);
         }
     }
 
@@ -420,7 +507,10 @@ impl World {
 
     // --- relaxation, in a fixed order ------------------------------------------
 
-    fn relax(&mut self) {
+    fn relax(&mut self, drives: &[Drive]) {
+        for d in drives {
+            self.drive_joint(d);
+        }
         for k in 0..self.parts.len() {
             let (a, b, len) = (self.parts[k].a, self.parts[k].b, self.parts[k].len);
             self.stick(a, b, len, false);
@@ -452,6 +542,21 @@ impl World {
             self.balance(seat);
         }
         self.bounds();
+    }
+
+    /// The relaxation passes can push a point past the cap after integration
+    /// clamped it; this holds every point's speed for the next tick to the
+    /// cap, by moving where it was rather than where it is. `speed_never_passes_the_cap`
+    /// checks it over a hundred seeded runs.
+    fn hold_to_cap(&mut self) {
+        let cap = self.setup.physics.tuning.cap;
+        let cap_sq = cap.0 as i64 * cap.0 as i64;
+        for pt in &mut self.particles {
+            let v = pt.p - pt.q;
+            if pt.m != 0 && v.len_sq_raw() > cap_sq {
+                pt.q = pt.p - v.with_len(cap);
+            }
+        }
     }
 
     fn stick(&mut self, a: u16, b: u16, len: Fx, push_only: bool) {

@@ -40,6 +40,10 @@ pub const GRIP_BODY: Fx = Fx::ratio(1, 10);
 /// 240 cm/s, about five seconds across the arena. *(guess; M1.0)*
 pub const RUN_SPEED: Fx = Fx::int(4);
 
+/// How much of a blocked joint's shortfall each relaxation pass makes up
+/// against the body. *(guess; M2.0)*
+pub const DRIVE_K: Fx = Fx::ratio(1, 4);
+
 /// The free-energy rule's numbers (D9). Sam chooses among the tunings by
 /// playing (M2.0); the practice yard can switch between them.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
@@ -55,10 +59,12 @@ pub struct Tuning {
     pub drag: Fx,
 }
 
-/// Three candidate tunings for M2.0. Index 1 is the default until Sam picks.
+/// Three candidate tunings for M2.0 (lab recon-m2, pogo-grid). Only tuning 2
+/// gives a clean planted pogo (211 cm, about 1.1 body heights), so it is the
+/// default until Sam picks by playing; the page takes `?tuning=0|1|2`.
 pub const TUNINGS: [Tuning; 3] = [
-    Tuning { motor_accel: Fx::ratio(1, 300), motor_speed: Fx::ratio(1, 9), cap: Fx::int(20), drag: Fx::ratio(1, 200) },
-    Tuning { motor_accel: Fx::ratio(1, 200), motor_speed: Fx::ratio(1, 7), cap: Fx::int(26), drag: Fx::ratio(1, 300) },
-    Tuning { motor_accel: Fx::ratio(1, 140), motor_speed: Fx::ratio(1, 5), cap: Fx::int(34), drag: Fx::ratio(1, 400) },
+    Tuning { motor_accel: Fx::ratio(1, 12), motor_speed: Fx::ratio(1, 9), cap: Fx::int(20), drag: Fx::ratio(1, 200) },
+    Tuning { motor_accel: Fx::ratio(1, 6), motor_speed: Fx::ratio(1, 7), cap: Fx::int(26), drag: Fx::ratio(1, 300) },
+    Tuning { motor_accel: Fx::ratio(1, 3), motor_speed: Fx::ratio(1, 5), cap: Fx::int(34), drag: Fx::ratio(1, 400) },
 ];
-pub const DEFAULT_TUNING: u8 = 1;
+pub const DEFAULT_TUNING: u8 = 2;

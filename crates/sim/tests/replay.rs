@@ -57,9 +57,20 @@ fn a_replay_with_a_spare_bit_set_is_refused() {
 #[test]
 fn a_replay_that_drifts_names_the_first_second_that_differs() {
     let mut r = recorded(600).replay();
-    r.inputs[200][0] ^= Input::SHOULDER_UP;
-    let d = replay::verify(&r).expect_err("an edited replay must not verify");
-    assert_eq!(d.tick, 240, "the first checkpoint after tick 200 is tick 240");
+    // A single flipped arm bit can change nothing (a servo already at its
+    // speed limit ignores a held key), so the edit is the left seat running
+    // the other way for a quarter second, which always moves it.
+    for pair in &mut r.inputs[200..215] {
+        pair[0] = Input::STEP_LEFT;
+    }
+    for pair in &mut r.inputs[190..200] {
+        pair[0] = Input::STEP_RIGHT;
+    }
+    let d = match replay::verify(&r) {
+        Ok(_) => panic!("an edited replay verified"),
+        Err(d) => d,
+    };
+    assert_eq!(d.tick, 240, "the first checkpoint after the edit at tick 190 is tick 240");
 }
 
 /// The golden replay was recorded by `lab golden` and is committed. If it

@@ -253,6 +253,61 @@ def a_replay_downloaded_and_loaded_plays_the_same_match(page, name, tmp=Path("/t
     return fails
 
 
+def tone(path):
+    """One second of a 440 Hz tone, written by this test. It is never
+    committed: no audio enters the repository (PLANNING-BRIEF 0.5)."""
+    import math, struct, wave
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(22050)
+        w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * 440 * i / 22050)))
+                               for i in range(22050)))
+
+
+@check
+def a_track_from_this_device_loops_during_a_fight(page, name, tmp=Path("/tmp")):
+    fails = []
+    track = tmp / f"vagrancy-gate-tone-{name}.wav"
+    tone(track)
+    click_copy(page, "menu.settings.label")
+    page.wait_for_selector('[data-copy="settings.music.none"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (settings)")
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "settings.music.load.label")
+    fc.value.set_files(str(track))
+    want = COPY["settings"]["music"]["loaded"].replace("{file_name}", track.name)
+    page.wait_for_selector('[data-copy="settings.music.loaded"]')
+    if page.inner_text('[data-copy="settings.music.loaded"]') != want:
+        fails.append(f"{name}: after loading, the settings say {page.inner_text('#music-status')!r}")
+    page.check("#music-remember")
+    page.wait_for_timeout(300)
+    click_copy(page, "menu.back.label")
+    click_copy(page, "menu.practice.label")
+    page.wait_for_timeout(800)
+    state = page.evaluate("window.vagrancy.music()")
+    if not state["playing"]:
+        fails.append(f"{name}: the loaded track is not playing during practice: {state}")
+    else:
+        print(f"ok: {name}: a track loaded from this device plays during practice")
+    click_copy(page, "menu.back.label")
+    if not page.evaluate("window.vagrancy.music()")["playing"] is False:
+        fails.append(f"{name}: the track kept playing outside a fight")
+    # The remembered copy survives a reload, from this browser's storage.
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.settings.label")
+    page.wait_for_selector("#music-status")
+    if page.inner_text("#music-status") != want:
+        fails.append(f"{name}: after a reload the remembered track is gone: {page.inner_text('#music-status')!r}")
+    else:
+        print(f"ok: {name}: the remembered track came back after a reload, from this browser's storage")
+    click_copy(page, "settings.music.remove.label")
+    page.wait_for_selector('[data-copy="settings.music.none"]')
+    click_copy(page, "menu.back.label")
+    return fails
+
+
 def walk(browser, name):
     fails = []
     ctx, page, problems, offsite = open_page(browser)

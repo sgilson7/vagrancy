@@ -23,7 +23,7 @@ export function pick(accept) {
     input.addEventListener('change', async () => {
       const f = input.files && input.files[0];
       input.remove();
-      resolve(f ? { name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) } : null);
+      resolve(f ? { name: f.name, type: f.type, bytes: new Uint8Array(await f.arrayBuffer()) } : null);
     });
     document.body.appendChild(input);
     input.click();
