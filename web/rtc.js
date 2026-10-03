@@ -19,8 +19,23 @@
 import { CONFIG } from './config.js';
 
 const CHANNEL_ID = 40;
+// Every message carries one byte saying what it is. A role says who the
+// sender is; an ack says the sender has heard the other's role; data is the
+// game's.
 const ROLE_HOST = 0x48; // 'H'
 const ROLE_JOINER = 0x4a; // 'J'
+const ACK = 0x41; // 'A'
+const DATA = 0x44; // 'D'
+// A message that reaches a negotiated channel before the other side has
+// created its end of it is lost, and the two sides create theirs whenever
+// Trystero tells each of them about the other, which is not at the same
+// moment. The first version sent its role once and read the first message
+// as the role, so between two computers the host read the joiner's Hello as
+// a role, refused it and hung up (reproduced locally: a joiner's first
+// message from the host was "8,0", its role byte lost). So the role is
+// repeated until the other side acknowledges it, and data waits until the
+// other side's role has arrived, which proves its end exists.
+const ROLE_REPEAT_MS = 250;
 const GATHER_TIMEOUT_MS = 6000;
 
 // `?ice=none` drops the STUN servers, so two tabs on one machine connect on
@@ -58,26 +73,43 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
 
   function flush(peer) {
     while (peer.queue.length && open(peer.link)) {
-      try { peer.link.ch.send(peer.queue[0]); } catch (e) { return; }
+      const body = peer.queue[0];
+      const framed = new Uint8Array(body.length + 1);
+      framed[0] = DATA;
+      framed.set(body, 1);
+      try { peer.link.ch.send(framed); } catch (e) { return; }
       peer.queue.shift();
     }
   }
 
   function attach(pc, mine, key) {
     const peer = peerFor(key);
-    const link = { pc, mine, ch: null, role: 0, ready: false, gone: false, peer };
+    const link = { pc, mine, ch: null, role: 0, ready: false, acked: false, gone: false, peer, timer: null, early: [] };
     const ch = pc.createDataChannel('vagrancy', { negotiated: true, id: CHANNEL_ID, ordered: true });
     ch.binaryType = 'arraybuffer';
     link.ch = ch;
+    const sayRole = () => {
+      if (link.gone || link.acked || ch.readyState !== 'open') return;
+      try { ch.send(new Uint8Array([isHost ? ROLE_HOST : ROLE_JOINER])); } catch (e) { /* closing */ }
+    };
     ch.onopen = () => {
-      try { ch.send(new Uint8Array([isHost ? ROLE_HOST : ROLE_JOINER])); } catch (e) { console.warn(e); }
+      sayRole();
+      link.timer = setInterval(sayRole, ROLE_REPEAT_MS);
     };
     ch.onmessage = (e) => {
       const bytes = new Uint8Array(e.data);
-      if (link.role === 0) {
-        link.role = bytes[0];
+      const kind = bytes[0];
+      if (kind === ACK) {
+        link.acked = true;
+        clearInterval(link.timer);
+        return;
+      }
+      if (kind === ROLE_HOST || kind === ROLE_JOINER) {
+        try { ch.send(new Uint8Array([ACK])); } catch (err) { /* closing */ }
+        if (link.ready) return; // a repeat
+        link.role = kind;
         // The star: a host talks to joiners; a joiner to one host.
-        const ok = isHost ? link.role === ROLE_JOINER : (link.role === ROLE_HOST && (!s.hostPeer || s.hostPeer === peer));
+        const ok = isHost ? kind === ROLE_JOINER : (kind === ROLE_HOST && (!s.hostPeer || s.hostPeer === peer));
         if (!ok) { hangUp(link); return; }
         if (!isHost) s.hostPeer = peer;
         link.ready = true;
@@ -85,13 +117,21 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
         peer.link = link;
         flush(peer);
         if (!peer.reported) { peer.reported = true; onPeer(peer.id); }
+        // Data that beat this side's copy of the role here is delivered now.
+        for (const b of link.early.splice(0)) onMessage(peer.id, b);
         return;
       }
-      onMessage(peer.id, bytes);
+      if (kind === DATA) {
+        // The sender has heard our role, so its end exists; its own role may
+        // still be a repeat away. Keep what it sent until then.
+        if (link.ready) onMessage(peer.id, bytes.subarray(1));
+        else link.early.push(bytes.slice(1));
+      }
     };
     const lost = () => {
       if (link.gone) return;
       link.gone = true;
+      clearInterval(link.timer);
       if (peer.link === link) peer.link = null;
       // By pasted code there is no relay to say a peer left; a closed link
       // is the leaving. By room code, Trystero says so (onPeerLeave), and a
@@ -111,6 +151,7 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
 
   function hangUp(link) {
     link.gone = true;
+    clearInterval(link.timer);
     try { link.ch.close(); if (link.mine) link.pc.close(); } catch (e) { /* already closing */ }
   }
 
