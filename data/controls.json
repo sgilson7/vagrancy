@@ -1,0 +1,6 @@
+{
+  "_about": "Default key bindings (D6), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file.",
+  "solo": { "shoulder_up": "KeyQ", "shoulder_down": "KeyW", "elbow_in": "KeyO", "elbow_out": "KeyP", "step_left": "KeyA", "step_right": "KeyD" },
+  "left": { "shoulder_up": "KeyQ", "shoulder_down": "KeyW", "elbow_in": "KeyE", "elbow_out": "KeyR", "step_left": "KeyA", "step_right": "KeyD" },
+  "right": { "shoulder_up": "KeyU", "shoulder_down": "KeyI", "elbow_in": "KeyO", "elbow_out": "KeyP", "step_left": "KeyJ", "step_right": "KeyL" }
+}

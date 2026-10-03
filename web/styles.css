@@ -11,10 +11,14 @@ h1 { font-weight: normal; letter-spacing: 0.04em; margin: 0 0 4px; }
 #foot { margin-top: 24px; display: flex; gap: 16px; justify-content: space-between;
         color: var(--muted); font-size: 0.85em; }
 #foot a { color: var(--muted); }
-canvas { display: block; width: 100%; height: auto; background: var(--paper);
+canvas { display: block; width: min(100%, calc(72vh * 1200 / 640)); height: auto; margin: 0 auto 12px;
+         background: var(--paper);
          border-top: 1px solid var(--ground-line); border-bottom: 1px solid var(--ground-line); }
 button { font: inherit; color: var(--line); background: var(--paper);
          border: 1px solid var(--line); padding: 6px 12px; cursor: pointer; margin: 4px 8px 4px 0; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
   outline: 3px solid var(--focus); outline-offset: 2px; }
 .desc { color: var(--muted); margin: 0 0 12px; max-width: 70ch; }
+#screen p { max-width: 75ch; }
+.item { margin-bottom: 8px; }
+.actions { margin-top: 8px; }

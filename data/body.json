@@ -1,0 +1,62 @@
+{
+  "_legs": "The legs are a rigid frame (Sam, 2026-10-03: rigid legs, quick movement; the arms fully simulated). The extra sticks among pelvis, knees and feet hold it; a cut through a leg removes them.",
+  "_about": "The bodies, in centimeters, facing +x, feet on the ground and x = 0 between them (D4, D7, D11, D12). Every value here is a guess until the recon of the milestone that uses it. A part runs from `near` (toward the heart) to `far`; a cut drops everything beyond it. `copy` is the parts.<id> key a result names the part by.",
+  "fighter": {
+    "ink": 3000,
+    "points": {
+      "foot_back": [-14, 3, 3], "foot_front": [14, 3, 3],
+      "knee_back": [-4, 48, 4], "knee_front": [10, 48, 4],
+      "pelvis": [0, 94, 8], "waist": [0, 114, 8], "shoulder": [0, 152, 6],
+      "neck": [0, 162, 5], "head": [0, 184, 10],
+      "elbow_lead": [22, 134, 4], "wrist_lead": [44, 130, 3], "hand_lead": [52, 130, 3],
+      "elbow_rear": [16, 130, 4], "wrist_rear": [39, 125, 3], "hand_rear": [47, 124, 3]
+    },
+    "parts": [
+      { "id": "chest", "copy": "chest", "near": "shoulder", "far": "waist", "radius": 14, "mass": 30, "drain": 40,
+        "fatal": [{ "from": 0.0, "to": 0.6, "cause": "heart" }] },
+      { "id": "neck", "copy": "neck", "near": "shoulder", "far": "neck", "radius": 5, "mass": 2, "drain": 0,
+        "fatal": [{ "from": 0.0, "to": 1.0, "cause": "neck" }] },
+      { "id": "head", "copy": "head", "near": "neck", "far": "head", "radius": 11, "mass": 6, "drain": 0,
+        "fatal": [{ "from": 0.0, "to": 1.0, "cause": "neck" }] },
+      { "id": "waist", "copy": "waist", "near": "waist", "far": "pelvis", "radius": 13, "mass": 14, "drain": 30 },
+      { "id": "upper_arm_lead", "copy": "arm", "near": "shoulder", "far": "elbow_lead", "radius": 5, "mass": 3, "drain": 20, "motor": "shoulder" },
+      { "id": "forearm_lead", "copy": "arm", "near": "elbow_lead", "far": "wrist_lead", "radius": 4, "mass": 2, "drain": 10, "motor": "elbow" },
+      { "id": "hand_lead", "copy": "hand", "near": "wrist_lead", "far": "hand_lead", "radius": 4, "mass": 1, "drain": 5, "hand": true },
+      { "id": "upper_arm_rear", "copy": "arm", "near": "shoulder", "far": "elbow_rear", "radius": 5, "mass": 3, "drain": 20 },
+      { "id": "forearm_rear", "copy": "arm", "near": "elbow_rear", "far": "wrist_rear", "radius": 4, "mass": 2, "drain": 10 },
+      { "id": "hand_rear", "copy": "hand", "near": "wrist_rear", "far": "hand_rear", "radius": 4, "mass": 1, "drain": 5, "hand": true },
+      { "id": "thigh_back", "copy": "leg", "near": "pelvis", "far": "knee_back", "radius": 7, "mass": 8, "drain": 25 },
+      { "id": "shin_back", "copy": "leg", "near": "knee_back", "far": "foot_back", "radius": 5, "mass": 5, "drain": 15 },
+      { "id": "thigh_front", "copy": "leg", "near": "pelvis", "far": "knee_front", "radius": 7, "mass": 8, "drain": 25 },
+      { "id": "shin_front", "copy": "leg", "near": "knee_front", "far": "foot_front", "radius": 5, "mass": 5, "drain": 15 }
+    ],
+    "sticks": [["shoulder", "pelvis"], ["shoulder", "head"], ["elbow_lead", "hand_lead"], ["elbow_rear", "hand_rear"],
+               ["pelvis", "foot_back"], ["pelvis", "foot_front"], ["foot_back", "foot_front"], ["knee_back", "knee_front"],
+               ["knee_back", "foot_front"], ["knee_front", "foot_back"]],
+    "hinges": [
+      { "a": "shoulder", "j": "elbow_lead", "c": "wrist_lead", "sign": 1, "max_bend": 150 },
+      { "a": "shoulder", "j": "elbow_rear", "c": "wrist_rear", "sign": 1, "max_bend": 150 },
+      { "a": "pelvis", "j": "knee_back", "c": "foot_back", "sign": -1, "max_bend": 120 },
+      { "a": "pelvis", "j": "knee_front", "c": "foot_front", "sign": -1, "max_bend": 120 }
+    ],
+    "roles": { "shoulder": "shoulder", "pelvis": "pelvis", "head": "head", "feet": ["foot_back", "foot_front"] },
+    "balance": true,
+    "sword": {
+      "butt": [44, 121], "tip": [105, 194], "hilt": 20, "mass": 2,
+      "grips": [{ "hand": "hand_lead", "stiff": "wrist_lead" }, { "hand": "hand_rear" }]
+    }
+  },
+  "post": {
+    "ink": 0,
+    "points": { "base": [0, 0, 0], "mid": [0, 70, 9], "top": [0, 140, 9] },
+    "parts": [
+      { "id": "post_low", "copy": "", "near": "base", "far": "mid", "radius": 10, "mass": 10, "drain": 0 },
+      { "id": "post_high", "copy": "", "near": "mid", "far": "top", "radius": 9, "mass": 8, "drain": 0 }
+    ],
+    "sticks": [["base", "top"]],
+    "hinges": [],
+    "roles": { "feet": [] },
+    "anchored": ["base"],
+    "balance": false
+  }
+}

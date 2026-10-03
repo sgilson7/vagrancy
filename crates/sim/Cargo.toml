@@ -9,3 +9,9 @@ description = "The fight. serde and postcard, no floats, no clock."
 [dependencies]
 serde.workspace = true
 postcard.workspace = true
+
+
+# Tests build worlds from data/body.json through `content`. A dev-dependency
+# is not shipped; boundary.rs allows exactly this one and nothing else.
+[dev-dependencies]
+content.workspace = true

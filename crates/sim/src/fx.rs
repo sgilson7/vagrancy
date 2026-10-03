@@ -28,6 +28,21 @@ pub const FRAC_BITS: u32 = 12;
 pub const ONE: Fx = Fx(1 << FRAC_BITS);
 pub const ZERO: Fx = Fx(0);
 
+/// Back from `i64` to `i32`, panicking if it does not fit.
+///
+/// **An `as i32` cast wraps, and overflow checks do not cover casts.** The
+/// first draft of this file widened every product to `i64` and narrowed it
+/// back with `as`, which would have wrapped a product at the speed cap on
+/// every build alike, silently (SECOND-ORDER-M1). A panic is the same loud
+/// failure in every build.
+#[inline]
+pub const fn narrow(v: i64) -> i32 {
+    if v > i32::MAX as i64 || v < i32::MIN as i64 {
+        panic!("a fixed-point value left the i32 range");
+    }
+    v as i32
+}
+
 /// A fixed-point number: `raw / 4096` centimeters (or of whatever unit).
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct Fx(pub i32);
@@ -39,7 +54,7 @@ impl Fx {
     }
     /// `num / den` as a fixed-point fraction, rounded toward zero.
     pub const fn ratio(num: i64, den: i64) -> Fx {
-        Fx(((num << FRAC_BITS) / den) as i32)
+        Fx(narrow((num << FRAC_BITS) / den))
     }
     pub const fn raw(self) -> i32 {
         self.0
@@ -71,7 +86,7 @@ impl Fx {
     }
     /// `self * num / den` in one widening step, rounded toward zero.
     pub const fn scale(self, num: i64, den: i64) -> Fx {
-        Fx((self.0 as i64 * num / den) as i32)
+        Fx(narrow(self.0 as i64 * num / den))
     }
 }
 
@@ -122,26 +137,26 @@ impl Mul for Fx {
     type Output = Fx;
     /// Rounds toward zero (D3), through `i64`.
     fn mul(self, r: Fx) -> Fx {
-        Fx(((self.0 as i64 * r.0 as i64) / (1i64 << FRAC_BITS)) as i32)
+        Fx(narrow((self.0 as i64 * r.0 as i64) / (1i64 << FRAC_BITS)))
     }
 }
 impl Div for Fx {
     type Output = Fx;
     /// Rounds toward zero, through `i64`. Panics on zero, identically everywhere.
     fn div(self, r: Fx) -> Fx {
-        Fx((((self.0 as i64) << FRAC_BITS) / r.0 as i64) as i32)
+        Fx(narrow(((self.0 as i64) << FRAC_BITS) / r.0 as i64))
     }
 }
 impl Mul<i32> for Fx {
     type Output = Fx;
     fn mul(self, r: i32) -> Fx {
-        Fx((self.0 as i64 * r as i64) as i32)
+        Fx(narrow(self.0 as i64 * r as i64))
     }
 }
 impl Div<i32> for Fx {
     type Output = Fx;
     fn div(self, r: i32) -> Fx {
-        Fx((self.0 as i64 / r as i64) as i32)
+        Fx(narrow(self.0 as i64 / r as i64))
     }
 }
 
@@ -167,15 +182,15 @@ impl V2 {
         x * x + y * y
     }
     pub const fn len(self) -> Fx {
-        Fx(isqrt(self.len_sq_raw() as u64) as i32)
+        Fx(narrow(isqrt(self.len_sq_raw() as u64) as i64))
     }
     /// Dot product, as `Fx`.
     pub const fn dot(self, o: V2) -> Fx {
-        Fx(((self.x.0 as i64 * o.x.0 as i64 + self.y.0 as i64 * o.y.0 as i64) / (1i64 << FRAC_BITS)) as i32)
+        Fx(narrow((self.x.0 as i64 * o.x.0 as i64 + self.y.0 as i64 * o.y.0 as i64) / (1i64 << FRAC_BITS)))
     }
     /// The z of the cross product, as `Fx`.
     pub const fn cross(self, o: V2) -> Fx {
-        Fx(((self.x.0 as i64 * o.y.0 as i64 - self.y.0 as i64 * o.x.0 as i64) / (1i64 << FRAC_BITS)) as i32)
+        Fx(narrow((self.x.0 as i64 * o.y.0 as i64 - self.y.0 as i64 * o.x.0 as i64) / (1i64 << FRAC_BITS)))
     }
     /// Cross product without rounding, in raw units squared.
     pub const fn cross_raw(self, o: V2) -> i64 {
@@ -348,7 +363,13 @@ mod tests {
         // 2^20 * 2^12 overflows i32 in the middle and fits after: a check
         // that would wrap in Floodline's Mul<i32>.
         let a = Fx(1 << 20);
-        assert_eq!((a * 4096) / 8192, Fx(1 << 19));
         assert_eq!(a.scale(4096, 8192), Fx(1 << 19));
+        assert_eq!(a * Fx(1 << 12), a, "times one, through i64");
+    }
+
+    #[test]
+    #[should_panic(expected = "left the i32 range")]
+    fn a_product_that_does_not_fit_panics_rather_than_wraps() {
+        let _ = Fx(1 << 20) * 4096;
     }
 }

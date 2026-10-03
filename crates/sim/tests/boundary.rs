@@ -15,17 +15,54 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 const ALLOWED: [&str; 2] = ["serde", "postcard"];
+/// Tests read the data files through `content`, which is never shipped with
+/// `sim`. Nothing else may appear, even here.
+const DEV_ALLOWED: [&str; 1] = ["content"];
 
 #[test]
 fn sim_depends_on_serde_and_postcard_and_nothing_else() {
     let manifest = include_str!("../Cargo.toml");
-    let found = dependency_names(manifest);
+    let found = runtime_dependency_names(manifest);
     let allowed: BTreeSet<&str> = ALLOWED.into_iter().collect();
     assert_eq!(
         found, allowed,
         "\n`sim`'s dependencies are {found:?}, and the only ones allowed are {allowed:?}.\n\
          A new one is Sam's decision (PLANNING-BRIEF 0.4). Do not delete this test.\n"
     );
+}
+
+#[test]
+fn sims_tests_may_read_content_and_nothing_else() {
+    let manifest = include_str!("../Cargo.toml");
+    let all = dependency_names(manifest);
+    let runtime = runtime_dependency_names(manifest);
+    let dev: BTreeSet<&str> = all.difference(&runtime).copied().collect();
+    let allowed: BTreeSet<&str> = DEV_ALLOWED.into_iter().collect();
+    assert!(dev.is_subset(&allowed), "`sim`'s dev-dependencies are {dev:?}; only {allowed:?} may be");
+}
+
+/// Names from `[dependencies]` and target-gated `.dependencies]` tables
+/// only: what ships with `sim`.
+fn runtime_dependency_names(manifest: &str) -> BTreeSet<&str> {
+    let mut names = BTreeSet::new();
+    let mut in_deps = false;
+    for line in manifest.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            in_deps = line == "[dependencies]" || (line.starts_with("[target.") && line.ends_with(".dependencies]"));
+            continue;
+        }
+        if !in_deps || line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        if let Some((key, _)) = line.split_once('=') {
+            let name = key.trim().split('.').next().unwrap_or("").trim_matches('"');
+            if !name.is_empty() {
+                names.insert(name);
+            }
+        }
+    }
+    names
 }
 
 #[test]

@@ -8,3 +8,24 @@
 //! decision to break them.
 #![forbid(unsafe_code)]
 #![deny(clippy::float_arithmetic)]
+
+pub mod balance;
+pub mod body;
+pub mod frame;
+pub mod fx;
+pub mod input;
+pub mod replay;
+pub mod rng;
+pub mod world;
+
+#[cfg(test)]
+mod hand;
+
+pub use body::Setup;
+pub use input::Input;
+pub use world::World;
+
+/// Bumped whenever what the simulation does changes, together with the
+/// golden replays, in the same commit (CLAUDE.md). A replay from another
+/// version is refused with a sentence.
+pub const SIM_VERSION: u32 = 1;

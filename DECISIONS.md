@@ -32,6 +32,8 @@ and anything decided since. Newest entries go at the bottom of their section.
 
   He also gave the agent push rights for this run, and asked that every check needing him be carried as a row, not waited on.
 
+- **2026-10-03, during M1:** "make the legs more rigid so its easier to move ala nidhogg, the arms should be full fluid though." This revises D8. The legs are a rigid frame, and the step keys drive the fighter through the ground at `sim::balance::RUN_SPEED`. The arms and the sword stay fully simulated.
+
 ## The build
 
 - **The red band is hue 330°–20° at saturation 0.20 or more.** It lives in `crates/content/tests/palette.rs`, beside its check, and not in `data/palette.json`, where editing the band would be a way to pass. Ochre `#B8862B` sits at hue 39°, 19° clear.
@@ -39,3 +41,9 @@ and anything decided since. Newest entries go at the bottom of their section.
 - **CSS colors are variables.** `package-web.sh` writes their values from `data/palette.json`, so the palette file stays the only place a color is written. `palette.rs` fails on a hex or `rgb(` in `web/`.
 - **The copy file ships inside the wasm module** (`content::copy::COPY_JSON`), so the strings and the build that uses them cannot drift apart.
 - **`build.txt` holds the content hash and the commit.** Against the live page, `drive.py` reads it back. The content hash differs between a laptop build and a CI build (different linkers), so the commit is what ties a live page to a push.
+- **Fixed-point narrowing panics** (`fx::narrow`). An `as` cast wraps, and overflow checks do not cover casts.
+- **Friction is applied in the ground projection, every relaxation pass.** Applied once per tick, it let the feet slide apart under the passes.
+- **The balance rule and every constraint are exact pair shifts.** `a` moves by `k·m_b` and `b` by `−k·m_a` with one integer `k`, so only the arm motor, the ground, the walls, the cap and drag change momentum. This is what makes H5 meaningful.
+- **Bit 6 of the input byte is "ready for the next round".** The round restarts through `World::step` like everything else.
+- **Points in `data/body.json` are numbered in name order**, so the numbering does not depend on how the JSON object was written.
+- **A replay carries its `Setup`, physics included.** A constant that lives in `Setup` can change without invalidating old replays. A constant that lives in code cannot, and changing one means bumping `SIM_VERSION`.

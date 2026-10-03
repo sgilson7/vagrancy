@@ -158,6 +158,20 @@ def every_visible_line_is_a_copy_string(page, name):
 
 
 @check
+def the_stylesheet_applied_with_the_palettes_paper(page, name):
+    # Packaging once shipped a stylesheet that was only its color variables
+    # (SECOND-ORDER-M1); every check above still passed.
+    pal = json.loads((ROOT / "data" / "palette.json").read_text())
+    h = pal["paper"].lstrip("#")
+    want = f"rgb({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)})"
+    got = page.evaluate("getComputedStyle(document.body).backgroundColor")
+    if got != want:
+        return [f"{name}: the page background is {got}, and the palette's paper is {want}"]
+    print(f"ok: {name}: the stylesheet applied; the page is the palette's paper")
+    return []
+
+
+@check
 def the_canvas_has_its_name(page, name):
     want = COPY["game"]["canvas_name"].replace("{game}", COPY["game"]["name"])
     got = page.get_attribute("#stage", "aria-label")
@@ -165,6 +179,78 @@ def the_canvas_has_its_name(page, name):
         return [f"{name}: the canvas is named {got!r}, not {want!r}"]
     print(f"ok: {name}: the canvas is named {want!r}")
     return []
+
+
+@functools.lru_cache(maxsize=None)
+def native_script_checksum(ticks):
+    out = subprocess.run(["cargo", "run", "-q", "--release", "-p", "lab", "--", "script-checksum", str(ticks)],
+                         cwd=ROOT, capture_output=True, text=True, check=True)
+    return out.stdout.strip()
+
+
+@check
+def the_browser_computes_what_the_native_build_computes(page, name):
+    # D3: integers, so the same inputs give the same world everywhere. The
+    # same fixed script runs in this engine's wasm and in a native build.
+    want = native_script_checksum(600)
+    got = page.evaluate("window.vagrancy.scriptChecksum(600)")
+    if got != want:
+        return [f"{name}: after 600 ticks of the script the browser says {got}, native says {want}"]
+    print(f"ok: {name}: the fixed script ends on {got} in wasm and natively")
+    return []
+
+
+def click_copy(page, key):
+    page.click(f'[data-copy="{key}"]')
+
+
+@check
+def a_replay_downloaded_and_loaded_plays_the_same_match(page, name, tmp=Path("/tmp")):
+    fails = []
+    click_copy(page, "menu.practice.label")
+    page.wait_for_selector('[data-copy="practice.intro"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (practice)")
+    page.keyboard.down("KeyQ")
+    page.wait_for_timeout(900)
+    page.keyboard.up("KeyQ")
+    page.keyboard.down("KeyP")
+    page.wait_for_timeout(500)
+    page.keyboard.up("KeyP")
+    with page.expect_download() as d:
+        click_copy(page, "replay.download.label")
+    path = tmp / f"vagrancy-gate-{name}.replay"
+    d.value.save_as(path)
+    data = path.read_bytes()
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "menu.replay.label")
+    fc.value.set_files(str(path))
+    page.wait_for_selector('[data-copy="replay.playing"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (replay)")
+    page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=60000)
+    got, want, ticks = page.evaluate("[window.vagrancy.checksum(), window.vagrancy.recordedChecksum(), window.vagrancy.tick()]")
+    if got != want:
+        fails.append(f"{name}: the replay ended on {got}, and it recorded {want}")
+    elif ticks < 60:
+        fails.append(f"{name}: the replay is only {ticks} ticks long; the keys were not held")
+    else:
+        print(f"ok: {name}: moved the arm, downloaded {len(data)} bytes, reloaded, and the replay ended on {got} after {ticks} ticks")
+    click_copy(page, "replay.stop.label")
+    # A file that is not a replay is refused with its sentence.
+    bad = tmp / f"vagrancy-gate-{name}.bad"
+    bad.write_bytes(b"not a replay")
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "menu.replay.label")
+    fc.value.set_files(str(bad))
+    page.wait_for_selector('[data-copy="replay.error.format"]')
+    want_text = COPY["replay"]["error"]["format"].replace("{game}", COPY["game"]["name"])
+    if page.inner_text('[data-copy="replay.error.format"]') != want_text:
+        fails.append(f"{name}: a bad file was refused with the wrong words")
+    else:
+        print(f"ok: {name}: a file that is not a replay is refused with its sentence")
+    click_copy(page, "menu.back.label")
+    return fails
 
 
 def walk(browser, name):

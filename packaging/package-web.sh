@@ -113,7 +113,10 @@ def walk(v, path):
 walk(pal, "")
 css = ":root {\n" + "".join(f"  --{k}: {v};\n" for k, v in sorted(flat.items())) + "}\n"
 p = f"{web}/styles.css"
-open(p, "w").write(css + open(p).read())
+# Read before opening for write: `open(p, "w")` truncates first, and the
+# first draft of this line shipped a stylesheet that was only its colors.
+rest = open(p).read()
+open(p, "w").write(css + rest)
 PY
 
 # --- cache busting (gear-master-2d, verbatim in intent) ---------------------
@@ -148,6 +151,7 @@ perl -0777 -pi -e "s/\Q__BUILD__\E/$BUILD/g" "$WEB/index.html"
 perl -0777 -pi -e "s/\{hash\}/$BUILD/g" "$WEB/index.html"
 
 grep -q "app.js?v=$BUILD" "$WEB/index.html" || die "cache-busting did not apply"
+grep -q "box-sizing" "$WEB/styles.css"      || die "styles.css lost its rules in packaging"
 grep -q "?v=$BUILD" "$WEB/pkg/$WASM.js"     || die "wasm URL not stamped"
 if grep -RnoE "from '\./[A-Za-z0-9_/-]+\.js'" "$WEB"/*.js; then
   die "an import above is unstamped, and will be served stale after a deploy"
