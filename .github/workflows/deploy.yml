@@ -64,8 +64,12 @@ jobs:
 
       # Two tabs, one match, by pasted codes and host candidates only: the
       # transport and the lockstep in the browser, with nothing off the origin.
+      # Chromium and Firefox only here: Playwright's Linux WebKit never
+      # connected two tabs on host candidates (CI run 37136168949), while
+      # WebKit on macOS does; `make test-ui-online` walks all three locally.
+      # The main gate above, replays included, still walks all three.
       - name: Play one match online between two tabs
-        run: ./.venv-test/bin/python testing/online.py chromium firefox webkit
+        run: ./.venv-test/bin/python testing/online.py chromium firefox
 
       - uses: actions/upload-pages-artifact@v3
         with:
