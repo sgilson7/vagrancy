@@ -70,6 +70,19 @@ impl Pair {
         panic!("never connected: host {:?}, joiner {:?}", self.host.status, self.join.status);
     }
 
+    fn connect_without_start(&mut self) {
+        for _ in 0..20_000 {
+            self.now += 1;
+            self.pump();
+            self.host.poll(self.now);
+            self.join.poll(self.now);
+            if matches!((&self.host.status, &self.join.status), (Status::Connected { .. }, Status::Connected { .. })) {
+                return;
+            }
+        }
+        panic!("never connected");
+    }
+
     /// Play on a 60 Hz clock (17, 17, 16 ms: 50 ms every three frames).
     /// `script(seat, tick)` is each side's input at its own world tick.
     fn play(&mut self, frames: u32, script: impl Fn(usize, u32) -> Input) {
@@ -212,4 +225,51 @@ fn a_silent_peer_is_waited_for_and_then_dropped() {
     assert_eq!(p.host.status, Status::Left, "after ten seconds the host gives up");
     p.play(120, |_, _| Input::NONE);
     assert_eq!(p.join.status, Status::Left, "and the joiner hears that it did");
+}
+
+#[test]
+fn a_connected_lobby_waits_for_the_host_to_start_however_long_it_takes() {
+    // Two people on two computers take longer than a moment to press Start.
+    // The connected lobby went quiet and its silence timer ended the match
+    // after 15 s, on both sides, with nothing wrong (reported by Sam between
+    // two computers; reproduced on this machine).
+    let mut p = Pair::new(30, 10);
+    let mut connected = false;
+    for _ in 0..20_000 {
+        p.now += 1;
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+        if matches!((&p.host.status, &p.join.status), (Status::Connected { .. }, Status::Connected { .. })) {
+            connected = true;
+            break;
+        }
+    }
+    assert!(connected);
+    // A minute in the lobby, the page polling ten times a second.
+    for _ in 0..600 {
+        p.now += 100;
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+    }
+    assert!(matches!(p.host.status, Status::Connected { .. }), "host: {:?}", p.host.status);
+    assert!(matches!(p.join.status, Status::Connected { .. }), "joiner: {:?}", p.join.status);
+    p.host.start(p.now);
+    p.play(60, |_, _| Input::NONE);
+    assert_eq!(p.join.status, Status::Playing, "and the match still starts");
+}
+
+#[test]
+fn a_lobby_whose_other_side_has_really_gone_still_gives_up() {
+    let mut p = Pair::new(30, 0);
+    p.connect_without_start();
+    p.cut_join_to_host = true;
+    for _ in 0..300 {
+        p.now += 100;
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+    }
+    assert_eq!(p.host.status, Status::Left, "the host heard nothing for 30 s");
 }

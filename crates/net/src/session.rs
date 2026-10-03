@@ -30,6 +30,11 @@ pub const WARN_MS: u64 = 1_000;
 pub const DROP_MS: u64 = 10_000;
 /// A lobby that hears nothing from the other side for this long gives up.
 pub const LOBBY_SILENCE_MS: u64 = 15_000;
+/// While connected and waiting for Start, the host pings this often and the
+/// joiner answers, so a lobby that is merely waiting is never silent. Without
+/// it the connected lobby went quiet and gave up after 15 s on both sides
+/// (SECOND-ORDER-M5, reported by Sam between two computers).
+pub const KEEPALIVE_MS: u64 = 1_000;
 
 /// The delay for a measured round trip: the joiner's input goes to the host
 /// and comes back in a bundle, one round trip, so the delay covers the
@@ -94,6 +99,7 @@ pub struct Session {
     // Silence.
     heard_at: u64,
     blocked_since: Option<u64>,
+    kept_at: u64,
 }
 
 impl Session {
@@ -115,6 +121,7 @@ impl Session {
             next_ping: 0,
             heard_at: 0,
             blocked_since: None,
+            kept_at: 0,
         }
     }
 
@@ -185,6 +192,8 @@ impl Session {
                 }
             }
             Msg::Ping { n } if !self.host => self.send(Msg::Pong { n }),
+            // Pongs after the measurement are keep-alives: heard, and that is all.
+            Msg::Pong { .. } if self.host && self.status != Status::Measuring => {}
             Msg::Pong { n } if self.host => {
                 if let Some(at) = self.pings_sent.remove(&n) {
                     self.rtts.push(now.saturating_sub(at));
@@ -256,6 +265,12 @@ impl Session {
 
     /// The lobby's clock: give up on a silent other side.
     pub fn poll(&mut self, now: u64) {
+        if self.host && matches!(self.status, Status::Connected { .. }) && now.saturating_sub(self.kept_at) >= KEEPALIVE_MS {
+            self.kept_at = now;
+            let n = self.next_ping;
+            self.next_ping += 1;
+            self.send(Msg::Ping { n });
+        }
         if matches!(self.status, Status::Measuring | Status::Connected { .. }) && self.heard_at > 0 && now.saturating_sub(self.heard_at) > LOBBY_SILENCE_MS {
             self.status = Status::Left;
         }

@@ -70,6 +70,12 @@ def play(browser, name, seconds):
         host.wait_for_selector('[data-copy="online.connected.host"]', timeout=30000)
         join.wait_for_selector('[data-copy="online.connected.join"]', timeout=30000)
         delay_text = host.inner_text('[data-copy="online.connected.host"]')
+        # People take a while to press Start. The connected lobby once went
+        # quiet and gave up after 15 s; wait longer than that, then check
+        # both sides are still connected.
+        time.sleep(20)
+        if not (host.locator('[data-copy="online.connected.host"]').count() and join.locator('[data-copy="online.connected.join"]').count()):
+            raise RuntimeError("the connected lobby did not survive 20 s of waiting for Start")
         host.click('[data-copy="online.start.label"]')
         join.wait_for_function("document.body.dataset.online === 'playing'", timeout=10000)
         print(f"ok: {name}: two tabs met by pasted codes: {delay_text}")
