@@ -1,0 +1,10 @@
+/target/
+/dist/
+/reference/
+/.venv-test/
+# Sam's own copy of a track lives here and never enters the repository
+# (PLANNING-BRIEF 0.5). package-web.sh refuses unlicensed audio as well.
+/web/assets/music/
+/vagrancy-packet.zip
+.DS_Store
+__pycache__/

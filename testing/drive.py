@@ -1,0 +1,236 @@
+"""Drive the built page in real browsers and walk the deploy gate.
+
+`cargo test` cannot reach any of this: whether the wasm instantiates in a
+browser, whether the stamped imports resolve, whether a download produces a
+file and a file input feeds it back, and whether the browser's arithmetic is
+the native build's arithmetic.
+
+A console error or a request that leaves the origin fails the run, so "nothing
+is uploaded" is tested rather than asserted. Every visible line of text must
+be a string from data/copy.en.json, so "the page writes no words of its own"
+is tested from what the player sees, not from the source.
+
+Ported in shape from gear-master-2d's testing/drive.py. `ORIGIN` points the
+gate at a page that is already served, which in practice means the live one
+(PLANNING-BRIEF Part G; GM2D calls the same variable GM2D_ORIGIN).
+
+    python testing/drive.py [chromium|firefox|webkit ...]
+    ORIGIN=https://sgilson7.github.io/vagrancy python testing/drive.py chromium firefox webkit
+"""
+import functools
+import http.server
+import json
+import os
+import re
+import socketserver
+import subprocess
+import sys
+import threading
+import traceback
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+ROOT = Path(__file__).resolve().parent.parent
+WEB = Path(os.environ.get("VAGRANCY_WEB") or ROOT / "dist" / "web")
+PORT = 8131
+LIVE = (os.environ.get("ORIGIN") or "").rstrip("/")
+ORIGIN = LIVE or f"http://127.0.0.1:{PORT}"
+COPY = json.loads((ROOT / "data" / "copy.en.json").read_text())
+
+# Every check registers here, in order. A check takes (page, name) and returns
+# a list of failures; it prints its own `ok:` line when it passes.
+CHECKS = []
+
+
+def check(fn):
+    CHECKS.append(fn)
+    return fn
+
+
+class Quiet(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+
+def serve():
+    handler = functools.partial(Quiet, directory=str(WEB))
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = socketserver.TCPServer(("127.0.0.1", PORT), handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd
+
+
+def copy_strings():
+    out = []
+
+    def walk(v, path):
+        if isinstance(v, dict):
+            for k, c in v.items():
+                if not k.startswith("_"):
+                    walk(c, f"{path}.{k}" if path else k)
+        elif isinstance(v, str):
+            out.append((path, v))
+
+    walk(COPY, "")
+    return out
+
+
+def copy_patterns():
+    """Each copy string as a regex: placeholders match any text."""
+    pats = []
+    for key, s in copy_strings():
+        s = s.replace("{game}", COPY["game"]["name"])
+        parts = re.split(r"\{[a-z_.]+\}", s)
+        pats.append((key, re.compile("^" + ".+?".join(re.escape(p) for p in parts) + "$", re.S)))
+    return pats
+
+
+PATTERNS = copy_patterns()
+
+
+def text_is_copy(text):
+    return any(p.match(text) for _, p in PATTERNS)
+
+
+def expected_build():
+    if LIVE:
+        import urllib.request
+        with urllib.request.urlopen(ORIGIN + "/build.txt") as r:
+            return r.read().decode().split()
+    return (WEB / "build.txt").read_text().split()
+
+
+def open_page(browser):
+    ctx = browser.new_context(accept_downloads=True)
+    page = ctx.new_page()
+    problems, offsite = [], []
+    page.on("console", lambda m: problems.append(f"console.{m.type}: {m.text}")
+            if m.type == "error" else None)
+    page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
+    # blob: and data: URLs are the page talking to itself; anything else that
+    # does not start with the origin has left it.
+    page.on("request", lambda r: offsite.append(r.url)
+            if not (r.url.startswith(ORIGIN) or r.url.startswith(("blob:", "data:"))) else None)
+    page.goto(ORIGIN + "/", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    return ctx, page, problems, offsite
+
+
+# --- the checks --------------------------------------------------------------
+
+@check
+def the_page_names_its_build(page, name):
+    want = expected_build()[0]
+    got = page.inner_text("#build").strip()
+    if got != f"Build {want}":
+        return [f"{name}: the page says {got!r}, and the build is {want}"]
+    print(f"ok: {name}: the page prints its build hash, {want}")
+    return []
+
+
+@check
+def every_visible_line_is_a_copy_string(page, name):
+    texts = page.evaluate("""() => {
+        const out = [];
+        const walk = (el) => {
+            if (el.nodeType !== 1) return;
+            const st = getComputedStyle(el);
+            if (st.display === 'none' || st.visibility === 'hidden' || el.hidden) return;
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName)) return;
+            let own = '';
+            for (const c of el.childNodes) if (c.nodeType === 3) own += c.textContent;
+            own = own.trim();
+            if (own) out.push(own);
+            for (const a of ['aria-label', 'title', 'placeholder', 'alt'])
+                if (el.getAttribute(a)) out.push(el.getAttribute(a));
+            for (const c of el.children) walk(c);
+        };
+        walk(document.body);
+        out.push(document.title);
+        return out;
+    }""")
+    bad = [t for t in texts if not text_is_copy(t)]
+    if bad:
+        return [f"{name}: text on the page that is not in the copy file: {bad[:5]}"]
+    print(f"ok: {name}: all {len(texts)} visible lines are strings from the copy file")
+    return []
+
+
+@check
+def the_canvas_has_its_name(page, name):
+    want = COPY["game"]["canvas_name"].replace("{game}", COPY["game"]["name"])
+    got = page.get_attribute("#stage", "aria-label")
+    if got != want:
+        return [f"{name}: the canvas is named {got!r}, not {want!r}"]
+    print(f"ok: {name}: the canvas is named {want!r}")
+    return []
+
+
+def walk(browser, name):
+    fails = []
+    ctx, page, problems, offsite = open_page(browser)
+    try:
+        for c in CHECKS:
+            try:
+                fails += c(page, name)
+            except Exception as e:
+                fails.append(f"{name}: {c.__name__} stopped: {str(e).splitlines()[0]}\n"
+                             + traceback.format_exc())
+    finally:
+        ctx.close()
+    fails += [f"{name}: {p}" for p in problems]
+    fails += [f"{name}: a request left the origin: {u}" for u in offsite]
+    if not problems:
+        print(f"ok: {name}: no console error")
+    if not offsite:
+        print(f"ok: {name}: no request left the origin")
+    return fails
+
+
+def main():
+    if not LIVE and not (WEB / "index.html").exists():
+        sys.exit(f"{WEB} is not built. Run: make web")
+    wanted = sys.argv[1:] or ["chromium"]
+    httpd = None if LIVE else serve()
+    if LIVE:
+        build, commit = expected_build()
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
+                              text=True).stdout.strip()
+        print(f"walking {ORIGIN}: build {build} from commit {commit[:8]}")
+        if commit != head:
+            print(f"note: the live page was built from {commit[:8]}, and HEAD here is {head[:8]}")
+    fails = []
+    try:
+        with sync_playwright() as p:
+            for name in wanted:
+                engine = getattr(p, name, None)
+                if engine is None:
+                    fails.append(f"{name}: no such browser")
+                    continue
+                try:
+                    b = engine.launch()
+                except Exception as e:
+                    # A browser that is not installed is reported, not skipped:
+                    # the gate names three and a quiet skip lets two rot.
+                    fails.append(f"{name}: could not launch ({e})")
+                    continue
+                try:
+                    mine = walk(b, name)
+                except Exception as e:
+                    mine = [f"{name}: the walk stopped: {e}\n{traceback.format_exc()}"]
+                fails += mine
+                b.close()
+                if not mine:
+                    print(f"ok: {name} walked the gate")
+    finally:
+        if httpd:
+            httpd.shutdown()
+    if fails:
+        print("\n".join(f"FAIL: {f}" for f in fails))
+        sys.exit(1)
+    print(f"ok: the gate passed in {', '.join(wanted)}")
+
+
+if __name__ == "__main__":
+    main()

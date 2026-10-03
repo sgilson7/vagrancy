@@ -1,0 +1,69 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sim",
+    "crates/content",
+    "crates/pilot",
+    "crates/net",
+    "crates/wasm",
+    "crates/lab",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.88"
+
+[workspace.dependencies]
+sim = { path = "crates/sim" }
+content = { path = "crates/content" }
+pilot = { path = "crates/pilot" }
+net = { path = "crates/net" }
+
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+# Default features drag in heapless, which nothing here uses; `alloc` is what
+# `to_allocvec` needs, and `to_allocvec` is what `checksum()` hashes.
+# (Floodline's Cargo.toml, comment and all.)
+postcard = { version = "1.1", default-features = false, features = ["alloc"] }
+serde_json = "1.0"
+# Pinned exactly: the CLI on the build machine and in CI must be this version,
+# and package-web.sh reads it back out of Cargo.lock to check.
+wasm-bindgen = "=0.2.127"
+
+# Copied from Floodline (which copied it from perturbation-workbench), comment
+# and all, because the reasoning is the part worth keeping.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+# An integer overflow must not mean two different things in two builds.
+#
+# Rust checks overflow in debug and wraps in release. A native test build is
+# debug and a browser peer is always a release wasm one, so without this an
+# overflow anywhere in `sim` panics on one and silently wraps on the other —
+# which is not a crash, it is a desync, and it is the hardest kind to find
+# because the two peers disagree about arithmetic itself. Here the likeliest
+# place is a fixed-point product at the speed cap (PLANNING-BRIEF E.3).
+overflow-checks = true
+# Deliberately NOT panic = "abort": that compiles panics down to a bare
+# `unreachable`, so a failure surfaces in the browser as
+# "Unreachable code should not be executed" with no indication of what broke.
+
+# Test binaries carry line tables and nothing else.
+#
+# Line tables keep file-and-line in panic messages, which is what a failing
+# assertion actually needs; the rest of debuginfo is link time and disk for
+# nobody (Floodline). For a full backtrace, ask for one for that run:
+#
+#     CARGO_PROFILE_TEST_DEBUG=2 cargo test -p sim --test determinism
+[profile.test]
+debug = "line-tables-only"
+opt-level = 2
+
+# Everything is optimised under test. The physics tests run tens of thousands
+# of ticks across many seeds; unoptimised, a determinism suite nobody waits
+# for is a suite nobody runs (Floodline's `sim`, GM2D's profile.test.package).
+# `debug-assertions` and `overflow-checks` are independent of `opt-level`, so
+# the same panics still fire.
+[profile.test.package."*"]
+opt-level = 2

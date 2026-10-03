@@ -1,0 +1,17 @@
+{
+  "_about": "The only place a color is written (D17). crates/content/tests/palette.rs fails on any value in the red band, and on a color written anywhere in web/. Each value says what it paints.",
+  "paper": "#EFE8D8",
+  "ground": "#D9CDB2",
+  "ground_line": "#A8987A",
+  "line": "#2B2A28",
+  "muted": "#6B6457",
+  "post": "#8A7A5C",
+  "sword": "#6E6F78",
+  "hilt": "#4A3B2A",
+  "focus": "#3E4A89",
+  "meter_back": "#CFC4AB",
+  "fighters": {
+    "left": { "body": "#3E4A89", "ink": "#3E4A89", "pattern": "solid", "stripe": "#3E4A89" },
+    "right": { "body": "#B8862B", "ink": "#B8862B", "pattern": "stripes", "stripe": "#7A5618" }
+  }
+}

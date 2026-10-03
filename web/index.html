@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{game.name}}</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Every word on this page is a {{key}} token. package-web.sh fills each one
+     from data/copy.en.json, and crates/content/tests/copy.rs fails on any
+     text the page writes for itself. -->
+<main id="app">
+  <header id="masthead">
+    <h1 id="title">{{game.name}}</h1>
+    <p id="description">{{game.description}}</p>
+    <p id="content-note">{{game.content_note}}</p>
+  </header>
+  <p id="status" role="status">{{game.loading}}</p>
+  <p id="loading-error" role="alert" hidden>{{game.loading_error}}</p>
+  <noscript><p>{{game.fallback}}</p></noscript>
+  <section id="screen" hidden></section>
+  <canvas id="stage" aria-label="{{game.canvas_name}}" width="1200" height="640" hidden></canvas>
+  <footer id="foot">
+    <a id="back" href="https://sgilson7.github.io/">{{game.back_link}}</a>
+    <span id="build">{{game.build}}</span>
+  </footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

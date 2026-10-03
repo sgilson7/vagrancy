@@ -1,0 +1,11 @@
+[package]
+name = "sim"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "The fight. serde and postcard, no floats, no clock."
+
+# Two dependencies, and tests/boundary.rs fails on a third.
+[dependencies]
+serde.workspace = true
+postcard.workspace = true

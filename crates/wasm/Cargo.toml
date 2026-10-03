@@ -1,0 +1,17 @@
+[package]
+name = "vagrancy-wasm"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "The shim. It moves bytes across the boundary and decides nothing."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sim.workspace = true
+content.workspace = true
+pilot.workspace = true
+net.workspace = true
+wasm-bindgen.workspace = true
+serde_json.workspace = true

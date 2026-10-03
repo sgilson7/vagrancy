@@ -1,0 +1,10 @@
+[package]
+name = "pilot"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+description = "Opponents. A pilot returns an Input and nothing else."
+
+[dependencies]
+sim.workspace = true
+serde.workspace = true

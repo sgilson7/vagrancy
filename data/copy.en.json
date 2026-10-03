@@ -1,0 +1,373 @@
+{
+  "_about": "Every string a player reads, written before the build against TONE.md. Implement each string exactly as written. Values in braces are placeholders that the page fills from core or from data; _placeholders says where each comes from. Keys that begin with an underscore are instructions and are never shown to a player.",
+
+  "_placeholders": {
+    "game": "game.name in this file",
+    "hash": "the build hash stamped by packaging/package-web.sh",
+    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right": "the current binding for that action, from data/controls.json or the player's saved bindings",
+    "left_keys, right_keys": "the bound keys for that seat, joined in binding order",
+    "left_name, right_name, winner, loser": "fighters.left.name or fighters.right.name",
+    "opponent": "opponents.<id>.name, for the start of a sentence or a heading",
+    "opponent_mid": "opponents.<id>.name_mid, for the middle of a sentence",
+    "part": "parts.<id>, for the part the deciding cut crossed, as reported by core",
+    "round, left_wins, right_wins, wins, losses": "match state from core",
+    "rounds_to_win": "the constant in sim::balance",
+    "delay_ms": "the match's input delay in ticks, converted to milliseconds by core",
+    "tick": "the first tick whose checksums differed, from the lockstep",
+    "code": "the room code",
+    "pause_s, reach_pct, horizon_ms, reaction_ms": "derived from that opponent's entry in data/pilots.json; never typed",
+    "theirs, ours": "the version in the file and the version this build reads",
+    "file_name, error": "reported by the browser",
+    "key, action": "the key pressed and settings.keys.actions.<id>"
+  },
+
+  "_depends": {
+    "how.control.body": "D6, D7",
+    "how.control.legs": "D6, D8 (decided by Sam, brief 0.7)",
+    "how.sword.body": "D9, D10",
+    "how.swing.body": "D9 (decided by Sam, brief 0.7)",
+    "how.cut.body": "D11 (decided by Sam, brief 0.7)",
+    "how.ink.body": "D12, D17",
+    "how.end.body": "D12, and Part I question 1",
+    "how.match.body": "D13",
+    "practice.step.plant": "D9, D10",
+    "practice.step.swing": "D9",
+    "results.draw": "D13",
+    "online.connected.host": "D14",
+    "online.connected.join": "D14",
+    "online.host_room.desc": "D14, and Part I question 4",
+    "opponents": "D16; every introduction describes what its pilot data makes that pilot do",
+    "settings.motion.desc": "M6; ship this string only if screen shake and slow motion exist",
+    "settings.sound.volume.label": "M6",
+    "game.content_note": "Part I questions 2 and 3",
+    "game.about_link": "Part I question 5"
+  },
+
+  "_universals": {},
+
+  "_glossary": {
+    "ink": { "means": "what a fighter spills when cut, and loses the round by running out of", "not": ["health", "HP", "hit points", "life", "energy"], "note": "The word blood appears once, in game.content_note, and nowhere else." },
+    "round": { "means": "one exchange, ended by a fighter who cannot continue", "not": ["bout", "set"] },
+    "match": { "means": "rounds played until one fighter has won enough of them", "not": ["bout", "duel"] },
+    "replay": { "means": "a file that plays a match back", "not": ["recording", "demo"] },
+    "save file": { "means": "a file holding road progress and settings", "not": ["savegame", "save game"] },
+    "room code": { "means": "the short code a host sends a friend", "not": ["lobby code", "room ID"] },
+    "input delay": { "means": "the time between a key press and its effect in an online match", "not": ["lag", "latency", "ping"] },
+    "the road": { "means": "story mode", "not": ["campaign", "story mode", "ladder"] }
+  },
+
+  "game": {
+    "name": "Vagrancy",
+    "description": "A physics sword-fighting game for two players, in which you move your fighter's arms one joint at a time.",
+    "content_note": "The fighters are paper figures. A cut removes part of a figure and spills ink, which stands in for blood.",
+    "loading": "Loading {game}…",
+    "loading_error": "The game could not load. Reload the page and try again.",
+    "fallback": "This game requires JavaScript and WebAssembly.",
+    "canvas_name": "{game} game",
+    "about_link": "About {game}",
+    "back_link": "Tools and games",
+    "build": "Build {hash}"
+  },
+
+  "menu": {
+    "road": { "label": "Walk the road", "desc": "Fight the opponents on the road in order, from the easiest to the hardest." },
+    "local": { "label": "Play at one keyboard", "desc": "Two players share this keyboard and fight each other." },
+    "online": { "label": "Play a friend online", "desc": "One of you hosts a match and the other joins it." },
+    "practice": { "label": "Practice in the yard", "desc": "Swing at a post that does not fight back. This is the place to learn the keys." },
+    "replay": { "label": "Load a replay", "desc": "Open a replay file and watch that match again." },
+    "how": { "label": "Read how to play" },
+    "settings": { "label": "Open settings" },
+    "back": { "label": "Go back to the menu" }
+  },
+
+  "how": {
+    "control": {
+      "title": "What you control",
+      "body": "You control your fighter's sword arm. {key.shoulder_up} raises the arm at the shoulder and {key.shoulder_down} lowers it. {key.elbow_in} bends the elbow and {key.elbow_out} straightens it. A joint keeps turning for as long as you hold its key, so a swing is a matter of when you press and when you let go.",
+      "legs": "The legs keep your fighter upright without your help. {key.step_left} and {key.step_right} take a slow step. Faster movement comes from the sword."
+    },
+    "sword": {
+      "title": "The sword is solid",
+      "body": "The sword does not bend, and it does not pass through the ground or through another sword. That makes it useful for more than cutting. If you plant the tip in the ground and straighten your arm, the sword pushes your fighter into the air."
+    },
+    "swing": {
+      "title": "A swing adds speed",
+      "body": "Swinging the sword pulls your whole fighter along with it. In this game that pull is free: a swing adds speed without taking it from anywhere else. Keep swinging in the same direction and your fighter moves faster, up to a limit."
+    },
+    "cut": {
+      "title": "What a blade does",
+      "body": "When a blade touches a fighter, it cuts straight across the part it touched, and the part beyond the cut drops off. Your own blade does this to your own fighter too. The hands holding the sword are the exception."
+    },
+    "ink": {
+      "title": "Ink",
+      "body": "The fighters are paper figures filled with ink. A cut that does not end the round spills ink for the rest of the round, and a larger cut spills it faster. The meter above a fighter shows how much ink that fighter has left."
+    },
+    "end": {
+      "title": "How a round ends",
+      "body": "A round ends when a fighter cannot continue. That happens when a cut crosses the neck or the head, when a cut crosses the heart, or when a fighter runs out of ink."
+    },
+    "match": {
+      "title": "How a match ends",
+      "body": "The first fighter to win {rounds_to_win} rounds wins the match. Between rounds both fighters are restored."
+    },
+    "files": {
+      "title": "Replays and save files",
+      "body": "You can download a match as a replay. Loading that file plays the same match again, input for input. You can download your progress on the road as a save file in Settings."
+    }
+  },
+
+  "practice": {
+    "intro": "The post does not fight back, so you can take as long as you need. The steps below go in order, and you can repeat any of them.",
+    "step": {
+      "shoulder": "Start with the shoulder. Hold {key.shoulder_up} and watch the arm rise, then let go. The sword is heavy, so the arm keeps moving for a moment after you release the key.",
+      "elbow": "Now the elbow. Hold {key.elbow_out} to straighten the arm and {key.elbow_in} to bend it. A straight arm reaches farther.",
+      "cut": "Cut the post. A blade cuts the part it touches, so a swing that reaches the post is enough. Look at where the cut lands: it is at the point the blade touched.",
+      "plant": "Plant the sword. Point the tip at the ground, then straighten your arm. The sword cannot go into the ground, so the push lifts your fighter instead.",
+      "swing": "Build speed. Swing in one direction several times without stopping. A swing adds to the one before it, which is how you cross the yard quickly or leave the ground."
+    },
+    "done": "Those are the controls. The road teaches the rest, one opponent at a time.",
+    "reset": { "label": "Stand the post back up" }
+  },
+
+  "hud": {
+    "ink": "Ink",
+    "round": "Round {round}",
+    "score": "{left_name} {left_wins}, {right_name} {right_wins}",
+    "delay": "Input delay: {delay_ms} ms"
+  },
+
+  "fighters": {
+    "left": { "name": "Indigo", "described": "Indigo, the solid figure on the left" },
+    "right": { "name": "Ochre", "described": "Ochre, the striped figure on the right" }
+  },
+
+  "parts": {
+    "head": "head",
+    "neck": "neck",
+    "chest": "chest",
+    "waist": "waist",
+    "arm": "arm",
+    "hand": "hand",
+    "leg": "leg"
+  },
+
+  "results": {
+    "road": {
+      "win_neck": "You won the round. Your blade cut across {opponent_mid}'s {part}.",
+      "win_heart": "You won the round. Your blade cut across {opponent_mid}'s heart.",
+      "win_ink": "You won the round. {opponent} ran out of ink.",
+      "win_self": "You won the round. {opponent}'s own blade made the cut that ended it.",
+      "lose_neck": "You lost the round. {opponent}'s blade cut across your {part}.",
+      "lose_heart": "You lost the round. {opponent}'s blade cut across your heart.",
+      "lose_ink": "You lost the round. You ran out of ink, and the cut to your {part} spilled the most.",
+      "lose_self": "You lost the round. Your own blade cut across your {part}.",
+      "match_win": "You won the match, {wins} rounds to {losses}.",
+      "match_lose": "You lost the match, {losses} rounds to {wins}. {opponent} is still on the road when you want to try again."
+    },
+    "versus": {
+      "neck": "{winner} won the round. {winner}'s blade cut across {loser}'s {part}.",
+      "heart": "{winner} won the round. {winner}'s blade cut across {loser}'s heart.",
+      "ink": "{winner} won the round. {loser} ran out of ink.",
+      "self": "{winner} won the round. {loser}'s own blade made the cut that ended it.",
+      "match": "{winner} won the match, {wins} rounds to {losses}."
+    },
+    "draw": "Nobody won the round. Both fighters stopped at the same moment, so the round is played again.",
+    "next_round": { "label": "Play the next round" },
+    "again": { "label": "Play this opponent again" },
+    "rematch": { "label": "Play another match" },
+    "to_road": { "label": "Go back to the road" },
+    "replay": { "label": "Download replay" }
+  },
+
+  "road": {
+    "intro": "You are walking a road with a sword you are still learning to use. The people who stop you fight in different ways. Before a fight you are told what that opponent does and one thing you could try. The suggestion is a starting point, and there are other answers.",
+    "does_heading": "What this opponent does",
+    "try_heading": "One thing to try",
+    "fight": { "label": "Fight {opponent_mid}" },
+    "locked": "You reach this stop after you win at the one before it.",
+    "cleared": "You have won here. You can fight {opponent_mid} again.",
+    "end": "That was the last opponent on the road. You can fight any of them again from this screen. If you found an approach that the suggestions did not mention, the suggestions were incomplete."
+  },
+
+  "opponents": {
+    "scarecrow": {
+      "name": "The Scarecrow",
+      "name_mid": "the scarecrow",
+      "place": "A rice field outside the first village.",
+      "does": "The scarecrow does not move and does not fight back. It is here so that your first cut costs you nothing.",
+      "try": "Cut it anywhere, to see how a cut works. Then aim for the neck, because a cut there ends the round."
+    },
+    "gatekeeper": {
+      "name": "The Gatekeeper",
+      "name_mid": "the gatekeeper",
+      "place": "A toll gate. Someone has pasted concert posters over the list of tolls.",
+      "does": "The gatekeeper holds his sword out in front of him and keeps it there. He does not swing. Swords are solid, so yours stops when it meets his.",
+      "try": "Go over his blade or under it, not through it. Look for the part of him that the sword is not in front of."
+    },
+    "thresher": {
+      "name": "The Thresher",
+      "name_mid": "the thresher",
+      "place": "A threshing floor behind a farmhouse.",
+      "does": "The thresher makes the same overhead swing again and again, with the same pause after each swing. The pause lasts about {pause_s} seconds.",
+      "try": "Stay out of reach and count the pause. Then move in after a swing has passed, while the blade is still low."
+    },
+    "ferryman": {
+      "name": "The Ferryman",
+      "name_mid": "the ferryman",
+      "place": "A ferry landing. A radio on the far bank is playing a drum loop.",
+      "does": "The ferryman's blade is about {reach_pct} percent longer than yours. A longer blade reaches you first when you both swing level. It is also heavier, so it takes him longer to start a swing and to stop one.",
+      "try": "Let him swing first. While his blade is still traveling, you have time that he does not."
+    },
+    "vaulter": {
+      "name": "The Vaulter",
+      "name_mid": "the vaulter",
+      "place": "A dry riverbed with a hard clay floor.",
+      "does": "The vaulter plants her sword, lifts herself over you, and cuts downward as she passes. Her attacks usually come from above.",
+      "try": "Watch where her sword is planted. While the tip is in the ground it is not pointed at you, and she has committed to a path."
+    },
+    "windmill": {
+      "name": "The Windmill",
+      "name_mid": "the windmill",
+      "place": "A crossroads on a hill, in a steady wind.",
+      "does": "The windmill does not stop swinging. He builds speed the way you can, by swinging in one direction, and then drifts toward you with the blade turning.",
+      "try": "Meet his blade with yours. Swords are solid, so a firm block stops the turn, and he needs time to build the speed again."
+    },
+    "sampler": {
+      "name": "The Sampler",
+      "name_mid": "the sampler",
+      "place": "A tea house with a turntable on the counter.",
+      "does": "The sampler has no style of her own. She watches the first round without attacking. From then on she repeats what you did in the previous round, mirrored.",
+      "try": "What you do in this round is what you face in the next. Choose something you know how to answer."
+    },
+    "reader": {
+      "name": "The Reader",
+      "name_mid": "the reader",
+      "place": "The end of the road, at a gate that is already open.",
+      "does": "The reader tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
+      "try": "She does not check further ahead than that. A move that looks harmless at first and changes late is one she has not seen coming."
+    }
+  },
+
+  "local": {
+    "intro": "Two players share this keyboard. {left_name} is on the left and uses {left_keys}. {right_name} is on the right and uses {right_keys}.",
+    "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding while both of you are pressing keys, that is the likely cause. Changing the key bindings in Settings sometimes helps.",
+    "start": { "label": "Start the match" }
+  },
+
+  "online": {
+    "intro": "One of you hosts and the other joins. The match then runs directly between your two browsers.",
+    "privacy": "A direct connection means your friend's browser learns your IP address, and yours learns theirs. Play online with people you are willing to share that with.",
+    "music": "Music is not shared. You hear the track you loaded, and your friend hears theirs.",
+    "host_room": {
+      "label": "Host with a room code",
+      "desc": "You get a short code and a link to send to your friend. Public relay servers, which this project does not run, introduce your two browsers. After that the match does not use them."
+    },
+    "join_room": {
+      "label": "Join with a room code",
+      "desc": "Open the link your friend sent, or type their room code here.",
+      "field": "Room code"
+    },
+    "host_paste": {
+      "label": "Host with a pasted code",
+      "desc": "Use this if a room code does not connect. You send your friend a block of text, they send one back, and no relay is involved.",
+      "step_copy": "Copy this invitation and send it to your friend in a chat you already use.",
+      "step_reply": "Paste your friend's reply here."
+    },
+    "join_paste": {
+      "label": "Join with a pasted code",
+      "step_paste": "Paste the invitation your friend sent you.",
+      "step_reply": "Copy this reply and send it back to your friend."
+    },
+    "copy": {
+      "label": "Copy to clipboard",
+      "done": "The text is on your clipboard.",
+      "failed": "Your browser did not allow copying. Select the text and copy it yourself."
+    },
+    "waiting": "Waiting for your friend to join. The room code is {code}.",
+    "joining": "Looking for the match with room code {code}.",
+    "connected": {
+      "host": "Your friend has joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back.",
+      "join": "You have joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back. The host starts the match."
+    },
+    "start": { "label": "Start the match" },
+    "error": {
+      "no_relay": "No relay answered, so your two browsers could not be introduced. Try hosting with a pasted code, which does not need a relay.",
+      "no_path": "Your two browsers found each other but could not open a direct connection. This usually means one of you is on a network that blocks direct connections, and a pasted code would fail the same way. Trying from a different network is the next step.",
+      "build": "You and your friend are running different builds of the game. Both of you should reload the page and then try again.",
+      "full": "This match already has two players.",
+      "bad_code": "That code could not be read. Check that the whole block of text was copied, from its first character to its last."
+    },
+    "status": {
+      "waiting_on": "Waiting for your friend's input. If this continues, one of the two connections is slow.",
+      "left": "Your friend's browser stopped responding, so the match has ended.",
+      "desync": "The two copies of the match disagreed at tick {tick}. The match has stopped so that it does not continue as two different fights. You can download the replay to report it."
+    }
+  },
+
+  "settings": {
+    "music": {
+      "title": "Music",
+      "desc": "The game does not include a music track. You can load one from this device, and it loops during fights.",
+      "load": { "label": "Load a track from this device" },
+      "privacy": "The file is read by your browser and is not uploaded. In an online match your friend does not hear it.",
+      "remember": {
+        "label": "Remember this track on this device",
+        "desc": "This keeps a copy of the file in this browser's storage for this site. Clearing the site's data removes it."
+      },
+      "remove": { "label": "Remove the track" },
+      "loaded": "The loaded track is {file_name}.",
+      "none": "No track is loaded.",
+      "volume": { "label": "Music volume" },
+      "error": "This file could not be played. Your browser reported: {error}",
+      "formats": "MP3, Ogg and WAV files play in most browsers."
+    },
+    "sound": {
+      "volume": { "label": "Sound effects volume" }
+    },
+    "keys": {
+      "title": "Key bindings",
+      "desc": "Choose a key for each action. Two actions cannot share a key.",
+      "conflict": "{key} is already used for {action}. Choose a different key, or change that binding first.",
+      "reset": { "label": "Restore the default keys" },
+      "actions": {
+        "shoulder_up": "Raise the arm at the shoulder",
+        "shoulder_down": "Lower the arm at the shoulder",
+        "elbow_in": "Bend the elbow",
+        "elbow_out": "Straighten the elbow",
+        "step_left": "Step left",
+        "step_right": "Step right"
+      }
+    },
+    "motion": {
+      "label": "Reduce motion",
+      "desc": "Turns off screen shake and slow motion."
+    },
+    "save": {
+      "title": "Save file",
+      "download": {
+        "label": "Download save file",
+        "desc": "This writes your progress on the road and your settings to a file that you keep."
+      },
+      "load": { "label": "Load save file" },
+      "loaded": "The save file was loaded.",
+      "autosave": "The game also keeps a copy in this browser so that you can continue after a reload. That copy is a convenience. Clearing the site's data removes it, so download a save file if you want to keep your progress.",
+      "error": {
+        "format": "This file is not a {game} save file, so nothing was loaded.",
+        "newer": "This save file was written by a newer version of the game. It is save version {theirs}, and this build reads up to version {ours}. Nothing was loaded.",
+        "damaged": "This save file is incomplete or damaged, so nothing was loaded. Your current progress is unchanged."
+      }
+    }
+  },
+
+  "replay": {
+    "download": { "label": "Download replay" },
+    "load": { "label": "Load a replay" },
+    "playing": "You are watching a replay. Pressing keys does not change it.",
+    "stop": { "label": "Stop the replay" },
+    "error": {
+      "format": "This file is not a {game} replay, so nothing was loaded.",
+      "sim": "This replay was recorded with simulation version {theirs}, and this build runs version {ours}. The same inputs would not produce the same match, so the replay was not loaded.",
+      "damaged": "This replay file is incomplete or damaged, so nothing was loaded."
+    }
+  }
+}
