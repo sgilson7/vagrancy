@@ -31,7 +31,7 @@ fn the_hands_on_the_hilt_are_safe_from_their_own_blade() {
         let mut w = versus(seed);
         let mut r = Rng::new(seed + 3);
         for _ in 0..600 {
-            w.step([Input(r.below(64) as u8), Input(r.below(64) as u8)]);
+            w.step([Input(r.below(64) as u16), Input(r.below(64) as u16)]);
             for e in &w.events {
                 if let Event::Cut { seat, by, part, spilled: true, .. } = *e {
                     let is_hand = w.setup.bodies[0].parts[part as usize].hand;
@@ -69,7 +69,7 @@ fn two_blades_never_pass_through_each_other() {
             if t % 12 == 0 {
                 // Both fighters close in and swing.
                 let toward = [Input::STEP_RIGHT, Input::STEP_LEFT];
-                held = [0, 1].map(|s| Input((r.below(16) as u8) | if r.below(3) > 0 { toward[s] } else { 0 }));
+                held = [0, 1].map(|s| Input((r.below(16) as u16) | if r.below(3) > 0 { toward[s] } else { 0 }));
             }
             w.step(held);
             clashes += w.events.iter().filter(|e| matches!(e, Event::Clash { .. })).count();

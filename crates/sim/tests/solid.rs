@@ -17,7 +17,7 @@ fn random_runs(mut check: impl FnMut(&World, u32, u64)) {
         for t in 0..600 {
             // Keys change about every quarter second, as a person's would.
             if t % 15 == 0 {
-                held = [Input(r.below(64) as u8), Input(r.below(64) as u8)];
+                held = [Input(r.below(64) as u16), Input(r.below(64) as u16)];
             }
             w.step(held);
             check(&w, t, seed);

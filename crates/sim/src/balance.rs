@@ -83,3 +83,17 @@ pub const MIN_SELF_CUT_SPEED: Fx = Fx::int(12);
 /// The share of the cutting edge, from the tip, with which a fighter's own
 /// blade can cut that fighter: the point. *(M3.0)*
 pub const SELF_CUT_POINT: Fx = Fx::ratio(85, 100);
+
+/// The jump, the air jump and the dodge (Sam, 2026-10-03). *(guesses until
+/// Sam plays them)* A jump sets the fighter's upward speed: 7 cm/tick at
+/// 0.2725 cm/tick² rises 7² / (2 · 0.2725) = 90 cm; the air jump's 6 rises 66.
+pub const JUMP_SPEED: Fx = Fx::int(7);
+pub const AIR_JUMP_SPEED: Fx = Fx::int(6);
+/// A dodge lasts this many ticks (a quarter second), uncuttable and with a
+/// harmless blade, and the next cannot start for this many after it began.
+pub const DODGE_TICKS: u8 = 16;
+pub const DODGE_COOLDOWN: u8 = 45;
+/// A roll on the ground: the ground carries the fighter this fast.
+pub const ROLL_SPEED: Fx = Fx::int(7);
+/// An air dodge sets the fighter's sideways speed to this.
+pub const AIR_DODGE_SPEED: Fx = Fx::int(9);

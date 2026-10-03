@@ -125,7 +125,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         return Err(SaveError::Newer { theirs: version, ours: VERSION });
     }
     let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
-    let s = file.state;
+    let mut s = file.state;
+    // A save written before the jump and the dodge existed has no keys for
+    // them: it takes the defaults rather than being called damaged.
+    let fresh = fresh();
+    for (g, d) in [(&mut s.bindings.solo, &fresh.bindings.solo), (&mut s.bindings.left, &fresh.bindings.left), (&mut s.bindings.right, &fresh.bindings.right)] {
+        for (action, code) in d {
+            if !g.contains_key(action) && !g.values().any(|c| c == code) {
+                g.insert(action.clone(), code.clone());
+            }
+        }
+    }
     validate(&s).then_some(s).ok_or(SaveError::Damaged)
 }
 
@@ -180,6 +190,17 @@ mod tests {
             assert!(matches!(decode(&bad), Err(SaveError::Damaged) | Err(SaveError::Format)), "accepted: {bad}");
         }
         assert_eq!(decode(&good.replace("\"music_volume\": 70", "\"music_volume\": 700")), Err(SaveError::Damaged));
+    }
+
+    #[test]
+    fn a_save_from_before_the_jump_takes_the_default_keys_for_it() {
+        let mut old = fresh();
+        for g in [&mut old.bindings.solo, &mut old.bindings.left, &mut old.bindings.right] {
+            g.remove("jump");
+            g.remove("dodge");
+        }
+        let back = decode(&encode(&old)).expect("an older save still loads");
+        assert_eq!(back.bindings, fresh().bindings);
     }
 
     #[test]

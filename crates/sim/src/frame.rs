@@ -50,6 +50,7 @@ pub struct FighterView {
     pub facing: i32,
     pub ink: i32,
     pub ink_max: i32,
+    pub dodging: bool,
 }
 
 pub fn frame(w: &World) -> Frame {
@@ -89,6 +90,7 @@ pub fn frame(w: &World) -> Frame {
                     facing: f.facing,
                     ink: f.ink,
                     ink_max: w.setup.bodies[f.body as usize].ink,
+                    dodging: f.dodge > 0,
                 })
             })
             .collect(),

@@ -20,7 +20,7 @@ fn only_arm_bits_drive_a_joint_motor() {
         .chain(def.roles.feet.iter().map(|&i| f.base + i as u16))
         .collect::<Vec<_>>();
     let arm = Input::SHOULDER_UP | Input::SHOULDER_DOWN | Input::ELBOW_IN | Input::ELBOW_OUT;
-    for b in 0..=255u8 {
+    for b in 0..=0x1FFu16 {
         let plan = w.motor_plan(0, Input(b));
         let arm_axes = Input(b).axis(Input::SHOULDER_UP, Input::SHOULDER_DOWN) != 0
             || Input(b).axis(Input::ELBOW_IN, Input::ELBOW_OUT) != 0;

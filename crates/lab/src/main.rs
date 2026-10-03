@@ -66,8 +66,8 @@ fn recon_m1() {
     let n = 20_000u32;
     let t0 = std::time::Instant::now();
     for _ in 0..n {
-        let a = Input(rng.below(64) as u8);
-        let b = Input(rng.below(64) as u8);
+        let a = Input(rng.below(64) as u16);
+        let b = Input(rng.below(64) as u16);
         w.step([a, b]);
     }
     let us = t0.elapsed().as_secs_f64() * 1e6 / n as f64;
@@ -142,7 +142,7 @@ fn script_checksum(args: &[String]) {
 
 /// Run a script of (input, ticks) and report the highest the pelvis rose
 /// above where it stood, and how far it travelled.
-fn run_script(tuning: u8, script: &[(u8, u32)]) -> (f64, f64, u32) {
+fn run_script(tuning: u8, script: &[(u16, u32)]) -> (f64, f64, u32) {
     let mut w = World::new(content::setup::alone(1, tuning));
     let f = w.fighters[0].clone().unwrap();
     let pel = (f.base + w.setup.bodies[0].roles.pelvis.unwrap() as u16) as usize;
@@ -167,8 +167,8 @@ fn run_script(tuning: u8, script: &[(u8, u32)]) -> (f64, f64, u32) {
 fn recon_m2() {
     use sim::Input as I;
     // The pogo the test uses, the spin, and a swing's carry in the air.
-    let pogo: Vec<(u8, u32)> = vec![(I::ELBOW_IN, 13), (0, 9), (I::SHOULDER_DOWN | I::ELBOW_OUT, 40), (0, 60)];
-    let spin: Vec<(u8, u32)> = vec![(I::SHOULDER_UP, 240)];
+    let pogo: Vec<(u16, u32)> = vec![(I::ELBOW_IN, 13), (0, 9), (I::SHOULDER_DOWN | I::ELBOW_OUT, 40), (0, 60)];
+    let spin: Vec<(u16, u32)> = vec![(I::SHOULDER_UP, 240)];
     for tuning in 0..sim::balance::TUNINGS.len() as u8 {
         let t = sim::balance::TUNINGS[tuning as usize];
         let (h, dx, _) = run_script(tuning, &pogo);
@@ -185,9 +185,9 @@ fn recon_m2() {
 /// Trace a script: tip, hand and pelvis every few ticks.
 fn trace(args: &[String]) {
     // Script as "keys:ticks,keys:ticks" where keys are letters u d i o (arm) l r (steps) or 0.
-    let script: Vec<(u8, u32)> = args.first().map(|s| s.split(',').map(|part| {
+    let script: Vec<(u16, u32)> = args.first().map(|s| s.split(',').map(|part| {
         let (k, n) = part.split_once(':').unwrap();
-        let mut b = 0u8;
+        let mut b = 0u16;
         for c in k.chars() {
             b |= match c { 'u' => Input::SHOULDER_UP, 'd' => Input::SHOULDER_DOWN, 'i' => Input::ELBOW_IN,
                            'o' => Input::ELBOW_OUT, 'l' => Input::STEP_LEFT, 'r' => Input::STEP_RIGHT, _ => 0 };
@@ -227,7 +227,7 @@ fn pogo_search(args: &[String]) {
         let mut best = (0.0f64, Vec::new());
         for _ in 0..tries {
             let n = 2 + r.below(4) as usize;
-            let script: Vec<(u8, u32)> = (0..n).map(|_| (keys[r.below(8) as usize], 3 + r.below(40))).chain([(0, 60)]).collect();
+            let script: Vec<(u16, u32)> = (0..n).map(|_| (keys[r.below(8) as usize], 3 + r.below(40))).chain([(0, 60)]).collect();
             let (h, _, _) = run_script(tuning, &script);
             if h > best.0 {
                 best = (h, script);
@@ -242,7 +242,7 @@ fn pogo_search(args: &[String]) {
 /// fighter does not fall first and the tip is on the ground while it rises.
 fn pogo_grid() {
     for tuning in 0..sim::balance::TUNINGS.len() as u8 {
-        let mut best = (0.0f64, 0u32, 0u32, 0u8);
+        let mut best = (0.0f64, 0u32, 0u32, 0u16);
         for &first in &[Input::SHOULDER_DOWN, Input::SHOULDER_DOWN | Input::ELBOW_IN] {
             for n1 in (4..=60).step_by(2) {
                 for n2 in (4..=40).step_by(2) {
@@ -253,7 +253,7 @@ fn pogo_grid() {
                     let y0 = w.particles[pel].p.y;
                     let mut fell = false;
                     let mut planted_rise = 0.0f64;
-                    let script = [(first, n1), (Input::ELBOW_OUT, n2), (0u8, 60)];
+                    let script = [(first, n1), (Input::ELBOW_OUT, n2), (0u16, 60)];
                     for (b, n) in script {
                         for _ in 0..n {
                             w.step([Input(b), Input::NONE]);
@@ -311,7 +311,7 @@ fn energy() {
     let mut w = World::new(setup);
     let mut r = sim::rng::Rng::new(4);
     for t in 0..400u32 {
-        let i = if t < 40 { Input(r.below(16) as u8) } else { Input::NONE };
+        let i = if t < 40 { Input(r.below(16) as u16) } else { Input::NONE };
         w.step([i, Input::NONE]);
         if t % 40 == 39 {
             println!("tick {:>3}: kinetic {:>8.0}   momentum {:?}", t + 1, w.kinetic() as f64 / 4096.0 / 4096.0, w.momentum());
@@ -324,7 +324,7 @@ fn energy() {
 fn self_cuts() {
     use sim::fight::Event;
     let count = |w: &World| w.events.iter().filter(|e| matches!(e, Event::Cut { seat, by, spilled: true, .. } if seat == by)).count();
-    for (label, keys) in [("standing still", vec![0u8]), ("running right", vec![Input::STEP_RIGHT])] {
+    for (label, keys) in [("standing still", vec![0u16]), ("running right", vec![Input::STEP_RIGHT])] {
         let mut w = World::new(content::setup::alone(1, sim::balance::DEFAULT_TUNING));
         let mut first = None;
         for t in 0..600u32 {
@@ -343,7 +343,7 @@ fn self_cuts() {
         let mut held = Input::NONE;
         for t in 0..600u32 {
             if t % 15 == 0 {
-                held = Input(r.below(64) as u8);
+                held = Input(r.below(64) as u16);
             }
             w.step([held, Input::NONE]);
             if count(&w) > 0 {
@@ -361,7 +361,7 @@ fn self_cuts() {
         let mut held = Input::NONE;
         'run: for t in 0..600u32 {
             if t % 15 == 0 {
-                held = Input(r.below(64) as u8);
+                held = Input(r.below(64) as u16);
             }
             w.step([held, Input::NONE]);
             for e in &w.events {
@@ -397,7 +397,7 @@ fn fixture_match() {
         for t in 0..2400u32 {
             if t % 12 == 0 {
                 let toward = [Input::STEP_RIGHT, Input::STEP_LEFT];
-                held = [0, 1].map(|s| Input((r.below(16) as u8) | if r.below(3) > 0 { toward[s] } else { 0 }));
+                held = [0, 1].map(|s| Input((r.below(16) as u16) | if r.below(3) > 0 { toward[s] } else { 0 }));
             }
             let ready = matches!(rec.world.phase, Phase::RoundOver { .. });
             let i = if ready { [Input(Input::READY); 2] } else { held };
@@ -431,7 +431,7 @@ fn recon_m5() {
     let t0 = std::time::Instant::now();
     let n = 30_000u32;
     for _ in 0..n {
-        w.step([Input(r.below(64) as u8), Input(r.below(64) as u8)]);
+        w.step([Input(r.below(64) as u16), Input(r.below(64) as u16)]);
     }
     let per_s = n as f64 / t0.elapsed().as_secs_f64();
     println!("headless: {per_s:.0} ticks a second, two fighters, random input (native release)");

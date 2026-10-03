@@ -96,9 +96,19 @@ pub struct Fighter {
     pub n: u16,
     pub sword: Option<u8>,
     pub ink: i32,
-    /// -1, 0 or +1: which way the step keys ask the ground to carry this
-    /// fighter this tick (D8, as Sam revised it on 2026-10-03).
-    pub drive: i32,
+    /// How fast, and which way, the ground carries this fighter this tick, in
+    /// cm per tick: the step keys at the run speed, or a roll (D8, as Sam
+    /// revised it on 2026-10-03).
+    pub drive: Fx,
+    /// Jumps left before landing: one in the air (Sam, 2026-10-03).
+    pub air_jumps: u8,
+    /// Ticks left in a dodge (uncuttable, its own blade harmless), and
+    /// before the next dodge may start.
+    pub dodge: u8,
+    pub dodge_cooldown: u8,
+    pub dodge_dir: i32,
+    /// Last tick's jump and dodge bits, so a held key acts once.
+    pub held: u16,
     /// Rest distances the balance rule restores: shoulder over pelvis, head
     /// over shoulder.
     pub torso: Fx,
@@ -282,7 +292,12 @@ impl World {
             n,
             sword,
             ink: def.ink,
-            drive: 0,
+            drive: Fx(0),
+            air_jumps: 1,
+            dodge: 0,
+            dodge_cooldown: 0,
+            dodge_dir: 0,
+            held: 0,
             torso: dist(r.shoulder, r.pelvis),
             neck: dist(r.head, r.shoulder),
             spilled: vec![0; def.parts.len()],
@@ -295,6 +310,12 @@ impl World {
         self.events.clear();
         // Between rounds the fighters are limp and only "ready" counts.
         let inputs = if self.between_rounds(inputs) { [Input::NONE; 2] } else { inputs };
+        let mut inputs = inputs;
+        for seat in 0..2 {
+            if self.fighters[seat].is_some() {
+                inputs[seat] = self.jump_and_dodge(seat, inputs[seat]);
+            }
+        }
         let mut acc = vec![V2::ZERO; self.particles.len()];
         let mut drives = Vec::new();
         for seat in 0..2 {
@@ -519,8 +540,82 @@ impl World {
     fn set_drive(&mut self, seat: usize, input: Input) {
         let balanced = self.balanced(seat);
         if let Some(f) = self.fighters[seat].as_mut() {
-            f.drive = if balanced { input.axis(Input::STEP_RIGHT, Input::STEP_LEFT) } else { 0 };
+            f.drive = if !balanced {
+                Fx(0)
+            } else if f.dodge > 0 {
+                balance::ROLL_SPEED * f.dodge_dir
+            } else {
+                balance::RUN_SPEED * input.axis(Input::STEP_RIGHT, Input::STEP_LEFT)
+            };
         }
+    }
+
+    // --- the jump and the dodge (Sam, 2026-10-03) ------------------------------------
+
+    /// Act on a jump or dodge press, count down a dodge, and return the input
+    /// the rest of the tick should see: while dodging, a fighter's arm and
+    /// step keys do nothing, as in Melee, where a dodge is a commitment.
+    fn jump_and_dodge(&mut self, seat: usize, input: Input) -> Input {
+        let grounded = self.feet(seat).iter().any(|&i| self.grounded(i)) && self.balanced(seat);
+        let f = self.fighters[seat].as_mut().unwrap();
+        let buttons = Input::JUMP | Input::DODGE;
+        let pressed = input.0 & !f.held & buttons;
+        f.held = input.0 & buttons;
+        if grounded {
+            f.air_jumps = 1;
+        }
+        f.dodge = f.dodge.saturating_sub(1);
+        f.dodge_cooldown = f.dodge_cooldown.saturating_sub(1);
+        let mut set_v: Option<(Option<Fx>, Option<Fx>)> = None;
+        if pressed & Input::DODGE != 0 && f.dodge == 0 && f.dodge_cooldown == 0 {
+            f.dodge = balance::DODGE_TICKS;
+            f.dodge_cooldown = balance::DODGE_COOLDOWN;
+            f.dodge_dir = input.axis(Input::STEP_RIGHT, Input::STEP_LEFT);
+            if !grounded {
+                // An air dodge: a burst the way the step keys point, the
+                // fall stopped for the moment, and no air jump until landing.
+                f.air_jumps = 0;
+                set_v = Some((Some(balance::AIR_DODGE_SPEED * f.dodge_dir), Some(Fx(0))));
+            }
+        } else if pressed & Input::JUMP != 0 && f.dodge == 0 {
+            if grounded {
+                set_v = Some((None, Some(balance::JUMP_SPEED)));
+            } else if f.air_jumps > 0 {
+                f.air_jumps -= 1;
+                set_v = Some((None, Some(balance::AIR_JUMP_SPEED)));
+            }
+        }
+        let dodging = f.dodge > 0;
+        if let Some((vx, vy)) = set_v {
+            // The whole fighter, its held sword with it. From the ground the
+            // ground pushes; in the air the push comes from nowhere, like a
+            // swing (D9).
+            let held = self.swords.iter().any(|s| s.fighter as usize == seat) && self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat));
+            for p in self.particles.iter_mut() {
+                let mine = p.owner == Owner::Body(seat as u8) || (held && p.owner == Owner::Sword(seat as u8));
+                if !mine || p.m == 0 {
+                    continue;
+                }
+                let mut v = p.p - p.q;
+                if let Some(x) = vx {
+                    v.x = x;
+                }
+                if let Some(y) = vy {
+                    v.y = y;
+                }
+                p.q = p.p - v;
+            }
+        }
+        if dodging {
+            Input(input.0 & Input::READY)
+        } else {
+            input
+        }
+    }
+
+    /// Whether a fighter is in the middle of a dodge.
+    pub fn dodging(&self, seat: usize) -> bool {
+        self.fighters[seat].as_ref().is_some_and(|f| f.dodge > 0)
     }
 
     // --- integration -------------------------------------------------------------
@@ -670,7 +765,7 @@ impl World {
     /// endpoint is the swept answer for a straight stick too (D10).
     fn bounds(&mut self) {
         let ph = self.setup.physics;
-        let drive = [0usize, 1].map(|s| self.fighters[s].as_ref().map(|f| f.drive).unwrap_or(0));
+        let drive = [0usize, 1].map(|s| self.fighters[s].as_ref().map(|f| f.drive).unwrap_or(Fx(0)));
         for pt in &mut self.particles {
             if pt.m == 0 {
                 continue;
@@ -684,7 +779,7 @@ impl World {
                 // A driven foot is carried at the run speed instead: the
                 // ground pushes, which is a force from outside the fighter.
                 let want = match pt.owner {
-                    Owner::Body(s) if pt.foot => balance::RUN_SPEED * drive[s as usize],
+                    Owner::Body(s) if pt.foot => drive[s as usize],
                     _ => Fx(0),
                 };
                 let slide = pt.p.x - pt.q.x - want;

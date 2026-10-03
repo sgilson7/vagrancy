@@ -86,7 +86,13 @@ export function renderer(canvas, palette, numbers) {
     ctx.moveTo(0, ground + 0.5);
     ctx.lineTo(W, ground + 0.5);
     ctx.stroke();
-    for (const part of cur.parts) capsule(pts[part.a], pts[part.b], part.r, fill(part));
+    // A dodging fighter is drawn see-through for the moment it cannot be cut.
+    const dodging = (seat) => cur.fighters[seat] && cur.fighters[seat].dodging;
+    for (const part of cur.parts) {
+      ctx.globalAlpha = part.attached && dodging(part.fighter) ? 0.4 : 1;
+      capsule(pts[part.a], pts[part.b], part.r, fill(part));
+    }
+    ctx.globalAlpha = 1;
     // A stump's cut end: the paper inside, ringed with that fighter's ink.
     for (const part of cur.parts) {
       if (!part.stump) continue;

@@ -9,7 +9,7 @@ fn recorded(ticks: u32) -> Recording {
     let mut rec = Recording::new(content::setup::versus(5, sim::balance::DEFAULT_TUNING));
     let mut r = Rng::new(11);
     for _ in 0..ticks {
-        rec.step([Input(r.below(64) as u8), Input(r.below(64) as u8)]);
+        rec.step([Input(r.below(64) as u16), Input(r.below(64) as u16)]);
     }
     rec
 }

@@ -45,6 +45,12 @@
 
   "_universals": {},
 
+  "_review": {
+    "_about": "Strings the agent wrote for the build and Sam has not yet accepted (PLANNING-BRIEF 0.6). settings.keys.solo.heading carries its own marker.",
+    "settings.keys.actions.jump": "new",
+    "settings.keys.actions.dodge": "new"
+  },
+
   "_glossary": {
     "ink": { "means": "what a fighter spills when cut, and loses the round by running out of", "not": ["health", "HP", "hit points", "life", "energy"], "note": "The word blood appears once, in game.content_note, and nowhere else." },
     "round": { "means": "one exchange, ended by a fighter who cannot continue", "not": ["bout", "set"] },
@@ -336,7 +342,9 @@
         "elbow_in": "Bend the elbow",
         "elbow_out": "Straighten the elbow",
         "step_left": "Step left",
-        "step_right": "Step right"
+        "step_right": "Step right",
+        "jump": "Jump",
+        "dodge": "Dodge"
       }
     },
     "motion": {

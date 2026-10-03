@@ -17,7 +17,8 @@ use serde::{Deserialize, Serialize};
 
 /// A lowercase identifier, not a player-read string (PLAN.md §8 Q12).
 pub const FORMAT: &str = "vagrancy.replay";
-pub const VERSION: u32 = 1;
+/// 2: inputs are 16 bits wide, for the jump and the dodge.
+pub const VERSION: u32 = 2;
 pub const CHECKPOINT_EVERY: u32 = 60;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -26,7 +27,7 @@ pub struct Replay {
     pub version: u32,
     pub sim_version: u32,
     pub setup: Setup,
-    pub inputs: Vec<[u8; 2]>,
+    pub inputs: Vec<[u16; 2]>,
     pub ticks: u32,
     pub checksum: u64,
     pub checkpoints: Vec<u64>,
@@ -55,7 +56,7 @@ pub enum ReplayError {
 #[derive(Clone, Debug)]
 pub struct Recording {
     pub world: World,
-    pub inputs: Vec<[u8; 2]>,
+    pub inputs: Vec<[u16; 2]>,
     pub checkpoints: Vec<u64>,
 }
 

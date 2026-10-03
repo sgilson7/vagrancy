@@ -71,7 +71,7 @@ impl Game {
             .map(|r| Game { rec: None, play: Some(Playback::new(r)) })
             .map_err(|e| content::messages::replay_error(e).to_string())
     }
-    pub fn step(&mut self, a: u8, b: u8) {
+    pub fn step(&mut self, a: u16, b: u16) {
         match (&mut self.rec, &mut self.play) {
             (Some(r), _) => r.step([Input(a), Input(b)]),
             (_, Some(p)) => {
@@ -153,7 +153,7 @@ impl Online {
     }
     /// One tick of the page's clock with this side's input. True if the
     /// world stepped.
-    pub fn step(&mut self, now: f64, mine: u8) -> bool {
+    pub fn step(&mut self, now: f64, mine: u16) -> bool {
         self.s.tick(now as u64, Input(mine)).is_some()
     }
     /// Everything to send, as [u32 length, little-endian][bytes]…
@@ -229,7 +229,7 @@ impl Road {
     }
     /// One tick: the pilot sees the player's last input and the world, and
     /// answers with an input of its own.
-    pub fn step(&mut self, mine: u8, _other: u8) {
+    pub fn step(&mut self, mine: u16, _other: u16) {
         self.pilot.observe(self.last);
         let theirs = self.pilot.input(&self.rec.world, 1);
         self.rec.step([Input(mine), theirs]);

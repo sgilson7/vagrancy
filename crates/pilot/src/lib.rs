@@ -92,7 +92,7 @@ pub fn gap(w: &World, seat: usize) -> i32 {
 }
 
 /// The step bit that moves `seat` toward (or away from) the other fighter.
-fn step_toward(w: &World, seat: usize, toward: bool) -> u8 {
+fn step_toward(w: &World, seat: usize, toward: bool) -> u16 {
     let (Some(a), Some(b)) = (pelvis(w, seat), pelvis(w, 1 - seat)) else { return 0 };
     let right = (b.x > a.x) == toward;
     if right { Input::STEP_RIGHT } else { Input::STEP_LEFT }
@@ -131,11 +131,11 @@ fn turn_milli(a: V2, b: V2) -> i64 {
 /// closes the gap between that and the speed it has. A first version pressed
 /// toward the pose until it got there and overshot every time; the
 /// gatekeeper, who "does not swing", swung (SECOND-ORDER-M5).
-fn pose_keys(w: &World, seat: usize, shoulder: i32, elbow: i32) -> u8 {
+fn pose_keys(w: &World, seat: usize, shoulder: i32, elbow: i32) -> u16 {
     let Some([(u, u0), (f, f0)]) = arm(w, seat) else { return 0 };
     let face = facing(w, seat) as i64;
     let want = V2::new(cos_deg(shoulder) * face as i32, sin_deg(shoulder));
-    let steer = |err: i64, speed: i64, plus: u8, minus: u8| -> u8 {
+    let steer = |err: i64, speed: i64, plus: u16, minus: u16| -> u16 {
         // Aim to close a tenth of the error each tick, at most 0.12 rad/tick.
         let aim = (err / 10).clamp(-120, 120);
         if speed < aim - 8 {
@@ -183,7 +183,7 @@ impl Pilot for Pose {
 
 /// A repeating sequence of keys, closing the distance when out of reach.
 struct Looper {
-    steps: Vec<(u8, u32)>,
+    steps: Vec<(u16, u32)>,
     drift: bool,
     at: usize,
     left: u32,

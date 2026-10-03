@@ -87,7 +87,11 @@ impl World {
     /// and the part is not a hand on the hilt of that same sword (D11). An
     /// opponent's blade cuts a hand (Q14). `cuts` reads this; so do the tests.
     pub fn may_cut(&self, si: usize, pi: usize) -> bool {
-        self.held(si) && !self.holds_own_sword(&self.parts[pi], self.swords[si].fighter)
+        let part = &self.parts[pi];
+        let owner = self.swords[si].fighter;
+        // A dodging fighter cannot be cut, and its blade cuts nothing.
+        let dodged = part.attached && self.dodging(part.fighter as usize);
+        self.held(si) && !self.dodging(owner as usize) && !dodged && !self.holds_own_sword(part, owner)
     }
 
     /// A hand on the hilt of its own fighter's sword (D11).

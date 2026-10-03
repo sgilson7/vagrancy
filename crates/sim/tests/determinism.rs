@@ -11,7 +11,7 @@ fn versus(seed: u64) -> World {
 }
 
 fn random_input(r: &mut Rng) -> Input {
-    Input(r.below(64) as u8)
+    Input(r.below(64) as u16)
 }
 
 #[test]
