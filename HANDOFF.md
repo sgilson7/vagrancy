@@ -1,41 +1,70 @@
 # Handoff
 
-Written for a reader with none of this session's context. It is rewritten at
-every deploy gate.
+Written for a reader with none of this session's context, and rewritten at every deploy gate. This one is for gate 6, the MVP.
 
 ## 1. What this is
 
-Vagrancy is a two-player physics sword-fighting game for the browser. Each player drives only the shoulder and elbow of a sword arm, plus two slow-step keys. Everything in a fight is integer physics in `crates/sim`; a wasm shim carries the numbers to a canvas page that draws them. It ships as static files on GitHub Pages at https://sgilson7.github.io/vagrancy/, built by `.github/workflows/deploy.yml`. `PLANNING-BRIEF.md` says what is being made, and `PLAN.md` (approved 2026-10-03) says how; the plan wins where they disagree.
+Vagrancy is a two-player physics sword-fighting game for the browser, at https://sgilson7.github.io/vagrancy/. Each player drives the shoulder and elbow of a sword arm with four keys; two more keys run on rigid legs. Everything in a fight is integer physics in `crates/sim`: particles and sticks relaxed in a fixed order, a blade swept against every part, a cut that drops whatever lies beyond it. A wasm shim carries frames to a canvas page that draws them and decides nothing. There is a road of eight opponents driven by pilots, versus at one keyboard, online play between two browsers with no server of ours, replays, and a save file. `PLANNING-BRIEF.md` is the brief; `PLAN.md` (approved 2026-10-03) is the plan, and it wins where the two disagree.
 
-## 2. Load-bearing rules, and what breaks silently
+## 2. Load-bearing rules, and what breaks silently when each is broken
 
-- **No float, no `HashMap`, no clock in `sim`.** Two browsers disagree and the match desyncs a minute later. Guard: `crates/sim/tests/boundary.rs`.
-- **Every string a player reads is in `data/copy.en.json`, exactly.** A paraphrase passes review and breaks the voice. Guard: `crates/content/tests/copy.rs`, and the gate's every-visible-line check.
-- **Colors live only in `data/palette.json`, and none is red.** Guard: `crates/content/tests/palette.rs`.
-- **A swing adds momentum from nowhere.** "Fixing" it kills the game's movement. Guard: H5, from M2.
-- **The agent pushes only on Sam's explicit ask.** Sam gave that ask for this run (`PLAN.md`, Approval).
+- **Integers only in `sim`, one `Rng`, no clock.** Two browsers stop agreeing and an online match stops on a desync. Guards: `crates/sim/tests/boundary.rs`; the gate's native-against-wasm checksum.
+- **Every correction inside a fighter is an exact pair shift.** Momentum appears from nowhere where it should not, and H5 stops meaning anything. Guard: H5c, momentum exactly zero without a motor.
+- **The arm motor pushes the arm and sword with no push back on the torso (D9).** "Fixing" it kills movement. Guard: H5.
+- **`SIM_VERSION` goes up with any change to what the simulation does,** with the golden replay and `testing/replays/match.replay` re-recorded (`cargo run -p lab -- golden`, `-- fixture-match`). Otherwise old replays play a different match.
+- **Strings come only from `data/copy.en.json`.** Guards: `crates/content/tests/copy.rs`; every gate screen checks that each visible line is a copy string.
+- **Colors come only from `data/palette.json`, never in the red band.** Guards: `palette.rs`; the gate's canvas-pixel check.
+- **A pilot returns an `Input`.** If it reaches into the world, it can do what a player cannot.
 
 ## 3. The shape of the code
 
-- `crates/sim`: the fight. `crates/content`: data and copy.
-- `crates/pilot`: opponents. `crates/net`: lockstep.
-- `crates/wasm`: the shim. `crates/lab`: the bench.
-- `web/`: the page. `packaging/`: the build. `testing/drive.py`: the gate.
+| crate | holds |
+|---|---|
+| `sim` | `fx` (12-bit fixed point), `world` (solver, balance, motors, traction), `contact` (the sweep), `fight` (cuts, clash, ink, rounds), `replay`, `frame` |
+| `content` | `data/*.json` into setups; `copy`, `messages` (which sentence for which outcome), `road`, `save` |
+| `pilot` | six kinds of opponent, `duel` |
+| `net` | `Session` (two-seat lockstep), `wire`, `Loopback` |
+| `wasm` | the shim: `Game`, `Road`, `Online` |
+| `lab` | recon commands, `ladder`, `golden`, `fixture-match`, `duel`, `trace` (not shipped) |
+
+The page is `web/`: `app.js` (screens and the clock), `draw.js`, `keys.js`, `files.js`, `music.js`, `rtc.js`, `config.js`, `echo.html`. The gate is `testing/drive.py`; the online walk is `testing/online.py`.
 
 ## 4. The commands
 
-`make test`, `make web`, `make test-ui`, `make count`. For the live gate: `ORIGIN=https://sgilson7.github.io/vagrancy .venv-test/bin/python testing/drive.py chromium firefox webkit`.
+- `make test`, `make web`, `make test-ui`, `make test-ui-online`, `make referee`, `make ladder`, `make count`.
+- The live gate: `ORIGIN=https://sgilson7.github.io/vagrancy .venv-test/bin/python testing/drive.py chromium firefox webkit`.
+- To feel it: `make serve`, then `?tuning=0|1|2`.
 
 ## 5. What will bite within the hour
 
-- `index.html` must hold only `{{key}}` tokens.
-- The wasm-bindgen CLI must be exactly the version pinned in `Cargo.lock` (0.2.127).
-- A laptop build and the CI build produce different content hashes; compare commits.
+- `make ladder` takes about 10 minutes. `the_road_is_ordered_by_the_yardstick` reads `analysis/ladder.md` and fails if its fingerprint is stale: pilots, the set of stops and `SIM_VERSION`, but not the road's order.
+- WebKit online play works on macOS, but not on CI's Linux runner, so CI's online walk runs Chromium and Firefox only.
+- Replays play back in real time, so a long fixture makes a slow gate.
+- zsh does not word-split `$var`; use `${=var}` in shell helpers.
 
-## 6. Mistakes that cost time
+## 6. Mistakes that cost time, by system
 
-- **Packaging:** a `{{key}}` inside an HTML comment was filled as a copy key.
+- **Physics:**
+  - knees that folded, then feet that splayed (friction belongs in the projection);
+  - a motor too weak to pogo, then a planted push that went into the ground (the blocked-joint drive);
+  - a hinge that asked a piece for its fighter's facing.
+- **Cuts:**
+  - every fighter cutting itself (own blade now point-first only);
+  - blades crossed in an X (a clash is now a block);
+  - blades that then glued together.
+- **Numbers:** an `as i32` cast that wrapped silently (`fx::narrow` now panics).
+- **Packaging:** a stylesheet truncated by `open(p, "w")` before it was read.
+- **Drawing:** ink marks drawn under the bodies, where no one saw them and no test could fail on them.
+- **Pilots:**
+  - a pose control that swung;
+  - a yardstick killed by a scarecrow's still sword (the cut floor is now 6 cm/tick).
 
 ## 7. The single next action
 
-Build M1: `fx.rs` (done), `rng.rs`, the body, the solver, replay v1.
+Sam plays the deployed build. In particular:
+- the three tunings (`?tuning=0|1|2`);
+- self-cuts (`SECOND-ORDER-M3` row 2);
+- the road's order against the ladder (`SECOND-ORDER-M5` rows 8 and 9);
+- one online match across two networks (`SECOND-ORDER-M4` row 7).
+
+Then file `PLAYTEST-M5.md`, with replays in `testing/replays/`.

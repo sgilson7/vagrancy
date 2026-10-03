@@ -1,0 +1,4 @@
+{
+  "_about": "The order of the road. It is a measurement: make ladder plays the yardstick against every stop and writes analysis/ladder.md, and if its win rate rises from one stop to the next, the order here changes (PLANNING-BRIEF M5). Sam's play outranks the ladder.",
+  "stops": ["windmill", "scarecrow", "thresher", "sampler", "reader", "ferryman", "gatekeeper", "vaulter"]
+}

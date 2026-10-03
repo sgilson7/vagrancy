@@ -419,6 +419,77 @@ def the_online_lobby_says_only_its_own_words(page, name):
     return fails
 
 
+@check
+def the_road_reads_its_numbers_from_the_pilots_and_its_first_fight_starts(page, name):
+    fails = []
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector('[data-copy="road.intro"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (road)")
+    does = page.inner_text('[data-stop="thresher"] [data-copy="opponents.thresher.does"]')
+    if "1.5 seconds" not in does:
+        fails.append(f"{name}: the thresher's introduction does not state its pause from the pilot data: {does!r}")
+    stops = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    locked = page.locator(f'[data-stop="{stops[-1]}"] [data-copy="road.locked"]').count()
+    if locked != 1:
+        fails.append(f"{name}: the last stop is not locked on a fresh road")
+    page.click(f'[data-stop="{stops[0]}"] [data-copy="road.fight.label"]')
+    page.wait_for_selector('[data-copy="hud.round"]')
+    page.wait_for_timeout(500)
+    fails += every_visible_line_is_a_copy_string(page, name + " (road fight)")
+    click_copy(page, "results.to_road.label")
+    page.wait_for_selector('[data-copy="road.intro"]')
+    click_copy(page, "menu.back.label")
+    if not fails:
+        print(f"ok: {name}: the road states its numbers from the pilot data, locks what is ahead, and its first fight starts")
+    return fails
+
+
+@check
+def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
+    fails = []
+    click_copy(page, "menu.settings.label")
+    page.wait_for_selector('#save')
+    with page.expect_download() as d:
+        click_copy(page, "settings.save.download.label")
+    path = tmp / f"vagrancy-gate-{name}.save.json"
+    d.value.save_as(path)
+    data = json.loads(path.read_text())
+    if data.get("format") != "vagrancy.save" or data["state"]["road"]["cleared"] != []:
+        fails.append(f"{name}: the downloaded save is not a fresh save: {data}")
+    # The same file with the first stop cleared, loaded back.
+    first = json.loads((ROOT / "data" / "road.json").read_text())["stops"][0]
+    data["state"]["road"]["cleared"] = [first]
+    path.write_text(json.dumps(data))
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "settings.save.load.label")
+    fc.value.set_files(str(path))
+    page.wait_for_selector('[data-copy="settings.save.loaded"]')
+    click_copy(page, "menu.back.label")
+    click_copy(page, "menu.road.label")
+    if page.locator(f'[data-stop="{first}"] [data-copy="road.cleared"]').count() != 1:
+        fails.append(f"{name}: after loading a save with the first stop cleared, the road does not say so")
+    click_copy(page, "menu.back.label")
+    # A save from a newer version, and a file that is not a save.
+    for content, key in ((json.dumps({**data, "version": 9}), "settings.save.error.newer"), ("not a save", "settings.save.error.format")):
+        bad = tmp / f"vagrancy-gate-{name}.bad.json"
+        bad.write_text(content)
+        click_copy(page, "menu.settings.label")
+        with page.expect_file_chooser() as fc:
+            click_copy(page, "settings.save.load.label")
+        fc.value.set_files(str(bad))
+        page.wait_for_selector(f'[data-copy="{key}"]')
+        fails += every_visible_line_is_a_copy_string(page, f"{name} ({key})")
+        click_copy(page, "menu.back.label")
+    # And the convenience copy survives a reload.
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if page.evaluate("window.vagrancy.save().state.road.cleared") != [first]:
+        fails.append(f"{name}: the road progress did not survive a reload")
+    if not fails:
+        print(f"ok: {name}: a save downloads, loads back with its progress, survives a reload, and newer or foreign files are refused by name")
+    return fails
+
+
 def walk(browser, name):
     fails = []
     ctx, page, problems, offsite = open_page(browser)

@@ -70,11 +70,14 @@ pub const TUNINGS: [Tuning; 3] = [
 pub const DEFAULT_TUNING: u8 = 2;
 
 /// A blade cuts only when its touching point moves at least this fast against
-/// the part, cm per tick (4 cm/tick is 240 cm/s). Without it every run of
-/// random input, and a fighter standing still, cut itself within a second
-/// (`lab self-cuts`). PLANNING-BRIEF Part C made this Sam's question; the
-/// agent set it so the game is playable and carries it (SECOND-ORDER-M3).
-pub const MIN_CUT_SPEED: Fx = Fx::int(4);
+/// the part, cm per tick (6 cm/tick is 360 cm/s). Without a floor every run
+/// of random input, and a fighter standing still, cut itself within a second
+/// (`lab self-cuts`). At 4 it equalled the run speed, so a fighter running
+/// into a still sword was cut by it, and the scarecrow, "here so that your
+/// first cut costs you nothing", cost the yardstick most of its matches
+/// (SECOND-ORDER-M5). A swing's tip moves at about 20. PLANNING-BRIEF Part C
+/// made this Sam's question; the agent set it and carries it.
+pub const MIN_CUT_SPEED: Fx = Fx::int(6);
 /// A fighter's own blade needs more speed to cut that fighter. *(M3.0)*
 pub const MIN_SELF_CUT_SPEED: Fx = Fx::int(12);
 /// The share of the cutting edge, from the tip, with which a fighter's own

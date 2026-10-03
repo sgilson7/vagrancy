@@ -52,3 +52,26 @@ Reliance, revisited: "a fast blade meeting a limb" and "cutting a body" stay **l
 | new strings | awaiting Sam | 1 | | | |
 
 Reliance, revisited: "lockstep for two" was **medium-high for the port, low for the new parts**. The new parts passed their tests on the first run; the surprises were in the browser (Firefox's mDNS on loopback) and in my own arithmetic (row 4).
+
+## After M5 (2026-10-03): MVP
+
+| # | milestone | deliverables | tests | commit | state |
+|---|---|---|---|---|---|
+| M0–M3 | foundation; a body; a free swing; cuts and a match | (see above) | 60 | 7d25e6d | done; gates 1–4 live |
+| M4 | Lockstep, on a loopback and then between two browsers | Session, Loopback, rtc.js, online lobby, referee | 68 (+8) | 12baf50 | done; gate 5 live at 1c26c050 |
+| M5 | The road (MVP complete) | six pilot kinds and the yardstick, pilots.json, road.json in ladder order, make ladder, the road screen, introductions filled from pilot data, save v1 with the labeled convenience copy | 77 (+9) | this commit | done once gate 6 is live |
+| notebook | rows open / done / the human's | 3 / 47 / 19 | | | |
+| new strings | awaiting Sam | 1 | | | |
+
+### The MVP checklist (PLANNING-BRIEF 0.3), walked
+
+1. **Four keys drive the shoulder and elbow of the sword arm, and no key drives any other joint.** Yes. `only_arm_bits_drive_a_joint_motor`. The step keys move a fighter only through the ground (`the_step_bits_move_a_fighter_only_through_the_ground`; Q9).
+2. **The sword is solid against the ground and the other sword; a planted sword lifts the fighter; a swing in the air adds momentum; both are tests with numbers.** Yes. `a_planted_sword_lifts_the_fighter` (591 cm measured); H5 (140 mass·cm/tick measured); `two_blades_never_pass_through_each_other`; `a_blade_never_ends_a_tick_below_the_ground`.
+3. **A blade cuts a part where it touched, and what lies beyond becomes a separate falling object.** Yes. H2, H2b, H3.
+4. **A round ends on a neck or head cut, a heart cut, or zero ink, and the result says which.** Yes. The round-end tests and `the_result_names_the_cut_that_ended_the_round`; the gate shows it.
+5. **Nothing drawn for ink, cuts or fighters is red, and no string breaks `TONE.md`; both are lints.** Yes. `palette.rs`, `copy.rs`, and the gate's canvas-pixel check.
+6. **A road of opponents ordered against one yardstick, and a save file to download and load.** Yes. `the_road_is_ordered_by_the_yardstick` against `analysis/ladder.md` (200 matches a stop); the save checks in the gate.
+7. **Versus at one keyboard, and between two browsers on two networks with no server of Sam's.** One keyboard: yes. Two browsers: yes, two tabs in three engines and a three-minute referee match. **Two networks: not walked by the agent.** That needs Sam and a friend (SECOND-ORDER-M4 row 7).
+8. **Any match downloads as a replay and plays back to the same final checksum in Chromium, Firefox and WebKit.** Yes. The gate, every deploy, both locally and live.
+9. **A music track from the player's own device loops during fights; no audio ships without a `LICENSES.md` row.** Yes. The gate's music check; `licenses.rs` and the packaging guard.
+10. **Static files on GitHub Pages, in its own repository.** Yes. `sgilson7/vagrancy`, deployed by Actions.

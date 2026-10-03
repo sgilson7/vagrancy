@@ -30,3 +30,7 @@ kbd { font: inherit; font-weight: bold; }
 .keys p { margin: 2px 0; }
 button.bind { min-width: 3em; margin: 0 0 0 8px; padding: 2px 8px; }
 button.bind.listening { outline: 3px solid var(--focus); }
+.stop { border-top: 1px solid var(--ground-line); padding: 8px 0 4px; max-width: 75ch; }
+.stop h3 { font-weight: normal; margin: 4px 0 0; font-size: 1.2em; }
+.stop h4 { font-weight: normal; font-style: italic; margin: 8px 0 0; }
+.stop p { margin: 2px 0; }

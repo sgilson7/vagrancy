@@ -206,3 +206,84 @@ impl Online {
         self.s.recording().map(|r| r.bytes()).unwrap_or_default()
     }
 }
+
+/// A stop on the road: the player in seat 0, a pilot in seat 1 (D16).
+#[wasm_bindgen]
+pub struct Road {
+    rec: Recording,
+    pilot: Box<dyn pilot::Pilot>,
+    last: Input,
+    opponent: String,
+}
+
+#[wasm_bindgen]
+impl Road {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32, tuning: u8, opponent: &str) -> Road {
+        Road {
+            rec: Recording::new(content::setup::road(seed as u64, tuning, opponent)),
+            pilot: pilot::build(&content::road::pilot(opponent)),
+            last: Input::NONE,
+            opponent: opponent.into(),
+        }
+    }
+    /// One tick: the pilot sees the player's last input and the world, and
+    /// answers with an input of its own.
+    pub fn step(&mut self, mine: u8, _other: u8) {
+        self.pilot.observe(self.last);
+        let theirs = self.pilot.input(&self.rec.world, 1);
+        self.rec.step([Input(mine), theirs]);
+        self.last = Input(mine);
+    }
+    pub fn frame(&self) -> String {
+        serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    pub fn phase_text(&self, _opponent: &str) -> String {
+        content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &self.opponent }).to_string()
+    }
+    pub fn checksum(&self) -> String {
+        format!("{:016x}", self.rec.world.checksum())
+    }
+    pub fn tick(&self) -> u32 {
+        self.rec.world.tick
+    }
+    pub fn is_replay(&self) -> bool {
+        false
+    }
+    pub fn done(&self) -> bool {
+        false
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.rec.bytes()
+    }
+    pub fn recorded_checksum(&self) -> String {
+        String::new()
+    }
+    /// The match is over and the player won it.
+    pub fn won(&self) -> bool {
+        matches!(self.rec.world.phase, sim::fight::Phase::MatchOver { .. }) && self.rec.world.wins[0] > self.rec.world.wins[1]
+    }
+}
+
+/// The road, in order, with the values each introduction's placeholders
+/// take, from the pilot data.
+#[wasm_bindgen]
+pub fn road_json() -> String {
+    let stops: Vec<serde_json::Value> = content::road::stops()
+        .iter()
+        .map(|id| json!({ "id": id, "numbers": content::road::intro_numbers(id) }))
+        .collect();
+    serde_json::Value::Array(stops).to_string()
+}
+
+/// A new save file's state, as JSON.
+#[wasm_bindgen]
+pub fn save_fresh() -> String {
+    content::save::encode(&content::save::fresh())
+}
+
+/// Read a save file: its normalized text, or the sentence that refuses it.
+#[wasm_bindgen]
+pub fn save_read(text: &str) -> Result<String, String> {
+    content::save::decode(text).map(|s| content::save::encode(&s)).map_err(|e| e.message().to_string())
+}

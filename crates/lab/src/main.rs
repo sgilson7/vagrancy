@@ -424,6 +424,107 @@ fn fixture_match() {
     println!("{said}");
 }
 
+/// M5.0: headless ticks per second, and what the search pilot costs a tick.
+fn recon_m5() {
+    let mut w = World::new(content::setup::versus(1, sim::balance::DEFAULT_TUNING));
+    let mut r = sim::rng::Rng::new(3);
+    let t0 = std::time::Instant::now();
+    let n = 30_000u32;
+    for _ in 0..n {
+        w.step([Input(r.below(64) as u8), Input(r.below(64) as u8)]);
+    }
+    let per_s = n as f64 / t0.elapsed().as_secs_f64();
+    println!("headless: {per_s:.0} ticks a second, two fighters, random input (native release)");
+    for id in ["yardstick", "reader"] {
+        let spec = content::road::pilot(id);
+        let mut p = pilot::build(&spec);
+        let mut w = World::new(content::setup::road(1, sim::balance::DEFAULT_TUNING, "scarecrow"));
+        let t0 = std::time::Instant::now();
+        let n = 1_200u32;
+        for _ in 0..n {
+            let a = p.input(&w, 0);
+            w.step([a, Input::NONE]);
+        }
+        let us = t0.elapsed().as_secs_f64() * 1e6 / n as f64;
+        println!("{id}: {us:.0} µs a tick, its own step included (native release; a tick has 16,667 µs)");
+    }
+}
+
+/// Play the yardstick against every stop on the road and write
+/// analysis/ladder.md. `lab ladder [matches]`.
+fn ladder(args: &[String]) {
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(200);
+    let stops = content::road::stops();
+    let max_ticks = 60 * 120;
+    let t0 = std::time::Instant::now();
+    let rows: Vec<(String, u32, u32, u64)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = stops
+            .iter()
+            .map(|id| {
+                let id = id.clone();
+                scope.spawn(move || {
+                    let (mut won, mut unfinished, mut ticks) = (0u32, 0u32, 0u64);
+                    for seed in 0..matches {
+                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
+                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(&id))];
+                        let o = pilot::duel(content::setup::road(seed, sim::balance::DEFAULT_TUNING, &id), &mut pilots, max_ticks);
+                        ticks += o.ticks as u64;
+                        if !o.finished {
+                            unfinished += 1;
+                        } else if o.wins[0] > o.wins[1] {
+                            won += 1;
+                        }
+                    }
+                    (id, won, unfinished, ticks)
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let mut md = format!(
+        "# Ladder\n\nThe yardstick pilot against every stop on the road, {matches} seeded matches each, written by `make ladder` \
+         ({:.0} s). A match unfinished after {} ticks is not a win. The road is ordered by this column: the yardstick's win \
+         rate should not rise from one stop to the next (`the_road_is_ordered_by_the_yardstick`).\n",
+        t0.elapsed().as_secs_f64(), max_ticks
+    );
+    md += &format!("\nfingerprint {} (data/pilots.json, the set of stops, SIM_VERSION {})\n\n", content::road::ladder_fingerprint(), sim::SIM_VERSION);
+    md += "| stop | yardstick wins | unfinished | mean ticks |\n|---|---|---|---|\n";
+    for (id, won, unf, ticks) in &rows {
+        md += &format!("| {id} | {won} of {matches} ({:.0} %) | {unf} | {} |\n", 100.0 * *won as f64 / matches as f64, ticks / matches);
+    }
+    print!("{md}");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.md");
+    std::fs::write(path, md).unwrap();
+}
+
+/// One road match between the yardstick (seat 0) and a stop, told as events.
+fn duel_trace(args: &[String]) {
+    use sim::fight::Event;
+    let id = args.first().map(String::as_str).unwrap_or("scarecrow");
+    let seed: u64 = args.get(1).and_then(|a| a.parse().ok()).unwrap_or(0);
+    let names = w_names();
+    let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
+    let mut ps: [Box<dyn pilot::Pilot>; 2] = [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(id))];
+    let mut last = [Input::NONE; 2];
+    while w.tick < 4000 && !matches!(w.phase, sim::fight::Phase::MatchOver { .. }) {
+        ps[0].observe(last[1]);
+        ps[1].observe(last[0]);
+        let i = [ps[0].input(&w, 0), ps[1].input(&w, 1)];
+        w.step(i);
+        last = i;
+        for e in &w.events {
+            match e {
+                Event::Cut { seat, part, by, spilled, .. } => println!("{:>5}: seat {by}'s blade cut seat {seat}'s {}{}", w.tick, names[*part as usize], if *spilled { "" } else { " (dropped piece)" }),
+                Event::RoundEnd { result } => println!("{:>5}: round over: {:?}; gap {} cm", w.tick, result, pilot::gap(&w, 0)),
+                _ => {}
+            }
+        }
+        if w.tick % 120 == 0 {
+            println!("{:>5}: gap {} cm, ink {:?}", w.tick, pilot::gap(&w, 0), w.fighters.iter().map(|f| f.as_ref().map(|f| f.ink)).collect::<Vec<_>>());
+        }
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -440,6 +541,9 @@ fn main() {
         Some("energy") => energy(),
         Some("self-cuts") => self_cuts(),
         Some("fixture-match") => fixture_match(),
+        Some("recon-m5") => recon_m5(),
+        Some("ladder") => ladder(&args[1..]),
+        Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),
         _ => eprintln!("usage: lab stand [ticks]"),

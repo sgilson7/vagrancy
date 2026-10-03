@@ -3,7 +3,8 @@
 // data/copy.en.json, which reaches it through the wasm module; which sentence
 // to show for an outcome is chosen by core (content::messages).
 import init, {
-  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online,
+  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road,
+  road_json, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -20,6 +21,7 @@ let PALETTE = null;
 let CONTROLS = null;
 let ACTION_BITS = {};
 let BINDINGS = null; // { solo, left, right }: action -> KeyboardEvent.code
+let SAVE = null; // the save file's parsed contents: { format, version, state }
 
 // Look up a dotted key and fill its placeholders. `{game}` and `{hash}` are
 // always available; everything else is passed in by the caller from core.
@@ -180,6 +182,7 @@ function menu() {
   delete document.body.dataset.phase;
   const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, {}, { class: 'desc' }));
   show(
+    item('menu.road', road),
     item('menu.local', local),
     item('menu.online', online),
     item('menu.practice', practice),
@@ -261,6 +264,102 @@ function seed() {
   // A fresh match gets a fresh spawn jitter. The seed travels in the replay,
   // so playback does not depend on this.
   return (Date.now() & 0x7fffffff) >>> 0;
+}
+
+// --- the road (D16) ----------------------------------------------------------------
+
+function road() {
+  stop();
+  const stops = JSON.parse(road_json());
+  const cleared = new Set(SAVE.state.road.cleared);
+  const next = stops.find((s) => !cleared.has(s.id));
+  const cards = stops.map((s) => {
+    const o = (k) => `opponents.${s.id}.${k}`;
+    const mid = { opponent_mid: t(o('name_mid')) };
+    let action;
+    if (cleared.has(s.id)) action = [say('road.cleared', mid, { class: 'desc' }), button('road.fight.label', () => fight(s.id), mid)];
+    else if (next && next.id === s.id) action = [button('road.fight.label', () => fight(s.id), mid)];
+    else action = [say('road.locked', {}, { class: 'desc' })];
+    return el('section', { class: 'stop', 'data-stop': s.id },
+      el('h3', { 'data-copy': o('name') }, t(o('name'))),
+      say(o('place'), {}, { class: 'desc' }),
+      el('h4', { 'data-copy': 'road.does_heading' }, t('road.does_heading')),
+      say(o('does'), s.numbers),
+      el('h4', { 'data-copy': 'road.try_heading' }, t('road.try_heading')),
+      say(o('try'), s.numbers),
+      ...action);
+  });
+  show(say('road.intro'), ...(next ? [] : [say('road.end')]), ...cards, button('menu.back.label', menu));
+}
+
+function fight(id) {
+  READY = false;
+  let won = false;
+  const watch = matchWatcher(id, () => [el('div', { class: 'actions' },
+    button('results.again.label', () => fight(id)),
+    button('results.to_road.label', road),
+    button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))]);
+  show(watch.panel, el('div', { class: 'actions' }, button('results.to_road.label', road)));
+  const g = new Road(seed(), tuning(), id);
+  start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+    watch.tick(f);
+    if (!won && game && game.won && game.won()) {
+      won = true;
+      if (!SAVE.state.road.cleared.includes(id)) SAVE.state.road.cleared.push(id);
+      persist();
+    }
+  });
+}
+
+// --- the save file (D15) ----------------------------------------------------------------
+
+const AUTOSAVE = 'vagrancy.autosave';
+
+// Write the convenience copy. Core reads it back first, so a state the page
+// got wrong is never kept.
+function persist() {
+  SAVE.state.bindings = BINDINGS;
+  try {
+    const text = save_read(JSON.stringify(SAVE));
+    localStorage.setItem(AUTOSAVE, text);
+  } catch (e) { console.warn(e); }
+}
+
+function restore() {
+  let text = null;
+  try { text = localStorage.getItem(AUTOSAVE); } catch (e) { /* storage off */ }
+  try {
+    SAVE = JSON.parse(save_read(text || save_fresh()));
+  } catch (e) {
+    SAVE = JSON.parse(save_fresh());
+  }
+  BINDINGS = SAVE.state.bindings;
+}
+
+let SAVE_NOTE = null; // { key, vars } after a load
+
+function saveSection() {
+  return el('section', { id: 'save' },
+    el('h2', { 'data-copy': 'settings.save.title' }, t('settings.save.title')),
+    el('div', { class: 'actions' },
+      button('settings.save.download.label', () => download(save_read(JSON.stringify(SAVE)), 'vagrancy.save.json', 'application/json')),
+      button('settings.save.load.label', async () => {
+        const file = await pick('.json,application/json');
+        if (!file) return;
+        try {
+          SAVE = JSON.parse(save_read(new TextDecoder().decode(file.bytes)));
+          BINDINGS = SAVE.state.bindings;
+          persist();
+          SAVE_NOTE = { key: 'settings.save.loaded', vars: {} };
+        } catch (err) {
+          SAVE_NOTE = JSON.parse(err);
+        }
+        settings();
+      })),
+    say('settings.save.download.desc', {}, { class: 'desc' }),
+    SAVE_NOTE ? say(SAVE_NOTE.key, SAVE_NOTE.vars, { role: 'status', id: 'save-note' }) : null,
+    say('settings.save.autosave', {}, { class: 'desc' }),
+  );
 }
 
 // --- online (D14) -------------------------------------------------------------------
@@ -462,7 +561,7 @@ function beginOnline(net) {
 
 function settings() {
   stop();
-  show(musicSection(), keysSection(), button('menu.back.label', menu));
+  show(musicSection(), keysSection(), saveSection(), button('menu.back.label', menu));
 }
 
 let REMEMBER = false;
@@ -480,7 +579,11 @@ function musicSection() {
     await music.setRemember(REMEMBER);
   });
   const vol = el('input', { type: 'range', id: 'music-volume', min: '0', max: '100', value: String(Math.round(state.volume * 100)) });
-  vol.addEventListener('input', () => music.setVolume(Number(vol.value) / 100));
+  vol.addEventListener('input', () => {
+    music.setVolume(Number(vol.value) / 100);
+    SAVE.state.options.music_volume = Number(vol.value);
+    persist();
+  });
   return el('section', { id: 'music' },
     el('h2', { 'data-copy': 'settings.music.title' }, t('settings.music.title')),
     say('settings.music.desc'),
@@ -500,21 +603,10 @@ function musicSection() {
   );
 }
 
-// Key bindings. The convenience copy lives in this browser's storage; M5's
-// save file carries them too.
-const KEYS_STORE = 'vagrancy.keys';
-
-function loadBindings() {
-  const defaults = { solo: { ...CONTROLS.solo }, left: { ...CONTROLS.left }, right: { ...CONTROLS.right } };
-  try {
-    const kept = JSON.parse(localStorage.getItem(KEYS_STORE) || 'null');
-    if (kept && kept.solo && kept.left && kept.right) return kept;
-  } catch (e) { /* storage off: the defaults stand */ }
-  return defaults;
-}
-
+// Key bindings live in the save file (D15), and the save's convenience copy
+// in this browser.
 function saveBindings() {
-  try { localStorage.setItem(KEYS_STORE, JSON.stringify(BINDINGS)); } catch (e) { /* storage off */ }
+  persist();
 }
 
 let KEY_CONFLICT = null;
@@ -538,7 +630,7 @@ function keysSection() {
     group('left', 'fighters.left.name'),
     group('right', 'fighters.right.name'),
     button('settings.keys.reset.label', () => {
-      BINDINGS = { solo: { ...CONTROLS.solo }, left: { ...CONTROLS.left }, right: { ...CONTROLS.right } };
+      BINDINGS = JSON.parse(save_fresh()).state.bindings;
       KEY_CONFLICT = null;
       saveBindings();
       settings();
@@ -578,13 +670,14 @@ async function main() {
   PALETTE = JSON.parse(palette_json());
   CONTROLS = JSON.parse(controls_json());
   ACTION_BITS = Object.fromEntries(N.actions);
-  BINDINGS = loadBindings();
+  restore();
   listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
   music.subscribe(({ error }) => {
     MUSIC_ERROR = error || null;
     if (document.getElementById('music')) settings();
   });
+  music.setVolume(SAVE.state.options.music_volume / 100);
   const kept = await music.remembered();
   if (kept) {
     REMEMBER = true;
@@ -600,6 +693,7 @@ async function main() {
     recordedChecksum: () => game && game.recorded_checksum(),
     music: () => music.current(),
     phase: () => curFrame && curFrame.phase,
+    save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };
   const m = location.hash.match(/^#room=([A-Z0-9]{4,12})$/);

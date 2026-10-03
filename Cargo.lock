@@ -27,6 +27,7 @@ dependencies = [
 name = "content"
 version = "0.1.0"
 dependencies = [
+ "pilot",
  "serde",
  "serde_json",
  "sim",

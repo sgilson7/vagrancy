@@ -1,0 +1,12 @@
+{
+  "_about": "Each opponent's pilot (D16). A pilot returns an Input and nothing else. The numbers an introduction states ({pause_s}, {reach_pct}, {horizon_ms}, {reaction_ms}) are derived from these by pilot::numbers and never typed. The yardstick is not on the road; make ladder plays it against every stop.",
+  "scarecrow": { "kind": "still" },
+  "gatekeeper": { "kind": "pose", "shoulder": 10, "elbow": 10 },
+  "thresher": { "kind": "loop", "pattern": "overhead", "pause_ticks": 90 },
+  "ferryman": { "kind": "machine", "script": "late_heavy", "sword_len": 125 },
+  "vaulter": { "kind": "machine", "script": "vault" },
+  "windmill": { "kind": "loop", "pattern": "spin", "drift": true },
+  "sampler": { "kind": "replayer", "first_round": "still", "mirror": true },
+  "reader": { "kind": "search", "horizon_ticks": 18, "reaction_ticks": 12, "branches": 9, "period": 6 },
+  "yardstick": { "kind": "search", "horizon_ticks": 20, "reaction_ticks": 10, "branches": 11, "period": 5 }
+}
