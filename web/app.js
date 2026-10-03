@@ -1,6 +1,7 @@
 // The page. It draws numbers core sent and decides nothing: no physics, no
 // contact, no copy of a constant (CLAUDE.md). Every word it shows comes from
-// data/copy.en.json, which reaches it through the wasm module.
+// data/copy.en.json, which reaches it through the wasm module; which sentence
+// to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game,
 } from './pkg/vagrancy_wasm.js';
@@ -17,6 +18,7 @@ let N = null; // numbers from core
 let PALETTE = null;
 let CONTROLS = null;
 let ACTION_BITS = {};
+let BINDINGS = null; // { solo, left, right }: action -> KeyboardEvent.code
 
 // Look up a dotted key and fill its placeholders. `{game}` and `{hash}` are
 // always available; everything else is passed in by the caller from core.
@@ -44,6 +46,11 @@ function el(tag, attrs = {}, ...kids) {
 // A paragraph holding one copy string; `data-copy` names it for the gate.
 const say = (key, vars, attrs = {}) => el('p', { 'data-copy': key, ...attrs }, t(key, vars));
 const button = (key, onclick, vars) => el('button', { type: 'button', 'data-copy': key, on: { click: onclick } }, t(key, vars));
+// A value filled from data, not a sentence: a key's name. The gate's copy
+// check skips `data-fill` text, as it skips the values inside a placeholder.
+const fillText = (text) => el('kbd', { 'data-fill': '' }, text);
+// A sentence chosen by core: { key, vars }.
+const sayChosen = (msg, attrs = {}) => say(msg.key, msg.vars, attrs);
 
 function show(...nodes) {
   const s = $('screen');
@@ -51,12 +58,14 @@ function show(...nodes) {
   s.hidden = false;
 }
 
-// Placeholders for the solo keys, by action: {key.shoulder_up} and so on.
+// Placeholders for one seat's keys, by action: {key.shoulder_up} and so on.
 function keyVars(binding) {
   const v = {};
   for (const [action, code] of Object.entries(binding)) v[`key.${action}`] = keyName(code);
   return v;
 }
+// "the bound keys for that seat, joined in binding order" (_placeholders).
+const keyList = (binding) => N.actions.map(([a]) => keyName(binding[a])).join(', ');
 
 // --- the loop ---------------------------------------------------------------------
 
@@ -76,6 +85,7 @@ function start(g, seatFn, tickFn = null) {
   curFrame = JSON.parse(game.frame());
   prevFrame = null;
   acc = 0;
+  draw.reset();
   $('stage').hidden = false;
   music.fight(!game.is_replay());
 }
@@ -83,6 +93,7 @@ function start(g, seatFn, tickFn = null) {
 function stop() {
   game = null;
   $('stage').hidden = true;
+  $('hud').hidden = true;
   music.fight(false);
 }
 
@@ -98,9 +109,10 @@ function loop(now) {
       game.step(a, b);
       prevFrame = curFrame;
       curFrame = JSON.parse(game.frame());
+      draw.events(curFrame);
       acc -= tickMs;
       n += 1;
-      if (onTick) onTick();
+      if (onTick) onTick(curFrame);
       if (!game) break;
     }
     if (game) draw(prevFrame, curFrame, Math.min(1, acc / tickMs));
@@ -109,20 +121,96 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+// --- the match: HUD, rounds, results -------------------------------------------
+
+// Watches the frames of a match and shows what core says about its phase.
+// `opponent` is a road opponent's id, or '' for versus. `onEnd` builds the
+// buttons for the end of the match.
+function matchWatcher(opponent, endButtons) {
+  let phase = 'fight';
+  const hud = $('hud');
+  hud.hidden = false;
+  const panel = el('div', { id: 'result', role: 'status' });
+  return {
+    panel,
+    tick(frame) {
+      hud.replaceChildren(
+        el('span', { 'data-copy': 'hud.round' }, t('hud.round', { round: frame.round })),
+        el('span', { 'data-copy': 'hud.score' }, t('hud.score', {
+          left_name: t('fighters.left.name'), left_wins: frame.wins[0],
+          right_name: t('fighters.right.name'), right_wins: frame.wins[1],
+        })),
+      );
+      if (frame.phase === phase) return;
+      phase = frame.phase;
+      if (phase === 'fight') {
+        panel.replaceChildren();
+        return;
+      }
+      const said = JSON.parse(game.phase_text(opponent));
+      const kids = [sayChosen(said.round, { class: 'result' })];
+      if (said.match) {
+        kids.push(sayChosen(said.match, { class: 'result' }));
+        kids.push(...endButtons());
+      } else if (!game.is_replay()) {
+        kids.push(button('results.next_round.label', () => { READY = true; }));
+      }
+      panel.replaceChildren(...kids);
+      document.body.dataset.phase = phase;
+    },
+  };
+}
+
+let READY = false;
+// Adds "ready" to both seats until the next round has begun.
+function withReady(fn) {
+  return () => {
+    const [a, b] = fn();
+    if (READY && curFrame && curFrame.phase !== 'round_over') READY = false;
+    return READY ? [a | N.ready_bit, b | N.ready_bit] : [a, b];
+  };
+}
+
 // --- screens ------------------------------------------------------------------------
 
 function menu() {
   stop();
+  delete document.body.dataset.phase;
   const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, {}, { class: 'desc' }));
   show(
+    item('menu.local', local),
     item('menu.practice', practice),
     item('menu.replay', loadReplay),
     el('div', { class: 'item' }, button('menu.settings.label', settings)),
   );
 }
 
+function local() {
+  stop();
+  show(
+    say('local.intro', {
+      left_name: t('fighters.left.name'), left_keys: keyList(BINDINGS.left),
+      right_name: t('fighters.right.name'), right_keys: keyList(BINDINGS.right),
+    }),
+    say('local.keyboard_limit', {}, { class: 'desc' }),
+    el('div', { class: 'actions' }, button('local.start.label', startLocal), button('menu.back.label', menu)),
+  );
+}
+
+function startLocal() {
+  READY = false;
+  const watch = matchWatcher('', () => [el('div', { class: 'actions' },
+    button('results.rematch.label', startLocal),
+    button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')),
+    button('menu.back.label', menu))]);
+  show(watch.panel, el('div', { class: 'actions' }, button('menu.back.label', menu)));
+  start(Game.versus(seed(), tuning()),
+    withReady(() => [bits(BINDINGS.left, ACTION_BITS), bits(BINDINGS.right, ACTION_BITS)]),
+    (f) => watch.tick(f));
+}
+
 function practice() {
-  const binding = CONTROLS.solo;
+  const binding = BINDINGS.solo;
   const vars = keyVars(binding);
   const steps = ['shoulder', 'elbow', 'cut', 'plant', 'swing'];
   show(
@@ -145,12 +233,42 @@ function tuning() {
   return Number.isInteger(v) && v >= 0 && v < N.tunings ? v : N.default_tuning;
 }
 
+async function loadReplay() {
+  const file = await pick('.replay');
+  if (!file) return;
+  let g;
+  try {
+    g = Game.load_replay(file.bytes);
+  } catch (err) {
+    const { key, vars } = JSON.parse(err);
+    show(say(key, vars, { role: 'alert' }), button('menu.back.label', menu));
+    stop();
+    return;
+  }
+  delete document.body.dataset.replayDone;
+  const watch = matchWatcher('', () => []);
+  show(say('replay.playing'), watch.panel, button('replay.stop.label', menu));
+  start(g, () => [0, 0], (f) => {
+    watch.tick(f);
+    if (game && game.done()) document.body.dataset.replayDone = '1';
+  });
+}
+
+function seed() {
+  // A fresh match gets a fresh spawn jitter. The seed travels in the replay,
+  // so playback does not depend on this.
+  return (Date.now() & 0x7fffffff) >>> 0;
+}
+
 // --- settings ------------------------------------------------------------------------
 
 function settings() {
   stop();
-  show(musicSection(), button('menu.back.label', menu));
+  show(musicSection(), keysSection(), button('menu.back.label', menu));
 }
+
+let REMEMBER = false;
+let MUSIC_ERROR = null;
 
 function musicSection() {
   const state = music.current();
@@ -184,32 +302,68 @@ function musicSection() {
   );
 }
 
-let REMEMBER = false;
-let MUSIC_ERROR = null;
+// Key bindings. The convenience copy lives in this browser's storage; M5's
+// save file carries them too.
+const KEYS_STORE = 'vagrancy.keys';
 
-async function loadReplay() {
-  const file = await pick('.replay');
-  if (!file) return;
-  let g;
+function loadBindings() {
+  const defaults = { solo: { ...CONTROLS.solo }, left: { ...CONTROLS.left }, right: { ...CONTROLS.right } };
   try {
-    g = Game.load_replay(file.bytes);
-  } catch (err) {
-    const { key, vars } = JSON.parse(err);
-    show(say(key, vars, { role: 'alert' }), button('menu.back.label', menu));
-    stop();
-    return;
-  }
-  show(say('replay.playing'), button('replay.stop.label', menu));
-  start(g, () => [0, 0], () => {
-    if (game && game.done()) document.body.dataset.replayDone = '1';
-  });
-  delete document.body.dataset.replayDone;
+    const kept = JSON.parse(localStorage.getItem(KEYS_STORE) || 'null');
+    if (kept && kept.solo && kept.left && kept.right) return kept;
+  } catch (e) { /* storage off: the defaults stand */ }
+  return defaults;
 }
 
-function seed() {
-  // A fresh match gets a fresh spawn jitter. The seed travels in the replay,
-  // so playback does not depend on this.
-  return (Date.now() & 0x7fffffff) >>> 0;
+function saveBindings() {
+  try { localStorage.setItem(KEYS_STORE, JSON.stringify(BINDINGS)); } catch (e) { /* storage off */ }
+}
+
+let KEY_CONFLICT = null;
+
+function keysSection() {
+  // One player's keys, and each seat's at one keyboard. A key may serve
+  // only one action within a group (settings.keys.desc).
+  const group = (name, heading) => {
+    const rows = N.actions.map(([action]) => {
+      const b = el('button', { type: 'button', class: 'bind', 'data-group': name, 'data-action': action }, fillText(keyName(BINDINGS[name][action])));
+      b.addEventListener('click', () => capture(name, action, b));
+      return el('p', {}, el('span', { 'data-copy': `settings.keys.actions.${action}` }, t(`settings.keys.actions.${action}`)), ' ', b);
+    });
+    return el('div', { class: 'keys' }, el('h3', { 'data-copy': heading }, t(heading)), ...rows);
+  };
+  return el('section', { id: 'keys' },
+    el('h2', { 'data-copy': 'settings.keys.title' }, t('settings.keys.title')),
+    say('settings.keys.desc'),
+    KEY_CONFLICT ? say('settings.keys.conflict', KEY_CONFLICT, { role: 'alert' }) : null,
+    group('solo', 'settings.keys.solo.heading'),
+    group('left', 'fighters.left.name'),
+    group('right', 'fighters.right.name'),
+    button('settings.keys.reset.label', () => {
+      BINDINGS = { solo: { ...CONTROLS.solo }, left: { ...CONTROLS.left }, right: { ...CONTROLS.right } };
+      KEY_CONFLICT = null;
+      saveBindings();
+      settings();
+    }),
+  );
+}
+
+function capture(groupName, action, btn) {
+  btn.classList.add('listening');
+  const onKey = (e) => {
+    e.preventDefault();
+    window.removeEventListener('keydown', onKey, true);
+    const taken = Object.entries(BINDINGS[groupName]).find(([a, code]) => code === e.code && a !== action);
+    if (taken) {
+      KEY_CONFLICT = { key: keyName(e.code), action: t(`settings.keys.actions.${taken[0]}`) };
+    } else {
+      BINDINGS[groupName][action] = e.code;
+      KEY_CONFLICT = null;
+      saveBindings();
+    }
+    settings();
+  };
+  window.addEventListener('keydown', onKey, true);
 }
 
 async function main() {
@@ -226,8 +380,8 @@ async function main() {
   PALETTE = JSON.parse(palette_json());
   CONTROLS = JSON.parse(controls_json());
   ACTION_BITS = Object.fromEntries(N.actions);
-  const bound = new Set(Object.values(CONTROLS.solo));
-  listen((code) => game && bound.has(code));
+  BINDINGS = loadBindings();
+  listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
   music.subscribe(({ error }) => {
     MUSIC_ERROR = error || null;
@@ -247,6 +401,7 @@ async function main() {
     tick: () => game && game.tick(),
     recordedChecksum: () => game && game.recorded_checksum(),
     music: () => music.current(),
+    phase: () => curFrame && curFrame.phase,
   };
   menu();
   requestAnimationFrame(loop);

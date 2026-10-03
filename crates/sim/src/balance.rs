@@ -68,3 +68,15 @@ pub const TUNINGS: [Tuning; 3] = [
     Tuning { motor_accel: Fx::ratio(1, 3), motor_speed: Fx::ratio(1, 5), cap: Fx::int(34), drag: Fx::ratio(1, 400) },
 ];
 pub const DEFAULT_TUNING: u8 = 2;
+
+/// A blade cuts only when its touching point moves at least this fast against
+/// the part, cm per tick (4 cm/tick is 240 cm/s). Without it every run of
+/// random input, and a fighter standing still, cut itself within a second
+/// (`lab self-cuts`). PLANNING-BRIEF Part C made this Sam's question; the
+/// agent set it so the game is playable and carries it (SECOND-ORDER-M3).
+pub const MIN_CUT_SPEED: Fx = Fx::int(4);
+/// A fighter's own blade needs more speed to cut that fighter. *(M3.0)*
+pub const MIN_SELF_CUT_SPEED: Fx = Fx::int(12);
+/// The share of the cutting edge, from the tip, with which a fighter's own
+/// blade can cut that fighter: the point. *(M3.0)*
+pub const SELF_CUT_POINT: Fx = Fx::ratio(85, 100);

@@ -3,6 +3,7 @@
 //! "native checksum equals wasm checksum" check.
 
 use sim::rng::Rng;
+use sim::fight::Event;
 use sim::{Input, World};
 
 fn versus(seed: u64) -> World {
@@ -45,20 +46,38 @@ fn the_checksum_would_actually_catch_a_divergence() {
 }
 
 #[test]
-fn a_mirrored_world_stays_a_mirror_for_ten_thousand_ticks() {
+fn a_mirrored_world_stays_a_mirror_until_the_fighters_touch() {
     // D3: products round toward zero, which is odd-symmetric, so the right
-    // seat fed the mirror of the left seat's input stays its exact mirror.
-    let mut w = versus(9);
-    let mut r = Rng::new(77);
-    let n = w.fighters[0].as_ref().unwrap().n as usize;
-    for t in 0..10_000 {
-        let i = random_input(&mut r);
-        w.step([i, i.mirror()]);
-        for k in 0..n {
-            let (l, rt) = (w.particles[k].p, w.particles[n + k].p);
-            assert_eq!(rt, l.mirror(), "tick {t}: point {k} of the right fighter is not the left one's mirror");
+    // seat fed the mirror of the left seat's input stays its exact mirror,
+    // self-cuts and a drawn round included. It holds until the fighters touch
+    // each other: blade against blade and cut against cut are resolved in seat
+    // order, which is fair to within a raw unit or two but not an exact mirror
+    // (SECOND-ORDER-M3). So each run stops at the first event that couples
+    // them, and the runs together must cover enough ticks to mean something.
+    let mut checked = 0;
+    for seed in 0..20u64 {
+        let mut w = versus(seed);
+        let mut r = Rng::new(77 + seed);
+        let n = w.fighters[0].as_ref().unwrap().n as usize;
+        for t in 0..2_000 {
+            let i = random_input(&mut r);
+            w.step([i, i.mirror()]);
+            let coupled = w.events.iter().any(|e| match e {
+                Event::Clash { .. } => true,
+                Event::Cut { seat, by, .. } => seat != by,
+                _ => false,
+            });
+            if coupled {
+                break;
+            }
+            for k in 0..n {
+                let (l, rt) = (w.particles[k].p, w.particles[n + k].p);
+                assert_eq!(rt, l.mirror(), "seed {seed}, tick {t}: point {k} of the right fighter is not the left one's mirror");
+            }
+            checked += 1;
         }
     }
+    assert!(checked >= 5_000, "only {checked} mirrored ticks were checked before the fighters touched");
 }
 
 #[test]

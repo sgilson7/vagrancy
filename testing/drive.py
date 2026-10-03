@@ -67,7 +67,7 @@ def copy_strings():
     def walk(v, path):
         if isinstance(v, dict):
             for k, c in v.items():
-                if not k.startswith("_"):
+                if not k.startswith("_") and k != "review":
                     walk(c, f"{path}.{k}" if path else k)
         elif isinstance(v, str):
             out.append((path, v))
@@ -138,6 +138,8 @@ def every_visible_line_is_a_copy_string(page, name):
             const st = getComputedStyle(el);
             if (st.display === 'none' || st.visibility === 'hidden' || el.hidden) return;
             if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName)) return;
+            // A value filled from data (a key's name) is not a sentence.
+            if (el.hasAttribute('data-fill')) return;
             let own = '';
             for (const c of el.childNodes) if (c.nodeType === 3) own += c.textContent;
             own = own.trim();
@@ -304,6 +306,105 @@ def a_track_from_this_device_loops_during_a_fight(page, name, tmp=Path("/tmp")):
         print(f"ok: {name}: the remembered track came back after a reload, from this browser's storage")
     click_copy(page, "settings.music.remove.label")
     page.wait_for_selector('[data-copy="settings.music.none"]')
+    click_copy(page, "menu.back.label")
+    return fails
+
+
+def red_pixels(page):
+    """Count canvas pixels in the red band (hue 330-20, saturation >= 0.20),
+    the same band crates/content/tests/palette.rs holds the palette to.
+    The palette lint guards the file; this guards what was drawn, blending
+    and antialiasing included."""
+    return page.evaluate("""() => {
+        const c = document.getElementById('stage');
+        const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+        let red = 0, drawn = 0;
+        for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2];
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn;
+            if (dl === 0) continue;
+            drawn++;
+            let h;
+            if (mx === r) h = ((60 * (g - b) / dl) % 360 + 360) % 360;
+            else if (mx === g) h = 60 * (b - r) / dl + 120;
+            else h = 60 * (r - g) / dl + 240;
+            const sum = mx + mn, den = sum <= 255 ? sum : 510 - sum;
+            const sat = dl / Math.max(1, den);
+            if (sat >= 0.20 && (h >= 330 || h <= 20)) red++;
+        }
+        return [red, drawn];
+    }""")
+
+
+@check
+def a_scripted_match_runs_to_its_result_and_nothing_drawn_is_red(page, name):
+    fails = []
+    fixture = ROOT / "testing" / "replays" / "match.replay"
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "menu.replay.label")
+    fc.value.set_files(str(fixture))
+    page.wait_for_selector('[data-copy="replay.playing"]')
+    page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=60000)
+    page.wait_for_selector('[data-copy="results.versus.match"]', timeout=5000)
+    got, want = page.evaluate("[window.vagrancy.checksum(), window.vagrancy.recordedChecksum()]")
+    text = page.inner_text('[data-copy="results.versus.match"]')
+    if got != want:
+        fails.append(f"{name}: the scripted match ended on {got}, and it recorded {want}")
+    elif text != "Indigo won the match, 3 rounds to 0.":
+        fails.append(f"{name}: the scripted match ended with {text!r}")
+    else:
+        print(f"ok: {name}: the scripted match ran to its result ({text}) on its recorded checksum {got}")
+    fails += every_visible_line_is_a_copy_string(page, name + " (match result)")
+    red, drawn = red_pixels(page)
+    if red:
+        fails.append(f"{name}: {red} of {drawn} colored canvas pixels are in the red band after the cuts")
+    else:
+        print(f"ok: {name}: none of {drawn} colored canvas pixels is in the red band, after the cuts")
+    click_copy(page, "replay.stop.label")
+    return fails
+
+
+@check
+def two_players_start_a_match_at_one_keyboard(page, name):
+    fails = []
+    click_copy(page, "menu.local.label")
+    page.wait_for_selector('[data-copy="local.intro"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (local)")
+    click_copy(page, "local.start.label")
+    page.wait_for_selector('[data-copy="hud.round"]')
+    page.keyboard.down("KeyD"); page.keyboard.down("KeyJ")
+    page.wait_for_timeout(500)
+    page.keyboard.up("KeyD"); page.keyboard.up("KeyJ")
+    want = COPY["hud"]["round"].replace("{round}", "1")
+    if page.inner_text('[data-copy="hud.round"]') != want:
+        fails.append(f"{name}: the HUD says {page.inner_text('#hud')!r}")
+    else:
+        print(f"ok: {name}: a match at one keyboard starts and its HUD reads from core")
+    fails += every_visible_line_is_a_copy_string(page, name + " (match)")
+    click_copy(page, "menu.back.label")
+    return fails
+
+
+@check
+def a_key_can_be_rebound_and_a_clash_is_refused(page, name):
+    fails = []
+    click_copy(page, "menu.settings.label")
+    page.wait_for_selector('#keys')
+    page.click('button.bind[data-group="solo"][data-action="shoulder_up"]')
+    page.keyboard.press("KeyZ")
+    page.wait_for_selector('button.bind[data-group="solo"][data-action="shoulder_up"]')
+    if page.inner_text('button.bind[data-group="solo"][data-action="shoulder_up"]') != "Z":
+        fails.append(f"{name}: rebinding shoulder-up to Z did not take")
+    page.click('button.bind[data-group="solo"][data-action="shoulder_down"]')
+    page.keyboard.press("KeyZ")
+    page.wait_for_selector('[data-copy="settings.keys.conflict"]')
+    want = COPY["settings"]["keys"]["conflict"].replace("{key}", "Z").replace("{action}", COPY["settings"]["keys"]["actions"]["shoulder_up"])
+    if page.inner_text('[data-copy="settings.keys.conflict"]') != want:
+        fails.append(f"{name}: a clashing key was refused with the wrong words")
+    else:
+        print(f"ok: {name}: a key can be rebound, and a key already in use is refused with its sentence")
+    fails += every_visible_line_is_a_copy_string(page, name + " (keys)")
+    click_copy(page, "settings.keys.reset.label")
     click_copy(page, "menu.back.label")
     return fails
 

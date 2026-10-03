@@ -319,6 +319,111 @@ fn energy() {
     }
 }
 
+/// M2.0/M3.0: how often a fighter cuts itself — standing still, running,
+/// and under 100 runs of random input.
+fn self_cuts() {
+    use sim::fight::Event;
+    let count = |w: &World| w.events.iter().filter(|e| matches!(e, Event::Cut { seat, by, spilled: true, .. } if seat == by)).count();
+    for (label, keys) in [("standing still", vec![0u8]), ("running right", vec![Input::STEP_RIGHT])] {
+        let mut w = World::new(content::setup::alone(1, sim::balance::DEFAULT_TUNING));
+        let mut first = None;
+        for t in 0..600u32 {
+            w.step([Input(keys[0]), Input::NONE]);
+            if first.is_none() && count(&w) > 0 {
+                first = Some(t);
+            }
+        }
+        println!("{label}: first self-cut at tick {first:?}");
+    }
+    let mut runs_with = 0;
+    let mut ticks = Vec::new();
+    for seed in 0..100u64 {
+        let mut w = World::new(content::setup::alone(seed, sim::balance::DEFAULT_TUNING));
+        let mut r = sim::rng::Rng::new(seed + 500);
+        let mut held = Input::NONE;
+        for t in 0..600u32 {
+            if t % 15 == 0 {
+                held = Input(r.below(64) as u8);
+            }
+            w.step([held, Input::NONE]);
+            if count(&w) > 0 {
+                runs_with += 1;
+                ticks.push(t);
+                break;
+            }
+        }
+    }
+    // Which parts: tally the first self-cut's part over the same runs.
+    let mut tally = std::collections::BTreeMap::new();
+    for seed in 0..100u64 {
+        let mut w = World::new(content::setup::alone(seed, sim::balance::DEFAULT_TUNING));
+        let mut r = sim::rng::Rng::new(seed + 500);
+        let mut held = Input::NONE;
+        'run: for t in 0..600u32 {
+            if t % 15 == 0 {
+                held = Input(r.below(64) as u8);
+            }
+            w.step([held, Input::NONE]);
+            for e in &w.events {
+                if let Event::Cut { seat, by, part, spilled: true, .. } = e {
+                    if seat == by {
+                        *tally.entry(*part).or_insert(0) += 1;
+                        break 'run;
+                    }
+                }
+            }
+        }
+    }
+    let names: Vec<String> = w_names();
+    println!("first self-cut by part: {}", tally.iter().map(|(k, v)| format!("{} {v}", names[*k as usize])).collect::<Vec<_>>().join(", "));
+    ticks.sort();
+    println!("random input, 100 runs of 600 ticks: {runs_with} cut themselves; median first self-cut at tick {:?}", ticks.get(ticks.len() / 2));
+}
+
+fn w_names() -> Vec<String> {
+    let v: serde_json::Value = serde_json::from_str(content::body::BODY_JSON).unwrap();
+    v["fighter"]["parts"].as_array().unwrap().iter().map(|p| p["id"].as_str().unwrap().to_string()).collect()
+}
+
+/// The gate's scripted match: both seats flail toward each other and press
+/// ready between rounds, on the seed that reaches the end of a match soonest.
+/// Written to testing/replays/match.replay, with what it should say.
+fn fixture_match() {
+    use sim::fight::Phase;
+    let play = |seed: u64| {
+        let mut rec = sim::replay::Recording::new(content::setup::versus(seed, sim::balance::DEFAULT_TUNING));
+        let mut r = sim::rng::Rng::new(seed ^ 0xABCD);
+        let mut held = [Input::NONE; 2];
+        for t in 0..2400u32 {
+            if t % 12 == 0 {
+                let toward = [Input::STEP_RIGHT, Input::STEP_LEFT];
+                held = [0, 1].map(|s| Input((r.below(16) as u8) | if r.below(3) > 0 { toward[s] } else { 0 }));
+            }
+            let ready = matches!(rec.world.phase, Phase::RoundOver { .. });
+            let i = if ready { [Input(Input::READY); 2] } else { held };
+            rec.step(i);
+            if matches!(rec.world.phase, Phase::MatchOver { .. }) {
+                return Some(rec);
+            }
+        }
+        None
+    };
+    let mut best: Option<(u64, sim::replay::Recording)> = None;
+    for seed in 0..200u64 {
+        if let Some(rec) = play(seed) {
+            if best.as_ref().is_none_or(|(_, b)| rec.world.tick < b.world.tick) {
+                best = Some((seed, rec));
+            }
+        }
+    }
+    let (seed, rec) = best.expect("no seed ended a match in 2400 ticks");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testing/replays/match.replay");
+    std::fs::write(path, rec.bytes()).unwrap();
+    let said = content::messages::phase_text(&rec.world, content::messages::Audience::Versus);
+    println!("seed {seed}: the match ended at tick {} with wins {:?}, checksum {:016x}", rec.world.tick, rec.world.wins, rec.world.checksum());
+    println!("{said}");
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -333,6 +438,8 @@ fn main() {
         Some("pogo-grid") => pogo_grid(),
         Some("h5") => h5(),
         Some("energy") => energy(),
+        Some("self-cuts") => self_cuts(),
+        Some("fixture-match") => fixture_match(),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),
         _ => eprintln!("usage: lab stand [ticks]"),

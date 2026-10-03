@@ -11,6 +11,8 @@
 
 pub mod balance;
 pub mod body;
+pub mod contact;
+pub mod fight;
 pub mod frame;
 pub mod fx;
 pub mod input;
@@ -28,4 +30,4 @@ pub use world::World;
 /// Bumped whenever what the simulation does changes, together with the
 /// golden replays, in the same commit (CLAUDE.md). A replay from another
 /// version is refused with a sentence.
-pub const SIM_VERSION: u32 = 2;
+pub const SIM_VERSION: u32 = 3;

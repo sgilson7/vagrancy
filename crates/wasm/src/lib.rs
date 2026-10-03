@@ -109,6 +109,18 @@ impl Game {
             _ => Vec::new(),
         }
     }
+    /// What to say about the phase: `null` mid-round, else the round's
+    /// sentence (and the match's), as copy keys and values chosen by
+    /// `content`. `opponent` is a road opponent's id, or empty for versus.
+    pub fn phase_text(&self, opponent: &str) -> String {
+        let who = if opponent.is_empty() {
+            content::messages::Audience::Versus
+        } else {
+            content::messages::Audience::Road { opponent }
+        };
+        content::messages::phase_text(self.world(), who).to_string()
+    }
+
     /// The checksum the replay recorded, for a watcher to compare at the end.
     pub fn recorded_checksum(&self) -> String {
         self.play.as_ref().map(|p| format!("{:016x}", p.replay.checksum)).unwrap_or_default()

@@ -103,6 +103,12 @@ pub struct Fighter {
     /// over shoulder.
     pub torso: Fx,
     pub neck: Fx,
+    /// Ink drained by each of this body's parts (by `PartDef` index) this
+    /// round, including stumps since removed. `results.road.lose_ink` names
+    /// the part that spilled the most.
+    pub spilled: Vec<i32>,
+    /// A cut this tick that ends the round for this fighter.
+    pub fatal: Option<crate::fight::Fatal>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -117,7 +123,7 @@ pub struct Sword {
 /// A held joint key this tick: the servo's target and who it turns.
 /// Transient: built at the start of `step` and dropped at its end.
 #[derive(Clone, Debug)]
-struct Drive {
+pub(crate) struct Drive {
     seat: usize,
     pivot: u16,
     limb: u16,
@@ -138,6 +144,18 @@ pub struct World {
     pub cons: Vec<Constraint>,
     pub fighters: [Option<Fighter>; 2],
     pub swords: Vec<Sword>,
+    pub phase: crate::fight::Phase,
+    /// 1-based. A drawn round is played again under the same number.
+    pub round: u32,
+    pub wins: [u32; 2],
+    /// Blade and part pairs in contact at the end of last tick: one cut per
+    /// blade, per part, per contact (D11).
+    pub touching: Vec<(u8, u16)>,
+    /// Pairs of swords in contact at the end of last tick.
+    pub clashing: bool,
+    /// What happened this tick, for the page to draw and later to sound.
+    pub events: Vec<crate::fight::Event>,
+    pub next_piece: u16,
 }
 
 impl World {
@@ -151,6 +169,13 @@ impl World {
             cons: Vec::new(),
             fighters: [None, None],
             swords: Vec::new(),
+            phase: crate::fight::Phase::Fight,
+            round: 1,
+            wins: [0, 0],
+            touching: Vec::new(),
+            clashing: false,
+            events: Vec::new(),
+            next_piece: 0,
         };
         w.spawn_round();
         w
@@ -158,7 +183,10 @@ impl World {
 
     /// Clear the arena and stand both seats up. One jitter draw per round,
     /// applied mirrored so neither seat is favored.
-    fn spawn_round(&mut self) {
+    pub(crate) fn spawn_round(&mut self) {
+        self.touching.clear();
+        self.clashing = false;
+        self.next_piece = 0;
         self.particles.clear();
         self.parts.clear();
         self.cons.clear();
@@ -210,7 +238,11 @@ impl World {
         }
         for h in &def.hinges {
             let (a, j, c) = (base + h.a as u16, base + h.j as u16, base + h.c as u16);
-            self.cons.push(Constraint { con: Con::Hinge { a, j, c, sign: h.sign }, tag: Tag::Body(seat) });
+            // The facing is folded into the sign here, once, so a hinge that a
+            // cut drops into a piece still bends the way it did (a piece has
+            // no fighter to ask; asking broke the mirror, SECOND-ORDER-M3).
+            let sign = h.sign * facing as i8;
+            self.cons.push(Constraint { con: Con::Hinge { a, j, c, sign }, tag: Tag::Body(seat) });
             self.cons.push(Constraint { con: Con::Min { a, b: c, len: h.min_dist }, tag: Tag::Body(seat) });
         }
         let mut sword = None;
@@ -253,11 +285,16 @@ impl World {
             drive: 0,
             torso: dist(r.shoulder, r.pelvis),
             neck: dist(r.head, r.shoulder),
+            spilled: vec![0; def.parts.len()],
+            fatal: None,
         });
     }
 
     /// The only way the world changes.
     pub fn step(&mut self, inputs: [Input; 2]) {
+        self.events.clear();
+        // Between rounds the fighters are limp and only "ready" counts.
+        let inputs = if self.between_rounds(inputs) { [Input::NONE; 2] } else { inputs };
         let mut acc = vec![V2::ZERO; self.particles.len()];
         let mut drives = Vec::new();
         for seat in 0..2 {
@@ -270,7 +307,11 @@ impl World {
         for _ in 0..ITERATIONS {
             self.relax(&drives);
         }
+        self.clash(&drives);
+        self.cuts();
         self.hold_to_cap();
+        self.drain();
+        self.judge();
         self.tick += 1;
     }
 
@@ -507,7 +548,7 @@ impl World {
 
     // --- relaxation, in a fixed order ------------------------------------------
 
-    fn relax(&mut self, drives: &[Drive]) {
+    pub(crate) fn relax(&mut self, drives: &[Drive]) {
         for d in drives {
             self.drive_joint(d);
         }
@@ -525,13 +566,9 @@ impl World {
                     self.shift_group(a, &[b, c], d);
                 }
                 Con::Hinge { a, j, c, sign } => {
-                    let facing = match self.particles[j as usize].owner {
-                        Owner::Body(s) => self.fighters[s as usize].as_ref().map(|f| f.facing).unwrap_or(1),
-                        _ => 1,
-                    };
                     let (pa, pj, pc) = (self.particles[a as usize].p, self.particles[j as usize].p, self.particles[c as usize].p);
                     let (u, f) = (pj - pa, pc - pj);
-                    if u.cross_raw(f) * (sign as i64) * (facing as i64) < 0 {
+                    if u.cross_raw(f) * (sign as i64) < 0 {
                         let target = pj + u.with_len(f.len());
                         self.shift_pair(c, j, target - pc);
                     }
@@ -573,7 +610,7 @@ impl World {
     /// axis, so the pair's momentum does not change by a single raw unit. An
     /// anchored point (mass zero) does not move and its partner takes all of
     /// `d`: the anchor is outside the system.
-    fn shift_pair(&mut self, i: u16, j: u16, d: V2) {
+    pub(crate) fn shift_pair(&mut self, i: u16, j: u16, d: V2) {
         let (mi, mj) = (self.particles[i as usize].m, self.particles[j as usize].m);
         match (mi, mj) {
             (0, 0) => {}

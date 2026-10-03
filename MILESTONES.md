@@ -25,3 +25,17 @@ Reliance (PLAN.md §1), revisited: the workspace and packaging row stays **high*
 | new strings | awaiting Sam | 0 | | | |
 
 Reliance, revisited: "jointed bodies in integers" stays **low**. Four first answers were wrong in M1 and M2: the knees, the feet, the motor's strength, and D9's planted push. Each was caught by a `lab` command before it reached the page.
+
+## After M3 (2026-10-03)
+
+| # | milestone | deliverables | tests | commit | state |
+|---|---|---|---|---|---|
+| M0 | Foundation, and the voice in the repo | workspace, packaging, Pages, lints | 15 (+15) | 58d51d8 | done; gate 1 live |
+| M1 | A body in integers, and a match you can play back | Fx, solver, balance, motors, replay v1, page | 39 (+24) | 4826e96 | done; gate 2 live |
+| M2 | The sword is solid, and a swing is free | servo motor, blocked drive, H5/H5c, pogo, yard, music | 45 (+6) | c496085 | done; gate 3 live at b96aceb1 |
+| M3 | Cuts, ink, and two fighters at one keyboard | swept contact (H2, H2b), cuts and pieces (H3), stumps and ink (H4), fatal zones, rounds, match, draw, clash, events, results, HUD, versus, key bindings | 60 (+15) | this commit | done once gate 4 is live |
+| M4 | Lockstep | | | | next |
+| notebook | rows open / done / the human's | 2 / 32 / 11 | | | |
+| new strings | awaiting Sam | 1 | | | |
+
+Reliance, revisited: "a fast blade meeting a limb" and "cutting a body" stay **low**. The sweep and the cut passed their hand cases on the first run. The world-level consequences (self-cuts everywhere, a hinge in a piece, blades that glued) were each found only by measuring, and none was in the brief's list of traps.

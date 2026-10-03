@@ -32,6 +32,11 @@ export function renderer(canvas, palette, numbers) {
     if (part.body === 1) return palette.post;
     return part.fighter === 0 ? palette.fighters.left.body : stripes;
   };
+  const inkColor = (seat) => (seat === 0 ? palette.fighters.left.ink : palette.fighters.right.ink);
+
+  // Where cuts landed this round, as core reported them. They are drawn
+  // where they happened and do not move: the page does not integrate.
+  let marks = [];
 
   function lerp(prev, cur, alpha) {
     if (!prev || prev.points.length !== cur.points.length) return cur.points;
@@ -51,7 +56,25 @@ export function renderer(canvas, palette, numbers) {
     ctx.stroke();
   }
 
-  return function draw(prev, cur, alpha) {
+  function dot(p, r, style) {
+    ctx.fillStyle = style;
+    ctx.beginPath();
+    ctx.arc(sx(p[0]), sy(p[1]), r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function meter(x, f, seat) {
+    const w = 220;
+    const h = 10;
+    ctx.fillStyle = palette.meter_back;
+    ctx.fillRect(x, 14, w, h);
+    ctx.fillStyle = inkColor(seat);
+    const filled = Math.max(0, Math.min(1, f.ink / Math.max(1, f.ink_max))) * w;
+    // The left meter empties toward the left fighter, the right toward the right.
+    ctx.fillRect(seat === 0 ? x : x + w - filled, 14, filled, h);
+  }
+
+  function draw(prev, cur, alpha) {
     const pts = lerp(prev, cur, alpha);
     ctx.fillStyle = palette.paper;
     ctx.fillRect(0, 0, W, H);
@@ -64,6 +87,16 @@ export function renderer(canvas, palette, numbers) {
     ctx.lineTo(W, ground + 0.5);
     ctx.stroke();
     for (const part of cur.parts) capsule(pts[part.a], pts[part.b], part.r, fill(part));
+    // A stump's cut end: the paper inside, ringed with that fighter's ink.
+    for (const part of cur.parts) {
+      if (!part.stump) continue;
+      const r = Math.max(2, (part.r / one) * scale);
+      dot(pts[part.b], r, inkColor(part.fighter));
+      dot(pts[part.b], r * 0.55, palette.paper);
+    }
+    // Ink where each cut landed, on top: drawn under the bodies, every mark
+    // sat inside the part it was cut from and none could be seen.
+    for (const m of marks) dot(m.at, 4, inkColor(m.seat));
     for (const s of cur.swords) {
       const a = pts[s.butt];
       const b = pts[s.tip];
@@ -72,5 +105,20 @@ export function renderer(canvas, palette, numbers) {
       capsule(a, h, one * 1.6, palette.hilt);
       capsule(h, b, one * 1.1, palette.sword);
     }
+    cur.fighters.forEach((f, seat) => {
+      if (f && f.ink_max > 0) meter(seat === 0 ? 16 : W - 236, f, seat);
+    });
+  }
+
+  let lastPhase = 'fight';
+  draw.reset = () => { marks = []; lastPhase = 'fight'; };
+  draw.events = (frame) => {
+    // A new round stands both fighters back up; its marks start clean.
+    if (lastPhase !== 'fight' && frame.phase === 'fight') marks = [];
+    lastPhase = frame.phase;
+    for (const e of frame.events) {
+      if (e.Cut && e.Cut.spilled) marks.push({ at: [e.Cut.at.x, e.Cut.at.y], seat: e.Cut.seat });
+    }
   };
+  return draw;
 }

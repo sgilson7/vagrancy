@@ -14,6 +14,11 @@ pub struct Frame {
     pub parts: Vec<PartView>,
     pub swords: Vec<SwordView>,
     pub fighters: Vec<Option<FighterView>>,
+    pub round: u32,
+    pub wins: [u32; 2],
+    /// "fight", "round_over" or "match_over".
+    pub phase: &'static str,
+    pub events: Vec<crate::fight::Event>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -87,5 +92,13 @@ pub fn frame(w: &World) -> Frame {
                 })
             })
             .collect(),
+        round: w.round,
+        wins: w.wins,
+        phase: match w.phase {
+            crate::fight::Phase::Fight => "fight",
+            crate::fight::Phase::RoundOver { .. } => "round_over",
+            crate::fight::Phase::MatchOver { .. } => "match_over",
+        },
+        events: w.events.clone(),
     }
 }

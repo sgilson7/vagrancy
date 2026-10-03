@@ -26,7 +26,9 @@ fn walk(v: &Value, path: String, out: &mut Vec<(String, String)>) {
     match v {
         Value::Object(m) => {
             for (k, child) in m {
-                if k.starts_with('_') {
+                // `_` keys are instructions; `review` marks a string the agent
+                // wrote and Sam has not yet accepted (PLANNING-BRIEF 0.6).
+                if k.starts_with('_') || k == "review" {
                     continue;
                 }
                 let p = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };

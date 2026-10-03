@@ -22,3 +22,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 #screen p { max-width: 75ch; }
 .item { margin-bottom: 8px; }
 .actions { margin-top: 8px; }
+#hud { display: flex; justify-content: space-between; max-width: calc(72vh * 1200 / 640); margin: 0 auto 4px; }
+.result { font-size: 1.1em; }
+kbd { font: inherit; font-weight: bold; }
+.keys { display: inline-block; vertical-align: top; margin-right: 32px; }
+.keys h3 { font-weight: normal; font-style: italic; margin: 8px 0 4px; }
+.keys p { margin: 2px 0; }
+button.bind { min-width: 3em; margin: 0 0 0 8px; padding: 2px 8px; }
+button.bind.listening { outline: 3px solid var(--focus); }

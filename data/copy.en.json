@@ -329,6 +329,7 @@
       "desc": "Choose a key for each action. Two actions cannot share a key.",
       "conflict": "{key} is already used for {action}. Choose a different key, or change that binding first.",
       "reset": { "label": "Restore the default keys" },
+      "solo": { "heading": "Keys for the road, the practice yard and online matches", "review": "new" },
       "actions": {
         "shoulder_up": "Raise the arm at the shoulder",
         "shoulder_down": "Lower the arm at the shoulder",
