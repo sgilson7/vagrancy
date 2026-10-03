@@ -98,7 +98,7 @@ impl Pair {
     }
 }
 
-fn inputs(s: &Session) -> Vec<[u8; 2]> {
+fn inputs(s: &Session) -> Vec<[u16; 2]> {
     s.recording().map(|r| r.inputs.clone()).unwrap_or_default()
 }
 
@@ -128,7 +128,7 @@ fn an_input_takes_effect_delay_ticks_later_on_both_peers() {
     for (who, s) in [("host", &p.host), ("joiner", &p.join)] {
         let i = inputs(s);
         assert!(i.len() > 60, "{who} only played {} ticks", i.len());
-        let pressed: Vec<(usize, [u8; 2])> = i.iter().copied().enumerate().filter(|(_, x)| *x != [0, 0]).collect();
+        let pressed: Vec<(usize, [u16; 2])> = i.iter().copied().enumerate().filter(|(_, x)| *x != [0, 0]).collect();
         assert_eq!(
             pressed,
             vec![(10 + delay as usize, [Input::SHOULDER_UP, 0]), (20 + delay as usize, [0, Input::ELBOW_IN])],
@@ -145,7 +145,7 @@ fn two_peers_stay_together_for_ten_thousand_ticks() {
         // A cheap, deterministic stand-in for a person: different on each
         // seat, changing every few ticks.
         let x = (t / 9).wrapping_mul(2654435761).wrapping_add(seat as u32 * 97);
-        Input((x >> 7) as u8 & 0b11_1111)
+        Input(((x >> 7) & 0b11_1111) as u16)
     };
     p.play(12_000, script);
     let (h, j) = (inputs(&p.host), inputs(&p.join));
@@ -155,7 +155,7 @@ fn two_peers_stay_together_for_ten_thousand_ticks() {
     assert!(matches!(p.host.status, Status::Playing | Status::WaitingOn), "{:?}", p.host.status);
     assert!(matches!(p.join.status, Status::Playing | Status::WaitingOn), "{:?}", p.join.status);
     // Replay both up to the shorter, and they are the same world.
-    let replay = |r: &[[u8; 2]]| {
+    let replay = |r: &[[u16; 2]]| {
         let mut w = World::new(content::setup::versus(7, sim::balance::DEFAULT_TUNING));
         for x in r {
             w.step([Input(x[0]), Input(x[1])]);
@@ -167,7 +167,7 @@ fn two_peers_stay_together_for_ten_thousand_ticks() {
 
 #[test]
 fn jitter_changes_nothing_but_the_wait() {
-    let script = |seat: usize, t: u32| Input(((t * 7 + seat as u32 * 3) / 11 % 64) as u8);
+    let script = |seat: usize, t: u32| Input(((t * 7 + seat as u32 * 3) / 11 % 64) as u16);
     let run = |jitter: u64| {
         let mut p = Pair::new(25, 0);
         p.connect();
@@ -272,4 +272,25 @@ fn a_lobby_whose_other_side_has_really_gone_still_gives_up() {
         p.join.poll(p.now);
     }
     assert_eq!(p.host.status, Status::Left, "the host heard nothing for 30 s");
+}
+
+#[test]
+fn a_start_that_is_lost_is_sent_again_and_the_match_begins() {
+    let mut p = Pair::new(30, 0);
+    p.connect_without_start();
+    // The host presses Start, and the message is lost on the way.
+    p.host.start(p.now);
+    let lost = p.host.take_outbox();
+    assert!(!lost.is_empty());
+    for _ in 0..30 {
+        p.now += 100;
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+        p.play(1, |_, _| Input::NONE);
+    }
+    assert_eq!(p.join.status, Status::Playing, "the joiner never began: {:?}", p.join.status);
+    p.play(120, |_, _| Input::NONE);
+    assert!(p.host.world().unwrap().tick > 60, "the match is stuck at tick {}", p.host.world().unwrap().tick);
+    assert_eq!(p.host.status, Status::Playing);
 }

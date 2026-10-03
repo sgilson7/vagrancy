@@ -85,7 +85,7 @@ pub struct Session {
     delay: u32,
     rec: Option<Recording>,
     /// Inputs known for a tick, by seat.
-    inputs: BTreeMap<u32, [Option<u8>; 2]>,
+    inputs: BTreeMap<u32, [Option<u16>; 2]>,
     /// Ticks the host has already bundled.
     bundled: u32,
     /// My checksum after each tick I have finished, and the other side's.
@@ -100,6 +100,9 @@ pub struct Session {
     heard_at: u64,
     blocked_since: Option<u64>,
     kept_at: u64,
+    /// Host: whether the joiner's first input has arrived, which is the only
+    /// proof that it heard Start.
+    heard_input: bool,
 }
 
 impl Session {
@@ -122,6 +125,7 @@ impl Session {
             heard_at: 0,
             blocked_since: None,
             kept_at: 0,
+            heard_input: false,
         }
     }
 
@@ -209,8 +213,11 @@ impl Session {
                 self.setup = Some(setup);
                 self.status = Status::Connected { delay };
             }
-            Msg::Start if !self.host => self.begin(now),
+            // Start may arrive more than once (the host repeats it until it
+            // hears an input); only the first, in the lobby, begins the match.
+            Msg::Start if !self.host && matches!(self.status, Status::Connected { .. }) => self.begin(now),
             Msg::Input { tick, input, checked, sum } if self.host => {
+                self.heard_input = true;
                 self.inputs.entry(tick).or_insert([None, None])[1] = Some(input);
                 self.theirs.insert(checked, sum);
                 self.compare();
@@ -265,6 +272,13 @@ impl Session {
 
     /// The lobby's clock: give up on a silent other side.
     pub fn poll(&mut self, now: u64) {
+        // A Start the joiner never received would freeze the match with both
+        // sides waiting (reported by Sam between two computers): repeat it
+        // every second until the joiner's first input proves it arrived.
+        if self.host && self.rec.is_some() && !self.heard_input && now.saturating_sub(self.kept_at) >= KEEPALIVE_MS {
+            self.kept_at = now;
+            self.send(Msg::Start);
+        }
         if self.host && matches!(self.status, Status::Connected { .. }) && now.saturating_sub(self.kept_at) >= KEEPALIVE_MS {
             self.kept_at = now;
             let n = self.next_ping;

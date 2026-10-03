@@ -32,10 +32,40 @@ function rtcConfig() {
 }
 
 export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onError }) {
-  const s = { isHost, links: new Map(), nextId: 1, closed: false, trystero: null, pending: null, hostLink: null };
+  const s = { isHost, closed: false, trystero: null, pending: null, hostPeer: null, nextId: 1 };
 
-  function attach(pc, mine) {
-    const link = { id: s.nextId++, pc, mine, ch: null, role: 0, reported: false, gone: false };
+  // A peer is the other browser, whatever connections come and go under it.
+  // Trystero may replace a connection to the same browser (a renegotiation,
+  // or a retry after a failed attempt); the first version treated the new
+  // connection as a stranger, turned it away as "full", and kept sending to
+  // the dead one, so Start never arrived and the match froze (reported by
+  // Sam between two computers). Now a peer keeps one id, its current link is
+  // swapped in place, and what cannot be sent yet waits in its queue.
+  const peers = new Map(); // key -> { id, key, link, queue, reported }
+  const byId = new Map();
+  function peerFor(key) {
+    if (!peers.has(key)) {
+      const peer = { id: s.nextId++, key, link: null, queue: [], reported: false };
+      peers.set(key, peer);
+      byId.set(peer.id, peer);
+    }
+    return peers.get(key);
+  }
+
+  function open(link) {
+    return link && !link.gone && link.ready && link.ch.readyState === 'open';
+  }
+
+  function flush(peer) {
+    while (peer.queue.length && open(peer.link)) {
+      try { peer.link.ch.send(peer.queue[0]); } catch (e) { return; }
+      peer.queue.shift();
+    }
+  }
+
+  function attach(pc, mine, key) {
+    const peer = peerFor(key);
+    const link = { pc, mine, ch: null, role: 0, ready: false, gone: false, peer };
     const ch = pc.createDataChannel('vagrancy', { negotiated: true, id: CHANNEL_ID, ordered: true });
     ch.binaryType = 'arraybuffer';
     link.ch = ch;
@@ -46,32 +76,42 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
       const bytes = new Uint8Array(e.data);
       if (link.role === 0) {
         link.role = bytes[0];
-        const ok = isHost ? link.role === ROLE_JOINER : (link.role === ROLE_HOST && !s.hostLink);
-        if (!ok) { disown(link); return; }
-        if (!isHost) s.hostLink = link;
-        link.reported = true;
-        onPeer(link.id);
+        // The star: a host talks to joiners; a joiner to one host.
+        const ok = isHost ? link.role === ROLE_JOINER : (link.role === ROLE_HOST && (!s.hostPeer || s.hostPeer === peer));
+        if (!ok) { hangUp(link); return; }
+        if (!isHost) s.hostPeer = peer;
+        link.ready = true;
+        if (peer.link && peer.link !== link) hangUp(peer.link);
+        peer.link = link;
+        flush(peer);
+        if (!peer.reported) { peer.reported = true; onPeer(peer.id); }
         return;
       }
-      onMessage(link.id, bytes);
+      onMessage(peer.id, bytes);
     };
-    ch.onclose = () => depart(link);
+    const lost = () => {
+      if (link.gone) return;
+      link.gone = true;
+      if (peer.link === link) peer.link = null;
+      // By pasted code there is no relay to say a peer left; a closed link
+      // is the leaving. By room code, Trystero says so (onPeerLeave), and a
+      // closed link may be a connection being replaced.
+      if (mode === 'code') leave(peer);
+    };
+    ch.onclose = lost;
     pc.addEventListener('connectionstatechange', () => {
-      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') depart(link);
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') lost();
     });
-    s.links.set(link.id, link);
     return link;
   }
 
-  function hangUp(link) {
-    try { link.ch.close(); if (link.mine) link.pc.close(); } catch (e) { /* already closing */ }
+  function leave(peer) {
+    if (peer.reported && !peer.left) { peer.left = true; onLeft(peer.id); }
   }
-  function disown(link) { s.links.delete(link.id); link.gone = true; hangUp(link); }
-  function depart(link) {
-    if (link.gone) return;
+
+  function hangUp(link) {
     link.gone = true;
-    s.links.delete(link.id);
-    if (link.reported) onLeft(link.id);
+    try { link.ch.close(); if (link.mine) link.pc.close(); } catch (e) { /* already closing */ }
   }
 
   // ---- a room code, through Trystero ----------------------------------------
@@ -90,7 +130,13 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
     let r;
     try {
       r = lib.joinRoom({ appId: CONFIG.appId, password: CONFIG.password, rtcConfig: rtcConfig() }, name, {
-        onJoinError: (d) => onError(d && d.peerId ? 'online.error.no_path' : 'online.error.no_relay'),
+        onJoinError: (d) => {
+          // A failed attempt to reach a browser we are already playing with
+          // is Trystero retrying under a working link, not the end of it.
+          const known = d && d.peerId && peers.get(d.peerId);
+          if (known && known.reported && !known.left) { console.warn('a connection attempt failed under a working link', d); return; }
+          onError(d && d.peerId ? 'online.error.no_path' : 'online.error.no_relay');
+        },
       });
     } catch (e) {
       console.warn(e);
@@ -98,20 +144,19 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
       return;
     }
     s.trystero = r;
-    const byRelay = new Map();
     // Trystero 0.25.4 takes these as properties, as Floodline assigns them.
+    // A peer is keyed by Trystero's id for it, so a replaced connection to
+    // the same browser is the same peer.
     r.onPeerJoin = (pid) => {
       const pc = r.getPeers()[pid];
-      if (!pc) return;
-      byRelay.set(pid, attach(pc, false));
+      if (pc) attach(pc, false, pid);
     };
     r.onPeerLeave = (pid) => {
-      const link = byRelay.get(pid);
-      byRelay.delete(pid);
-      if (link) depart(link);
+      const peer = peers.get(pid);
+      if (peer) leave(peer);
     };
     setTimeout(() => {
-      if (s.closed || s.links.size > 0) return;
+      if (s.closed || [...peers.values()].some((p) => p.reported)) return;
       let open = 0;
       try {
         const sockets = lib.getRelaySockets();
@@ -135,7 +180,7 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
 
   async function invitation() {
     const pc = new RTCPeerConnection(rtcConfig());
-    s.pending = attach(pc, true);
+    s.pending = attach(pc, true, 'code');
     await pc.setLocalDescription(await pc.createOffer());
     await gathered(pc);
     return pack('O', pc.localDescription.sdp);
@@ -144,7 +189,7 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
   async function reply(code) {
     const sdp = await unpack('O', code);
     const pc = new RTCPeerConnection(rtcConfig());
-    s.pending = attach(pc, true);
+    s.pending = attach(pc, true, 'code');
     await pc.setRemoteDescription({ type: 'offer', sdp });
     await pc.setLocalDescription(await pc.createAnswer());
     await gathered(pc);
@@ -164,16 +209,20 @@ export function open({ isHost, mode, room, build, onPeer, onLeft, onMessage, onE
     reply,
     // Host: the joiner's reply.
     accept,
+    // Never drops: what cannot go now waits for the peer's open link.
     send(id, bytes) {
-      const link = s.links.get(id);
-      if (!link || !link.reported || link.ch.readyState !== 'open') return false;
-      try { link.ch.send(bytes); return true; } catch (e) { return false; }
+      const peer = byId.get(id);
+      if (!peer) return false;
+      peer.queue.push(bytes);
+      flush(peer);
+      return true;
     },
     close() {
       s.closed = true;
       if (s.trystero) { try { s.trystero.leave(); } catch (e) { /* gone */ } }
-      s.links.forEach(hangUp);
-      s.links.clear();
+      peers.forEach((p) => p.link && hangUp(p.link));
+      peers.clear();
+      byId.clear();
     },
   };
 }

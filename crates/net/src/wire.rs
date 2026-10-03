@@ -7,7 +7,7 @@ use sim::Setup;
 
 /// Bumped when a message changes shape; a peer on another version is
 /// refused, like a peer on another build.
-pub const PROTO: u32 = 1;
+pub const PROTO: u32 = 2;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Msg {
@@ -21,9 +21,9 @@ pub enum Msg {
     /// Host to joiner: tick 0 begins.
     Start,
     /// Joiner to host: my input for `tick`, and my checksum after `checked`.
-    Input { tick: u32, input: u8, checked: u32, sum: u64 },
+    Input { tick: u32, input: u16, checked: u32, sum: u64 },
     /// Host to joiner: both inputs for `tick`.
-    Bundle { tick: u32, inputs: [u8; 2], checked: u32, sum: u64 },
+    Bundle { tick: u32, inputs: [u16; 2], checked: u32, sum: u64 },
     /// The two copies disagreed after `tick`. Both stop there.
     Stop { tick: u32 },
     Bye { reason: Bye },
