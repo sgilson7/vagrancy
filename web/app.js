@@ -67,6 +67,9 @@ function keyVars(binding) {
   for (const [action, code] of Object.entries(binding)) v[`key.${action}`] = keyName(code);
   return v;
 }
+// One line that names every key, shown in every fight that one person plays.
+const keysLine = (binding) => say('hud.keys', keyVars(binding), { class: 'desc', id: 'keys-line' });
+
 // "the bound keys for that seat, joined in binding order" (_placeholders).
 const keyList = (binding) => N.actions.map(([a]) => keyName(binding[a])).join(', ');
 
@@ -218,9 +221,13 @@ function startLocal() {
 function practice() {
   const binding = BINDINGS.solo;
   const vars = keyVars(binding);
-  const steps = ['shoulder', 'elbow', 'cut', 'plant', 'swing'];
+  // Every control, in the order it is easiest to learn: the arm, moving,
+  // the jump and the dodge, then what a blade does, then the tricks.
+  const steps = ['shoulder', 'elbow', 'move', 'jump', 'dodge', 'roll', 'air_dodge', 'cooldown',
+    'cut', 'own_blade', 'block', 'plant', 'swing', 'ink'];
   show(
     say('practice.intro'),
+    keysLine(binding),
     el('ol', { id: 'steps' }, ...steps.map((k) => el('li', {}, say(`practice.step.${k}`, vars)))),
     say('practice.done'),
     el('div', { class: 'actions' },
@@ -299,7 +306,7 @@ function fight(id) {
     button('results.again.label', () => fight(id)),
     button('results.to_road.label', road),
     button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))]);
-  show(watch.panel, el('div', { class: 'actions' }, button('results.to_road.label', road)));
+  show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
   const g = new Road(seed(), tuning(), id);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     watch.tick(f);
@@ -539,7 +546,7 @@ function beginOnline(net) {
   const watch = matchWatcher('', () => [el('div', { class: 'actions' },
     button('results.replay.label', () => download(sess.replay_bytes(), 'vagrancy.replay')),
     button('menu.back.label', online))]);
-  show(watch.panel, status, el('div', { class: 'actions' }, button('menu.back.label', online)));
+  show(watch.panel, status, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.back.label', online)));
   const delay = JSON.parse(sess.status()).delay_ms;
   let shown = '';
   start(adapter, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {

@@ -22,7 +22,11 @@ export function bits(binding, actionBits) {
   return b;
 }
 
-// What a key code shows as in a sentence: "KeyQ" reads as "Q".
+// What a key code shows as in a sentence: "KeyQ" reads as "Q", "ShiftLeft"
+// as "Left Shift". A key's name is a value filled into a sentence, like a
+// file name, not a sentence of its own.
 export function keyName(code) {
-  return code.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '');
+  const side = code.match(/^(Shift|Control|Alt|Meta)(Left|Right)$/);
+  if (side) return `${side[2]} ${side[1] === 'Control' ? 'Ctrl' : side[1]}`;
+  return code.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '').replace(/^Numpad/, 'Numpad ');
 }

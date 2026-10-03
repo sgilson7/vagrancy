@@ -4,7 +4,7 @@
   "_placeholders": {
     "game": "game.name in this file",
     "hash": "the build hash stamped by packaging/package-web.sh",
-    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right": "the current binding for that action, from data/controls.json or the player's saved bindings",
+    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right, key.jump, key.dodge": "the current binding for that action, from data/controls.json or the player's saved bindings",
     "left_keys, right_keys": "the bound keys for that seat, joined in binding order",
     "left_name, right_name, winner, loser": "fighters.left.name or fighters.right.name",
     "opponent": "opponents.<id>.name, for the start of a sentence or a heading",
@@ -32,6 +32,15 @@
     "how.match.body": "D13",
     "practice.step.plant": "D9, D10",
     "practice.step.swing": "D9",
+    "practice.step.move": "D8 as Sam revised it (rigid legs, traction)",
+    "practice.step.jump": "the jump Sam asked for, sim::balance::JUMP_SPEED and AIR_JUMP_SPEED",
+    "practice.step.dodge": "the dodge Sam asked for; a_dodge_makes_a_fighter_uncuttable_and_its_blade_harmless_for_a_moment",
+    "practice.step.roll": "ROLL_SPEED; a_roll_carries_a_fighter_along_the_ground",
+    "practice.step.air_dodge": "an_air_dodge_spends_the_air_jump",
+    "practice.step.cooldown": "DODGE_COOLDOWN; a_dodge_cannot_be_repeated_until_its_cooldown_ends",
+    "practice.step.own_blade": "D11 and SELF_CUT_POINT (SECOND-ORDER-M3 row 2)",
+    "practice.step.block": "D10",
+    "practice.step.ink": "D12",
     "results.draw": "D13",
     "online.connected.host": "D14",
     "online.connected.join": "D14",
@@ -129,8 +138,18 @@
       "elbow": "Now the elbow. Hold {key.elbow_out} to straighten the arm and {key.elbow_in} to bend it. A straight arm reaches farther.",
       "cut": "Cut the post. A blade cuts the part it touches, so a swing that reaches the post is enough. Look at where the cut lands: it is at the point the blade touched.",
       "plant": "Plant the sword. Point the tip at the ground, then straighten your arm. The sword cannot go into the ground, so the push lifts your fighter instead.",
-      "swing": "Build speed. Swing in one direction several times without stopping. A swing adds to the one before it, which is how you cross the yard quickly or leave the ground."
+      "swing": "Build speed. Swing in one direction several times without stopping. A swing adds to the one before it, which is how you cross the yard quickly or leave the ground.",
+      "move": "Move. Hold {key.step_left} or {key.step_right} and the ground carries your fighter that way. The legs stay straight and keep your fighter upright, so your attention can stay on the sword.",
+      "jump": "Jump. Press {key.jump} to leave the ground. You can press it once more while you are in the air, and you get that second jump back when you land.",
+      "dodge": "Dodge. Press {key.dodge} and for a moment no blade can cut your fighter, so you can let an attack pass through you. Your own blade cuts nothing during that moment either.",
+      "roll": "Roll. Hold {key.step_left} or {key.step_right} as you press {key.dodge} and your fighter rolls that way along the ground. With neither held, your fighter dodges in place.",
+      "air_dodge": "Dodge in the air. Press {key.dodge} while you are off the ground and your fighter is carried sideways in the direction you hold. It uses up your jump in the air, so save it for when you need to get out of the way.",
+      "cooldown": "After a dodge there is a short wait before you can dodge again, so a dodge is a choice and not something to press over and over.",
+      "own_blade": "Mind your own point. Your own blade can cut your fighter when its point is driven into you, as in a thrust toward yourself or a fall onto your sword. A swing passes beside you.",
+      "block": "Block. Swords are solid, so a blade that meets yours stops. Holding your sword in front of you is a way to stop a swing before it reaches you.",
+      "ink": "Watch the ink. A cut that does not end the round leaves a stump that spills ink until the round ends. The meters at the top show how much ink each fighter has left."
     },
+    "review": "new: practice.step.move, jump, dodge, roll, air_dodge, cooldown, own_blade, block, ink, and hud.keys",
     "done": "Those are the controls. The road teaches the rest, one opponent at a time.",
     "reset": { "label": "Stand the post back up" }
   },
@@ -139,7 +158,8 @@
     "ink": "Ink",
     "round": "Round {round}",
     "score": "{left_name} {left_wins}, {right_name} {right_wins}",
-    "delay": "Input delay: {delay_ms} ms"
+    "delay": "Input delay: {delay_ms} ms",
+    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps and {key.dodge} dodges."
   },
 
   "fighters": {
