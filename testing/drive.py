@@ -344,9 +344,19 @@ def a_youtube_link_plays_in_a_visible_player_only_when_asked(page, name):
         p2.goto(ORIGIN + "/", wait_until="load")
         p2.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
         click_copy(p2, "menu.settings.label")
-        p2.fill("#youtube-link", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        # Sam's video is filled in already: Play alone plays it.
+        default = p2.evaluate("async () => { const y = await import('./youtube.js'); return [y.DEFAULT_LINK, y.videoId(y.DEFAULT_LINK)]; }")
+        if p2.input_value("#youtube-link") != default[0] or not default[1]:
+            fails.append(f"{name}: the link field holds {p2.input_value('#youtube-link')!r}, not Sam's {default[0]!r}")
         if away:
             fails.append(f"{name}: YouTube was contacted before Play: {away}")
+        click_copy(p2, "settings.youtube.play.label")
+        p2.wait_for_selector("#youtube-dock iframe")
+        src = p2.get_attribute("#youtube-dock iframe", "src")
+        if not src.startswith(f"https://www.youtube-nocookie.com/embed/{default[1]}?"):
+            fails.append(f"{name}: Play with nothing pasted loads {src}")
+        p2.click('#youtube-dock [data-copy="settings.youtube.stop.label"]')
+        p2.fill("#youtube-link", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         click_copy(p2, "settings.youtube.play.label")
         p2.wait_for_selector("#youtube-dock iframe")
         src = p2.get_attribute("#youtube-dock iframe", "src")

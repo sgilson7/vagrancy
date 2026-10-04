@@ -522,7 +522,7 @@
     },
     "youtube": {
       "title": "Music from YouTube",
-      "desc": "Paste a link to a YouTube video, and it plays on a loop in a small player in the corner of the page.",
+      "desc": "A video is already chosen. Press Play the video and it plays on a loop in a small player in the corner of the page. To play a different one, paste its link here first.",
       "field": "YouTube link",
       "play": {
         "label": "Play the video"

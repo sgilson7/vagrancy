@@ -1,12 +1,16 @@
 // A YouTube video, chosen by the player, playing on a loop in a small player
 // in the corner of the page. Sam asked for the game's track to play "even if
 // its in a weird way like a youtube player" (DECISIONS.md, "Decided by Sam":
-// his override of PLANNING-BRIEF 0.5's "no stream"). The game names no
-// video: the player pastes the link. Nothing contacts YouTube until they press Play, and the
+// his override of PLANNING-BRIEF 0.5's "no stream"). The video is the one
+// Sam chose, already filled in; a player may paste another. Nothing contacts
+// YouTube until they press Play, and the
 // player stays visible, because YouTube's terms do not allow a hidden one.
 
 const ID = /^[A-Za-z0-9_-]{11}$/;
 const KEY = 'vagrancy.youtube';
+// Sam's link (2026-10-04): "the song link should be pre-loaded in and you
+// just have to hit play".
+export const DEFAULT_LINK = 'https://www.youtube.com/watch?v=L7dqdw2i5JM';
 
 // The video's id from a link a person copies, or null.
 export function videoId(text) {
@@ -32,9 +36,9 @@ export function embedUrl(id) {
   return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&playsinline=1&rel=0`;
 }
 
-// The last link played on this device, a convenience only.
+// The last link played on this device, a convenience only; Sam's otherwise.
 export function remembered() {
-  try { return localStorage.getItem(KEY) || ''; } catch { return ''; }
+  try { return localStorage.getItem(KEY) || DEFAULT_LINK; } catch { return DEFAULT_LINK; }
 }
 
 let dock = null;
