@@ -132,8 +132,10 @@ function loop(now) {
     // Catch up at most eight ticks a frame, so a stalled tab does not
     // replay a burst of stale keys (Floodline caps its catch-up the same way).
     let n = 0;
-    // A headshot holds the clock while the view closes in on it.
-    if (FREEZE && now < FREEZE.until) acc = 0;
+    // A headshot holds the clock while the view closes in on it. Read on
+    // performance.now(), the clock the hold was set on: the frame's own time
+    // need not agree with it (CI's headless Firefox ran past every hold).
+    if (FREEZE && performance.now() < FREEZE.until) acc = 0;
     else FREEZE = null;
     while (acc >= tickMs && n < 8) {
       const [a, b] = seats();
