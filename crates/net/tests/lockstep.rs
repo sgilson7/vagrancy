@@ -20,7 +20,10 @@ struct Pair {
 
 impl Pair {
     fn new(latency_ms: u64, jitter_ms: u64) -> Pair {
-        let setup = content::setup::versus(7, sim::balance::DEFAULT_TUNING);
+        Pair::with_setup(content::setup::versus(7, sim::balance::DEFAULT_TUNING), latency_ms, jitter_ms)
+    }
+
+    fn with_setup(setup: sim::Setup, latency_ms: u64, jitter_ms: u64) -> Pair {
         Pair {
             host: Session::host(setup, BUILD),
             join: Session::join(BUILD),
@@ -336,4 +339,74 @@ fn the_match_starts_only_when_both_players_are_ready_and_each_sees_the_other() {
     p.host.start(p.now);
     p.play(60, |_, _| Input::NONE);
     assert_eq!(p.join.status, Status::Playing);
+}
+
+#[test]
+fn after_a_match_both_stay_connected_and_play_the_next_without_finding_each_other_again() {
+    // Sam: "there also needs to be rematch built into the game when you are
+    // playing multiplayer, dont need to refind the game after each set". The
+    // gate's match fixture, flailing, with ready pressed between rounds.
+    let fixture = sim::replay::load(include_bytes!("../../../testing/replays/match.replay")).unwrap();
+    let mut p = Pair::with_setup(fixture.setup.clone(), 30, 10);
+    let d = p.connect();
+    let flail = |seat: usize, t: u32, w: Option<&World>| -> Input {
+        if w.is_some_and(|w| matches!(w.phase, sim::fight::Phase::RoundOver { .. })) {
+            return Input(Input::READY);
+        }
+        let i = fixture.inputs[((t + d) as usize) % fixture.inputs.len()][seat];
+        Input(i & !Input::READY)
+    };
+    let mut over = false;
+    for f in 0..20_000u32 {
+        p.now += if f % 3 == 2 { 16 } else { 17 };
+        p.pump();
+        let ht = p.host.world().map(|w| w.tick).unwrap_or(0);
+        let hi = flail(0, ht, p.host.world());
+        p.host.tick(p.now, hi);
+        let jt = p.join.world().map(|w| w.tick).unwrap_or(0);
+        let ji = flail(1, jt, p.join.world());
+        p.join.tick(p.now, ji);
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+        if matches!((&p.host.status, &p.join.status), (Status::Connected { .. }, Status::Connected { .. })) {
+            over = true;
+            break;
+        }
+    }
+    assert!(over, "the match never ended on both: host {:?}, joiner {:?}", p.host.status, p.join.status);
+    let (h, j) = (p.host.world().unwrap(), p.join.world().unwrap());
+    assert!(matches!(h.phase, sim::fight::Phase::MatchOver { .. }), "{:?}", h.phase);
+    assert_eq!((h.tick, h.checksum()), (j.tick, j.checksum()), "the two sides ended on different matches");
+    let first = (h.tick, h.checksum(), h.setup.seed);
+    // The finished match's replay is still there to save.
+    assert_eq!(p.host.recording().unwrap().inputs.len() as u32, first.0);
+    // Back in the lobby, long enough to read the result: neither side gives
+    // up, and nobody is ready until they say so.
+    for _ in 0..30 {
+        p.now += 1_000;
+        p.pump();
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+        p.pump();
+    }
+    assert!(matches!(p.host.status, Status::Connected { .. }) && matches!(p.join.status, Status::Connected { .. }), "{:?} {:?}", p.host.status, p.join.status);
+    assert!(!p.host.me_ready && !p.host.them_ready && !p.join.me_ready && !p.join.them_ready);
+    p.host.start(p.now);
+    p.pump();
+    assert_eq!(p.host.world().unwrap().tick, first.0, "the host started the next match before anyone was ready");
+    // Ready again, Start again, and the next match is a new one on both.
+    p.both_ready();
+    p.host.start(p.now);
+    p.pump();
+    p.play(600, |seat, t| Input(((t * 7 + seat as u32 * 3) / 11 % 64) as u16));
+    for (who, s) in [("host", &p.host), ("joiner", &p.join)] {
+        assert!(matches!(s.status, Status::Playing | Status::WaitingOn), "{who}: {:?}", s.status);
+        let w = s.world().unwrap();
+        assert!(w.tick > 300, "{who} only reached tick {} of the next match", w.tick);
+        assert_eq!(w.setup.seed, first.2.wrapping_add(1), "{who}: the next match is on the next seed");
+    }
+    let (hi, ji) = (inputs(&p.host), inputs(&p.join));
+    let n = hi.len().min(ji.len());
+    assert_eq!(hi[..n], ji[..n], "the two sides stepped the next match on different inputs");
 }

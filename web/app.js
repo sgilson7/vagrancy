@@ -439,8 +439,9 @@ function openNet(isHost, mode, code, paint) {
     const now = JSON.stringify([sess.status(), net.error, net.left, net.peer !== null]);
     if (!force && now === net.shown) return;
     net.shown = now;
-    paint();
+    net.draw();
   };
+  net.draw = paint;
   const flush = () => {
     if (net.peer === null) return;
     const out = net.sess.outbox();
@@ -496,17 +497,32 @@ function lobbyLines(net, waitingKey, vars) {
     // each sees the other's answer, and the host's Start appears once both
     // have.
     const host = net.sess.seat() === 0;
-    const lines = [say(host ? 'online.connected.host' : 'online.connected.join', { delay_ms: st.delay_ms })];
-    lines.push(st.me_ready
-      ? say('online.ready.you')
-      : button('online.ready.label', () => { net.sess.ready(); net.flush(); net.paint(true); }));
-    lines.push(say(st.them_ready ? 'online.ready.friend' : 'online.ready.friend_not'));
-    if (host && st.me_ready && st.them_ready) {
-      lines.push(button('online.start.label', () => { net.sess.start(performance.now()); net.flush(); beginOnline(net); }));
-    }
-    return lines;
+    return [say(host ? 'online.connected.host' : 'online.connected.join', { delay_ms: st.delay_ms }),
+      ...readyLines(net, st, 'online.ready.label', () => beginOnline(net))];
   }
   return waitingKey ? [say(waitingKey, vars)] : [];
+}
+
+// Ready for each player, what the friend has said, and the host's Start
+// once both are ready: before the first match, and between matches.
+function readyLines(net, st, readyKey, started) {
+  const lines = [st.me_ready
+    ? say('online.ready.you')
+    : button(readyKey, () => { net.sess.ready(); net.flush(); net.paint(true); })];
+  lines.push(say(st.them_ready ? 'online.ready.friend' : 'online.ready.friend_not'));
+  if (net.sess.seat() === 0 && st.me_ready && st.them_ready) {
+    lines.push(button('online.start.label', () => { net.sess.start(performance.now()); net.flush(); started(); }));
+  }
+  return lines;
+}
+
+// After a match, the next one on the same connection (Sam: "dont need to
+// refind the game after each set"). The session is back in its lobby; the
+// finished match stays on screen until the host starts the next.
+function againLines(net) {
+  const st = JSON.parse(net.sess.status());
+  if (st.kind !== 'connected') return [];
+  return readyLines(net, st, 'online.ready.again', () => {});
 }
 
 function hostRoom() {
@@ -581,14 +597,20 @@ function beginOnline(net) {
     recorded_checksum: () => '',
   };
   const status = el('div', { id: 'net-status', role: 'status' });
-  const watch = matchWatcher('', () => [el('div', { class: 'actions' },
-    button('results.replay.label', () => download(sess.replay_bytes(), 'vagrancy.replay')),
-    button('menu.back.label', online))]);
+  const again = el('div', { id: 'again' });
+  net.draw = () => again.replaceChildren(...againLines(net));
+  const watch = matchWatcher('', () => {
+    net.paint(true);
+    return [again, el('div', { class: 'actions' },
+      button('results.replay.label', () => download(sess.replay_bytes(), 'vagrancy.replay')),
+      button('menu.back.label', online))];
+  });
   show(watch.panel, status, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.back.label', online)));
   const delay = JSON.parse(sess.status()).delay_ms;
   let shown = '';
   start(adapter, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     watch.tick(f);
+    net.paint();
     $('hud').append(el('span', { 'data-copy': 'hud.delay' }, t('hud.delay', { delay_ms: delay })));
     const st = JSON.parse(sess.status());
     if (st.kind === shown) return;
@@ -745,7 +767,10 @@ async function main() {
   // focus is.
   window.addEventListener('keydown', (e) => {
     if (e.code !== 'Enter' && e.code !== 'NumpadEnter') return;
-    const first = document.querySelector('#result button');
+    // Between online matches, Enter says ready or starts, and never saves a
+    // replay or leaves.
+    const again = document.querySelector('#again');
+    const first = again ? again.querySelector('button') : document.querySelector('#result button');
     if (first && document.activeElement !== first && !(document.activeElement && document.activeElement.matches('input, textarea'))) {
       e.preventDefault();
       first.click();

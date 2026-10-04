@@ -14,6 +14,7 @@
 use crate::wire::{decode, encode, Bye, Msg, PROTO};
 use sim::balance::TICKS_PER_SECOND;
 use sim::replay::Recording;
+use sim::fight::Phase;
 use sim::{Input, Setup, World};
 use std::collections::BTreeMap;
 
@@ -221,7 +222,13 @@ impl Session {
             }
             // Start may arrive more than once (the host repeats it until it
             // hears an input); only the first, in the lobby, begins the match.
-            Msg::Start if !self.host && matches!(self.status, Status::Connected { .. }) => self.begin(now),
+            // A joiner that has not said it is ready has not been started.
+            Msg::Start if !self.host && matches!(self.status, Status::Connected { .. }) && self.me_ready => self.begin(now),
+            // Inputs and bundles belong to a match being played. Between
+            // matches, the last of the one before may still arrive; the
+            // channel is ordered, so they all arrive before the other side's
+            // Ready, and so before the next match.
+            Msg::Input { .. } | Msg::Bundle { .. } if !self.playing() => {}
             Msg::Input { tick, input, checked, sum } if self.host => {
                 self.heard_input = true;
                 self.inputs.entry(tick).or_insert([None, None])[1] = Some(input);
@@ -274,11 +281,25 @@ impl Session {
         }
     }
 
+    fn playing(&self) -> bool {
+        matches!(self.status, Status::Playing | Status::WaitingOn)
+    }
+
     fn begin(&mut self, now: u64) {
         let setup = self.setup.clone().expect("a setup before the start");
         self.rec = Some(Recording::new(setup));
         self.status = Status::Playing;
         self.heard_at = now;
+        self.heard_input = false;
+        self.blocked_since = None;
+        // Ready is said again for each match. A Ready that arrives during
+        // this one is from a side that has already finished it, and counts
+        // for the next.
+        self.me_ready = false;
+        self.them_ready = false;
+        self.inputs.clear();
+        self.mine.clear();
+        self.theirs.clear();
         // The first `delay` ticks run on empty input, on both sides, untold.
         for t in 0..self.delay {
             self.inputs.insert(t, [Some(0), Some(0)]);
@@ -291,7 +312,7 @@ impl Session {
         // A Start the joiner never received would freeze the match with both
         // sides waiting (reported by Sam between two computers): repeat it
         // every second until the joiner's first input proves it arrived.
-        if self.host && self.rec.is_some() && !self.heard_input && now.saturating_sub(self.kept_at) >= KEEPALIVE_MS {
+        if self.host && self.playing() && !self.heard_input && now.saturating_sub(self.kept_at) >= KEEPALIVE_MS {
             self.kept_at = now;
             self.send(Msg::Start);
         }
@@ -350,7 +371,25 @@ impl Session {
         // Old entries are not needed once both sides are past them.
         let keep_from = done.saturating_sub(4 * MAX_DELAY);
         self.inputs = self.inputs.split_off(&keep_from);
+        if matches!(self.rec.as_ref().unwrap().world.phase, Phase::MatchOver { .. }) && self.playing() {
+            self.between_matches(now);
+        }
         Some(inputs)
+    }
+
+    /// The match is over, on this side: everything the other side needs to
+    /// reach the same end has been sent. Back to the lobby on the same
+    /// connection (Sam: "dont need to refind the game after each set"), with
+    /// the finished match kept for its replay until the next begins. Both
+    /// sides step the seed the same way, so the next match is a new one and
+    /// nothing about it crosses the wire.
+    fn between_matches(&mut self, now: u64) {
+        self.status = Status::Connected { delay: self.delay };
+        self.heard_at = now;
+        self.kept_at = now;
+        if let Some(s) = self.setup.as_mut() {
+            s.seed = s.seed.wrapping_add(1);
+        }
     }
 
     /// Host: send a bundle for every tick whose two inputs are both known,

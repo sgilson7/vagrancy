@@ -59,7 +59,7 @@
     "settings.keys.actions.stand": "new",
     "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
     "results.key_hint": "new",
-    "online.ready": "new: label, you, friend, friend_not"
+    "online.ready": "new: label, you, friend, friend_not, again"
   },
   "_glossary": {
     "ink": {
@@ -492,7 +492,8 @@
       "label": "Tell your friend you are ready",
       "you": "You are ready, and your friend has been told.",
       "friend": "Your friend is ready.",
-      "friend_not": "Your friend has not said they are ready yet."
+      "friend_not": "Your friend has not said they are ready yet.",
+      "again": "Tell your friend you want another match"
     }
   },
   "settings": {
