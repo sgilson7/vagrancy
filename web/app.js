@@ -11,6 +11,7 @@ import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 import { download, pick } from './files.js';
 import * as music from './music.js';
+import * as youtube from './youtube.js';
 
 const BUILD = '__BUILD__';
 const $ = (id) => document.getElementById(id);
@@ -628,11 +629,42 @@ function beginOnline(net) {
 
 function settings() {
   stop();
-  show(musicSection(), keysSection(), saveSection(), button('menu.back.label', menu));
+  show(musicSection(), youtubeSection(), keysSection(), saveSection(), button('menu.back.label', menu));
 }
 
 let REMEMBER = false;
 let MUSIC_ERROR = null;
+
+// A YouTube link the player chooses, in a visible player that outlives the
+// screen it was started from.
+function youtubeSection() {
+  const field = el('input', { type: 'url', id: 'youtube-link', size: '40', value: youtube.remembered() });
+  const error = el('div', { id: 'youtube-error' });
+  const stopButton = () => button('settings.youtube.stop.label', () => { youtube.stop(); settingsIfShown(); });
+  return el('section', { id: 'youtube' },
+    el('h2', { 'data-copy': 'settings.youtube.title' }, t('settings.youtube.title')),
+    say('settings.youtube.desc'),
+    el('p', {}, el('label', { for: 'youtube-link', 'data-copy': 'settings.youtube.field' }, t('settings.youtube.field')), ' ', field),
+    error,
+    el('div', { class: 'actions' },
+      button('settings.youtube.play.label', () => {
+        const id = youtube.videoId(field.value);
+        if (!id) {
+          error.replaceChildren(say('settings.youtube.error', {}, { role: 'alert' }));
+          return;
+        }
+        error.replaceChildren();
+        youtube.play(id, stopButton());
+      }),
+      youtube.playing() ? stopButton() : null),
+    say('settings.youtube.privacy', {}, { class: 'desc' }),
+  );
+}
+
+// Redraw Settings if it is what is on screen, so a Stop button there goes.
+function settingsIfShown() {
+  if (document.querySelector('#screen #youtube')) settings();
+}
 
 function musicSection() {
   const state = music.current();

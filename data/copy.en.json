@@ -59,7 +59,8 @@
     "settings.keys.actions.stand": "new",
     "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
     "results.key_hint": "new",
-    "online.ready": "new: label, you, friend, friend_not, again"
+    "online.ready": "new: label, you, friend, friend_not, again",
+    "settings.youtube": "new: all seven strings"
   },
   "_glossary": {
     "ink": {
@@ -518,6 +519,19 @@
       },
       "error": "This file could not be played. Your browser reported: {error}",
       "formats": "MP3, Ogg and WAV files play in most browsers."
+    },
+    "youtube": {
+      "title": "Music from YouTube",
+      "desc": "Paste a link to a YouTube video, and it plays on a loop in a small player in the corner of the page.",
+      "field": "YouTube link",
+      "play": {
+        "label": "Play the video"
+      },
+      "stop": {
+        "label": "Stop the video"
+      },
+      "error": "That is not a link to a YouTube video. Copy the address from the video's page and paste it here.",
+      "privacy": "Nothing is sent to YouTube until you start the video. After that, YouTube sees that this page is playing the video, as it does for any embedded video. In an online match your friend does not hear it."
     },
     "sound": {
       "volume": {

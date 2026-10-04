@@ -33,6 +33,7 @@ and anything decided since. Newest entries go at the bottom of their section.
   He also gave the agent push rights for this run, and asked that every check needing him be carried as a row, not waited on.
 
 - **2026-10-03, during M1:** "make the legs more rigid so its easier to move ala nidhogg, the arms should be full fluid though." This revises D8. The legs are a rigid frame, and the step keys drive the fighter through the ground at `sim::balance::RUN_SPEED`. The arms and the sword stay fully simulated.
+- **2026-10-03, after the MVP:** "you gotta find a way to get the song vagrancy to play, even if its in a weird way like a youtube player playing the song with only auido." This overrides brief 0.5's "does not embed a stream" for YouTube. The agent built a "Music from YouTube" section in Settings. The player pastes any YouTube link, and the video loops in a small, visible 200 by 200 player in the corner. It is not hidden: YouTube's terms do not allow a player that is hidden or shown only as audio. The game names no video and ships no audio. The deny-list and "no element names the track" still hold, so the agent did not choose an upload. The ones it found were fan uploads, not the label's. Nothing contacts YouTube until the player presses Play, so the gate's "no request leaves the origin" still holds for everything else. The gate checks the Play path in its own browser context, with YouTube stubbed. The local-file slot is unchanged.
 
 ## The build
 

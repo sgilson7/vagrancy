@@ -310,6 +310,68 @@ def a_track_from_this_device_loops_during_a_fight(page, name, tmp=Path("/tmp")):
     return fails
 
 
+@check
+def a_youtube_link_plays_in_a_visible_player_only_when_asked(page, name):
+    """Sam's override of brief 0.5: a YouTube link the player pastes loops in
+    a visible player. Nothing reaches YouTube until Play is pressed; this
+    walk's own page never presses it, so its no-request-left-the-origin line
+    still covers everything else."""
+    fails = []
+    click_copy(page, "menu.settings.label")
+    page.wait_for_selector('[data-copy="settings.youtube.title"]')
+    page.fill("#youtube-link", "not a link")
+    click_copy(page, "settings.youtube.play.label")
+    page.wait_for_selector('[data-copy="settings.youtube.error"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (settings, YouTube)")
+    if page.locator("#youtube-dock").count():
+        fails.append(f"{name}: a link that is not YouTube's opened a player")
+    ids = page.evaluate("""async () => { const y = await import('./youtube.js');
+        return ['https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=3', 'https://youtu.be/dQw4w9WgXcQ?si=x',
+                'https://m.youtube.com/shorts/dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://example.com/watch?v=dQw4w9WgXcQ',
+                'https://www.youtube.com/watch?v=short'].map(y.videoId); }""")
+    want = ["dQw4w9WgXcQ"] * 4 + [None, None]
+    if ids != want:
+        fails.append(f"{name}: YouTube links read as {ids}, not {want}")
+    click_copy(page, "menu.back.label")
+    # Pressing Play, in a context of its own, with YouTube answered by a stub
+    # so the gate does not depend on it.
+    ctx = page.context.browser.new_context()
+    try:
+        p2 = ctx.new_page()
+        away = []
+        p2.on("request", lambda r: away.append(r.url) if not r.url.startswith(ORIGIN) else None)
+        p2.route("https://www.youtube-nocookie.com/**", lambda route: route.fulfill(status=200, content_type="text/html", body="<p>stub</p>"))
+        p2.goto(ORIGIN + "/", wait_until="load")
+        p2.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+        click_copy(p2, "menu.settings.label")
+        p2.fill("#youtube-link", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        if away:
+            fails.append(f"{name}: YouTube was contacted before Play: {away}")
+        click_copy(p2, "settings.youtube.play.label")
+        p2.wait_for_selector("#youtube-dock iframe")
+        src = p2.get_attribute("#youtube-dock iframe", "src")
+        if not src.startswith("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?") or "loop=1" not in src:
+            fails.append(f"{name}: the player loads {src}")
+        box = p2.locator("#youtube-dock iframe").bounding_box()
+        if not box or box["width"] < 200 or box["height"] < 200 or not p2.is_visible("#youtube-dock iframe"):
+            fails.append(f"{name}: the YouTube player is not visible at 200 by 200: {box}")
+        others = [u for u in away if not u.startswith("https://www.youtube-nocookie.com/")]
+        if others:
+            fails.append(f"{name}: Play reached beyond YouTube: {others}")
+        # It outlives Settings, and Stop removes it.
+        click_copy(p2, "menu.back.label")
+        if not p2.is_visible("#youtube-dock iframe"):
+            fails.append(f"{name}: the YouTube player went away with Settings")
+        p2.click('#youtube-dock [data-copy="settings.youtube.stop.label"]')
+        if p2.locator("#youtube-dock").count():
+            fails.append(f"{name}: Stop left the YouTube player")
+    finally:
+        ctx.close()
+    if not fails:
+        print(f"ok: {name}: a YouTube link plays in a visible player, and only once asked")
+    return fails
+
+
 def red_pixels(page):
     """Count canvas pixels in the red band (hue 330-20, saturation >= 0.20),
     the same band crates/content/tests/palette.rs holds the palette to.

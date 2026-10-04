@@ -34,3 +34,9 @@ button.bind.listening { outline: 3px solid var(--focus); }
 .stop h3 { font-weight: normal; margin: 4px 0 0; font-size: 1.2em; }
 .stop h4 { font-weight: normal; font-style: italic; margin: 8px 0 0; }
 .stop p { margin: 2px 0; }
+/* The YouTube player stays visible: YouTube's terms do not allow a hidden one. */
+#youtube-dock { position: fixed; right: 16px; bottom: 16px; z-index: 10; background: var(--paper);
+                border: 1px solid var(--line); padding: 4px; display: flex; flex-direction: column; }
+#youtube-dock iframe { display: block; width: 200px; height: 200px; border: 0; }
+#youtube-dock button { margin: 4px 0 0; }
+#youtube-link { font: inherit; max-width: 100%; }
