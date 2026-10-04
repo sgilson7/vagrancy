@@ -79,7 +79,7 @@ def play(browser, name, seconds):
         host.click('[data-copy="online.start.label"]')
         join.wait_for_function("document.body.dataset.online === 'playing'", timeout=10000)
         print(f"ok: {name}: two tabs met by pasted codes: {delay_text}")
-        keys = ["KeyQ", "KeyW", "KeyO", "KeyP", "KeyA", "KeyD"]
+        keys = ["KeyI", "KeyK", "KeyJ", "KeyL", "KeyA", "KeyD"]
         rng = random.Random(7)
         end = time.time() + seconds
         while time.time() < end:

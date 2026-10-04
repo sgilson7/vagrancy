@@ -1,6 +1,47 @@
 {
-  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file.",
-  "solo": { "shoulder_up": "KeyQ", "shoulder_down": "KeyW", "elbow_in": "KeyO", "elbow_out": "KeyP", "step_left": "KeyA", "step_right": "KeyD", "jump": "Space", "dodge": "ShiftLeft", "stand": "KeyS" },
-  "left": { "shoulder_up": "KeyQ", "shoulder_down": "KeyW", "elbow_in": "KeyE", "elbow_out": "KeyR", "step_left": "KeyA", "step_right": "KeyD", "jump": "KeyS", "dodge": "KeyF", "stand": "KeyG" },
-  "right": { "shoulder_up": "KeyU", "shoulder_down": "KeyI", "elbow_in": "KeyO", "elbow_out": "KeyP", "step_left": "KeyJ", "step_right": "KeyL", "jump": "KeyK", "dodge": "KeyH", "stand": "KeyY" }
+  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file. One player: the left hand moves (A and D step, W jumps, S stands up, Left Shift dodges) and the right hand drives the arm (I and K the shoulder, J and L the elbow), at Sam's request (2026-10-03). _solo_before is the earlier layout: a save still holding it exactly is moved to the new one.",
+  "solo": {
+    "shoulder_up": "KeyI",
+    "shoulder_down": "KeyK",
+    "elbow_in": "KeyJ",
+    "elbow_out": "KeyL",
+    "step_left": "KeyA",
+    "step_right": "KeyD",
+    "jump": "KeyW",
+    "dodge": "ShiftLeft",
+    "stand": "KeyS"
+  },
+  "left": {
+    "shoulder_up": "KeyQ",
+    "shoulder_down": "KeyW",
+    "elbow_in": "KeyE",
+    "elbow_out": "KeyR",
+    "step_left": "KeyA",
+    "step_right": "KeyD",
+    "jump": "KeyS",
+    "dodge": "KeyF",
+    "stand": "KeyG"
+  },
+  "right": {
+    "shoulder_up": "KeyU",
+    "shoulder_down": "KeyI",
+    "elbow_in": "KeyO",
+    "elbow_out": "KeyP",
+    "step_left": "KeyJ",
+    "step_right": "KeyL",
+    "jump": "KeyK",
+    "dodge": "KeyH",
+    "stand": "KeyY"
+  },
+  "_solo_before": {
+    "shoulder_up": "KeyQ",
+    "shoulder_down": "KeyW",
+    "elbow_in": "KeyO",
+    "elbow_out": "KeyP",
+    "step_left": "KeyA",
+    "step_right": "KeyD",
+    "jump": "Space",
+    "dodge": "ShiftLeft",
+    "stand": "KeyS"
+  }
 }

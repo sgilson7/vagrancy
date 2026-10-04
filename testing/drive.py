@@ -212,12 +212,12 @@ def a_replay_downloaded_and_loaded_plays_the_same_match(page, name, tmp=Path("/t
     click_copy(page, "menu.practice.label")
     page.wait_for_selector('[data-copy="practice.intro"]')
     fails += every_visible_line_is_a_copy_string(page, name + " (practice)")
-    page.keyboard.down("KeyQ")
+    page.keyboard.down("KeyI")
     page.wait_for_timeout(900)
-    page.keyboard.up("KeyQ")
-    page.keyboard.down("KeyP")
+    page.keyboard.up("KeyI")
+    page.keyboard.down("KeyL")
     page.wait_for_timeout(500)
-    page.keyboard.up("KeyP")
+    page.keyboard.up("KeyL")
     with page.expect_download() as d:
         click_copy(page, "replay.download.label")
     path = tmp / f"vagrancy-gate-{name}.replay"
@@ -503,14 +503,14 @@ def enter_goes_on_without_the_mouse(page, name):
     page.wait_for_selector('[data-copy="hud.round"]')
     rounds = 0
     for _ in range(8):
-        page.keyboard.down("KeyD"); page.keyboard.down("KeyQ")
+        page.keyboard.down("KeyD"); page.keyboard.down("KeyI")
         try:
             page.wait_for_function("['round_over','match_over'].includes(document.body.dataset.phase)", timeout=30000)
         except Exception:
             fails.append(f"{name}: no round ended against the {stops[0]} in 30 s")
             break
         finally:
-            page.keyboard.up("KeyD"); page.keyboard.up("KeyQ")
+            page.keyboard.up("KeyD"); page.keyboard.up("KeyI")
         phase = page.evaluate("document.body.dataset.phase")
         want = "road.fight.label" if phase == "match_over" else "results.next_round.label"
         focused = page.evaluate("document.activeElement && document.activeElement.dataset.copy")

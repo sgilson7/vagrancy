@@ -126,6 +126,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
     }
     let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
     let mut s = file.state;
+    // A save still holding the earlier one-player layout exactly (as every
+    // save made before Sam split the keys between the hands does, unless its
+    // player changed them) moves to the new layout; a player's own choices
+    // stay.
+    let controls: Value = serde_json::from_str(include_str!("../../../data/controls.json")).expect("data/controls.json");
+    if let Some(before) = controls["_solo_before"].as_object() {
+        let matches = before.iter().all(|(k, v)| s.bindings.solo.get(k).map(String::as_str) == v.as_str());
+        if matches {
+            s.bindings.solo = fresh().bindings.solo;
+        }
+    }
     // A save written before the jump and the dodge existed has no keys for
     // them: it takes the defaults rather than being called damaged.
     let fresh = fresh();
@@ -190,6 +201,20 @@ mod tests {
             assert!(matches!(decode(&bad), Err(SaveError::Damaged) | Err(SaveError::Format)), "accepted: {bad}");
         }
         assert_eq!(decode(&good.replace("\"music_volume\": 70", "\"music_volume\": 700")), Err(SaveError::Damaged));
+    }
+
+    #[test]
+    fn a_save_with_the_old_one_player_keys_moves_to_the_new_layout() {
+        let controls: Value = serde_json::from_str(include_str!("../../../data/controls.json")).unwrap();
+        let mut old = fresh();
+        old.bindings.solo = controls["_solo_before"].as_object().unwrap().iter().map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string())).collect();
+        let back = decode(&encode(&old)).unwrap();
+        assert_eq!(back.bindings.solo, fresh().bindings.solo);
+        assert_eq!(back.bindings.solo["shoulder_up"], "KeyI");
+        // A player's own layout is left alone.
+        let mut mine = fresh();
+        mine.bindings.solo.insert("shoulder_up".into(), "KeyZ".into());
+        assert_eq!(decode(&encode(&mine)).unwrap().bindings.solo["shoulder_up"], "KeyZ");
     }
 
     #[test]
