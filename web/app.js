@@ -400,7 +400,20 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
     const box = tree.getBoundingClientRect();
     wires.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
     for (const n of nodes) {
-      for (const r of n.requires) {
+      // The chart draws one route into each fight (Sam: "just one line per
+      // layer between nodes"): from the requirement in the row directly
+      // above, the nearest across if there are several. Every fight has one
+      // there (the_chart_has_a_route_into_every_fight_from_the_row_above).
+      // Hovering still lists all it asks for. The tree draws every line.
+      let shown = n.requires;
+      if (layout === 'chart' && n.requires.length > 1) {
+        const cx = (id) => { const r = buttons.get(id).getBoundingClientRect(); return r.left + r.width / 2; };
+        const above = n.requires.filter((r) => byId.get(r.from).row === n.row - 1);
+        const pool = above.length ? above : n.requires;
+        const here = cx(n.id);
+        shown = [pool.reduce((best, r) => Math.abs(cx(r.from) - here) < Math.abs(cx(best.from) - here) ? r : best)];
+      }
+      for (const r of shown) {
         const a = buttons.get(r.from).getBoundingClientRect();
         const c = buttons.get(n.id).getBoundingClientRect();
         const x1 = a.left - box.left + a.width / 2, y1 = a.bottom - box.top;

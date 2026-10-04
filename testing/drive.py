@@ -644,6 +644,10 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
         if page.locator(sel).count() != want:
             fails.append(f"{name}: the {view} shows {page.locator(sel).count()} of {want}")
         fails += every_visible_line_is_a_copy_string(page, f"{name} (road as {view})")
+        if view == "chart":
+            lines = page.locator("#road-tree.chart .wires path.met, #road-tree.chart .wires path.unmet").count()
+            if lines != len(road) - 1:
+                fails.append(f"{name}: the chart draws {lines} routes, not one into each of the {len(road) - 1} fights below the first")
     page.click('#chapters [data-chapter="1"]')
     page.wait_for_selector("#chapter-stages .stage")
     if page.locator("#chapter-stages .stage").count() != sum(1 for s in road if len(s["requires"]) == 1):

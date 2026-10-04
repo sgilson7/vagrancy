@@ -209,6 +209,17 @@ fn the_tree_is_a_tree_whose_levels_are_counts_of_requirements() {
 }
 
 #[test]
+fn the_chart_has_a_route_into_every_fight_from_the_row_above() {
+    // The chart draws one route into each fight, from a requirement in the
+    // row directly above it (Sam: "just one line per layer between nodes").
+    let road = road();
+    for s in road.iter().filter(|s| s.level() > 0) {
+        let above = s.requires.iter().any(|r| road.iter().any(|t| t.id == r.stop() && t.level() + 1 == s.level()));
+        assert!(above, "{} has no requirement in the row above it, so the chart has no route into it", s.id);
+    }
+}
+
+#[test]
 fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     let mut best = BTreeMap::new();
     let open_now = |b: &BTreeMap<String, Best>| road().into_iter().filter(|s| content::road::open(s, b)).map(|s| s.id).collect::<Vec<_>>();
