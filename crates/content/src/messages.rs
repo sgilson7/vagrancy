@@ -161,8 +161,8 @@ mod tests {
         let s = fill(&replay_error(ReplayError::Sim { theirs: 3, ours: 1 }));
         assert_eq!(
             s,
-            "This replay was recorded with simulation version 3, and this build runs version 1. \
-             The same inputs would not produce the same match, so the replay was not loaded."
+            "This replay was recorded with simulation version 3, and this build runs version 1, \
+             so the replay was not loaded."
         );
         assert!(fill(&replay_error(ReplayError::Damaged)).starts_with("This replay file is incomplete"));
         assert!(fill(&replay_error(ReplayError::Format)).contains("is not a Vagrancy replay"));

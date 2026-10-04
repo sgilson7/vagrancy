@@ -210,7 +210,7 @@ def click_copy(page, key):
 def a_replay_downloaded_and_loaded_plays_the_same_match(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.practice.label")
-    page.wait_for_selector('[data-copy="practice.intro"]')
+    page.wait_for_selector('[data-copy="practice.step.shoulder"]')
     fails += every_visible_line_is_a_copy_string(page, name + " (practice)")
     page.keyboard.down("KeyI")
     page.wait_for_timeout(900)
@@ -485,7 +485,7 @@ def a_key_can_be_rebound_and_a_clash_is_refused(page, name):
 def the_online_lobby_says_only_its_own_words(page, name):
     # Opening the lobby connects to nothing; only hosting or joining does.
     click_copy(page, "menu.online.label")
-    page.wait_for_selector('[data-copy="online.intro"]')
+    page.wait_for_selector('[data-copy="online.host_room.label"]')
     fails = every_visible_line_is_a_copy_string(page, name + " (online lobby)")
     click_copy(page, "menu.back.label")
     return fails
@@ -495,7 +495,7 @@ def the_online_lobby_says_only_its_own_words(page, name):
 def the_road_reads_its_numbers_from_the_pilots_and_its_first_fight_starts(page, name):
     fails = []
     click_copy(page, "menu.road.label")
-    page.wait_for_selector('[data-copy="road.intro"]')
+    page.wait_for_selector('[data-copy="road.does_heading"]')
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
     does = page.inner_text('[data-stop="thresher"] [data-copy="opponents.thresher.does"]')
     if "1.5 seconds" not in does:
@@ -509,7 +509,7 @@ def the_road_reads_its_numbers_from_the_pilots_and_its_first_fight_starts(page, 
     page.wait_for_timeout(500)
     fails += every_visible_line_is_a_copy_string(page, name + " (road fight)")
     click_copy(page, "results.to_road.label")
-    page.wait_for_selector('[data-copy="road.intro"]')
+    page.wait_for_selector('[data-copy="road.does_heading"]')
     click_copy(page, "menu.back.label")
     if not fails:
         print(f"ok: {name}: the road states its numbers from the pilot data, locks what is ahead, and its first fight starts")

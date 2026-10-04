@@ -237,10 +237,8 @@ function practice() {
   const steps = ['shoulder', 'elbow', 'move', 'jump', 'air_jump', 'stand', 'dodge', 'roll', 'air_dodge', 'cooldown',
     'cut', 'block', 'plant', 'swing', 'ink'];
   show(
-    say('practice.intro'),
     keysLine(binding),
     el('ol', { id: 'steps' }, ...steps.map((k) => el('li', {}, say(`practice.step.${k}`, vars)))),
-    say('practice.done'),
     el('div', { class: 'actions' },
       button('practice.reset.label', practice),
       button('replay.download.label', () => download(game.replay_bytes(), 'vagrancy.replay')),
@@ -307,7 +305,7 @@ function road() {
       say(o('try'), s.numbers),
       ...action);
   });
-  show(say('road.intro'), ...(next ? [] : [say('road.end')]), ...cards, button('menu.back.label', menu));
+  show(...(next ? [] : [say('road.end')]), ...cards, button('menu.back.label', menu));
 }
 
 function fight(id) {
@@ -406,9 +404,7 @@ function online() {
   hangUpOnline();
   const field = el('input', { id: 'room-code', type: 'text', autocomplete: 'off', spellcheck: 'false' });
   show(
-    say('online.intro'),
     say('online.privacy', {}, { class: 'desc' }),
-    say('online.music', {}, { class: 'desc' }),
     el('div', { class: 'item' }, button('online.host_room.label', () => hostRoom()), say('online.host_room.desc', {}, { class: 'desc' })),
     el('div', { class: 'item' },
       button('online.join_room.label', () => field.value.trim() && joinRoom(field.value.trim().toUpperCase())),
@@ -657,7 +653,6 @@ function youtubeSection() {
         youtube.play(id, stopButton());
       }),
       youtube.playing() ? stopButton() : null),
-    say('settings.youtube.privacy', {}, { class: 'desc' }),
   );
 }
 
@@ -694,7 +689,6 @@ function musicSection() {
       state.name ? button('settings.music.remove.label', () => music.remove()) : null),
     status,
     MUSIC_ERROR ? say('settings.music.error', { error: MUSIC_ERROR }, { role: 'alert' }) : null,
-    say('settings.music.privacy'),
     el('p', {}, remember, ' ', el('label', { for: 'music-remember', 'data-copy': 'settings.music.remember.label' }, t('settings.music.remember.label'))),
     say('settings.music.remember.desc', {}, { class: 'desc' }),
     el('p', {}, el('label', { for: 'music-volume', 'data-copy': 'settings.music.volume.label' }, t('settings.music.volume.label')), ' ', vol),

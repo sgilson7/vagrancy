@@ -6,7 +6,6 @@ body { font: 16px/1.5 Georgia, "Iowan Old Style", serif; }
 #app { max-width: 1240px; margin: 0 auto; padding: 16px; }
 h1 { font-weight: normal; letter-spacing: 0.04em; margin: 0 0 4px; }
 #masthead p { margin: 0 0 4px; max-width: 70ch; }
-#content-note { color: var(--muted); font-size: 0.9em; }
 #status { color: var(--muted); }
 #foot { margin-top: 24px; display: flex; gap: 16px; justify-content: space-between;
         color: var(--muted); font-size: 0.85em; }

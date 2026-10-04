@@ -55,8 +55,9 @@ const GORE: &[&str] = &[
     "dismember", "dismembered", "mutilate", "mutilated", "slaughter", "butcher", "carnage",
     "kill", "kills", "killed", "killing", "blood", "bloody", "corpse", "dead", "die", "dies",
 ];
-// `_glossary.ink.note`: "The word blood appears once, in game.content_note".
-const GORE_ALLOWED: &[(&str, &str)] = &[("game.content_note", "blood")];
+// `_glossary.ink.note`: "The word blood appears nowhere." Sam removed the
+// one line that used it, game.content_note, on 2026-10-04.
+const GORE_ALLOWED: &[(&str, &str)] = &[];
 // Rule 14: no red word for ink or a cut.
 const RED_WORDS: &[&str] = &[
     "red", "reds", "reddish", "crimson", "scarlet", "vermilion", "maroon", "blood-red", "ruby",

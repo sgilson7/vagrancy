@@ -60,7 +60,7 @@
     "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
     "results.key_hint": "new",
     "online.ready": "new: label, you, friend, friend_not, again",
-    "settings.youtube": "new: all seven strings"
+    "settings.youtube": "new: all six strings"
   },
   "_glossary": {
     "ink": {
@@ -72,7 +72,7 @@
         "life",
         "energy"
       ],
-      "note": "The word blood appears once, in game.content_note, and nowhere else."
+      "note": "The word blood appears nowhere."
     },
     "round": {
       "means": "one exchange, ended by a fighter who cannot continue",
@@ -128,8 +128,6 @@
   },
   "game": {
     "name": "Vagrancy",
-    "description": "A physics sword-fighting game for two players, in which you move your fighter's arms one joint at a time.",
-    "content_note": "The fighters are paper figures. A cut removes part of a figure and spills ink, which stands in for blood.",
     "loading": "Loading {game}…",
     "loading_error": "The game could not load. Reload the page and try again.",
     "fallback": "This game requires JavaScript and WebAssembly.",
@@ -181,15 +179,15 @@
     },
     "swing": {
       "title": "A swing adds speed",
-      "body": "Swinging the sword pulls your whole fighter along with it. In this game that pull is free: a swing adds speed without taking it from anywhere else. Keep swinging in the same direction and your fighter moves faster, up to a limit."
+      "body": "Swinging the sword pulls your whole fighter along with it. Keep swinging in the same direction and your fighter moves faster, up to a limit."
     },
     "cut": {
       "title": "What a blade does",
-      "body": "When a blade touches a fighter, it cuts straight across the part it touched, and the part beyond the cut drops off. Your own blade does this to your own fighter too. The hands holding the sword are the exception."
+      "body": "When a blade touches a fighter, it cuts straight across the part it touched, and the part beyond the cut drops off. A fighter's own blade does not cut that fighter."
     },
     "ink": {
       "title": "Ink",
-      "body": "The fighters are paper figures filled with ink. A cut that does not end the round spills ink for the rest of the round, and a larger cut spills it faster. The meter above a fighter shows how much ink that fighter has left."
+      "body": "A cut that does not end the round spills ink for the rest of the round, and a larger cut spills it faster. The meter above a fighter shows how much ink that fighter has left."
     },
     "end": {
       "title": "How a round ends",
@@ -205,26 +203,24 @@
     }
   },
   "practice": {
-    "intro": "The post does not fight back, so you can take as long as you need. The steps below go in order, and you can repeat any of them.",
     "step": {
       "shoulder": "Start with the shoulder. Hold {key.shoulder_up} and watch the arm rise, then let go. The sword is heavy, so the arm keeps moving for a moment after you release the key.",
       "elbow": "Now the elbow. Hold {key.elbow_out} to straighten the arm and {key.elbow_in} to bend it. A straight arm reaches farther.",
-      "cut": "Cut the post. A blade cuts the part it touches, so a swing that reaches the post is enough. Look at where the cut lands: it is at the point the blade touched.",
+      "cut": "Cut the post. A blade cuts the part it touches, so a swing that reaches the post is enough.",
       "plant": "Plant the sword. Point the tip at the ground, then straighten your arm. The sword cannot go into the ground, so the push lifts your fighter instead.",
       "swing": "Build speed. Swing in one direction several times without stopping. A swing adds to the one before it, which is how you cross the yard quickly or leave the ground.",
-      "move": "Move. Hold {key.step_left} or {key.step_right} and the ground carries your fighter that way. The legs stay straight and keep your fighter upright, so your attention can stay on the sword.",
+      "move": "Move. Hold {key.step_left} or {key.step_right} and the ground carries your fighter that way.",
       "jump": "Jump. Press {key.jump} to leave the ground. You can press it once more while you are in the air, and you get that second jump back when you land.",
       "air_jump": "Push off the air. Your second jump works as if your fighter bounced off a wall you cannot see: hold {key.step_left} or {key.step_right} as you press {key.jump} to push off toward that side, or neither to push straight up. A fall turns into a rise at the same speed, so a jump late in a fall goes higher than one at the top.",
       "stand": "Get up. If your fighter is knocked off its feet but still has both legs, press {key.stand} to stand back up where you are.",
       "dodge": "Dodge. Press {key.dodge} and for a moment no blade can cut your fighter, so you can let an attack pass through you. Your own blade cuts nothing during that moment either.",
       "roll": "Roll. Hold {key.step_left} or {key.step_right} as you press {key.dodge} and your fighter rolls that way along the ground. With neither held, your fighter dodges in place.",
       "air_dodge": "Dodge in the air. Press {key.dodge} while you are off the ground and your fighter is carried sideways in the direction you hold. It uses up your jump in the air, so save it for when you need to get out of the way.",
-      "cooldown": "After a dodge there is a short wait before you can dodge again, so a dodge is a choice and not something to press over and over.",
+      "cooldown": "After a dodge there is a short wait before you can dodge again.",
       "block": "Block. Swords are solid, so a blade that meets yours stops. Holding your sword in front of you is a way to stop a swing before it reaches you.",
       "ink": "Watch the ink. A cut that does not end the round leaves a stump that spills ink until the round ends. The meters at the top show how much ink each fighter has left."
     },
     "review": "new: practice.step.move, jump, air_jump, stand, dodge, roll, air_dodge, cooldown, block, ink, and hud.keys",
-    "done": "Those are the controls. The road teaches the rest, one opponent at a time.",
     "reset": {
       "label": "Stand the post back up"
     }
@@ -266,7 +262,7 @@
       "lose_ink": "You lost the round. You ran out of ink, and the cut to your {part} spilled the most.",
       "lose_self": "You lost the round. Your own blade cut across your {part}.",
       "match_win": "You won the match, {wins} rounds to {losses}.",
-      "match_lose": "You lost the match, {losses} rounds to {wins}. {opponent} is still on the road when you want to try again."
+      "match_lose": "You lost the match, {losses} rounds to {wins}."
     },
     "versus": {
       "neck": "{winner} won the round. {winner}'s blade cut across {loser}'s {part}.",
@@ -291,10 +287,9 @@
     "replay": {
       "label": "Download replay"
     },
-    "key_hint": "Press {key} to choose the first button, so you can go on without the mouse."
+    "key_hint": "Press {key} to choose the first button."
   },
   "road": {
-    "intro": "You are walking a road with a sword you are still learning to use. The people who stop you fight in different ways. Before a fight you are told what that opponent does and one thing you could try. The suggestion is a starting point, and there are other answers.",
     "does_heading": "What this opponent does",
     "try_heading": "One thing to try",
     "fight": {
@@ -302,14 +297,14 @@
     },
     "locked": "You reach this stop after you win at the one before it.",
     "cleared": "You have won here. You can fight {opponent_mid} again.",
-    "end": "That was the last opponent on the road. You can fight any of them again from this screen. If you found an approach that the suggestions did not mention, the suggestions were incomplete."
+    "end": "That was the last opponent on the road. You can fight any of them again from this screen."
   },
   "opponents": {
     "scarecrow": {
       "name": "The Scarecrow",
       "name_mid": "the scarecrow",
       "place": "A rice field outside the first village.",
-      "does": "The scarecrow does not move and does not fight back. It is here so that your first cut costs you nothing.",
+      "does": "The scarecrow does not move and does not fight back.",
       "try": "Cut it anywhere, to see how a cut works. Then aim for the neck, because a cut there ends the round."
     },
     "gatekeeper": {
@@ -434,18 +429,16 @@
   },
   "local": {
     "intro": "Two players share this keyboard. {left_name} is on the left and uses {left_keys}. {right_name} is on the right and uses {right_keys}.",
-    "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding while both of you are pressing keys, that is the likely cause. Changing the key bindings in Settings sometimes helps.",
+    "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding, try different key bindings in Settings.",
     "start": {
       "label": "Start the match"
     }
   },
   "online": {
-    "intro": "One of you hosts and the other joins. The match then runs directly between your two browsers.",
     "privacy": "A direct connection means your friend's browser learns your IP address, and yours learns theirs. Play online with people you are willing to share that with.",
-    "music": "Music is not shared. You hear the track you loaded, and your friend hears theirs.",
     "host_room": {
       "label": "Host with a room code",
-      "desc": "You get a short code and a link to send to your friend. Public relay servers, which this project does not run, introduce your two browsers. After that the match does not use them."
+      "desc": "You get a short code and a link to send to your friend."
     },
     "join_room": {
       "label": "Join with a room code",
@@ -454,7 +447,7 @@
     },
     "host_paste": {
       "label": "Host with a pasted code",
-      "desc": "Use this if a room code does not connect. You send your friend a block of text, they send one back, and no relay is involved.",
+      "desc": "Use this if a room code does not connect. You send your friend a block of text, and they send one back.",
       "step_copy": "Copy this invitation and send it to your friend in a chat you already use.",
       "step_reply": "Paste your friend's reply here."
     },
@@ -471,23 +464,23 @@
     "waiting": "Waiting for your friend to join. The room code is {code}.",
     "joining": "Looking for the match with room code {code}.",
     "connected": {
-      "host": "Your friend has joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back.",
-      "join": "You have joined. Input delay for this match is {delay_ms} milliseconds, chosen from how long a message takes to travel between you and back. The host starts the match."
+      "host": "Your friend has joined. Input delay for this match is {delay_ms} milliseconds.",
+      "join": "You have joined. Input delay for this match is {delay_ms} milliseconds. The host starts the match."
     },
     "start": {
       "label": "Start the match"
     },
     "error": {
       "no_relay": "No relay answered, so your two browsers could not be introduced. Try hosting with a pasted code, which does not need a relay.",
-      "no_path": "Your two browsers found each other but could not open a direct connection. This usually means one of you is on a network that blocks direct connections, and a pasted code would fail the same way. Trying from a different network is the next step.",
+      "no_path": "Your two browsers found each other but could not open a direct connection. One of your networks probably blocks direct connections. Try again from a different network.",
       "build": "You and your friend are running different builds of the game. Both of you should reload the page and then try again.",
       "full": "This match already has two players.",
       "bad_code": "That code could not be read. Check that the whole block of text was copied, from its first character to its last."
     },
     "status": {
-      "waiting_on": "Waiting for your friend's input. If this continues, one of the two connections is slow.",
+      "waiting_on": "Waiting for your friend's input.",
       "left": "Your friend's browser stopped responding, so the match has ended.",
-      "desync": "The two copies of the match disagreed at tick {tick}. The match has stopped so that it does not continue as two different fights. You can download the replay to report it."
+      "desync": "The two copies of the match disagreed at tick {tick}, so the match has stopped. You can download the replay to report it."
     },
     "ready": {
       "label": "Tell your friend you are ready",
@@ -500,11 +493,10 @@
   "settings": {
     "music": {
       "title": "Music",
-      "desc": "The game does not include a music track. You can load one from this device, and it loops during fights.",
+      "desc": "Load a track from this device and it loops during fights.",
       "load": {
         "label": "Load a track from this device"
       },
-      "privacy": "The file is read by your browser and is not uploaded. In an online match your friend does not hear it.",
       "remember": {
         "label": "Remember this track on this device",
         "desc": "This keeps a copy of the file in this browser's storage for this site. Clearing the site's data removes it."
@@ -522,7 +514,7 @@
     },
     "youtube": {
       "title": "Music from YouTube",
-      "desc": "A video is already chosen. Press Play the video and it plays on a loop in a small player in the corner of the page. To play a different one, paste its link here first.",
+      "desc": "The video plays on a loop in a small player in the corner of the page. To play a different video, paste its link first.",
       "field": "YouTube link",
       "play": {
         "label": "Play the video"
@@ -530,8 +522,7 @@
       "stop": {
         "label": "Stop the video"
       },
-      "error": "That is not a link to a YouTube video. Copy the address from the video's page and paste it here.",
-      "privacy": "Nothing is sent to YouTube until you start the video. After that, YouTube sees that this page is playing the video, as it does for any embedded video. In an online match your friend does not hear it."
+      "error": "That is not a link to a YouTube video. Copy the address from the video's page and paste it here."
     },
     "sound": {
       "volume": {
@@ -575,7 +566,7 @@
         "label": "Load save file"
       },
       "loaded": "The save file was loaded.",
-      "autosave": "The game also keeps a copy in this browser so that you can continue after a reload. That copy is a convenience. Clearing the site's data removes it, so download a save file if you want to keep your progress.",
+      "autosave": "The game also keeps a copy in this browser so that you can continue after a reload. Clearing the site's data removes it.",
       "error": {
         "format": "This file is not a {game} save file, so nothing was loaded.",
         "newer": "This save file was written by a newer version of the game. It is save version {theirs}, and this build reads up to version {ours}. Nothing was loaded.",
@@ -596,7 +587,7 @@
     },
     "error": {
       "format": "This file is not a {game} replay, so nothing was loaded.",
-      "sim": "This replay was recorded with simulation version {theirs}, and this build runs version {ours}. The same inputs would not produce the same match, so the replay was not loaded.",
+      "sim": "This replay was recorded with simulation version {theirs}, and this build runs version {ours}, so the replay was not loaded.",
       "damaged": "This replay file is incomplete or damaged, so nothing was loaded."
     }
   }
