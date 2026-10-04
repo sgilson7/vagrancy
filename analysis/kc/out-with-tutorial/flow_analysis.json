@@ -1,0 +1,483 @@
+{
+ "entry_kcs": [
+  "K01",
+  "K02",
+  "K04",
+  "K05",
+  "K07",
+  "K08",
+  "S1",
+  "S2"
+ ],
+ "n_nodes": 36,
+ "n_edges": 43,
+ "edge_type_counts": {
+  "prerequisite": 12,
+  "relational": 22,
+  "integrative": 5,
+  "strategy": 4
+ },
+ "per_kc": [
+  {
+   "kc": "K03",
+   "name": "The sword carries on",
+   "group": "Arm",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K01",
+     "K03"
+    ]
+   ]
+  },
+  {
+   "kc": "K06",
+   "name": "The bounce in the air",
+   "group": "Move",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K05",
+     "K06"
+    ]
+   ]
+  },
+  {
+   "kc": "K12",
+   "name": "Blocking",
+   "group": "Defend",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K01",
+     "K12"
+    ]
+   ]
+  },
+  {
+   "kc": "K14",
+   "name": "Where a cut ends the round",
+   "group": "Cut",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K13",
+     "K14"
+    ]
+   ]
+  },
+  {
+   "kc": "K15",
+   "name": "Ink",
+   "group": "Cut",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K13",
+     "K15"
+    ]
+   ]
+  },
+  {
+   "kc": "K16",
+   "name": "Swinging for speed",
+   "group": "Physics",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K01",
+     "K16"
+    ]
+   ]
+  },
+  {
+   "kc": "K18",
+   "name": "Reach",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K02",
+     "K18"
+    ]
+   ]
+  },
+  {
+   "kc": "K21",
+   "name": "Getting around a guard",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K12",
+     "K21"
+    ]
+   ]
+  },
+  {
+   "kc": "K22",
+   "name": "Stopping a turning blade",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K01",
+     "K12"
+    ]
+   ]
+  },
+  {
+   "kc": "K27",
+   "name": "A late change",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K19",
+     "K28"
+    ]
+   ]
+  },
+  {
+   "kc": "K28",
+   "name": "Inside their reaction",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K19",
+     "K28"
+    ]
+   ]
+  },
+  {
+   "kc": "K29",
+   "name": "Distance",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K04",
+     "K29"
+    ]
+   ]
+  },
+  {
+   "kc": "K30",
+   "name": "A guard above",
+   "group": "Read",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K12",
+     "K30"
+    ]
+   ]
+  },
+  {
+   "kc": "K31",
+   "name": "Light gravity",
+   "group": "Condition",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 2,
+   "min_cut": [
+    [
+     "K06",
+     "K31"
+    ]
+   ]
+  },
+  {
+   "kc": "K09",
+   "name": "Rolling",
+   "group": "Defend",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 3,
+   "min_cut": [
+    [
+     "K08",
+     "K09"
+    ]
+   ]
+  },
+  {
+   "kc": "K11",
+   "name": "The wait after a dodge",
+   "group": "Defend",
+   "in_degree": 1,
+   "edge_disjoint_routes": 1,
+   "practice_capacity": 3,
+   "min_cut": [
+    [
+     "K08",
+     "K11"
+    ]
+   ]
+  },
+  {
+   "kc": "K17",
+   "name": "Planting the sword",
+   "group": "Physics",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 3,
+   "min_cut": [
+    [
+     "K02",
+     "K17"
+    ],
+    [
+     "K16",
+     "K17"
+    ]
+   ]
+  },
+  {
+   "kc": "K10",
+   "name": "Dodging in the air",
+   "group": "Defend",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 4,
+   "min_cut": [
+    [
+     "K08",
+     "K10"
+    ],
+    [
+     "K06",
+     "K10"
+    ]
+   ]
+  },
+  {
+   "kc": "K26",
+   "name": "Your own moves returned",
+   "group": "Read",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 4,
+   "min_cut": [
+    [
+     "S1",
+     "K26"
+    ],
+    [
+     "K19",
+     "K26"
+    ]
+   ]
+  },
+  {
+   "kc": "K25",
+   "name": "Drawing a move",
+   "group": "Read",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 5,
+   "min_cut": [
+    [
+     "K11",
+     "K25"
+    ],
+    [
+     "K19",
+     "K25"
+    ]
+   ]
+  },
+  {
+   "kc": "I1",
+   "name": "Winning a round",
+   "group": "Integr",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 5,
+   "min_cut": [
+    [
+     "K14",
+     "I1"
+    ],
+    [
+     "K04",
+     "I1"
+    ]
+   ]
+  },
+  {
+   "kc": "K13",
+   "name": "What a cut is",
+   "group": "Cut",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 6,
+   "min_cut": [
+    [
+     "K02",
+     "K13"
+    ],
+    [
+     "K01",
+     "K13"
+    ]
+   ]
+  },
+  {
+   "kc": "K19",
+   "name": "The opening after a committed move",
+   "group": "Read",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 6,
+   "min_cut": [
+    [
+     "S1",
+     "K19"
+    ],
+    [
+     "K13",
+     "K19"
+    ]
+   ]
+  },
+  {
+   "kc": "K20",
+   "name": "A path already chosen",
+   "group": "Read",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 6,
+   "min_cut": [
+    [
+     "K02",
+     "K17"
+    ],
+    [
+     "K16",
+     "K17"
+    ],
+    [
+     "K19",
+     "K20"
+    ]
+   ]
+  },
+  {
+   "kc": "K23",
+   "name": "High against low",
+   "group": "Read",
+   "in_degree": 2,
+   "edge_disjoint_routes": 2,
+   "practice_capacity": 6,
+   "min_cut": [
+    [
+     "K05",
+     "K23"
+    ],
+    [
+     "K01",
+     "K12"
+    ]
+   ]
+  },
+  {
+   "kc": "K32",
+   "name": "An opponent with more ink",
+   "group": "Condition",
+   "in_degree": 3,
+   "edge_disjoint_routes": 3,
+   "practice_capacity": 5,
+   "min_cut": [
+    [
+     "K15",
+     "K32"
+    ],
+    [
+     "K14",
+     "K32"
+    ],
+    [
+     "S2",
+     "K32"
+    ]
+   ]
+  },
+  {
+   "kc": "K24",
+   "name": "Aim where they do not defend",
+   "group": "Read",
+   "in_degree": 3,
+   "edge_disjoint_routes": 3,
+   "practice_capacity": 6,
+   "min_cut": [
+    [
+     "K08",
+     "K24"
+    ],
+    [
+     "K13",
+     "K14"
+    ],
+    [
+     "S2",
+     "K24"
+    ]
+   ]
+  },
+  {
+   "kc": "I2",
+   "name": "Winning a match",
+   "group": "Integr",
+   "in_degree": 3,
+   "edge_disjoint_routes": 3,
+   "practice_capacity": 10,
+   "min_cut": [
+    [
+     "S1",
+     "K19"
+    ],
+    [
+     "I1",
+     "I2"
+    ],
+    [
+     "K13",
+     "K19"
+    ],
+    [
+     "K01",
+     "K12"
+    ]
+   ]
+  }
+ ],
+ "unpracticed_edges": []
+}

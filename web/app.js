@@ -3,8 +3,8 @@
 // data/copy.en.json, which reaches it through the wasm module; which sentence
 // to show for an outcome is chosen by core (content::messages).
 import init, {
-  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road,
-  road_json, save_fresh, save_read,
+  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission,
+  road_json, tutorial_json, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -196,6 +196,7 @@ function menu() {
   delete document.body.dataset.phase;
   const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, {}, { class: 'desc' }));
   show(
+    item('menu.tutorial', tutorial),
     item('menu.road', road),
     item('menu.local', local),
     item('menu.online', online),
@@ -301,61 +302,62 @@ function reqLine(r, attrs = {}) {
   return say(r.key, { ...r.vars, opponent_mid: t(`opponents.${r.stop}.name_mid`) }, attrs);
 }
 
-function road() {
-  stop();
-  const stops = roadData();
-  const byId = new Map(stops.map((s) => [s.id, s]));
-  // Rows by level; within a row, by where its fights' requirements sit in
-  // the rows above, which keeps the lines from crossing more than they must.
+// A map of nodes in rows with a line from each requirement down to what
+// it opens: the road's tree and the tutorial's missions. Hovering a node or
+// a line says what it asks for; picking a node fills the card above.
+//   nodes: [{ id, row, name: element text key, nameVars, state:
+//            'open'|'won'|'flawless'|'locked', requires: [{ from, met, line() }] }]
+//   rowLabel(row) -> element; detail(id, card) fills the card; first: id
+function mapScreen({ nodes, rowLabel, detail, first, attr }) {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
   const rows = [];
-  for (const s of stops) (rows[s.level] ||= []).push(s);
+  for (const n of nodes) (rows[n.row] ||= []).push(n);
+  // Within a row, by where the requirements sit in the rows above, which
+  // keeps the lines from crossing more than they must.
   const place = new Map();
   rows.forEach((row, l) => {
+    if (!row) return;
     if (l > 0) {
-      const at = (s) => s.requires.reduce((a, r) => a + (place.get(r.stop) ?? 0), 0) / Math.max(1, s.requires.length);
+      const at = (n) => n.requires.reduce((a, r) => a + (place.get(r.from) ?? 0), 0) / Math.max(1, n.requires.length);
       row.sort((a, b) => at(a) - at(b));
     }
-    row.forEach((s, i) => place.set(s.id, i / Math.max(1, row.length - 1)));
+    row.forEach((n, i) => place.set(n.id, i / Math.max(1, row.length - 1)));
   });
-  const detail = el('section', { id: 'stop-detail' });
+  const card = el('section', { id: 'stop-detail' });
   const tip = el('div', { id: 'road-tip', role: 'tooltip', hidden: '' });
-  const nodes = new Map();
+  const buttons = new Map();
   const tree = el('div', { id: 'road-tree' });
   const wires = document.createElementNS(SVG, 'svg');
   wires.setAttribute('class', 'wires');
   wires.setAttribute('aria-hidden', 'true');
   tree.append(wires);
   rows.forEach((row, l) => {
-    const label = l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
-      : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
-      : say('road.tier.many', { count: l }, { class: 'tier-label' });
+    if (!row) return;
     const tier = el('div', { class: 'tier' });
-    for (const s of row) {
-      const state = s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked';
-      const b = el('button', { type: 'button', class: `node ${state}`, 'data-stop': s.id, 'data-copy': `opponents.${s.id}.name`,
+    for (const n of row) {
+      const b = el('button', { type: 'button', class: `node ${n.state}`, [attr]: n.id, 'data-copy': n.name,
         on: {
-          click: () => pick(s.id),
-          mouseenter: () => hoverNode(s.id),
-          focus: () => hoverNode(s.id),
+          click: () => pick(n.id),
+          mouseenter: () => hoverNode(n.id),
+          focus: () => hoverNode(n.id),
           mouseleave: unhover,
           blur: unhover,
-        } }, t(`opponents.${s.id}.name`));
-      nodes.set(s.id, b);
+        } }, t(n.name, n.nameVars));
+      buttons.set(n.id, b);
       tier.append(b);
     }
-    tree.append(el('div', { class: 'level', 'data-level': String(l) }, label, tier));
+    tree.append(el('div', { class: 'level', 'data-level': String(l) }, rowLabel(l), tier));
   });
-  // Lines: drawn once the tree has its size, and again when it changes.
   const paths = [];
   function wire() {
     wires.replaceChildren();
     paths.length = 0;
     const box = tree.getBoundingClientRect();
     wires.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-    for (const s of stops) {
-      for (const r of s.requires) {
-        const a = nodes.get(r.stop).getBoundingClientRect();
-        const c = nodes.get(s.id).getBoundingClientRect();
+    for (const n of nodes) {
+      for (const r of n.requires) {
+        const a = buttons.get(r.from).getBoundingClientRect();
+        const c = buttons.get(n.id).getBoundingClientRect();
         const x1 = a.left - box.left + a.width / 2, y1 = a.bottom - box.top;
         const x2 = c.left - box.left + c.width / 2, y2 = c.top - box.top;
         const k = (y2 - y1) / 2;
@@ -367,11 +369,11 @@ function road() {
         const hit = document.createElementNS(SVG, 'path');
         hit.setAttribute('d', d);
         hit.setAttribute('class', 'hit');
-        hit.addEventListener('mouseenter', (e) => { light([line]); showTip([reqLine(r)], e.clientX, e.clientY); });
+        hit.addEventListener('mouseenter', (e) => { light([line]); showTip([r.line()], e.clientX, e.clientY); });
         hit.addEventListener('mousemove', (e) => moveTip(e.clientX, e.clientY));
         hit.addEventListener('mouseleave', unhover);
         wires.append(line, hit);
-        paths.push({ from: r.stop, to: s.id, line });
+        paths.push({ from: r.from, to: n.id, line });
       }
     }
   }
@@ -389,20 +391,48 @@ function road() {
     tip.style.top = `${y + 18 + h > innerHeight ? y - h - 10 : y + 18}px`;
   }
   function hoverNode(id) {
-    const s = byId.get(id);
+    const n = byId.get(id);
     light(paths.filter((p) => p.to === id).map((p) => p.line));
-    if (s.open) { tip.hidden = true; return; }
-    const r = nodes.get(id).getBoundingClientRect();
-    // Beside the fight, not over the row below it.
-    showTip([say('road.locked'), ...s.requires.map((q) => reqLine(q, { class: q.met ? 'met' : 'unmet' }))], r.right - 6, r.top - 18);
+    if (n.state !== 'locked') { tip.hidden = true; return; }
+    const r = buttons.get(id).getBoundingClientRect();
+    // Beside the node, not over the row below it.
+    showTip([say(n.lockedKey), ...n.requires.map((q) => {
+      const e = q.line();
+      e.classList.add(q.met ? 'met' : 'unmet');
+      return e;
+    })], r.right - 6, r.top - 18);
   }
   function unhover() {
     light([]);
     tip.hidden = true;
   }
   function pick(id) {
+    for (const [k, b] of buttons) b.classList.toggle('picked', k === id);
+    detail(id, card);
+  }
+  show(card, tree, tip, button('menu.back.label', menu));
+  pick(first);
+  wire();
+  new ResizeObserver(() => { if (tree.isConnected) wire(); }).observe(tree);
+}
+
+function road() {
+  stop();
+  const stops = roadData();
+  const byId = new Map(stops.map((s) => [s.id, s]));
+  const nodes = stops.map((s) => ({
+    id: s.id,
+    row: s.level,
+    name: `opponents.${s.id}.name`,
+    state: s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked',
+    lockedKey: 'road.locked',
+    requires: s.requires.map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
+  }));
+  const rowLabel = (l) => l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
+    : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
+    : say('road.tier.many', { count: l }, { class: 'tier-label' });
+  const detail = (id, card) => {
     ROAD_PICK = id;
-    for (const [k, b] of nodes) b.classList.toggle('picked', k === id);
     const s = byId.get(id);
     const o = (k) => `opponents.${id}.${k}`;
     const mid = { opponent_mid: t(o('name_mid')) };
@@ -422,14 +452,144 @@ function road() {
       kids.push(say('road.locked'), el('ul', { class: 'reqs' },
         ...s.requires.map((q) => el('li', { class: q.met ? 'met' : 'unmet' }, reqLine(q), q.met ? say('road.req.met', {}, { class: 'desc' }) : null))));
     }
-    detail.replaceChildren(...kids);
-  }
-  show(detail, tree, tip, button('menu.back.label', menu));
+    card.replaceChildren(...kids);
+  };
   // The fight picked last, or the first open one not yet won.
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
-  pick(first.id);
-  wire();
-  new ResizeObserver(() => { if (tree.isConnected) wire(); }).observe(tree);
+  mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop' });
+}
+
+// --- the tutorial: a map of missions in the order the knowledge-component
+// graph teaches (analysis/kc/RESULTS.md) -------------------------------------------
+
+let MISSION_PICK = null;
+
+function tutorialData() {
+  return JSON.parse(tutorial_json(JSON.stringify(SAVE)));
+}
+
+// A mission's name: what it teaches first, or for a comparison its two
+// opponents.
+function missionName(m) {
+  if (m.name) return { key: m.name, vars: {} };
+  if (m.tasks.length === 2) {
+    return { key: 'tutorial.compare_name', vars: { first: t(`opponents.${m.tasks[0].at}.name`), second: t(`opponents.${m.tasks[1].at}.name`) } };
+  }
+  return { key: `kc.${m.teaches[0]}.name`, vars: {} };
+}
+
+function sayMission(m, attrs = {}) {
+  const n = missionName(m);
+  return say(n.key, n.vars, attrs);
+}
+
+function taskLine(task) {
+  const where = task.at === 'yard' ? say('tutorial.in_yard') : say('tutorial.against', { opponent_mid: t(`opponents.${task.at}.name_mid`) });
+  return [where, say(task.goal, task.vars)];
+}
+
+function tutorial() {
+  stop();
+  const ms = tutorialData();
+  const byId = new Map(ms.map((m) => [m.id, m]));
+  const nodes = ms.map((m) => {
+    const n = missionName(m);
+    return {
+      id: m.id,
+      row: m.row,
+      name: n.key,
+      nameVars: n.vars,
+      state: m.done ? 'won' : m.open ? 'open' : 'locked',
+      lockedKey: 'tutorial.locked',
+      requires: m.requires.map((r) => ({ from: r.id, met: r.done, line: () => sayMission(byId.get(r.id)) })),
+    };
+  });
+  const rowLabel = (l) => {
+    // A row is named by the chapter most of its missions belong to.
+    const count = {};
+    for (const m of ms) if (m.row === l) count[m.chapter] = (count[m.chapter] || 0) + 1;
+    const ch = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+    return say(`tutorial.chapter.${ch}`, {}, { class: 'tier-label' });
+  };
+  const detail = (id, card) => {
+    MISSION_PICK = id;
+    const m = byId.get(id);
+    const n = missionName(m);
+    const kids = [el('h3', { 'data-copy': n.key }, t(n.key, n.vars))];
+    for (const k of m.teaches) {
+      if (m.teaches.length > 1 && `kc.${k}.name` !== n.key) kids.push(el('h4', { 'data-copy': `kc.${k}.name` }, t(`kc.${k}.name`)));
+      kids.push(
+        el('h4', { 'data-copy': 'tutorial.when_heading' }, t('tutorial.when_heading')), say(`kc.${k}.when`),
+        el('h4', { 'data-copy': 'tutorial.then_heading' }, t('tutorial.then_heading')), say(`kc.${k}.then`));
+    }
+    if (m.builds_on.length) {
+      kids.push(el('h4', { 'data-copy': 'tutorial.builds_heading' }, t('tutorial.builds_heading')),
+        ...m.builds_on.map((e) => say(`kc_edge.${e}`)));
+    }
+    if (m.tasks.length === 2) {
+      kids.push(el('h4', { 'data-copy': 'tutorial.compare_heading' }, t('tutorial.compare_heading')), say(`kc_compare.${m.id}`));
+    }
+    kids.push(el('h4', { 'data-copy': 'tutorial.task_heading' }, t('tutorial.task_heading')));
+    m.tasks.forEach((task, i) => {
+      if (m.tasks.length > 1) kids.push(say('tutorial.part', { n: i + 1, count: m.tasks.length }, { class: 'desc' }));
+      kids.push(...taskLine(task));
+      if (task.done) kids.push(say('tutorial.done', {}, { class: 'desc' }));
+    });
+    if (m.open) {
+      const next = m.tasks.findIndex((x) => !x.done);
+      kids.push(el('div', { class: 'actions' }, button('tutorial.start.label', () => mission(id, next < 0 ? 0 : next))));
+    } else {
+      kids.push(say('tutorial.locked'), el('ul', { class: 'reqs' },
+        ...m.requires.map((r) => el('li', { class: r.done ? 'met' : 'unmet' }, sayMission(byId.get(r.id)), r.done ? say('tutorial.done', {}, { class: 'desc' }) : null))));
+    }
+    card.replaceChildren(...kids);
+  };
+  const first = (MISSION_PICK && byId.get(MISSION_PICK)) || ms.find((m) => m.open && !m.done) || ms[0];
+  mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-mission' });
+}
+
+function mission(id, part) {
+  READY = false;
+  MISSION_PICK = id;
+  const ms = tutorialData();
+  const m = ms.find((x) => x.id === id);
+  const task = m.tasks[part];
+  let finished = false;
+  let opened = [];
+  const status = el('div', { id: 'mission-status', role: 'status' });
+  const goal = el('div', { id: 'mission-goal' }, ...taskLine(task));
+  const ended = () => {
+    // Done: what opened, then the next task of a comparison or the map.
+    const nextPart = m.tasks.findIndex((x, i) => i !== part && !x.done);
+    const buttons = [];
+    if (nextPart >= 0) buttons.push(button('tutorial.next.label', () => mission(id, nextPart)));
+    buttons.push(button('tutorial.to_map.label', tutorial));
+    status.replaceChildren(say('tutorial.task_done'),
+      ...opened.map((o) => say('tutorial.opened', { mission: t(missionName(ms.find((x) => x.id === o)).key, missionName(ms.find((x) => x.id === o)).vars) }, { class: 'desc' })),
+      el('div', { class: 'actions' }, ...buttons));
+    const b = status.querySelector('button');
+    if (b) b.focus({ preventScroll: true });
+  };
+  // A fight has rounds and a result; the yard has neither.
+  const watch = task.at === 'yard' ? null : matchWatcher(task.at, () => [el('div', { class: 'actions' },
+    button('tutorial.again.label', () => mission(id, part)),
+    button('tutorial.to_map.label', tutorial))]);
+  show(status, goal, ...(watch ? [watch.panel] : []), keysLine(BINDINGS.solo),
+    el('div', { class: 'actions' }, button('tutorial.again.label', () => mission(id, part)), button('tutorial.to_map.label', tutorial)));
+  const g = new Mission(seed(), tuning(), id, part);
+  start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+    if (!finished && game && game.met && game.met()) {
+      finished = true;
+      const r = JSON.parse(game.record(JSON.stringify(SAVE)));
+      SAVE = JSON.parse(r.save);
+      opened = r.opened;
+      persist();
+      ended();
+      document.body.dataset.mission = 'done';
+    }
+    if (watch) watch.tick(f);
+  });
+  delete document.body.dataset.mission;
 }
 
 function fight(id) {

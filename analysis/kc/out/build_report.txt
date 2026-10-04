@@ -1,0 +1,7 @@
+graphviz not installed, skipping render
+nodes 36  edges 43  {'prerequisite': 12, 'relational': 22, 'integrative': 5, 'strategy': 4}
+items tagged: 48
+practiced edges: 40 of 43
+entry KCs: ['K01', 'K02', 'K04', 'K05', 'K07', 'K08', 'S1', 'S2']
+KCs with a single route: [('K03', 'The sword carries on'), ('K06', 'The bounce in the air'), ('K12', 'Blocking'), ('K14', 'Where a cut ends the round'), ('K15', 'Ink'), ('K16', 'Swinging for speed'), ('K18', 'Reach'), ('K21', 'Getting around a guard'), ('K22', 'Stopping a turning blade'), ('K27', 'A late change'), ('K28', 'Inside their reaction'), ('K29', 'Distance'), ('K30', 'A guard above'), ('K31', 'Light gravity'), ('K09', 'Rolling'), ('K11', 'The wait after a dodge')]
+written to /Users/samgilson/Documents/vagrancy/analysis/kc/out

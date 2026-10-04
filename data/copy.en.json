@@ -19,6 +19,11 @@
     "file_name, error": "reported by the browser",
     "key, action": "the key pressed and settings.keys.actions.<id>",
     "seconds": "the time limit of a quick requirement, from data/road.json",
+    "cm": "a distance in a tutorial goal, from data/tutorial.json",
+    "speed": "a tutorial goal's speed in metres a second, converted by core from cm a tick in data/tutorial.json",
+    "first, second": "the names of the two opponents a comparison mission pairs",
+    "n": "which task of a comparison mission this is",
+    "mission": "the name of a tutorial mission: the first component it teaches, or its two opponents",
     "count": "how many requirements a level of the road's tree has, from data/road.json"
   },
   "_depends": {
@@ -64,6 +69,8 @@
     "online.ready": "new: label, you, friend, friend_not, again",
     "settings.youtube": "new: all six strings",
     "road": "new: condition_heading, condition.deep_ink, condition.light, req.*, tier.*, flawless, opened; locked rewritten (it described a line, and the road is now a tree)",
+    "tutorial, menu.tutorial": "new: every string",
+    "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
   },
   "_glossary": {
@@ -156,6 +163,10 @@
     "practice": {
       "label": "Practice in the yard",
       "desc": "Swing at a post that does not fight back. This is the place to learn the keys."
+    },
+    "tutorial": {
+      "label": "Learn in missions",
+      "desc": "A map of short missions that teaches the game one idea at a time, each built on one you already have."
     },
     "replay": {
       "label": "Load a replay",
@@ -715,6 +726,305 @@
       "format": "This file is not a {game} replay, so nothing was loaded.",
       "sim": "This replay was recorded with simulation version {theirs}, and this build runs version {ours}, so the replay was not loaded.",
       "damaged": "This replay file is incomplete or damaged, so nothing was loaded."
+    }
+  },
+    "kc": {
+      "K01": {
+        "name": "Turning the shoulder",
+        "when": "You want the sword higher or lower.",
+        "then": "Hold a shoulder key, and the arm turns for as long as you hold it."
+      },
+      "K02": {
+        "name": "Bending and straightening the elbow",
+        "when": "The target is nearer or farther than your blade.",
+        "then": "Straighten the elbow to reach farther, and bend it to pull the blade in."
+      },
+      "K03": {
+        "name": "The sword carries on",
+        "when": "A swing is moving.",
+        "then": "Let go of the key before the blade gets where you want it, because the heavy sword keeps turning the arm."
+      },
+      "K04": {
+        "name": "Stepping",
+        "when": "You are too far from your opponent, or too close.",
+        "then": "Hold a step key, and the ground carries you that way while the legs keep you upright."
+      },
+      "K05": {
+        "name": "Jumping",
+        "when": "You need to leave the ground.",
+        "then": "Press jump: you get one jump from the ground."
+      },
+      "K06": {
+        "name": "The bounce in the air",
+        "when": "You are in the air and still have your second jump.",
+        "then": "Press jump to bounce off the air, holding a direction to push that way; a jump late in a fall rises higher, because the fall turns into a rise at the same speed."
+      },
+      "K07": {
+        "name": "Getting up",
+        "when": "You are knocked down and still have both legs.",
+        "then": "Press stand."
+      },
+      "K08": {
+        "name": "Dodging",
+        "when": "A blade is about to touch you.",
+        "then": "Press dodge so that the moment no blade can cut you covers the touch; your own blade cuts nothing in that moment either."
+      },
+      "K09": {
+        "name": "Rolling",
+        "when": "You want to dodge and change place on the ground.",
+        "then": "Hold a direction as you press dodge."
+      },
+      "K10": {
+        "name": "Dodging in the air",
+        "when": "You are in the air and need to get out of the way.",
+        "then": "Press dodge to be carried sideways, at the cost of your second jump."
+      },
+      "K11": {
+        "name": "The wait after a dodge",
+        "when": "You dodged a moment ago.",
+        "then": "Expect a short wait before the next dodge, so choose the moment rather than pressing again."
+      },
+      "K12": {
+        "name": "Blocking",
+        "when": "A swing is coming at you.",
+        "then": "Put your blade in its path, because swords are solid and a blade that meets yours stops."
+      },
+      "K13": {
+        "name": "What a cut is",
+        "when": "Your moving blade touches a part of a fighter.",
+        "then": "The blade cuts straight across that part where it touched, and what lies beyond the cut drops off; a slow blade does not cut."
+      },
+      "K14": {
+        "name": "Where a cut ends the round",
+        "when": "You choose where to aim.",
+        "then": "Aim across the neck, the head or the heart, because a cut there ends the round."
+      },
+      "K15": {
+        "name": "Ink",
+        "when": "A cut lands somewhere that does not end the round.",
+        "then": "The stump spills ink until the round ends, faster for a larger cut, and a fighter who runs out of ink loses the round."
+      },
+      "K16": {
+        "name": "Swinging for speed",
+        "when": "You need to cross ground fast or leave it.",
+        "then": "Swing in one direction again and again: each swing adds speed to your whole fighter."
+      },
+      "K17": {
+        "name": "Planting the sword",
+        "when": "You want to rise or vault.",
+        "then": "Put the tip on the ground and straighten the arm; the sword cannot go into the ground, so the push lifts you."
+      },
+      "K18": {
+        "name": "Reach",
+        "when": "The opponent's blade is longer than yours.",
+        "then": "Let them swing first and move in while their blade travels, because a longer, heavier blade is slower to start and to stop."
+      },
+      "K19": {
+        "name": "The opening after a committed move",
+        "when": "The opponent has finished a swing, a thrust or a landing.",
+        "then": "Attack in that moment, before they can move again."
+      },
+      "K20": {
+        "name": "A path already chosen",
+        "when": "The opponent is in the air or has planted the sword.",
+        "then": "Move to where they are not going, and cut where they land."
+      },
+      "K21": {
+        "name": "Getting around a guard",
+        "when": "The opponent holds the sword out in front.",
+        "then": "Go over or under the blade, toward the part it does not cover."
+      },
+      "K22": {
+        "name": "Stopping a turning blade",
+        "when": "The opponent keeps the sword turning.",
+        "then": "Meet it with a firm block, then strike while they build speed again."
+      },
+      "K23": {
+        "name": "High against low",
+        "when": "An attack comes low, or a guard sits high, or an overhead waits for your jump.",
+        "then": "Answer from the other height: over a sweep, under a high guard, and on the ground against an overhead."
+      },
+      "K24": {
+        "name": "Aim where they do not defend",
+        "when": "The opponent dodges attacks at one part of the body.",
+        "then": "Aim at another part that still ends the round or drains it."
+      },
+      "K25": {
+        "name": "Drawing a move",
+        "when": "The opponent answers a threat rather than attacking.",
+        "then": "Make the threat, let them answer, and strike as the answer ends."
+      },
+      "K26": {
+        "name": "Your own moves returned",
+        "when": "The opponent copies what you did last round.",
+        "then": "Do this round what you know how to answer next round."
+      },
+      "K27": {
+        "name": "A late change",
+        "when": "The opponent looks a short time ahead before choosing.",
+        "then": "Start a move that looks harmless and change it late."
+      },
+      "K28": {
+        "name": "Inside their reaction",
+        "when": "The opponent reacts some time after you move.",
+        "then": "Finish what you start before they can answer it."
+      },
+      "K29": {
+        "name": "Distance",
+        "when": "The opponent keeps away from you, or waits for you to come.",
+        "then": "Close in with your guard up, and keep your blade where they will be."
+      },
+      "K30": {
+        "name": "A guard above",
+        "when": "The opponent comes down at you from the air.",
+        "then": "Hold your sword above you, because a blade that meets yours stops."
+      },
+      "K31": {
+        "name": "Light gravity",
+        "when": "Gravity is weaker than usual.",
+        "then": "Jump later and expect to hang longer, for you and for them."
+      },
+      "K32": {
+        "name": "An opponent with more ink",
+        "when": "The opponent has twice your ink.",
+        "then": "Go for a cut that ends the round rather than waiting for them to run dry."
+      },
+      "I1": {
+        "name": "Winning a round",
+        "when": "A round starts against an opponent who does not fight back.",
+        "then": "Close the distance and land a cut that ends the round."
+      },
+      "I2": {
+        "name": "Winning a match",
+        "when": "An opponent fights back.",
+        "then": "Find what they commit to, answer it, and do that again in the next round."
+      },
+      "S1": {
+        "name": "Watch before you commit",
+        "when": "You meet a new opponent.",
+        "then": "Watch what they repeat before you attack."
+      },
+      "S2": {
+        "name": "Compare two opponents",
+        "when": "Two opponents differ in one thing.",
+        "then": "Find that difference, and change the part of your plan it touches."
+      }
+    },
+    "kc_edge": {
+      "K01_K03": "Letting go early is the same shoulder key, timed against the weight of the sword.",
+      "K01_K13": "A cut needs a moving blade, and the shoulder is what moves it.",
+      "K02_K13": "The elbow decides whether the blade reaches the part you aim at.",
+      "K13_K14": "A cut that ends the round is an ordinary cut across a different part.",
+      "K13_K15": "A cut that does not end the round still costs ink.",
+      "K01_K12": "A block is the shoulder holding the blade in the path of a swing.",
+      "K12_K22": "Stopping a turning blade is a block held against something that keeps coming.",
+      "K12_K30": "A guard above is a block against a swing that comes down.",
+      "K12_K21": "A guard that waits is a block you have to go around.",
+      "K05_K06": "The second jump is the first with the ground replaced by a bounce.",
+      "K08_K09": "A roll is a dodge with a direction held.",
+      "K08_K10": "An air dodge is a dodge with the ground taken away.",
+      "K06_K10": "An air dodge spends the second jump.",
+      "K08_K11": "The wait comes after the dodge.",
+      "K01_K16": "Speed comes from swinging the shoulder one way.",
+      "K02_K17": "Straightening the arm is what pushes the planted tip.",
+      "K16_K17": "A plant is a swing whose push goes into the ground.",
+      "K04_K29": "Distance is your steps chosen against theirs.",
+      "K02_K18": "Reach is your straightened arm measured against theirs.",
+      "K13_K19": "An opening is worth something when you have a cut to land in it.",
+      "K19_K20": "A jump or a plant is a committed move that lasts longer.",
+      "K17_K20": "An opponent who plants has done what you can do, and their path is fixed until they land.",
+      "K19_K25": "Drawing a move makes the opening instead of waiting for it.",
+      "K11_K25": "The wait after their dodge is the opening a drawn dodge gives you.",
+      "K05_K23": "A jump is one way over a low attack.",
+      "K12_K23": "Meeting a sweep from above is a block from another height.",
+      "K14_K24": "If one part that ends the round is defended, another still ends it.",
+      "K08_K24": "Their dodge is the move you learned, used against you, so aim at a part that does not trigger it.",
+      "K19_K26": "Your own last round is the committed move you face.",
+      "K19_K28": "An opening lasts as long as they take to react.",
+      "K28_K27": "Looking ahead is reacting early, and a late change lands past what they looked at.",
+      "K06_K31": "Light gravity is the same jump with the fall slowed.",
+      "K15_K32": "With twice the ink to drain, waiting for them to run dry takes twice as long.",
+      "K14_K32": "A cut that ends the round does not depend on how much ink is left.",
+      "K04_I1": "A round starts with closing the distance.",
+      "K14_I1": "A round ends with a cut across the neck, the head or the heart.",
+      "I1_I2": "A match is rounds won against someone who answers back.",
+      "K12_I2": "Against someone who swings back, your blade is also your shield.",
+      "K19_I2": "What wins rounds against a real opponent is the opening after what they commit to.",
+      "S1_K19": "Watching first shows which moves they commit to.",
+      "S1_K26": "Watching your own round is how you see what comes back.",
+      "S2_K24": "Comparing two opponents shows what changed, and so where to aim.",
+      "S2_K32": "Comparing a fight with and without its condition shows what the condition changes."
+    },
+  "kc_compare": {
+    "c_swing_plant": "The same push from the shoulder and the arm, sent into the air or into the ground.",
+    "p_jump_air_jump": "A jump from the ground and a bounce off the air.",
+    "p_dodge_roll": "A dodge in place and a dodge with a direction.",
+    "c_sweep": "The same low sweep, with and without a dodge behind it.",
+    "c_overhead": "An overhead waiting for your jump, with and without dodges.",
+    "c_opening": "The opening after a swing and after a thrust.",
+    "c_lookahead": "The same look-ahead, longer.",
+    "c_aim": "Dodges at the head with and without a search behind them.",
+    "c_above": "A fall from the air with and without a search between attacks.",
+    "c_commit": "A vault now and then, and a vault as the whole plan.",
+    "c_turning": "A turning blade that drifts in, and one that dodges away.",
+    "c_draw": "Drawing a thrust and drawing a dodge.",
+    "c_ink": "A thrust with the usual ink behind it, and one with twice the ink."
+  },
+  "tutorial": {
+    "chapter": {
+      "arm": "The arm",
+      "ground": "On the ground",
+      "air": "In the air",
+      "defense": "Keeping safe",
+      "reading": "Reading an opponent",
+      "ahead": "Thinking ahead",
+      "compare": "Comparisons",
+      "capstone": "A whole match"
+    },
+    "when_heading": "When",
+    "then_heading": "Do this",
+    "builds_heading": "It builds on what you know",
+    "task_heading": "Your task",
+    "compare_heading": "What the two have in common",
+    "compare_name": "{first} and {second}",
+    "mission": {
+      "c_swing_plant": "Swing, then plant"
+    },
+    "in_yard": "In the yard.",
+    "against": "Against {opponent_mid}.",
+    "part": "Part {n} of {count}.",
+    "goal": {
+      "full_turn": "Turn the sword one whole turn round your shoulder.",
+      "reach": "Hold the tip {cm} cm in front of you.",
+      "step": "Move {cm} cm from where you started.",
+      "airborne": "Leave the ground.",
+      "air_jump": "Jump again while you are in the air.",
+      "dodge": "Dodge.",
+      "roll": "Roll along the ground.",
+      "air_dodge": "Dodge while you are in the air.",
+      "dodges": "Dodge {count} times.",
+      "cut": "Cut the post.",
+      "spill_cut": "Make a cut that spills ink.",
+      "clashes": "Meet the opponent's blade with yours {count} times.",
+      "speed": "Swing until you are moving at {speed} metres a second.",
+      "plant": "Plant the sword and lift yourself {cm} cm, without the jump key.",
+      "win": "Win the match."
+    },
+    "locked": "Finish these first:",
+    "done": "Done.",
+    "start": {
+      "label": "Start this mission"
+    },
+    "task_done": "Task complete.",
+    "opened": "Now open: {mission}.",
+    "to_map": {
+      "label": "Go back to the map"
+    },
+    "again": {
+      "label": "Try this task again"
+    },
+    "next": {
+      "label": "Start the next task"
     }
   }
 }

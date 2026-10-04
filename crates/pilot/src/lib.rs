@@ -77,6 +77,10 @@ pub fn head(w: &World, seat: usize) -> Option<V2> {
     role(w, seat, |r| r.head)
 }
 
+pub fn shoulder(w: &World, seat: usize) -> Option<V2> {
+    role(w, seat, |r| r.shoulder)
+}
+
 pub fn pelvis(w: &World, seat: usize) -> Option<V2> {
     role(w, seat, |r| r.pelvis)
 }
@@ -90,6 +94,17 @@ fn tip(w: &World, seat: usize) -> Option<V2> {
 }
 
 /// Horizontal distance between the two pelvises, in whole cm.
+/// No foot still attached to the fighter is on the ground.
+pub fn airborne(w: &World, seat: usize) -> bool {
+    w.fighters[seat].as_ref().is_some_and(|f| {
+        let def = &w.setup.bodies[f.body as usize];
+        !def.roles.feet.iter().any(|&i| {
+            let p = &w.particles[(f.base + i as u16) as usize];
+            p.owner == Owner::Body(seat as u8) && p.p.y <= p.rad + ONE
+        })
+    })
+}
+
 pub fn gap(w: &World, seat: usize) -> i32 {
     match (pelvis(w, seat), pelvis(w, 1 - seat)) {
         (Some(a), Some(b)) => (b.x - a.x).abs().trunc(),
@@ -586,14 +601,7 @@ impl Tree {
             (Some(a), Some(b)) => (a - b).len().trunc() < cm,
             _ => false,
         };
-        let airborne = |s: usize| w.fighters[s].as_ref().is_some_and(|_| {
-            let f = w.fighters[s].as_ref().unwrap();
-            let def = &w.setup.bodies[f.body as usize];
-            !def.roles.feet.iter().any(|&i| {
-                let p = &w.particles[(f.base + i as u16) as usize];
-                p.owner == Owner::Body(s as u8) && p.p.y <= p.rad + ONE
-            })
-        });
+        let airborne = |s: usize| airborne(w, s);
         match c {
             Cond::GapAbove(cm) => gap(w, me) > *cm,
             Cond::GapBelow(cm) => gap(w, me) < *cm,

@@ -1,0 +1,37 @@
+id,group,name,condition,response,kli_type,strategy,n_instances
+K01,Arm,Turning the shoulder,you want the sword higher or lower,"hold a shoulder key, and the arm turns for as long as you hold it",VV-nonverbal,False,5
+K02,Arm,Bending and straightening the elbow,the target is nearer or farther than your blade,"straighten the elbow to reach farther, and bend it to pull the blade in",VV-nonverbal,False,6
+K03,Arm,The sword carries on,a swing is moving,"let go of the key before the blade gets where you want it, because the heavy sword keeps turning the arm",VV-nonverbal-rationale,False,1
+K04,Move,Stepping,"you are too far from your opponent, or too close","hold a step key, and the ground carries you that way while the legs keep you upright",VV-nonverbal,False,4
+K05,Move,Jumping,you need to leave the ground,press jump: you get one jump from the ground,CC-nonverbal,False,5
+K06,Move,The bounce in the air,you are in the air and still have your second jump,"press jump to bounce off the air, holding a direction to push that way; a jump late in a fall rises higher, because the fall turns into a rise at the same speed",VV-nonverbal-rationale,False,6
+K07,Move,Getting up,you are knocked down and still have both legs,press stand,CC-nonverbal,False,3
+K08,Defend,Dodging,a blade is about to touch you,press dodge so that the moment no blade can cut you covers the touch; your own blade cuts nothing in that moment either,VC-nonverbal-rationale,False,10
+K09,Defend,Rolling,you want to dodge and change place on the ground,hold a direction as you press dodge,VV-nonverbal,False,3
+K10,Defend,Dodging in the air,you are in the air and need to get out of the way,"press dodge to be carried sideways, at the cost of your second jump",VV-nonverbal-rationale,False,1
+K11,Defend,The wait after a dodge,you dodged a moment ago,"expect a short wait before the next dodge, so choose the moment rather than pressing again",CC-verbal-rationale,False,2
+K12,Defend,Blocking,a swing is coming at you,"put your blade in its path, because swords are solid and a blade that meets yours stops",VV-nonverbal-rationale,False,8
+K13,Cut,What a cut is,your moving blade touches a part of a fighter,"the blade cuts straight across that part where it touched, and what lies beyond the cut drops off; a slow blade does not cut",VC-verbal-rationale,False,5
+K14,Cut,Where a cut ends the round,you choose where to aim,"aim across the neck, the head or the heart, because a cut there ends the round",VC-verbal-rationale,False,4
+K15,Cut,Ink,a cut lands somewhere that does not end the round,"the stump spills ink until the round ends, faster for a larger cut, and a fighter who runs out of ink loses the round",VC-verbal-rationale,False,4
+K16,Physics,Swinging for speed,you need to cross ground fast or leave it,swing in one direction again and again: each swing adds speed to your whole fighter,VV-nonverbal-rationale,False,2
+K17,Physics,Planting the sword,you want to rise or vault,"put the tip on the ground and straighten the arm; the sword cannot go into the ground, so the push lifts you",VV-nonverbal-rationale,False,5
+K18,Read,Reach,the opponent's blade is longer than yours,"let them swing first and move in while their blade travels, because a longer, heavier blade is slower to start and to stop",VV-verbal-rationale,False,1
+K19,Read,The opening after a committed move,"the opponent has finished a swing, a thrust or a landing","attack in that moment, before they can move again",VV-nonverbal-rationale,False,12
+K20,Read,A path already chosen,the opponent is in the air or has planted the sword,"move to where they are not going, and cut where they land",VV-nonverbal-rationale,False,7
+K21,Read,Getting around a guard,the opponent holds the sword out in front,"go over or under the blade, toward the part it does not cover",VV-nonverbal-rationale,False,1
+K22,Read,Stopping a turning blade,the opponent keeps the sword turning,"meet it with a firm block, then strike while they build speed again",VV-nonverbal-rationale,False,3
+K23,Read,High against low,"an attack comes low, or a guard sits high, or an overhead waits for your jump","answer from the other height: over a sweep, under a high guard, and on the ground against an overhead",VV-verbal-rationale,False,6
+K24,Read,Aim where they do not defend,the opponent dodges attacks at one part of the body,aim at another part that still ends the round or drains it,VV-verbal-rationale,False,8
+K25,Read,Drawing a move,the opponent answers a threat rather than attacking,"make the threat, let them answer, and strike as the answer ends",VV-verbal-rationale,False,3
+K26,Read,Your own moves returned,the opponent copies what you did last round,do this round what you know how to answer next round,VV-verbal-rationale,False,1
+K27,Read,A late change,the opponent looks a short time ahead before choosing,start a move that looks harmless and change it late,VV-verbal-rationale,False,2
+K28,Read,Inside their reaction,the opponent reacts some time after you move,finish what you start before they can answer it,VV-verbal-rationale,False,5
+K29,Read,Distance,"the opponent keeps away from you, or waits for you to come","close in with your guard up, and keep your blade where they will be",VV-nonverbal-rationale,False,5
+K30,Read,A guard above,the opponent comes down at you from the air,"hold your sword above you, because a blade that meets yours stops",VV-nonverbal-rationale,False,3
+K31,Condition,Light gravity,gravity is weaker than usual,"jump later and expect to hang longer, for you and for them",VV-nonverbal-rationale,False,1
+K32,Condition,An opponent with more ink,the opponent has twice your ink,go for a cut that ends the round rather than waiting for them to run dry,VV-verbal-rationale,False,1
+I1,Integr,Winning a round,a round starts against an opponent who does not fight back,close the distance and land a cut that ends the round,VV-nonverbal-rationale,False,2
+I2,Integr,Winning a match,an opponent fights back,"find what they commit to, answer it, and do that again in the next round",VV-verbal-rationale,False,32
+S1,strategy,Watch before you commit,you meet a new opponent,watch what they repeat before you attack,VV-verbal-rationale,True,2
+S2,strategy,Compare two opponents,two opponents differ in one thing,"find that difference, and change the part of your plan it touches",VV-verbal-rationale,True,0

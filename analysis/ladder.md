@@ -1,8 +1,8 @@
 # Ladder
 
-The yardstick pilot against every stop on the road, 200 seeded matches each, written by `make ladder` (2000 s). A match unfinished after 7200 ticks is not a win. The road is ordered by this column: the yardstick's win rate should not rise from one stop to the next (`the_road_is_ordered_by_the_yardstick`).
+The yardstick pilot against every fight on the road, 200 seeded matches each, written by `make ladder` (2073 s). A match unfinished after 7200 ticks is not a win. Each fight is played with its condition. Along every requirement in the tree, the yardstick should not win much more often below than above (`the_tree_gets_no_easier_going_down`).
 
-fingerprint 17002a47ec3ea361 (data/pilots.json, the set of stops, SIM_VERSION 6)
+fingerprint a4aff9a24e74161d (data/pilots.json, the set of stops with their conditions, SIM_VERSION 6)
 
 | stop | yardstick wins | unfinished | mean ticks |
 |---|---|---|---|
@@ -14,21 +14,21 @@ fingerprint 17002a47ec3ea361 (data/pilots.json, the set of stops, SIM_VERSION 6)
 | salt_trader | 154 of 200 (77 %) | 0 | 523 |
 | lamplighter | 149 of 200 (74 %) | 0 | 482 |
 | ferryman | 131 of 200 (66 %) | 0 | 633 |
-| cooper | 0 of 200 (0 %) | 0 | 78 |
+| cooper | 112 of 200 (56 %) | 0 | 501 |
 | windmill | 110 of 200 (55 %) | 0 | 403 |
 | ropewalker | 108 of 200 (54 %) | 0 | 468 |
 | smith | 107 of 200 (54 %) | 0 | 553 |
 | bellringer | 88 of 200 (44 %) | 0 | 485 |
 | gatekeeper | 87 of 200 (44 %) | 0 | 816 |
 | reader | 80 of 200 (40 %) | 1 | 626 |
-| dyer | 120 of 200 (60 %) | 0 | 445 |
+| dyer | 88 of 200 (44 %) | 0 | 453 |
 | boatwright | 95 of 200 (48 %) | 0 | 505 |
-| herbalist | 103 of 200 (52 %) | 0 | 631 |
-| potter | 55 of 200 (28 %) | 0 | 453 |
+| herbalist | 78 of 200 (39 %) | 0 | 574 |
+| potter | 94 of 200 (47 %) | 0 | 479 |
 | carpenter | 65 of 200 (32 %) | 0 | 421 |
-| weaver | 34 of 200 (17 %) | 0 | 77 |
+| weaver | 75 of 200 (38 %) | 0 | 420 |
 | falconer | 68 of 200 (34 %) | 0 | 456 |
-| cartographer | 58 of 200 (29 %) | 0 | 481 |
+| cartographer | 94 of 200 (47 %) | 0 | 486 |
 | mason | 67 of 200 (34 %) | 0 | 701 |
 | brewer | 68 of 200 (34 %) | 0 | 615 |
 | archivist | 45 of 200 (22 %) | 0 | 594 |

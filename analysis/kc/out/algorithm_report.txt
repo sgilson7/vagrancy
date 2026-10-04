@@ -1,0 +1,95 @@
+
+============================================================================
+A. DOMINATORS
+============================================================================
+stated edges 43, practiced edges 40
+reachable: stated 36, practiced 36
+unreachable once only items count: []
+
+concepts with a single route only once you require items:
+  K17 Planting the sword                   sole route through K02 Bending and straightening the elbow
+  K32 An opponent with more ink            sole route through K13 What a cut is
+
+dominator changed: {}
+
+============================================================================
+B. RECOVERABILITY
+============================================================================
+rank stability across damping: {'0.5vs0.65': 0.985, '0.5vs0.75': 0.975, '0.5vs0.85': 0.946, '0.5vs0.9': 0.926, '0.65vs0.75': 0.996, '0.65vs0.85': 0.982, '0.65vs0.9': 0.968, '0.75vs0.85': 0.99, '0.75vs0.9': 0.98, '0.85vs0.9': 0.994}
+
+least recoverable on the stated graph:
+  K07 Getting up                           Move  0.0
+  K30 A guard above                        Read  0.00452
+  K21 Getting around a guard               Read  0.00499
+  K03 The sword carries on                 Arm   0.00559
+  K18 Reach                                Read  0.00619
+  K29 Distance                             Read  0.00625
+  K26 Your own moves returned              Read  0.00705
+  K31 Light gravity                        Condition 0.00736
+  K28 Inside their reaction                Read  0.00736
+  K22 Stopping a turning blade             Read  0.00904
+
+biggest loss once only item-backed connections carry activation:
+  S2 Compare two opponents                -0.01154  (0.01154 -> 0.0)
+  K16 Swinging for speed                   -0.00527  (0.01101 -> 0.00574)
+  K32 An opponent with more ink            -0.00378  (0.01872 -> 0.01494)
+  K17 Planting the sword                   -0.00319  (0.02699 -> 0.0238)
+  K24 Aim where they do not defend         -0.00253  (0.02677 -> 0.02423)
+  K01 Turning the shoulder                 -0.00018  (0.02323 -> 0.02305)
+  K07 Getting up                           -0.0  (0.0 -> 0.0)
+  K21 Getting around a guard               --6e-05  (0.00499 -> 0.00505)
+  K30 A guard above                        --6e-05  (0.00452 -> 0.00458)
+  K31 Light gravity                        --0.0001  (0.00736 -> 0.00745)
+  K27 A late change                        --0.00011  (0.01173 -> 0.01184)
+  K22 Stopping a turning blade             --0.00012  (0.00904 -> 0.00916)
+
+lowest activation seeded at retained concepts:
+  K07 Getting up                           Move  0.0
+  K31 Light gravity                        Condition 0.00151
+  K10 Dodging in the air                   Defend 0.00317
+  K09 Rolling                              Defend 0.00333
+  K27 A late change                        Read  0.00377
+  K06 The bounce in the air                Move  0.00533
+  K11 The wait after a dodge               Defend 0.00574
+  K26 Your own moves returned              Read  0.00613
+  K28 Inside their reaction                Read  0.00664
+  K21 Getting around a guard               Read  0.00692
+
+============================================================================
+C. COMMUNITIES
+============================================================================
+  resolution 0.6: modularity 0.67 over 6.0 communities; unit partition 0.128
+  resolution 0.8: modularity 0.613 over 6.5 communities; unit partition 0.09
+  resolution 1.0: modularity 0.556 over 6.54 communities; unit partition 0.052
+  resolution 1.2: modularity 0.503 over 7.34 communities; unit partition 0.013
+  resolution 1.5: modularity 0.444 over 8.88 communities; unit partition -0.044
+
+consensus 0.559 vs unit partition 0.052   ARI 0.097  NMI 0.427
+
+consensus communities:
+  C0: I1(Integr), K04(Move), K29(Read)
+  C1: I2(Integr), K12(Defend), K19(Read), K21(Read), K22(Read), K25(Read), K26(Read), K30(Read), S1(strategy)
+  C2: K01(Arm), K02(Arm), K03(Arm), K13(Cut), K16(Physics), K17(Physics), K18(Read), K20(Read)
+  C3: K05(Move), K06(Move), K10(Defend), K23(Read), K31(Condition)
+  C4: K07(Move)
+  C5: K08(Defend), K09(Defend), K11(Defend), K14(Cut), K15(Cut), K24(Read), K32(Condition), S2(strategy)
+  C6: K27(Read), K28(Read)
+
+stable cross-unit pairs: 80
+  K05 Jumping [Move]  ~  K10 Dodging in the air [Defend]  1.0
+  K05 Jumping [Move]  ~  K23 High against low [Read]  1.0
+  K05 Jumping [Move]  ~  K31 Light gravity [Condition]  1.0
+  K06 The bounce in the air [Move]  ~  K10 Dodging in the air [Defend]  1.0
+  K06 The bounce in the air [Move]  ~  K23 High against low [Read]  1.0
+  K06 The bounce in the air [Move]  ~  K31 Light gravity [Condition]  1.0
+  K10 Dodging in the air [Defend]  ~  K23 High against low [Read]  1.0
+  K10 Dodging in the air [Defend]  ~  K31 Light gravity [Condition]  1.0
+  K23 High against low [Read]  ~  K31 Light gravity [Condition]  1.0
+  K01 Turning the shoulder [Arm]  ~  K13 What a cut is [Cut]  1.0
+  K01 Turning the shoulder [Arm]  ~  K16 Swinging for speed [Physics]  1.0
+  K01 Turning the shoulder [Arm]  ~  K17 Planting the sword [Physics]  1.0
+  K01 Turning the shoulder [Arm]  ~  K18 Reach [Read]  1.0
+  K01 Turning the shoulder [Arm]  ~  K20 A path already chosen [Read]  1.0
+  K02 Bending and straightening the elbow [Arm]  ~  K13 What a cut is [Cut]  1.0
+
+written to /Users/samgilson/Documents/vagrancy/analysis/kc/out/algorithm_results.json

@@ -1,0 +1,29 @@
+kc,name,group,in_degree,edge_disjoint_routes,practice_capacity,min_cut_edges
+K03,The sword carries on,Arm,1,1,2,K01->K03
+K06,The bounce in the air,Move,1,1,2,K05->K06
+K12,Blocking,Defend,1,1,2,K01->K12
+K14,Where a cut ends the round,Cut,1,1,2,K13->K14
+K15,Ink,Cut,1,1,2,K13->K15
+K16,Swinging for speed,Physics,1,1,2,K01->K16
+K18,Reach,Read,1,1,2,K02->K18
+K21,Getting around a guard,Read,1,1,2,K12->K21
+K22,Stopping a turning blade,Read,1,1,2,K01->K12
+K27,A late change,Read,1,1,2,K19->K28
+K28,Inside their reaction,Read,1,1,2,K19->K28
+K29,Distance,Read,1,1,2,K04->K29
+K30,A guard above,Read,1,1,2,K12->K30
+K31,Light gravity,Condition,1,1,2,K06->K31
+K09,Rolling,Defend,1,1,3,K08->K09
+K11,The wait after a dodge,Defend,1,1,3,K08->K11
+K17,Planting the sword,Physics,2,2,3,K02->K17;K16->K17
+K10,Dodging in the air,Defend,2,2,4,K08->K10;K06->K10
+K26,Your own moves returned,Read,2,2,4,S1->K26;K19->K26
+K25,Drawing a move,Read,2,2,5,K11->K25;K19->K25
+I1,Winning a round,Integr,2,2,5,K14->I1;K04->I1
+K13,What a cut is,Cut,2,2,6,K02->K13;K01->K13
+K19,The opening after a committed move,Read,2,2,6,S1->K19;K13->K19
+K20,A path already chosen,Read,2,2,6,K02->K17;K16->K17;K19->K20
+K23,High against low,Read,2,2,6,K05->K23;K01->K12
+K32,An opponent with more ink,Condition,3,3,5,K15->K32;K14->K32;S2->K32
+K24,Aim where they do not defend,Read,3,3,6,K08->K24;K13->K14;S2->K24
+I2,Winning a match,Integr,3,3,10,S1->K19;I1->I2;K13->K19;K01->K12

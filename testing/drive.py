@@ -558,6 +558,58 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
 
 
 @check
+def the_tutorial_is_a_map_of_missions_and_its_first_mission_is_played_with_the_keys(page, name):
+    # Sam: "a dedicated tutorial mode that is a map of missions following the
+    # teaching flow" of the knowledge-component analysis.
+    fails = []
+    missions = json.loads((ROOT / "data" / "tutorial.json").read_text())["missions"]
+    click_copy(page, "menu.tutorial.label")
+    page.wait_for_selector("#road-tree .node")
+    fails += every_visible_line_is_a_copy_string(page, name + " (tutorial)")
+    if page.locator("#road-tree [data-mission]").count() != len(missions):
+        fails.append(f"{name}: the map shows {page.locator('#road-tree [data-mission]').count()} of {len(missions)} missions")
+    want = sum(len(m.get("requires", [])) for m in missions)
+    if page.locator("#road-tree .wires path.met, #road-tree .wires path.unmet").count() != want:
+        fails.append(f"{name}: the map draws the wrong number of lines for {want} requirements")
+    last = missions[-1]
+    page.hover(f'[data-mission="{last["id"]}"]')
+    page.wait_for_selector("#road-tip:not([hidden])")
+    if page.locator("#road-tip p").count() != 1 + len(last["requires"]):
+        fails.append(f"{name}: hovering the last mission does not list what it requires")
+    fails += every_visible_line_is_a_copy_string(page, name + " (tutorial, hovering a locked mission)")
+    page.mouse.move(0, 0)
+    # The first mission: one whole turn of the shoulder, by holding its key.
+    first = missions[0]["id"]
+    page.click(f'[data-mission="{first}"]')
+    click_copy(page, "tutorial.start.label")
+    page.wait_for_selector("#mission-goal")
+    fails += every_visible_line_is_a_copy_string(page, name + " (tutorial mission)")
+    page.keyboard.down("KeyI")
+    try:
+        page.wait_for_function("document.body.dataset.mission === 'done'", timeout=15000)
+    except Exception:
+        fails.append(f"{name}: holding the shoulder key did not finish the first mission in 15 s")
+    finally:
+        page.keyboard.up("KeyI")
+    if not fails:
+        fails += every_visible_line_is_a_copy_string(page, name + " (tutorial mission done)")
+        if first not in page.evaluate("window.vagrancy.save().state.tutorial"):
+            fails.append(f"{name}: the finished mission is not in the save")
+        opened = [m["id"] for m in missions if m.get("requires") == [first]]
+        page.keyboard.press("Enter")
+        page.wait_for_selector("#road-tree .node")
+        for o in opened:
+            if page.locator(f'[data-mission="{o}"].open').count() != 1:
+                fails.append(f"{name}: finishing {first} did not open {o}")
+        if page.locator(f'[data-mission="{first}"].won').count() != 1:
+            fails.append(f"{name}: the map does not show {first} as done")
+    click_copy(page, "menu.back.label")
+    if not fails:
+        print(f"ok: {name}: the tutorial maps its missions with their requirements; the first is played with the keys and opens the next")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

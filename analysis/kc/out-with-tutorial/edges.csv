@@ -1,0 +1,44 @@
+src,dst,type,label,learning_process,instruction_in_materials,weight,practiced
+K01,K03,relational,"letting go early is the same shoulder key, timed against the weight of the sword",sense-making,practice.step.shoulder,2,True
+K01,K13,prerequisite,"a cut needs a moving blade, and the shoulder is what moves it",memory,practice.step.cut,3,True
+K01,K12,prerequisite,a block is the shoulder holding the blade in the path of a swing,memory,practice.step.block,2,True
+K01,K16,prerequisite,speed comes from swinging the shoulder one way,memory,practice.step.swing,2,True
+K02,K13,prerequisite,the elbow decides whether the blade reaches the part you aim at,memory,practice.step.elbow,3,True
+K02,K17,prerequisite,straightening the arm is what pushes the planted tip,memory,practice.step.plant,2,True
+K02,K18,relational,reach is your straightened arm measured against theirs,sense-making,opponents.ferryman.does,2,True
+K04,K29,prerequisite,distance is your steps chosen against theirs,memory,opponents.courier.try,2,True
+K04,I1,integrative,a round starts with closing the distance,refinement,practice.step.move,3,True
+K05,K06,relational,the second jump is the first with the ground replaced by a bounce,sense-making,practice.step.air_jump,2,True
+K05,K23,prerequisite,a jump is one way over a low attack,memory,opponents.drover.try,4,True
+K06,K10,prerequisite,an air dodge spends the second jump,memory,practice.step.air_dodge,2,True
+K06,K31,relational,light gravity is the same jump with the fall slowed,sense-making,road.condition.light,2,True
+K08,K09,relational,a roll is a dodge with a direction held,sense-making,practice.step.roll,3,True
+K08,K10,relational,an air dodge is a dodge with the ground taken away,sense-making,practice.step.air_dodge,2,True
+K08,K11,prerequisite,the wait comes after the dodge,memory,practice.step.cooldown,3,True
+K08,K24,relational,"their dodge is the move you learned, used against you, so aim at a part that does not trigger it",sense-making,opponents.archivist.does,3,True
+K11,K25,relational,the wait after their dodge is the opening a drawn dodge gives you,sense-making,opponents.salt_trader.try,2,True
+K12,K22,prerequisite,stopping a turning blade is a block held against something that keeps coming,refinement,opponents.windmill.try,3,True
+K12,K30,relational,a guard above is a block against a swing that comes down,sense-making,opponents.ropewalker.try,2,True
+K12,K21,relational,a guard that waits is a block you have to go around,sense-making,opponents.gatekeeper.does,2,True
+K12,K23,relational,meeting a sweep from above is a block from another height,sense-making,opponents.drover.try,3,True
+K12,I2,integrative,"against someone who swings back, your blade is also your shield",refinement,practice.step.block,8,True
+K13,K14,relational,a cut that ends the round is an ordinary cut across a different part,sense-making,how.end.body,2,True
+K13,K15,relational,a cut that does not end the round still costs ink,sense-making,practice.step.ink,2,True
+K13,K19,prerequisite,an opening is worth something when you have a cut to land in it,memory,opponents.thresher.try,2,True
+K14,K24,relational,"if one part that ends the round is defended, another still ends it",sense-making,opponents.archivist.try,3,True
+K14,K32,relational,a cut that ends the round does not depend on how much ink is left,sense-making,none,2,True
+K14,I1,integrative,"a round ends with a cut across the neck, the head or the heart",refinement,how.end.body,2,True
+K15,K32,relational,"with twice the ink to drain, waiting for them to run dry takes twice as long",sense-making,road.condition.deep_ink,2,True
+K16,K17,relational,a plant is a swing whose push goes into the ground,sense-making,none,1,True
+K17,K20,relational,"an opponent who plants has done what you can do, and their path is fixed until they land",sense-making,opponents.vaulter.does,5,True
+K19,K20,relational,a jump or a plant is a committed move that lasts longer,sense-making,opponents.vaulter.try,3,True
+K19,K25,relational,drawing a move makes the opening instead of waiting for it,sense-making,opponents.lamplighter.try,3,True
+K19,K26,relational,your own last round is the committed move you face,sense-making,opponents.sampler.try,2,True
+K19,K28,prerequisite,an opening lasts as long as they take to react,memory,opponents.archivist.does,2,True
+K19,I2,integrative,what wins rounds against a real opponent is the opening after what they commit to,refinement,opponents.thresher.try,13,True
+K28,K27,relational,"looking ahead is reacting early, and a late change lands past what they looked at",sense-making,opponents.reader.try,3,True
+I1,I2,integrative,a match is rounds won against someone who answers back,refinement,how.match.body,2,True
+S1,K19,strategy,watching first shows which moves they commit to,sense-making,opponents.thresher.try,4,True
+S1,K26,strategy,watching your own round is how you see what comes back,sense-making,opponents.sampler.try,2,True
+S2,K24,strategy,"comparing two opponents shows what changed, and so where to aim",sense-making,none,1,True
+S2,K32,strategy,comparing a fight with and without its condition shows what the condition changes,sense-making,none,1,True

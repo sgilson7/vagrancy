@@ -1,0 +1,1821 @@
+{
+ "n_edges_stated": 43,
+ "n_edges_practiced": 40,
+ "dominators_stated": {
+  "entries": [
+   "K01",
+   "K02",
+   "K04",
+   "K05",
+   "K07",
+   "K08",
+   "S1",
+   "S2"
+  ],
+  "n_reachable": 36,
+  "unreachable": [],
+  "dominated": {
+   "K11": "K08",
+   "K09": "K08",
+   "K06": "K05",
+   "K31": "K06",
+   "K29": "K04",
+   "K18": "K02",
+   "K16": "K01",
+   "K12": "K01",
+   "K21": "K12",
+   "K30": "K12",
+   "K22": "K12",
+   "K28": "K19",
+   "K27": "K28",
+   "K15": "K13",
+   "K14": "K13",
+   "K03": "K01"
+  },
+  "dominates_count": {
+   "K01": 6,
+   "K12": 3,
+   "K08": 2,
+   "K05": 2,
+   "K19": 2,
+   "K13": 2,
+   "K06": 1,
+   "K04": 1,
+   "K02": 1,
+   "K28": 1
+  }
+ },
+ "dominators_practiced": {
+  "entries": [
+   "K01",
+   "K02",
+   "K04",
+   "K05",
+   "K07",
+   "K08",
+   "S1",
+   "S2"
+  ],
+  "n_reachable": 36,
+  "unreachable": [],
+  "dominated": {
+   "K11": "K08",
+   "K09": "K08",
+   "K06": "K05",
+   "K31": "K06",
+   "K29": "K04",
+   "K18": "K02",
+   "K17": "K02",
+   "K16": "K01",
+   "K12": "K01",
+   "K21": "K12",
+   "K30": "K12",
+   "K22": "K12",
+   "K28": "K19",
+   "K27": "K28",
+   "K15": "K13",
+   "K14": "K13",
+   "K32": "K13",
+   "K03": "K01"
+  },
+  "dominates_count": {
+   "K01": 6,
+   "K12": 3,
+   "K13": 3,
+   "K08": 2,
+   "K05": 2,
+   "K02": 2,
+   "K19": 2,
+   "K06": 1,
+   "K04": 1,
+   "K28": 1
+  }
+ },
+ "newly_dominated_when_only_items_count": {
+  "K17": "K02",
+  "K32": "K13"
+ },
+ "dominator_changed": {},
+ "well_practiced_seed_set": [
+  [
+   "I2",
+   "Winning a match",
+   32
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   5
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   6
+  ],
+  [
+   "K04",
+   "Stepping",
+   4
+  ],
+  [
+   "K05",
+   "Jumping",
+   5
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   6
+  ],
+  [
+   "K07",
+   "Getting up",
+   3
+  ],
+  [
+   "K08",
+   "Dodging",
+   10
+  ],
+  [
+   "K09",
+   "Rolling",
+   3
+  ],
+  [
+   "K12",
+   "Blocking",
+   8
+  ],
+  [
+   "K13",
+   "What a cut is",
+   5
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   4
+  ],
+  [
+   "K15",
+   "Ink",
+   4
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   5
+  ],
+  [
+   "K19",
+   "The opening after a committed move",
+   12
+  ],
+  [
+   "K20",
+   "A path already chosen",
+   7
+  ],
+  [
+   "K22",
+   "Stopping a turning blade",
+   3
+  ],
+  [
+   "K23",
+   "High against low",
+   6
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   8
+  ],
+  [
+   "K25",
+   "Drawing a move",
+   3
+  ],
+  [
+   "K28",
+   "Inside their reaction",
+   5
+  ],
+  [
+   "K29",
+   "Distance",
+   5
+  ],
+  [
+   "K30",
+   "A guard above",
+   3
+  ]
+ ],
+ "recoverability_stated": [
+  [
+   "K07",
+   "Getting up",
+   "Move",
+   0.0
+  ],
+  [
+   "K30",
+   "A guard above",
+   "Read",
+   0.00452
+  ],
+  [
+   "K21",
+   "Getting around a guard",
+   "Read",
+   0.00499
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   0.00559
+  ],
+  [
+   "K18",
+   "Reach",
+   "Read",
+   0.00619
+  ],
+  [
+   "K29",
+   "Distance",
+   "Read",
+   0.00625
+  ],
+  [
+   "K26",
+   "Your own moves returned",
+   "Read",
+   0.00705
+  ],
+  [
+   "K31",
+   "Light gravity",
+   "Condition",
+   0.00736
+  ],
+  [
+   "K28",
+   "Inside their reaction",
+   "Read",
+   0.00736
+  ],
+  [
+   "K22",
+   "Stopping a turning blade",
+   "Read",
+   0.00904
+  ],
+  [
+   "K15",
+   "Ink",
+   "Cut",
+   0.00941
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   0.01005
+  ],
+  [
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   0.01092
+  ],
+  [
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   0.01101
+  ],
+  [
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.01154
+  ],
+  [
+   "K27",
+   "A late change",
+   "Read",
+   0.01173
+  ],
+  [
+   "K25",
+   "Drawing a move",
+   "Read",
+   0.01201
+  ],
+  [
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   0.01365
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   0.01388
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   0.0182
+  ],
+  [
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.01872
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   0.01918
+  ],
+  [
+   "K04",
+   "Stepping",
+   "Move",
+   0.01993
+  ],
+  [
+   "K05",
+   "Jumping",
+   "Move",
+   0.02237
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   0.02323
+  ],
+  [
+   "K20",
+   "A path already chosen",
+   "Read",
+   0.02599
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.02677
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   "Physics",
+   0.02699
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   0.02749
+  ],
+  [
+   "K23",
+   "High against low",
+   "Read",
+   0.02751
+  ],
+  [
+   "I1",
+   "Winning a round",
+   "Integr",
+   0.02871
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   0.0391
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   0.03913
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   0.07239
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   0.08526
+  ],
+  [
+   "K19",
+   "The opening after a committed move",
+   "Read",
+   0.08748
+  ]
+ ],
+ "recoverability_practiced": [
+  [
+   "K07",
+   "Getting up",
+   "Move",
+   0.0
+  ],
+  [
+   "K30",
+   "A guard above",
+   "Read",
+   0.00458
+  ],
+  [
+   "K21",
+   "Getting around a guard",
+   "Read",
+   0.00505
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   0.00574
+  ],
+  [
+   "K18",
+   "Reach",
+   "Read",
+   0.00647
+  ],
+  [
+   "K29",
+   "Distance",
+   "Read",
+   0.0064
+  ],
+  [
+   "K26",
+   "Your own moves returned",
+   "Read",
+   0.00723
+  ],
+  [
+   "K31",
+   "Light gravity",
+   "Condition",
+   0.00745
+  ],
+  [
+   "K28",
+   "Inside their reaction",
+   "Read",
+   0.00756
+  ],
+  [
+   "K22",
+   "Stopping a turning blade",
+   "Read",
+   0.00916
+  ],
+  [
+   "K15",
+   "Ink",
+   "Cut",
+   0.01013
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   0.01077
+  ],
+  [
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   0.01119
+  ],
+  [
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   0.00574
+  ],
+  [
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.0
+  ],
+  [
+   "K27",
+   "A late change",
+   "Read",
+   0.01184
+  ],
+  [
+   "K25",
+   "Drawing a move",
+   "Read",
+   0.01247
+  ],
+  [
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   0.01414
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   0.01422
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   0.01912
+  ],
+  [
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.01494
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   0.02042
+  ],
+  [
+   "K04",
+   "Stepping",
+   "Move",
+   0.02047
+  ],
+  [
+   "K05",
+   "Jumping",
+   "Move",
+   0.02261
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   0.02305
+  ],
+  [
+   "K20",
+   "A path already chosen",
+   "Read",
+   0.02769
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.02423
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   "Physics",
+   0.0238
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   0.0305
+  ],
+  [
+   "K23",
+   "High against low",
+   "Read",
+   0.02778
+  ],
+  [
+   "I1",
+   "Winning a round",
+   "Integr",
+   0.02966
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   0.04105
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   0.042
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   0.07338
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   0.0871
+  ],
+  [
+   "K19",
+   "The opening after a committed move",
+   "Read",
+   0.08993
+  ]
+ ],
+ "recoverability_drop": [
+  [
+   "S2",
+   "Compare two opponents",
+   0.01154,
+   0.01154,
+   0.0
+  ],
+  [
+   "K16",
+   "Swinging for speed",
+   0.00527,
+   0.01101,
+   0.00574
+  ],
+  [
+   "K32",
+   "An opponent with more ink",
+   0.00378,
+   0.01872,
+   0.01494
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   0.00319,
+   0.02699,
+   0.0238
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   0.00253,
+   0.02677,
+   0.02423
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   0.00018,
+   0.02323,
+   0.02305
+  ],
+  [
+   "K07",
+   "Getting up",
+   0.0,
+   0.0,
+   0.0
+  ],
+  [
+   "K21",
+   "Getting around a guard",
+   -6e-05,
+   0.00499,
+   0.00505
+  ],
+  [
+   "K30",
+   "A guard above",
+   -6e-05,
+   0.00452,
+   0.00458
+  ],
+  [
+   "K31",
+   "Light gravity",
+   -0.0001,
+   0.00736,
+   0.00745
+  ],
+  [
+   "K27",
+   "A late change",
+   -0.00011,
+   0.01173,
+   0.01184
+  ],
+  [
+   "K22",
+   "Stopping a turning blade",
+   -0.00012,
+   0.00904,
+   0.00916
+  ]
+ ],
+ "recoverability_rank_stability_spearman": {
+  "0.5vs0.65": 0.985,
+  "0.5vs0.75": 0.975,
+  "0.5vs0.85": 0.946,
+  "0.5vs0.9": 0.926,
+  "0.65vs0.75": 0.996,
+  "0.65vs0.85": 0.982,
+  "0.65vs0.9": 0.968,
+  "0.75vs0.85": 0.99,
+  "0.75vs0.9": 0.98,
+  "0.85vs0.9": 0.994
+ },
+ "seeds_used_for_forward_activation": [
+  [
+   "K01",
+   "Turning the shoulder"
+  ],
+  [
+   "K04",
+   "Stepping"
+  ],
+  [
+   "K13",
+   "What a cut is"
+  ],
+  [
+   "K12",
+   "Blocking"
+  ]
+ ],
+ "activation_lowest": [
+  [
+   "K07",
+   "Getting up",
+   "Move",
+   0.0
+  ],
+  [
+   "K31",
+   "Light gravity",
+   "Condition",
+   0.00151
+  ],
+  [
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   0.00317
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   0.00333
+  ],
+  [
+   "K27",
+   "A late change",
+   "Read",
+   0.00377
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   0.00533
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   0.00574
+  ],
+  [
+   "K26",
+   "Your own moves returned",
+   "Read",
+   0.00613
+  ],
+  [
+   "K28",
+   "Inside their reaction",
+   "Read",
+   0.00664
+  ],
+  [
+   "K21",
+   "Getting around a guard",
+   "Read",
+   0.00692
+  ]
+ ],
+ "resolution_sweep": {
+  "0.6": {
+   "mean_modularity": 0.67,
+   "mean_n_communities": 6.0,
+   "group_modularity": 0.128
+  },
+  "0.8": {
+   "mean_modularity": 0.613,
+   "mean_n_communities": 6.5,
+   "group_modularity": 0.09
+  },
+  "1.0": {
+   "mean_modularity": 0.556,
+   "mean_n_communities": 6.54,
+   "group_modularity": 0.052
+  },
+  "1.2": {
+   "mean_modularity": 0.503,
+   "mean_n_communities": 7.34,
+   "group_modularity": 0.013
+  },
+  "1.5": {
+   "mean_modularity": 0.444,
+   "mean_n_communities": 8.88,
+   "group_modularity": -0.044
+  }
+ },
+ "consensus_communities": [
+  [
+   [
+    "I1",
+    "Winning a round",
+    "Integr"
+   ],
+   [
+    "K04",
+    "Stepping",
+    "Move"
+   ],
+   [
+    "K29",
+    "Distance",
+    "Read"
+   ]
+  ],
+  [
+   [
+    "I2",
+    "Winning a match",
+    "Integr"
+   ],
+   [
+    "K12",
+    "Blocking",
+    "Defend"
+   ],
+   [
+    "K19",
+    "The opening after a committed move",
+    "Read"
+   ],
+   [
+    "K21",
+    "Getting around a guard",
+    "Read"
+   ],
+   [
+    "K22",
+    "Stopping a turning blade",
+    "Read"
+   ],
+   [
+    "K25",
+    "Drawing a move",
+    "Read"
+   ],
+   [
+    "K26",
+    "Your own moves returned",
+    "Read"
+   ],
+   [
+    "K30",
+    "A guard above",
+    "Read"
+   ],
+   [
+    "S1",
+    "Watch before you commit",
+    "strategy"
+   ]
+  ],
+  [
+   [
+    "K01",
+    "Turning the shoulder",
+    "Arm"
+   ],
+   [
+    "K02",
+    "Bending and straightening the elbow",
+    "Arm"
+   ],
+   [
+    "K03",
+    "The sword carries on",
+    "Arm"
+   ],
+   [
+    "K13",
+    "What a cut is",
+    "Cut"
+   ],
+   [
+    "K16",
+    "Swinging for speed",
+    "Physics"
+   ],
+   [
+    "K17",
+    "Planting the sword",
+    "Physics"
+   ],
+   [
+    "K18",
+    "Reach",
+    "Read"
+   ],
+   [
+    "K20",
+    "A path already chosen",
+    "Read"
+   ]
+  ],
+  [
+   [
+    "K05",
+    "Jumping",
+    "Move"
+   ],
+   [
+    "K06",
+    "The bounce in the air",
+    "Move"
+   ],
+   [
+    "K10",
+    "Dodging in the air",
+    "Defend"
+   ],
+   [
+    "K23",
+    "High against low",
+    "Read"
+   ],
+   [
+    "K31",
+    "Light gravity",
+    "Condition"
+   ]
+  ],
+  [
+   [
+    "K07",
+    "Getting up",
+    "Move"
+   ]
+  ],
+  [
+   [
+    "K08",
+    "Dodging",
+    "Defend"
+   ],
+   [
+    "K09",
+    "Rolling",
+    "Defend"
+   ],
+   [
+    "K11",
+    "The wait after a dodge",
+    "Defend"
+   ],
+   [
+    "K14",
+    "Where a cut ends the round",
+    "Cut"
+   ],
+   [
+    "K15",
+    "Ink",
+    "Cut"
+   ],
+   [
+    "K24",
+    "Aim where they do not defend",
+    "Read"
+   ],
+   [
+    "K32",
+    "An opponent with more ink",
+    "Condition"
+   ],
+   [
+    "S2",
+    "Compare two opponents",
+    "strategy"
+   ]
+  ],
+  [
+   [
+    "K27",
+    "A late change",
+    "Read"
+   ],
+   [
+    "K28",
+    "Inside their reaction",
+    "Read"
+   ]
+  ]
+ ],
+ "consensus_modularity": 0.559,
+ "group_modularity": 0.052,
+ "ari_vs_groups": 0.097,
+ "nmi_vs_groups": 0.427,
+ "stable_cross_group_pairs": [
+  [
+   "K05",
+   "Jumping",
+   "Move",
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   1.0
+  ],
+  [
+   "K05",
+   "Jumping",
+   "Move",
+   "K23",
+   "High against low",
+   "Read",
+   1.0
+  ],
+  [
+   "K05",
+   "Jumping",
+   "Move",
+   "K31",
+   "Light gravity",
+   "Condition",
+   1.0
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   1.0
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   "K23",
+   "High against low",
+   "Read",
+   1.0
+  ],
+  [
+   "K06",
+   "The bounce in the air",
+   "Move",
+   "K31",
+   "Light gravity",
+   "Condition",
+   1.0
+  ],
+  [
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   "K23",
+   "High against low",
+   "Read",
+   1.0
+  ],
+  [
+   "K10",
+   "Dodging in the air",
+   "Defend",
+   "K31",
+   "Light gravity",
+   "Condition",
+   1.0
+  ],
+  [
+   "K23",
+   "High against low",
+   "Read",
+   "K31",
+   "Light gravity",
+   "Condition",
+   1.0
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   "K13",
+   "What a cut is",
+   "Cut",
+   1.0
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   1.0
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   "K17",
+   "Planting the sword",
+   "Physics",
+   1.0
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K01",
+   "Turning the shoulder",
+   "Arm",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   "K13",
+   "What a cut is",
+   "Cut",
+   1.0
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   1.0
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   "K17",
+   "Planting the sword",
+   "Physics",
+   1.0
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K02",
+   "Bending and straightening the elbow",
+   "Arm",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   "K13",
+   "What a cut is",
+   "Cut",
+   1.0
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   1.0
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   "K17",
+   "Planting the sword",
+   "Physics",
+   1.0
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K03",
+   "The sword carries on",
+   "Arm",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   1.0
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   "K17",
+   "Planting the sword",
+   "Physics",
+   1.0
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K13",
+   "What a cut is",
+   "Cut",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K16",
+   "Swinging for speed",
+   "Physics",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   "Physics",
+   "K18",
+   "Reach",
+   "Read",
+   1.0
+  ],
+  [
+   "K17",
+   "Planting the sword",
+   "Physics",
+   "K20",
+   "A path already chosen",
+   "Read",
+   1.0
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   1.0
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   1.0
+  ],
+  [
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   1.0
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   1.0
+  ],
+  [
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   1.0
+  ],
+  [
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K12",
+   "Blocking",
+   "Defend",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K19",
+   "The opening after a committed move",
+   "Read",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K21",
+   "Getting around a guard",
+   "Read",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K22",
+   "Stopping a turning blade",
+   "Read",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K26",
+   "Your own moves returned",
+   "Read",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K30",
+   "A guard above",
+   "Read",
+   1.0
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K19",
+   "The opening after a committed move",
+   "Read",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K21",
+   "Getting around a guard",
+   "Read",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K22",
+   "Stopping a turning blade",
+   "Read",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K26",
+   "Your own moves returned",
+   "Read",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K30",
+   "A guard above",
+   "Read",
+   1.0
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K19",
+   "The opening after a committed move",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K21",
+   "Getting around a guard",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K22",
+   "Stopping a turning blade",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K26",
+   "Your own moves returned",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "K30",
+   "A guard above",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   1.0
+  ],
+  [
+   "I1",
+   "Winning a round",
+   "Integr",
+   "K04",
+   "Stepping",
+   "Move",
+   1.0
+  ],
+  [
+   "I1",
+   "Winning a round",
+   "Integr",
+   "K29",
+   "Distance",
+   "Read",
+   1.0
+  ],
+  [
+   "K04",
+   "Stepping",
+   "Move",
+   "K29",
+   "Distance",
+   "Read",
+   1.0
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   0.99
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.99
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.99
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.99
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   0.99
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.99
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.99
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.99
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   "K14",
+   "Where a cut ends the round",
+   "Cut",
+   0.99
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.99
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.99
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.99
+  ],
+  [
+   "K15",
+   "Ink",
+   "Cut",
+   "K24",
+   "Aim where they do not defend",
+   "Read",
+   0.98
+  ],
+  [
+   "K15",
+   "Ink",
+   "Cut",
+   "K32",
+   "An opponent with more ink",
+   "Condition",
+   0.98
+  ],
+  [
+   "K15",
+   "Ink",
+   "Cut",
+   "S2",
+   "Compare two opponents",
+   "strategy",
+   0.98
+  ],
+  [
+   "I2",
+   "Winning a match",
+   "Integr",
+   "K25",
+   "Drawing a move",
+   "Read",
+   0.98
+  ],
+  [
+   "K12",
+   "Blocking",
+   "Defend",
+   "K25",
+   "Drawing a move",
+   "Read",
+   0.98
+  ],
+  [
+   "K25",
+   "Drawing a move",
+   "Read",
+   "S1",
+   "Watch before you commit",
+   "strategy",
+   0.98
+  ],
+  [
+   "K08",
+   "Dodging",
+   "Defend",
+   "K15",
+   "Ink",
+   "Cut",
+   0.97
+  ],
+  [
+   "K09",
+   "Rolling",
+   "Defend",
+   "K15",
+   "Ink",
+   "Cut",
+   0.97
+  ],
+  [
+   "K11",
+   "The wait after a dodge",
+   "Defend",
+   "K15",
+   "Ink",
+   "Cut",
+   0.97
+  ]
+ ],
+ "group_split_across_communities": {
+  "Arm": {
+   "2": 3
+  },
+  "Move": {
+   "0": 1,
+   "3": 2,
+   "4": 1
+  },
+  "Defend": {
+   "1": 1,
+   "3": 1,
+   "5": 3
+  },
+  "Cut": {
+   "2": 1,
+   "5": 2
+  },
+  "Physics": {
+   "2": 2
+  },
+  "Read": {
+   "0": 1,
+   "1": 6,
+   "2": 2,
+   "3": 1,
+   "5": 1,
+   "6": 2
+  },
+  "Condition": {
+   "3": 1,
+   "5": 1
+  },
+  "Integr": {
+   "0": 1,
+   "1": 1
+  },
+  "strategy": {
+   "1": 1,
+   "5": 1
+  }
+ }
+}

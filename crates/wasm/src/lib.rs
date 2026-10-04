@@ -314,6 +314,93 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
     Ok(serde_json::Value::Array(stops).to_string())
 }
 
+/// One task of a tutorial mission: the yard or a fight on the road, with a
+/// tracker in core that says when its goal is met.
+#[wasm_bindgen]
+pub struct Mission {
+    rec: Recording,
+    pilot: Option<Box<dyn pilot::Pilot>>,
+    last: Input,
+    tracker: content::tutorial::Tracker,
+    mission: content::tutorial::Mission,
+    part: usize,
+}
+
+#[wasm_bindgen]
+impl Mission {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32, tuning: u8, id: &str, part: usize) -> Mission {
+        let mission = content::tutorial::mission(id).expect("a mission in data/tutorial.json");
+        let task = mission.tasks[part].clone();
+        let (setup, pilot) = if task.at == "yard" {
+            (content::setup::practice(seed as u64, tuning), None)
+        } else {
+            (content::setup::road(seed as u64, tuning, &task.at), Some(pilot::build(&content::road::pilot(&task.at))))
+        };
+        Mission { rec: Recording::new(setup), pilot, last: Input::NONE, tracker: content::tutorial::Tracker::new(task.goal), mission, part }
+    }
+    pub fn step(&mut self, mine: u16, _other: u16) {
+        let theirs = match self.pilot.as_mut() {
+            Some(p) => {
+                p.observe(self.last);
+                p.input(&self.rec.world, 1)
+            }
+            None => Input::NONE,
+        };
+        self.rec.step([Input(mine), theirs]);
+        self.tracker.observe(&self.rec.world, Input(mine));
+        self.last = Input(mine);
+    }
+    pub fn frame(&self) -> String {
+        serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    pub fn phase_text(&self, _opponent: &str) -> String {
+        let task = &self.mission.tasks[self.part];
+        if task.at == "yard" {
+            return "{}".into();
+        }
+        content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &task.at }).to_string()
+    }
+    pub fn checksum(&self) -> String {
+        format!("{:016x}", self.rec.world.checksum())
+    }
+    pub fn tick(&self) -> u32 {
+        self.rec.world.tick
+    }
+    pub fn is_replay(&self) -> bool {
+        false
+    }
+    pub fn done(&self) -> bool {
+        false
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.rec.bytes()
+    }
+    pub fn recorded_checksum(&self) -> String {
+        String::new()
+    }
+    /// The task's goal has been met.
+    pub fn met(&self) -> bool {
+        self.tracker.met()
+    }
+    /// After the goal is met: the save with this task kept, and the missions
+    /// it opened, as `{ "save": text, "opened": [id] }`.
+    pub fn record(&self, save_text: &str) -> Result<String, String> {
+        let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+        let opened = if self.met() { content::tutorial::record(&mut s.tutorial, &self.mission, self.part) } else { Vec::new() };
+        Ok(json!({ "save": content::save::encode(&s), "opened": opened }).to_string())
+    }
+}
+
+/// The tutorial's map for a save: each mission with its row, its chapter,
+/// whether it is open and done, what it teaches and builds on, its tasks
+/// with their sentences, and what it requires with whether each is done.
+#[wasm_bindgen]
+pub fn tutorial_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    Ok(content::tutorial::map(&s.tutorial).to_string())
+}
+
 /// A new save file's state, as JSON.
 #[wasm_bindgen]
 pub fn save_fresh() -> String {

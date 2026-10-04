@@ -71,3 +71,5 @@ button.bind.listening { outline: 3px solid var(--focus); }
 #road-tip p { margin: 2px 0; }
 #road-tip p.met { text-decoration: line-through; color: var(--muted); }
 @media (max-width: 600px) { #road-tree .node { width: 104px; font-size: 0.85em; } }
+#mission-goal { border-left: 3px solid var(--focus); padding: 2px 12px; margin-bottom: 8px; }
+#mission-goal p, #mission-status p { margin: 2px 0; }

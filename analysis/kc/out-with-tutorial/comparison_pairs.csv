@@ -1,0 +1,14 @@
+instance_a,instance_b,kc,relation_surfaced,status
+drill/swing,drill/plant,K17,"the same push from the shoulder and the arm, sent into the air or into the ground","MISSING (separate practice steps, three apart)"
+drill/jump,drill/air_jump,K06,a jump from the ground and a bounce off the air,EXISTING (adjacent practice steps)
+drill/dodge,drill/roll,K09,a dodge in place and a dodge with a direction,EXISTING (adjacent practice steps)
+fight/drover,fight/dyer,K23,"the same low sweep, with and without a dodge behind it","MISSING (rows 1 and 4, no requirement between them)"
+fight/brewer,fight/abbot,K23,"an overhead waiting for your jump, with and without dodges",MISSING (no requirement between them)
+fight/thresher,fight/potter,K19,the opening after a swing and after a thrust,MISSING
+fight/reader,fight/cartographer,K27,"the same look-ahead, longer","MISSING (the cartographer requires the reader, but nothing says to compare)"
+fight/herbalist,fight/archivist,K24,dodges at the head with and without a search behind them,MISSING
+fight/ropewalker,fight/falconer,K30,a fall from the air with and without a search between attacks,MISSING
+fight/carpenter,fight/vaulter,K20,"a vault now and then, and a vault as the whole plan",MISSING
+fight/windmill,fight/bellringer,K22,"a turning blade that drifts in, and one that dodges away",MISSING
+fight/lamplighter,fight/salt_trader,K25,drawing a thrust and drawing a dodge,MISSING
+fight/boatwright,fight/potter,K32,"a thrust with the usual ink behind it, and one with twice the ink",MISSING (no requirement or row joins them)

@@ -9,3 +9,4 @@ pub mod setup;
 pub mod messages;
 pub mod road;
 pub mod save;
+pub mod tutorial;

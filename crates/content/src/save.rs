@@ -15,7 +15,8 @@ use std::collections::BTreeMap;
 pub const FORMAT: &str = "vagrancy.save";
 /// 2: the road keeps each stop's best result, not only that it was won,
 /// because a fight can ask for a flawless or a quick win (Sam's tree).
-pub const VERSION: u32 = 2;
+/// 3: the tutorial's finished missions.
+pub const VERSION: u32 = 3;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -23,6 +24,8 @@ pub struct SaveState {
     pub road: Road,
     pub bindings: Bindings,
     pub options: Options,
+    /// Finished tutorial tasks, by `content::tutorial::part_key`.
+    pub tutorial: Vec<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -79,12 +82,13 @@ pub fn fresh() -> SaveState {
         road: Road::default(),
         bindings: Bindings { solo: group("solo"), left: group("left"), right: group("right") },
         options: Options { music_volume: 70, remember_track: false },
+        tutorial: Vec::new(),
     }
 }
 
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
-    let SaveState { road, bindings, options } = s;
+    let SaveState { road, bindings, options, tutorial } = s;
     let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
@@ -95,6 +99,7 @@ pub fn encode(s: &SaveState) -> String {
             "road": { "best": best },
             "bindings": { "solo": solo, "left": left, "right": right },
             "options": { "music_volume": music_volume, "remember_track": remember_track },
+            "tutorial": tutorial,
         }
     });
     serde_json::to_string_pretty(&body).expect("a save always encodes")
@@ -104,6 +109,25 @@ pub fn encode(s: &SaveState) -> String {
 struct Envelope {
     format: Value,
     version: Value,
+}
+
+/// A version 2 file: no tutorial.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FileV2 {
+    #[allow(dead_code)]
+    format: String,
+    #[allow(dead_code)]
+    version: u32,
+    state: StateV2,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StateV2 {
+    road: Road,
+    bindings: Bindings,
+    options: Options,
 }
 
 /// A version 1 file: the road was a list of stops won.
@@ -156,7 +180,12 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV1 { road, bindings, options } = v1.state;
         let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
-        SaveState { road: Road { best }, bindings, options }
+        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new() }
+    } else if version < 3 {
+        // No tutorial yet.
+        let v2: FileV2 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
+        let StateV2 { road, bindings, options } = v2.state;
+        SaveState { road, bindings, options, tutorial: Vec::new() }
     } else {
         let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         file.state
@@ -197,7 +226,9 @@ fn validate(s: &SaveState) -> bool {
         codes.dedup();
         keys.len() == actions.len() && actions.iter().all(|a| g.contains_key(*a)) && codes.len() == g.len() && g.values().all(|c| !c.is_empty())
     };
+    let parts: Vec<String> = crate::tutorial::missions().iter().flat_map(|m| (0..m.tasks.len()).map(|i| crate::tutorial::part_key(m, i)).collect::<Vec<_>>()).collect();
     s.road.best.keys().all(|c| stops.contains(c))
+        && s.tutorial.iter().all(|t| parts.contains(t))
         && group_ok(&s.bindings.solo)
         && group_ok(&s.bindings.left)
         && group_ok(&s.bindings.right)
@@ -220,8 +251,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 2", "\"version\": 3");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 3, ours: 2 }));
+        let text = encode(&fresh()).replace("\"version\": 3", "\"version\": 4");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 4, ours: 3 }));
     }
 
     #[test]
@@ -266,7 +297,7 @@ mod tests {
 
     #[test]
     fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
-        let v1 = encode(&fresh()).replace("\"version\": 2", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]");
+        let v1 = encode(&fresh()).replace("\"version\": 3", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "");
         let s = decode(&v1).expect("a version 1 save loads");
         let unknown = crate::road::Best::UNKNOWN;
         assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown), ("thresher".to_string(), unknown)]));
@@ -276,7 +307,21 @@ mod tests {
         assert!(Req::Beat("scarecrow".into()).met(&s.road.best));
         assert!(!Req::Flawless("scarecrow".into()).met(&s.road.best));
         assert!(!Req::Quick { stop: "scarecrow".into(), seconds: 600 }.met(&s.road.best));
-        assert_eq!(decode(&encode(&s)), Ok(s), "and it is written back as version 2");
+        assert_eq!(decode(&encode(&s)), Ok(s), "and it is written back as the current version");
+    }
+
+    #[test]
+    fn a_version_2_save_loads_with_no_tutorial_done_and_a_finished_mission_round_trips() {
+        let v2 = encode(&fresh()).replace("\"version\": 3", "\"version\": 2").replace(",\n    \"tutorial\": []", "");
+        assert!(!v2.contains("tutorial"), "{v2}");
+        let s = decode(&v2).expect("a version 2 save loads");
+        assert!(s.tutorial.is_empty());
+        let mut done = fresh();
+        done.tutorial = vec!["m_shoulder".into(), "c_sweep/1".into()];
+        assert_eq!(decode(&encode(&done)), Ok(done.clone()));
+        let mut bad = done;
+        bad.tutorial.push("no_such_mission".into());
+        assert_eq!(decode(&encode(&bad)), Err(SaveError::Damaged));
     }
 
     #[test]
