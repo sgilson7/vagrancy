@@ -74,10 +74,31 @@ export function renderer(canvas, palette, numbers) {
     ctx.fillRect(seat === 0 ? x : x + w - filled, 14, filled, h);
   }
 
+  // A headshot is looked at: the page holds the clock, and the view closes
+  // in on where the blade landed, then opens again. `e` runs 0 → 1 → 0.
+  let focus = null;
+  draw.focus = (f) => { focus = f; };
+  function closeness(now) {
+    if (!focus || focus.still) return 0;
+    const t = (now - focus.start) / focus.dur;
+    if (t <= 0 || t >= 1) return 0;
+    const ease = (x) => x * x * (3 - 2 * x);
+    return t < 0.2 ? ease(t / 0.2) : t > 0.8 ? ease((1 - t) / 0.2) : 1;
+  }
+
   function draw(prev, cur, alpha) {
     const pts = lerp(prev, cur, alpha);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = palette.paper;
     ctx.fillRect(0, 0, W, H);
+    const e = closeness(performance.now());
+    if (e > 0) {
+      // The cut's point moves toward the middle as the view closes in.
+      const px = sx(focus.at[0]), py = sy(focus.at[1]);
+      const z = 1 + 1.6 * e;
+      const tx = px + (W / 2 - px) * e, ty = py + (H / 2 - py) * e;
+      ctx.setTransform(z, 0, 0, z, tx - z * px, ty - z * py);
+    }
     ctx.fillStyle = palette.ground;
     ctx.fillRect(0, ground, W, H - ground);
     ctx.strokeStyle = palette.ground_line;
@@ -113,6 +134,23 @@ export function renderer(canvas, palette, numbers) {
       for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 1.1, palette.sword);
       capsule(a, h, one * 1.6, palette.hilt);
     }
+    if (e > 0) {
+      // The edges darken while the view is close.
+      // Rings of the line color, each a little further out, so the dark
+      // deepens toward the edges (a gradient would need a color the palette
+      // does not hold).
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = palette.line;
+      for (let k = 0; k < 24; k += 1) {
+        ctx.globalAlpha = 0.018 * e;
+        ctx.beginPath();
+        ctx.rect(0, 0, W, H);
+        ctx.arc(W / 2, H / 2, H * (0.42 + k * 0.025), 0, Math.PI * 2, true);
+        ctx.fill('evenodd');
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     cur.fighters.forEach((f, seat) => {
       if (f && f.ink_max > 0) meter(seat === 0 ? 16 : W - 236, f, seat);
     });

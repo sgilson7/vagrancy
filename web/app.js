@@ -83,6 +83,10 @@ let curFrame = null;
 let acc = 0;
 let last = 0;
 let draw = null;
+// Until when the clock is held for a headshot, and where to look.
+let FREEZE = null;
+const HOLD_MS = 1600;
+const stillMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let onTick = null;
 
 function start(g, seatFn, tickFn = null) {
@@ -97,7 +101,24 @@ function start(g, seatFn, tickFn = null) {
   music.fight(!game.is_replay());
 }
 
+// The card that comes up over the arena when a round ends.
+function popupShow(said) {
+  const box = $('death-popup');
+  box.replaceChildren(
+    el('p', { class: 'popup-head', 'data-copy': said.popup.key }, t(said.popup.key, said.popup.vars)),
+    sayChosen(said.round, { class: 'popup-line' }));
+  box.classList.toggle('headshot', !!said.focus);
+  box.hidden = false;
+}
+function popupHide() {
+  const box = $('death-popup');
+  if (box) { box.hidden = true; box.replaceChildren(); }
+  FREEZE = null;
+  if (draw && draw.focus) draw.focus(null);
+}
+
 function stop() {
+  popupHide();
   game = null;
   $('stage').hidden = true;
   $('hud').hidden = true;
@@ -111,6 +132,9 @@ function loop(now) {
     // Catch up at most eight ticks a frame, so a stalled tab does not
     // replay a burst of stale keys (Floodline caps its catch-up the same way).
     let n = 0;
+    // A headshot holds the clock while the view closes in on it.
+    if (FREEZE && now < FREEZE.until) acc = 0;
+    else FREEZE = null;
     while (acc >= tickMs && n < 8) {
       const [a, b] = seats();
       game.step(a, b);
@@ -154,9 +178,19 @@ function matchWatcher(opponent, endButtons) {
       document.body.dataset.phase = phase;
       if (phase === 'fight') {
         panel.replaceChildren();
+        popupHide();
         return;
       }
       const said = JSON.parse(game.phase_text(opponent));
+      // How the round ended, over the arena (Sam: "pop a popup on the
+      // screen about how someone died"), and for a headshot, the clock held
+      // while the view closes in where the blade landed.
+      popupShow(said);
+      if (said.focus) {
+        const start = performance.now();
+        FREEZE = { until: start + HOLD_MS };
+        draw.focus({ at: said.focus, start, dur: HOLD_MS, still: stillMotion() });
+      }
       const kids = [sayChosen(said.round, { class: 'result' })];
       if (said.match) {
         kids.push(sayChosen(said.match, { class: 'result' }));
@@ -1201,6 +1235,11 @@ async function main() {
   restore();
   listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
+  // The arena: the canvas, and the card that comes up over it.
+  const stage = $('stage');
+  const arena = el('div', { id: 'arena' });
+  stage.replaceWith(arena);
+  arena.append(stage, el('div', { id: 'death-popup', role: 'status', hidden: '' }));
   music.subscribe(({ error }) => {
     MUSIC_ERROR = error || null;
     if (document.getElementById('music')) settings();

@@ -409,6 +409,39 @@ def red_pixels(page):
 
 
 @check
+def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
+    # Sam: "pop a popup on the screen about how someone died, and if someone
+    # gets headshot, stop the simulation to focus on it". A replay whose
+    # first round ends with a cut across the head, and plays on after it
+    # (`lab fixture-headshot`).
+    fails = []
+    fixture = ROOT / "testing" / "replays" / "headshot.replay"
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "menu.replay.label")
+    fc.value.set_files(str(fixture))
+    page.wait_for_selector('[data-copy="replay.playing"]')
+    page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
+    fails += every_visible_line_is_a_copy_string(page, name + " (a headshot's card)")
+    if page.inner_text("#death-popup .popup-head") != COPY["results"]["popup"]["head"]:
+        fails.append(f"{name}: a headshot's card says {page.inner_text('#death-popup .popup-head')!r}")
+    t0 = page.evaluate("window.vagrancy.tick()")
+    page.wait_for_timeout(800)
+    t1 = page.evaluate("window.vagrancy.tick()")
+    if t1 != t0:
+        fails.append(f"{name}: the clock ran from tick {t0} to {t1} during a headshot")
+    # And then it runs on: the next round starts.
+    try:
+        page.wait_for_function(f"window.vagrancy.tick() > {t0} + 30", timeout=5000)
+    except Exception:
+        fails.append(f"{name}: the clock never ran again after the headshot at tick {t0}")
+    page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=20000)
+    click_copy(page, "replay.stop.label")
+    if not fails:
+        print(f"ok: {name}: a headshot pops its card, holds the clock at tick {t0}, then lets it run on")
+    return fails
+
+
+@check
 def a_scripted_match_runs_to_its_result_and_nothing_drawn_is_red(page, name):
     fails = []
     fixture = ROOT / "testing" / "replays" / "match.replay"

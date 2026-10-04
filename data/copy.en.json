@@ -73,6 +73,7 @@
     "settings.youtube": "new: all six strings",
     "road": "new: condition_heading, condition.deep_ink, condition.light, req.*, tier.*, flawless, opened; locked rewritten (it described a line, and the road is now a tree)",
     "tutorial, menu.tutorial": "new: every string",
+    "results.popup": "new: every string",
     "weapons, road.weapon_heading, road.carry, road.carried, road.weapon_locked, road.reward, road.carries, road.view, road.region, road.chapter, road.chapter_progress, local.weapon_left, local.weapon_right": "new: every string",
     "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
@@ -291,6 +292,13 @@
       "match": "{winner} won the match, {wins} rounds to {losses}."
     },
     "draw": "Nobody won the round. Both fighters stopped at the same moment, so the round is played again.",
+    "popup": {
+      "head": "Headshot",
+      "neck": "Cut across the neck",
+      "heart": "Cut across the heart",
+      "ink": "Out of ink",
+      "draw": "Both down at once"
+    },
     "next_round": {
       "label": "Play the next round"
     },

@@ -94,8 +94,56 @@ pub fn match_result(w: &World, who: Audience) -> Value {
 pub fn phase_text(w: &World, who: Audience) -> Value {
     match w.phase {
         Phase::Fight => Value::Null,
-        Phase::RoundOver { result, ready } => json!({ "round": round_result(w, &result, who), "ready": ready }),
-        Phase::MatchOver { result } => json!({ "round": round_result(w, &result, who), "match": match_result(w, who) }),
+        Phase::RoundOver { result, ready } => {
+            json!({ "round": round_result(w, &result, who), "ready": ready, "popup": popup(w, &result), "focus": focus(w, &result) })
+        }
+        Phase::MatchOver { result } => {
+            json!({ "round": round_result(w, &result, who), "match": match_result(w, who), "popup": popup(w, &result), "focus": focus(w, &result) })
+        }
+    }
+}
+
+/// Whether the round's deciding cut crossed the head (Sam: "if someone gets
+/// headshot"), as against the neck, which the same cause covers.
+fn headshot(w: &World, r: &RoundResult) -> bool {
+    let Some(loser) = r.loser else { return false };
+    let body = w.setup.seats[loser as usize].map(|s| s.body as usize).unwrap_or(0);
+    r.cause == Cause::Neck && w.setup.bodies[body].parts.get(r.part as usize).is_some_and(|p| p.copy == "head")
+}
+
+/// The heading of the card that comes up when a round ends: how the loser
+/// went down (Sam: "pop a popup on the screen about how someone died").
+pub fn popup(w: &World, r: &RoundResult) -> Value {
+    let key = match (r.loser, r.cause) {
+        (None, _) => "results.popup.draw",
+        (Some(_), Cause::Ink) => "results.popup.ink",
+        (Some(_), Cause::Heart) => "results.popup.heart",
+        (Some(_), Cause::Neck) if headshot(w, r) => "results.popup.head",
+        (Some(_), Cause::Neck) => "results.popup.neck",
+    };
+    json!({ "key": key, "vars": {} })
+}
+
+/// For a cut across the head, where the blade landed, in the world's raw
+/// fixed-point units like the frame's points: the page stops the clock and
+/// looks there (Sam: "stop the simulation to focus on it"). Read on the tick
+/// the round ended, which is the tick of the cut.
+pub fn focus(w: &World, r: &RoundResult) -> Value {
+    if !headshot(w, r) {
+        return Value::Null;
+    }
+    let loser = r.loser.unwrap();
+    let at = w
+        .events
+        .iter()
+        .find_map(|e| match e {
+            sim::fight::Event::Cut { seat, part, at, .. } if *seat == loser && *part == r.part => Some(*at),
+            _ => None,
+        })
+        .or_else(|| pilot::head(w, loser as usize));
+    match at {
+        Some(p) => json!([p.x.0, p.y.0]),
+        None => Value::Null,
     }
 }
 
@@ -166,5 +214,30 @@ mod tests {
         );
         assert!(fill(&replay_error(ReplayError::Damaged)).starts_with("This replay file is incomplete"));
         assert!(fill(&replay_error(ReplayError::Format)).contains("is not a Vagrancy replay"));
+    }
+
+    #[test]
+    fn a_round_ends_with_a_heading_for_how_it_ended_and_a_headshot_stops_the_clock_where_it_landed() {
+        let mut w = world();
+        let parts = &w.setup.bodies[0].parts;
+        let idx = |name: &str| parts.iter().position(|p| p.copy == name).unwrap() as u8;
+        let (head, neck, chest) = (idx("head"), idx("neck"), idx("chest"));
+        let key = |w: &World, r: &RoundResult| popup(w, r)["key"].as_str().unwrap().to_string();
+        assert_eq!(key(&w, &result(Some(1), Cause::Neck, head, 0)), "results.popup.head");
+        assert_eq!(key(&w, &result(Some(1), Cause::Neck, neck, 0)), "results.popup.neck");
+        assert_eq!(key(&w, &result(Some(1), Cause::Heart, chest, 0)), "results.popup.heart");
+        assert_eq!(key(&w, &result(Some(0), Cause::Ink, chest, 0)), "results.popup.ink");
+        assert_eq!(key(&w, &result(None, Cause::Neck, head, 0)), "results.popup.draw");
+        // Only a cut across the head stops the clock, and it looks where the
+        // blade landed on that tick.
+        let at = sim::fx::V2::cm(212, 151);
+        w.events.push(sim::fight::Event::Cut { seat: 1, part: head, by: 0, at, spilled: true });
+        assert_eq!(focus(&w, &result(Some(1), Cause::Neck, head, 0)), json!([at.x.0, at.y.0]));
+        assert_eq!(focus(&w, &result(Some(1), Cause::Neck, neck, 0)), Value::Null);
+        assert_eq!(focus(&w, &result(Some(1), Cause::Heart, chest, 0)), Value::Null);
+        // Without the cut among this tick's events, it looks at the head.
+        w.events.clear();
+        let h = pilot::head(&w, 1).unwrap();
+        assert_eq!(focus(&w, &result(Some(1), Cause::Neck, head, 0)), json!([h.x.0, h.y.0]));
     }
 }

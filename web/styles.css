@@ -124,3 +124,15 @@ button.bind.listening { outline: 3px solid var(--focus); }
 @media (max-width: 600px) {
   #road-tree.chart .node { font-size: 0.7em; max-width: 70px; }
 }
+/* The card over the arena when a round ends. */
+#arena { position: relative; }
+#death-popup { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); z-index: 5;
+  background: var(--paper); border: 2px solid var(--line); padding: 10px 26px 12px; text-align: center;
+  max-width: min(90%, 560px); box-shadow: 0 6px 0 var(--ground-line); animation: pop 220ms ease-out; pointer-events: none; }
+#death-popup .popup-head { font-size: 2em; margin: 0 0 4px; letter-spacing: 0.04em; }
+#death-popup .popup-line { margin: 0; }
+#death-popup.headshot { border-width: 3px; border-color: var(--focus); }
+#death-popup.headshot .popup-head { font-size: 2.6em; color: var(--focus); }
+@keyframes pop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #death-popup { animation: none; } }
+@media (max-width: 600px) { #death-popup .popup-head { font-size: 1.4em; } #death-popup.headshot .popup-head { font-size: 1.7em; } }

@@ -385,6 +385,52 @@ fn w_names() -> Vec<String> {
     v["fighter"]["parts"].as_array().unwrap().iter().map(|p| p["id"].as_str().unwrap().to_string()).collect()
 }
 
+/// A replay whose first round ends with a cut across the head, so the gate
+/// can see the clock held for a headshot and then run on (Sam: "if someone
+/// gets headshot, stop the simulation to focus on it"). Written to
+/// testing/replays/headshot.replay: the first seed whose flailing does it,
+/// played to the tick the next round has run a second.
+fn fixture_headshot() {
+    use sim::fight::{Event, Phase};
+    for seed in 0..2000u64 {
+        let mut rec = sim::replay::Recording::new(content::setup::versus(seed, sim::balance::DEFAULT_TUNING));
+        let mut r = sim::rng::Rng::new(seed ^ 0xBEEF);
+        let mut held = [Input::NONE; 2];
+        let mut first: Option<(u32, String)> = None;
+        for t in 0..2400u32 {
+            if t % 12 == 0 {
+                let toward = [Input::STEP_RIGHT, Input::STEP_LEFT];
+                held = [0, 1].map(|s| Input((r.below(16) as u16) | if r.below(3) > 0 { toward[s] } else { 0 }));
+            }
+            let ready = matches!(rec.world.phase, Phase::RoundOver { .. });
+            rec.step(if ready { [Input(Input::READY); 2] } else { held });
+            for e in &rec.world.events {
+                if let Event::RoundEnd { result } = e {
+                    if first.is_none() {
+                        let part = result.loser.map(|l| {
+                            let body = rec.world.setup.seats[l as usize].unwrap().body as usize;
+                            rec.world.setup.bodies[body].parts[result.part as usize].copy.clone()
+                        });
+                        first = Some((rec.world.tick, part.unwrap_or_default()));
+                    }
+                }
+            }
+            if let Some((at, part)) = &first {
+                if part != "head" {
+                    break;
+                }
+                if rec.world.tick >= at + 60 * 4 && matches!(rec.world.phase, Phase::Fight) {
+                    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testing/replays/headshot.replay");
+                    std::fs::write(path, rec.bytes()).unwrap();
+                    println!("seed {seed}: a headshot at tick {at}; written to {} ticks", rec.world.tick);
+                    return;
+                }
+            }
+        }
+    }
+    panic!("no seed's first round ended with a cut across the head");
+}
+
 /// The gate's scripted match: both seats flail toward each other and press
 /// ready between rounds, on the seed that reaches the end of a match soonest.
 /// Written to testing/replays/match.replay, with what it should say.
@@ -628,6 +674,7 @@ fn main() {
         Some("ladder") => ladder(&args[1..]),
         Some("rate") => rate(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
+        Some("fixture-headshot") => fixture_headshot(),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),
