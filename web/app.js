@@ -134,6 +134,7 @@ function loop(now) {
 // buttons for the end of the match.
 function matchWatcher(opponent, endButtons) {
   let phase = 'fight';
+  document.body.dataset.phase = phase;
   const hud = $('hud');
   hud.hidden = false;
   const panel = el('div', { id: 'result', role: 'status' });
@@ -149,6 +150,7 @@ function matchWatcher(opponent, endButtons) {
       );
       if (frame.phase === phase) return;
       phase = frame.phase;
+      document.body.dataset.phase = phase;
       if (phase === 'fight') {
         panel.replaceChildren();
         return;
@@ -161,7 +163,15 @@ function matchWatcher(opponent, endButtons) {
       } else if (!game.is_replay()) {
         kids.push(button('results.next_round.label', () => { READY = true; }));
       }
+      // The first button is the way on, and Enter presses it (Sam asked to
+      // go on without the mouse): it takes the focus, and the page-wide Enter
+      // below finds it if the focus has wandered.
+      if (kids.some((k) => k.querySelector && (k.matches('button') || k.querySelector('button')))) {
+        kids.push(say('results.key_hint', { key: keyName('Enter') }, { class: 'desc' }));
+      }
       panel.replaceChildren(...kids);
+      const first = panel.querySelector('button');
+      if (first) first.focus({ preventScroll: true });
       document.body.dataset.phase = phase;
     },
   };
@@ -302,10 +312,20 @@ function road() {
 function fight(id) {
   READY = false;
   let won = false;
-  const watch = matchWatcher(id, () => [el('div', { class: 'actions' },
-    button('results.again.label', () => fight(id)),
-    button('results.to_road.label', road),
-    button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))]);
+  const stops = JSON.parse(road_json()).map((s) => s.id);
+  const next = stops[stops.indexOf(id) + 1];
+  const watch = matchWatcher(id, () => {
+    // After a win, the first button is the next stop on the road; after a
+    // loss, this opponent again. Enter presses the first.
+    const again = button('results.again.label', () => fight(id));
+    const onward = next && game && game.won && game.won()
+      ? button('road.fight.label', () => fight(next), { opponent_mid: t(`opponents.${next}.name_mid`) })
+      : null;
+    return [el('div', { class: 'actions' },
+      onward, again,
+      button('results.to_road.label', road),
+      button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
+  });
   show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
   const g = new Road(seed(), tuning(), id);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
@@ -703,6 +723,16 @@ async function main() {
     save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };
+  // Enter goes on: it presses the first button of a result, wherever the
+  // focus is.
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'Enter' && e.code !== 'NumpadEnter') return;
+    const first = document.querySelector('#result button');
+    if (first && document.activeElement !== first && !(document.activeElement && document.activeElement.matches('input, textarea'))) {
+      e.preventDefault();
+      first.click();
+    }
+  });
   const m = location.hash.match(/^#room=([A-Z0-9]{4,12})$/);
   if (m) joinRoom(m[1]); else menu();
   requestAnimationFrame(loop);

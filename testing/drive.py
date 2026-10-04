@@ -490,6 +490,64 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     return fails
 
 
+@check
+def enter_goes_on_without_the_mouse(page, name):
+    # Sam: "you should be able to press a button to reset the match / go to
+    # the next battle instead of having to click". Win at the first stop by
+    # keyboard alone (it does not fight back), pressing Enter after each
+    # round, and Enter after the match starts the next stop.
+    fails = []
+    stops = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    click_copy(page, "menu.road.label")
+    page.click(f'[data-stop="{stops[0]}"] [data-copy="road.fight.label"]')
+    page.wait_for_selector('[data-copy="hud.round"]')
+    rounds = 0
+    for _ in range(8):
+        page.keyboard.down("KeyD"); page.keyboard.down("KeyQ")
+        try:
+            page.wait_for_function("['round_over','match_over'].includes(document.body.dataset.phase)", timeout=30000)
+        except Exception:
+            fails.append(f"{name}: no round ended against the {stops[0]} in 30 s")
+            break
+        finally:
+            page.keyboard.up("KeyD"); page.keyboard.up("KeyQ")
+        phase = page.evaluate("document.body.dataset.phase")
+        want = "road.fight.label" if phase == "match_over" else "results.next_round.label"
+        focused = page.evaluate("document.activeElement && document.activeElement.dataset.copy")
+        if focused != want:
+            fails.append(f"{name}: after a {phase}, the focus is on {focused!r}, not {want!r}")
+            break
+        if phase == "match_over":
+            onward = page.inner_text('#result [data-copy="road.fight.label"]')
+            page.keyboard.press("Enter")
+            try:
+                page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+            except Exception:
+                fails.append(f"{name}: after the match, Enter did not start the next stop: phase {page.evaluate('window.vagrancy.phase()')}")
+                break
+            nxt = COPY["opponents"][stops[1]]["name_mid"]
+            if onward != COPY["road"]["fight"]["label"].replace("{opponent_mid}", nxt):
+                fails.append(f"{name}: the button after a win says {onward!r}")
+            elif page.evaluate("window.vagrancy.tick()") > 120:
+                fails.append(f"{name}: Enter did not start a new match")
+            else:
+                print(f"ok: {name}: Enter took the next round {rounds} times, then started the next stop ({nxt})")
+            break
+        page.keyboard.press("Enter")
+        try:
+            page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+        except Exception:
+            fails.append(f"{name}: after round {rounds + 1}, Enter did not start the next round: phase "
+                         f"{page.evaluate('window.vagrancy.phase()')}, focus "
+                         f"{page.evaluate('document.activeElement && (document.activeElement.dataset.copy || document.activeElement.tagName)')}")
+            break
+        rounds += 1
+    fails += every_visible_line_is_a_copy_string(page, name + " (after Enter)")
+    click_copy(page, "results.to_road.label")
+    click_copy(page, "menu.back.label")
+    return fails
+
+
 def walk(browser, name):
     fails = []
     ctx, page, problems, offsite = open_page(browser)

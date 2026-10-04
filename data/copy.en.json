@@ -56,7 +56,8 @@
     "settings.keys.actions.jump": "new",
     "settings.keys.actions.dodge": "new",
     "settings.keys.actions.stand": "new",
-    "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)"
+    "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
+    "results.key_hint": "new"
   },
   "_glossary": {
     "ink": {
@@ -286,7 +287,8 @@
     },
     "replay": {
       "label": "Download replay"
-    }
+    },
+    "key_hint": "Press {key} to choose the first button, so you can go on without the mouse."
   },
   "road": {
     "intro": "You are walking a road with a sword you are still learning to use. The people who stop you fight in different ways. Before a fight you are told what that opponent does and one thing you could try. The suggestion is a starting point, and there are other answers.",
