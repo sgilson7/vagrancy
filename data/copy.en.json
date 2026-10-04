@@ -17,7 +17,9 @@
     "pause_s, reach_pct, horizon_ms, reaction_ms": "derived from that opponent's entry in data/pilots.json; never typed",
     "theirs, ours": "the version in the file and the version this build reads",
     "file_name, error": "reported by the browser",
-    "key, action": "the key pressed and settings.keys.actions.<id>"
+    "key, action": "the key pressed and settings.keys.actions.<id>",
+    "seconds": "the time limit of a quick requirement, from data/road.json",
+    "count": "how many requirements a level of the road's tree has, from data/road.json"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -60,7 +62,9 @@
     "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
     "results.key_hint": "new",
     "online.ready": "new: label, you, friend, friend_not, again",
-    "settings.youtube": "new: all six strings"
+    "settings.youtube": "new: all six strings",
+    "road": "new: condition_heading, condition.deep_ink, condition.light, req.*, tier.*, flawless, opened; locked rewritten (it described a line, and the road is now a tree)",
+    "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
   },
   "_glossary": {
     "ink": {
@@ -139,7 +143,7 @@
   "menu": {
     "road": {
       "label": "Walk the road",
-      "desc": "Fight the opponents on the road in order, from the easiest to the hardest."
+      "desc": "Work down a tree of opponents. Each win opens the fights below it."
     },
     "local": {
       "label": "Play at one keyboard",
@@ -292,12 +296,29 @@
   "road": {
     "does_heading": "What this opponent does",
     "try_heading": "One thing to try",
+    "condition_heading": "Special condition",
+    "condition": {
+      "deep_ink": "Your opponent starts each round with twice as much ink.",
+      "light": "Gravity is half its usual strength here, so jumps go higher and falls are slower."
+    },
+    "req": {
+      "beat": "Beat {opponent_mid}.",
+      "flawless": "Beat {opponent_mid} without losing a round.",
+      "quick": "Beat {opponent_mid} in {seconds} seconds or less.",
+      "met": "Done."
+    },
+    "tier": {
+      "none": "Open from the start",
+      "one": "One requirement",
+      "many": "{count} requirements"
+    },
+    "flawless": "You have beaten {opponent_mid} without losing a round.",
+    "opened": "Now open: {opponent}.",
     "fight": {
       "label": "Fight {opponent_mid}"
     },
-    "locked": "You reach this stop after you win at the one before it.",
-    "cleared": "You have won here. You can fight {opponent_mid} again.",
-    "end": "That was the last opponent on the road. You can fight any of them again from this screen."
+    "locked": "To fight here, first:",
+    "cleared": "You have won here. You can fight {opponent_mid} again."
   },
   "opponents": {
     "scarecrow": {
@@ -352,7 +373,7 @@
     "reader": {
       "name": "The Reader",
       "name_mid": "the reader",
-      "place": "The end of the road, at a gate that is already open.",
+      "place": "A gate on the road that is already open.",
       "does": "The reader tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
       "try": "She does not check further ahead than that. A move that looks harmless at first and changes late is one she has not seen coming."
     },
@@ -425,6 +446,111 @@
       "place": "A gatehouse at the end of a bridge, with a television left on inside.",
       "does": "The watchman dodges attacks at his head, cuts at you when you leave the ground, jumps and pushes off the air, and stands up at once when knocked down. Between those he tries moves a short way ahead. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
       "try": "He punishes a jump. Stay on the ground, keep your guard up, and make him come to you."
+    },
+    "dyer": {
+      "name": "The Dyer",
+      "name_mid": "the dyer",
+      "place": "A dye works where the river runs blue below the vats, and a radio hangs from a drying pole.",
+      "does": "The dyer often sweeps low at your legs when you come close, and dodges back when your point comes at her body. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Her sweep stays low. Meet it from above, or jump it and cut as you come down."
+    },
+    "potter": {
+      "name": "The Potter",
+      "name_mid": "the potter",
+      "place": "A kiln yard with rows of pots drying in the sun and a cassette player on the wheel.",
+      "does": "The potter thrusts when you are close. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "A thrust leaves his arm out straight. Step aside from it, then cut before the arm comes back."
+    },
+    "carpenter": {
+      "name": "The Carpenter",
+      "name_mid": "the carpenter",
+      "place": "A half-built house, with a nail gun lying on the beams.",
+      "does": "The carpenter now and then plants her sword and vaults at you. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "When her tip goes into the ground she has chosen her path. Be somewhere else when she lands."
+    },
+    "mason": {
+      "name": "The Mason",
+      "name_mid": "the mason",
+      "place": "A quarry where the stone is cut by a saw with a petrol motor.",
+      "does": "The mason waits behind his guard while you are far away, and backs off when his ink runs low. Close in, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Cut him early. Once his ink is low he backs away, and he is easier to corner than to meet head on."
+    },
+    "weaver": {
+      "name": "The Weaver",
+      "name_mid": "the weaver",
+      "place": "A weaving shed with a loom and a television that shows nothing but static.",
+      "does": "The weaver dodges in through your attack when your point comes at her body, and sometimes spins her sword as she closes. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Her dodge brings her toward you. Draw it with a feint at her body, and have your blade where she comes out."
+    },
+    "falconer": {
+      "name": "The Falconer",
+      "name_mid": "the falconer",
+      "place": "A hillside mews with a satellite dish on the roof.",
+      "does": "The falconer sometimes jumps, pushes off the air toward you, and cuts down as he falls. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Hold your sword above you when he leaves the ground, because a blade that meets yours stops."
+    },
+    "boatwright": {
+      "name": "The Boatwright",
+      "name_mid": "the boatwright",
+      "place": "A slipway with a hull on blocks and an outboard motor on a trestle.",
+      "does": "The boatwright thrusts when you come in range and often steps back out of reach straight after. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "She gives ground after a thrust. Follow her as she steps back, while her arm is still coming in."
+    },
+    "brewer": {
+      "name": "The Brewer",
+      "name_mid": "the brewer",
+      "place": "A brewery yard stacked with kegs, with a jukebox by the door.",
+      "does": "The brewer cuts overhead whenever you leave the ground near him. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "He punishes a jump. Stay on the ground near him, and save your jumps for getting away."
+    },
+    "herbalist": {
+      "name": "The Herbalist",
+      "name_mid": "the herbalist",
+      "place": "A herb garden with a greenhouse and a kettle on a camping stove.",
+      "does": "The herbalist dodges away from many attacks at her head, and backs off when her ink runs low. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Aim at her body and legs, which she does not dodge."
+    },
+    "cartographer": {
+      "name": "The Cartographer",
+      "name_mid": "the cartographer",
+      "place": "A survey camp with a theodolite and a fax machine on a folding table.",
+      "does": "The cartographer tries several moves a short way ahead before he chooses. He looks about {horizon_ms} milliseconds into the future, and he acts on what he saw {reaction_ms} milliseconds ago.",
+      "try": "He sees further ahead than the reader. A move that starts slowly and finishes fast is the kind he misjudges."
+    },
+    "magistrate": {
+      "name": "The Magistrate",
+      "name_mid": "the magistrate",
+      "place": "A courthouse with a ceiling fan and a typewriter on the bench.",
+      "does": "The magistrate dodges most attacks at her head and many at her body. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Her dodges carry her away. Attack, let her dodge, and be closer when she stops."
+    },
+    "abbot": {
+      "name": "The Abbot",
+      "name_mid": "the abbot",
+      "place": "A mountain temple with a payphone by the gate.",
+      "does": "The abbot cuts overhead whenever you leave the ground near him, and dodges away from most attacks at his head. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Fight him on the ground, and aim low."
+    },
+    "warden": {
+      "name": "The Warden",
+      "name_mid": "the warden",
+      "place": "A walled prison yard with floodlights on poles.",
+      "does": "The warden dodges most attacks at her head, and now and then vaults at you on her sword. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "When her tip goes into the ground she is committed. Step aside and cut as she lands."
+    },
+    "hermit": {
+      "name": "The Hermit",
+      "name_mid": "the hermit",
+      "place": "A cave above the tree line, with a transistor radio on a ledge.",
+      "does": "The hermit waits for you to come to him, and dodges away from most attacks at his head. Close in, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "He will not come to you. Approach with your guard up, and attack his body."
+    },
+    "tanner": {
+      "name": "The Tanner",
+      "name_mid": "the tanner",
+      "place": "A tannery downwind of the town, with a refrigerator humming in the shed.",
+      "does": "The tanner tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
+      "try": "She reacts faster than anyone before her. A steady guard does better against her than a feint."
     }
   },
   "local": {

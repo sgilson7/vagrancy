@@ -482,12 +482,13 @@ fn ladder(args: &[String]) {
         handles.into_iter().map(|h| h.join().unwrap()).collect()
     });
     let mut md = format!(
-        "# Ladder\n\nThe yardstick pilot against every stop on the road, {matches} seeded matches each, written by `make ladder` \
-         ({:.0} s). A match unfinished after {} ticks is not a win. The road is ordered by this column: the yardstick's win \
-         rate should not rise from one stop to the next (`the_road_is_ordered_by_the_yardstick`).\n",
+        "# Ladder\n\nThe yardstick pilot against every fight on the road, {matches} seeded matches each, written by `make ladder` \
+         ({:.0} s). A match unfinished after {} ticks is not a win. Each fight is played with its condition. Along every \
+         requirement in the tree, the yardstick should not win much more often below than above \
+         (`the_tree_gets_no_easier_going_down`).\n",
         t0.elapsed().as_secs_f64(), max_ticks
     );
-    md += &format!("\nfingerprint {} (data/pilots.json, the set of stops, SIM_VERSION {})\n\n", content::road::ladder_fingerprint(), sim::SIM_VERSION);
+    md += &format!("\nfingerprint {} (data/pilots.json, the set of stops with their conditions, SIM_VERSION {})\n\n", content::road::ladder_fingerprint(), sim::SIM_VERSION);
     md += "| stop | yardstick wins | unfinished | mean ticks |\n|---|---|---|---|\n";
     for (id, won, unf, ticks) in &rows {
         md += &format!("| {id} | {won} of {matches} ({:.0} %) | {unf} | {} |\n", 100.0 * *won as f64 / matches as f64, ticks / matches);
@@ -495,6 +496,39 @@ fn ladder(args: &[String]) {
     print!("{md}");
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.md");
     std::fs::write(path, md).unwrap();
+}
+
+/// The yardstick's win rate against a few stops, for tuning a pilot: `rate
+/// <matches> <stop>...`. Prints only; the ladder is what the tests read.
+fn rate(args: &[String]) {
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(40);
+    let max_ticks = 60 * 120;
+    let rows: Vec<(String, u32, u32)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = args[1..]
+            .iter()
+            .map(|id| {
+                let id = id.clone();
+                scope.spawn(move || {
+                    let (mut won, mut unfinished) = (0u32, 0u32);
+                    for seed in 0..matches {
+                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
+                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(&id))];
+                        let o = pilot::duel(content::setup::road(seed, sim::balance::DEFAULT_TUNING, &id), &mut pilots, max_ticks);
+                        if !o.finished {
+                            unfinished += 1;
+                        } else if o.wins[0] > o.wins[1] {
+                            won += 1;
+                        }
+                    }
+                    (id, won, unfinished)
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    for (id, won, unf) in rows {
+        println!("{id}: {won} of {matches} ({:.0} %), {unf} unfinished", 100.0 * won as f64 / matches as f64);
+    }
 }
 
 /// One road match between the yardstick (seat 0) and a stop, told as events.
@@ -543,6 +577,7 @@ fn main() {
         Some("fixture-match") => fixture_match(),
         Some("recon-m5") => recon_m5(),
         Some("ladder") => ladder(&args[1..]),
+        Some("rate") => rate(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),

@@ -13,7 +13,9 @@ use std::collections::BTreeMap;
 
 /// A lowercase identifier, not a player-read string (PLAN.md §8 Q12).
 pub const FORMAT: &str = "vagrancy.save";
-pub const VERSION: u32 = 1;
+/// 2: the road keeps each stop's best result, not only that it was won,
+/// because a fight can ask for a flawless or a quick win (Sam's tree).
+pub const VERSION: u32 = 2;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -26,8 +28,8 @@ pub struct SaveState {
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Road {
-    /// Stops won at least once, by opponent id.
-    pub cleared: Vec<String>,
+    /// The best won match at each stop won at least once.
+    pub best: BTreeMap<String, crate::road::Best>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -83,14 +85,14 @@ pub fn fresh() -> SaveState {
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
     let SaveState { road, bindings, options } = s;
-    let Road { cleared } = road;
+    let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
     let body = json!({
         "format": FORMAT,
         "version": VERSION,
         "state": {
-            "road": { "cleared": cleared },
+            "road": { "best": best },
             "bindings": { "solo": solo, "left": left, "right": right },
             "options": { "music_volume": music_volume, "remember_track": remember_track },
         }
@@ -102,6 +104,31 @@ pub fn encode(s: &SaveState) -> String {
 struct Envelope {
     format: Value,
     version: Value,
+}
+
+/// A version 1 file: the road was a list of stops won.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FileV1 {
+    #[allow(dead_code)]
+    format: String,
+    #[allow(dead_code)]
+    version: u32,
+    state: StateV1,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StateV1 {
+    road: RoadV1,
+    bindings: Bindings,
+    options: Options,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RoadV1 {
+    cleared: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -124,8 +151,16 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
     if version > VERSION {
         return Err(SaveError::Newer { theirs: version, ours: VERSION });
     }
-    let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
-    let mut s = file.state;
+    let mut s = if version < 2 {
+        // Its wins carry over; how they were won was not kept.
+        let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
+        let StateV1 { road, bindings, options } = v1.state;
+        let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
+        SaveState { road: Road { best }, bindings, options }
+    } else {
+        let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
+        file.state
+    };
     // A save still holding the earlier one-player layout exactly (as every
     // save made before Sam split the keys between the hands does, unless its
     // player changed them) moves to the new layout; a player's own choices
@@ -162,7 +197,7 @@ fn validate(s: &SaveState) -> bool {
         codes.dedup();
         keys.len() == actions.len() && actions.iter().all(|a| g.contains_key(*a)) && codes.len() == g.len() && g.values().all(|c| !c.is_empty())
     };
-    s.road.cleared.iter().all(|c| stops.contains(c))
+    s.road.best.keys().all(|c| stops.contains(c))
         && group_ok(&s.bindings.solo)
         && group_ok(&s.bindings.left)
         && group_ok(&s.bindings.right)
@@ -176,7 +211,8 @@ mod tests {
     #[test]
     fn a_save_round_trips() {
         let mut s = fresh();
-        s.road.cleared = vec!["scarecrow".into(), "gatekeeper".into()];
+        s.road.best.insert("scarecrow".into(), crate::road::Best { losses: 0, ticks: 900 });
+        s.road.best.insert("gatekeeper".into(), crate::road::Best { losses: 2, ticks: 4000 });
         s.bindings.solo.insert("shoulder_up".into(), "KeyZ".into());
         s.options.music_volume = 35;
         assert_eq!(decode(&encode(&s)), Ok(s));
@@ -184,8 +220,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 1", "\"version\": 2");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 2, ours: 1 }));
+        let text = encode(&fresh()).replace("\"version\": 2", "\"version\": 3");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 3, ours: 2 }));
     }
 
     #[test]
@@ -194,7 +230,7 @@ mod tests {
         for bad in [
             good[..good.len() / 2].to_string(),
             good.replace("\"music_volume\": 70", "\"music_volume\": 700"),
-            good.replace("\"cleared\": []", "\"cleared\": [\"nobody\"]"),
+            good.replace("\"best\": {}", "\"best\": {\"nobody\": {\"losses\": 0, \"ticks\": 1}}"),
             good.replace("\"KeyW\"", "\"KeyQ\""),
             good.replace("\"remember_track\": false", "\"remember_track\": false, \"extra\": 1"),
         ] {
@@ -226,6 +262,21 @@ mod tests {
         }
         let back = decode(&encode(&old)).expect("an older save still loads");
         assert_eq!(back.bindings, fresh().bindings);
+    }
+
+    #[test]
+    fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
+        let v1 = encode(&fresh()).replace("\"version\": 2", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]");
+        let s = decode(&v1).expect("a version 1 save loads");
+        let unknown = crate::road::Best::UNKNOWN;
+        assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown), ("thresher".to_string(), unknown)]));
+        // A win of unknown margin opens what a win opens, and nothing that
+        // asks for a flawless or a quick one.
+        use crate::road::Req;
+        assert!(Req::Beat("scarecrow".into()).met(&s.road.best));
+        assert!(!Req::Flawless("scarecrow".into()).met(&s.road.best));
+        assert!(!Req::Quick { stop: "scarecrow".into(), seconds: 600 }.met(&s.road.best));
+        assert_eq!(decode(&encode(&s)), Ok(s), "and it is written back as version 2");
     }
 
     #[test]

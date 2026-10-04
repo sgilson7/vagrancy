@@ -284,56 +284,185 @@ function seed() {
 
 // --- the road (D16) ----------------------------------------------------------------
 
+// The road is a tree of fights (Sam): one row per number of requirements,
+// the fight at the top open from the start, the hardest at the bottom. A
+// line runs from each requirement's fight down to the fight it opens; a
+// line or a fight under the pointer says what it asks for. After the
+// errands map in gear-master-2d (web/app.js paintLog, drawChainWires).
+const SVG = 'http://www.w3.org/2000/svg';
+let ROAD_PICK = null;
+
+function roadData() {
+  return JSON.parse(road_json(JSON.stringify(SAVE)));
+}
+
+// One requirement as its sentence, with the opponent's name filled in.
+function reqLine(r, attrs = {}) {
+  return say(r.key, { ...r.vars, opponent_mid: t(`opponents.${r.stop}.name_mid`) }, attrs);
+}
+
 function road() {
   stop();
-  const stops = JSON.parse(road_json());
-  const cleared = new Set(SAVE.state.road.cleared);
-  const next = stops.find((s) => !cleared.has(s.id));
-  const cards = stops.map((s) => {
-    const o = (k) => `opponents.${s.id}.${k}`;
+  const stops = roadData();
+  const byId = new Map(stops.map((s) => [s.id, s]));
+  // Rows by level; within a row, by where its fights' requirements sit in
+  // the rows above, which keeps the lines from crossing more than they must.
+  const rows = [];
+  for (const s of stops) (rows[s.level] ||= []).push(s);
+  const place = new Map();
+  rows.forEach((row, l) => {
+    if (l > 0) {
+      const at = (s) => s.requires.reduce((a, r) => a + (place.get(r.stop) ?? 0), 0) / Math.max(1, s.requires.length);
+      row.sort((a, b) => at(a) - at(b));
+    }
+    row.forEach((s, i) => place.set(s.id, i / Math.max(1, row.length - 1)));
+  });
+  const detail = el('section', { id: 'stop-detail' });
+  const tip = el('div', { id: 'road-tip', role: 'tooltip', hidden: '' });
+  const nodes = new Map();
+  const tree = el('div', { id: 'road-tree' });
+  const wires = document.createElementNS(SVG, 'svg');
+  wires.setAttribute('class', 'wires');
+  wires.setAttribute('aria-hidden', 'true');
+  tree.append(wires);
+  rows.forEach((row, l) => {
+    const label = l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
+      : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
+      : say('road.tier.many', { count: l }, { class: 'tier-label' });
+    const tier = el('div', { class: 'tier' });
+    for (const s of row) {
+      const state = s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked';
+      const b = el('button', { type: 'button', class: `node ${state}`, 'data-stop': s.id, 'data-copy': `opponents.${s.id}.name`,
+        on: {
+          click: () => pick(s.id),
+          mouseenter: () => hoverNode(s.id),
+          focus: () => hoverNode(s.id),
+          mouseleave: unhover,
+          blur: unhover,
+        } }, t(`opponents.${s.id}.name`));
+      nodes.set(s.id, b);
+      tier.append(b);
+    }
+    tree.append(el('div', { class: 'level', 'data-level': String(l) }, label, tier));
+  });
+  // Lines: drawn once the tree has its size, and again when it changes.
+  const paths = [];
+  function wire() {
+    wires.replaceChildren();
+    paths.length = 0;
+    const box = tree.getBoundingClientRect();
+    wires.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    for (const s of stops) {
+      for (const r of s.requires) {
+        const a = nodes.get(r.stop).getBoundingClientRect();
+        const c = nodes.get(s.id).getBoundingClientRect();
+        const x1 = a.left - box.left + a.width / 2, y1 = a.bottom - box.top;
+        const x2 = c.left - box.left + c.width / 2, y2 = c.top - box.top;
+        const k = (y2 - y1) / 2;
+        const d = `M ${x1} ${y1} C ${x1} ${y1 + k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+        const line = document.createElementNS(SVG, 'path');
+        line.setAttribute('d', d);
+        line.setAttribute('class', r.met ? 'met' : 'unmet');
+        // A wider, invisible twin is what the pointer finds.
+        const hit = document.createElementNS(SVG, 'path');
+        hit.setAttribute('d', d);
+        hit.setAttribute('class', 'hit');
+        hit.addEventListener('mouseenter', (e) => { light([line]); showTip([reqLine(r)], e.clientX, e.clientY); });
+        hit.addEventListener('mousemove', (e) => moveTip(e.clientX, e.clientY));
+        hit.addEventListener('mouseleave', unhover);
+        wires.append(line, hit);
+        paths.push({ from: r.stop, to: s.id, line });
+      }
+    }
+  }
+  function light(lines) {
+    for (const p of paths) p.line.classList.toggle('hot', lines.includes(p.line));
+  }
+  function showTip(kids, x, y) {
+    tip.replaceChildren(...kids);
+    tip.hidden = false;
+    moveTip(x, y);
+  }
+  function moveTip(x, y) {
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = `${Math.max(8, Math.min(x + 14, innerWidth - w - 8))}px`;
+    tip.style.top = `${y + 18 + h > innerHeight ? y - h - 10 : y + 18}px`;
+  }
+  function hoverNode(id) {
+    const s = byId.get(id);
+    light(paths.filter((p) => p.to === id).map((p) => p.line));
+    if (s.open) { tip.hidden = true; return; }
+    const r = nodes.get(id).getBoundingClientRect();
+    // Beside the fight, not over the row below it.
+    showTip([say('road.locked'), ...s.requires.map((q) => reqLine(q, { class: q.met ? 'met' : 'unmet' }))], r.right - 6, r.top - 18);
+  }
+  function unhover() {
+    light([]);
+    tip.hidden = true;
+  }
+  function pick(id) {
+    ROAD_PICK = id;
+    for (const [k, b] of nodes) b.classList.toggle('picked', k === id);
+    const s = byId.get(id);
+    const o = (k) => `opponents.${id}.${k}`;
     const mid = { opponent_mid: t(o('name_mid')) };
-    let action;
-    if (cleared.has(s.id)) action = [say('road.cleared', mid, { class: 'desc' }), button('road.fight.label', () => fight(s.id), mid)];
-    else if (next && next.id === s.id) action = [button('road.fight.label', () => fight(s.id), mid)];
-    else action = [say('road.locked', {}, { class: 'desc' })];
-    return el('section', { class: 'stop', 'data-stop': s.id },
+    const kids = [
       el('h3', { 'data-copy': o('name') }, t(o('name'))),
       say(o('place'), {}, { class: 'desc' }),
-      el('h4', { 'data-copy': 'road.does_heading' }, t('road.does_heading')),
-      say(o('does'), s.numbers),
-      el('h4', { 'data-copy': 'road.try_heading' }, t('road.try_heading')),
-      say(o('try'), s.numbers),
-      ...action);
-  });
-  show(...(next ? [] : [say('road.end')]), ...cards, button('menu.back.label', menu));
+    ];
+    if (s.condition) kids.push(el('h4', { 'data-copy': 'road.condition_heading' }, t('road.condition_heading')), say(s.condition));
+    kids.push(
+      el('h4', { 'data-copy': 'road.does_heading' }, t('road.does_heading')), say(o('does'), s.numbers),
+      el('h4', { 'data-copy': 'road.try_heading' }, t('road.try_heading')), say(o('try'), s.numbers));
+    if (s.open) {
+      if (s.flawless) kids.push(say('road.flawless', mid, { class: 'desc' }));
+      else if (s.won) kids.push(say('road.cleared', mid, { class: 'desc' }));
+      kids.push(el('div', { class: 'actions' }, button('road.fight.label', () => fight(id), mid)));
+    } else {
+      kids.push(say('road.locked'), el('ul', { class: 'reqs' },
+        ...s.requires.map((q) => el('li', { class: q.met ? 'met' : 'unmet' }, reqLine(q), q.met ? say('road.req.met', {}, { class: 'desc' }) : null))));
+    }
+    detail.replaceChildren(...kids);
+  }
+  show(detail, tree, tip, button('menu.back.label', menu));
+  // The fight picked last, or the first open one not yet won.
+  const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
+  pick(first.id);
+  wire();
+  new ResizeObserver(() => { if (tree.isConnected) wire(); }).observe(tree);
 }
 
 function fight(id) {
   READY = false;
+  ROAD_PICK = id;
   let won = false;
-  const stops = JSON.parse(road_json()).map((s) => s.id);
-  const next = stops[stops.indexOf(id) + 1];
+  let opened = [];
   const watch = matchWatcher(id, () => {
-    // After a win, the first button is the next stop on the road; after a
-    // loss, this opponent again. Enter presses the first.
+    // After a win that opened fights, the first button is the first of
+    // them; otherwise this opponent again. Enter presses the first.
     const again = button('results.again.label', () => fight(id));
-    const onward = next && game && game.won && game.won()
-      ? button('road.fight.label', () => fight(next), { opponent_mid: t(`opponents.${next}.name_mid`) })
+    const onward = opened.length
+      ? button('road.fight.label', () => fight(opened[0]), { opponent_mid: t(`opponents.${opened[0]}.name_mid`) })
       : null;
-    return [el('div', { class: 'actions' },
-      onward, again,
-      button('results.to_road.label', road),
-      button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
+    return [
+      ...opened.map((o) => say('road.opened', { opponent: t(`opponents.${o}.name`) }, { class: 'desc' })),
+      el('div', { class: 'actions' },
+        onward, again,
+        button('results.to_road.label', road),
+        button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
   });
   show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
   const g = new Road(seed(), tuning(), id);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
-    watch.tick(f);
+    // Kept before the result is drawn, so the result can name what opened.
     if (!won && game && game.won && game.won()) {
       won = true;
-      if (!SAVE.state.road.cleared.includes(id)) SAVE.state.road.cleared.push(id);
+      const r = JSON.parse(game.record(JSON.stringify(SAVE)));
+      SAVE = JSON.parse(r.save);
+      opened = r.opened;
       persist();
     }
+    watch.tick(f);
   });
 }
 

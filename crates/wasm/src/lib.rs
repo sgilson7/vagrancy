@@ -267,17 +267,51 @@ impl Road {
     pub fn won(&self) -> bool {
         matches!(self.rec.world.phase, sim::fight::Phase::MatchOver { .. }) && self.rec.world.wins[0] > self.rec.world.wins[1]
     }
+    /// After a win: the save with this result kept, and the fights it
+    /// opened, as `{ "save": text, "opened": [id] }`.
+    pub fn record(&self, save_text: &str) -> Result<String, String> {
+        let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+        if !self.won() {
+            return Ok(json!({ "save": content::save::encode(&s), "opened": [] }).to_string());
+        }
+        let w = &self.rec.world;
+        let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best { losses: w.wins[1], ticks: w.tick });
+        Ok(json!({ "save": content::save::encode(&s), "opened": opened }).to_string())
+    }
 }
 
-/// The road, in order, with the values each introduction's placeholders
-/// take, from the pilot data.
+/// The tree of fights for a save: each stop with its level, whether it is
+/// open, how it has been won, its condition, the values its introduction's
+/// placeholders take, and each requirement with whether it is met.
 #[wasm_bindgen]
-pub fn road_json() -> String {
-    let stops: Vec<serde_json::Value> = content::road::stops()
+pub fn road_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let best = &s.road.best;
+    let stops: Vec<serde_json::Value> = content::road::road()
         .iter()
-        .map(|id| json!({ "id": id, "numbers": content::road::intro_numbers(id) }))
+        .map(|st| {
+            let won = best.get(&st.id);
+            let requires: Vec<serde_json::Value> = st
+                .requires
+                .iter()
+                .map(|r| {
+                    let (key, vars) = r.sentence();
+                    json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(best) })
+                })
+                .collect();
+            json!({
+                "id": st.id,
+                "level": st.level(),
+                "open": content::road::open(st, best),
+                "won": won.is_some(),
+                "flawless": won.is_some_and(|b| b.losses == 0),
+                "condition": st.condition.map(|c| c.copy_key()),
+                "numbers": content::road::intro_numbers(&st.id),
+                "requires": requires,
+            })
+        })
         .collect();
-    serde_json::Value::Array(stops).to_string()
+    Ok(serde_json::Value::Array(stops).to_string())
 }
 
 /// A new save file's state, as JSON.

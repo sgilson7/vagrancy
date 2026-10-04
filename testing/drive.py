@@ -492,27 +492,68 @@ def the_online_lobby_says_only_its_own_words(page, name):
 
 
 @check
-def the_road_reads_its_numbers_from_the_pilots_and_its_first_fight_starts(page, name):
+def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_starts(page, name):
     fails = []
+    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
     click_copy(page, "menu.road.label")
-    page.wait_for_selector('[data-copy="road.does_heading"]')
+    page.wait_for_selector("#road-tree .node")
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
-    does = page.inner_text('[data-stop="thresher"] [data-copy="opponents.thresher.does"]')
+    # One row per number of requirements, and every fight in its row.
+    for s in road:
+        lvl = page.locator(f'#road-tree .level[data-level="{len(s["requires"])}"] [data-stop="{s["id"]}"]').count()
+        if lvl != 1:
+            fails.append(f"{name}: {s['id']} is not in the row for {len(s['requires'])} requirements")
+    # A line for every requirement.
+    want = sum(len(s["requires"]) for s in road)
+    got = page.locator("#road-tree .wires path.unmet, #road-tree .wires path.met").count()
+    if got != want:
+        fails.append(f"{name}: the tree draws {got} lines for {want} requirements")
+    # On a fresh road only the top fight is open.
+    if page.locator("#road-tree .node.open").count() != 1 or page.locator(f'[data-stop="{road[0]["id"]}"].open').count() != 1:
+        fails.append(f"{name}: a fresh road does not open exactly its first fight")
+    # Hovering a locked fight lists what it asks for, and lights its lines.
+    last = road[-1]
+    page.hover(f'[data-stop="{last["id"]}"]')
+    page.wait_for_selector("#road-tip:not([hidden])")
+    lines = page.locator("#road-tip p").count()
+    hot = page.locator("#road-tree .wires path.hot").count()
+    if lines != 1 + len(last["requires"]) or hot != len(last["requires"]):
+        fails.append(f"{name}: hovering {last['id']} shows {lines} lines and lights {hot}, for {len(last['requires'])} requirements")
+    fails += every_visible_line_is_a_copy_string(page, name + " (road, hovering a locked fight)")
+    # Hovering a line says the one requirement it stands for.
+    page.mouse.move(0, 0)
+    page.evaluate("window.scrollTo(0, 0)")
+    hit = page.locator("#road-tree .wires path.hit").first
+    box = hit.bounding_box()
+    pt = page.evaluate("""() => { const p = document.querySelector('#road-tree .wires path.hit');
+        const l = p.getTotalLength(); const q = p.getPointAtLength(l / 2); const m = p.getScreenCTM();
+        return [q.x * m.a + m.e, q.y * m.d + m.f]; }""")
+    page.mouse.move(pt[0], pt[1])
+    try:
+        page.wait_for_selector("#road-tip:not([hidden])", timeout=3000)
+        said = page.inner_text("#road-tip")
+        if page.locator("#road-tree .wires path.hot").count() != 1 or not said.startswith("Beat "):
+            fails.append(f"{name}: hovering a line says {said!r}")
+    except Exception:
+        fails.append(f"{name}: hovering a line showed nothing (box {box})")
+    page.mouse.move(0, 0)
+    # The thresher's numbers come from its pilot.
+    page.click('[data-stop="thresher"]')
+    does = page.inner_text('#stop-detail [data-copy="opponents.thresher.does"]')
     if "1.5 seconds" not in does:
         fails.append(f"{name}: the thresher's introduction does not state its pause from the pilot data: {does!r}")
-    stops = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
-    locked = page.locator(f'[data-stop="{stops[-1]}"] [data-copy="road.locked"]').count()
-    if locked != 1:
-        fails.append(f"{name}: the last stop is not locked on a fresh road")
-    page.click(f'[data-stop="{stops[0]}"] [data-copy="road.fight.label"]')
+    if page.locator('#stop-detail [data-copy="road.fight.label"]').count():
+        fails.append(f"{name}: a locked fight offers a Fight button")
+    page.click(f'[data-stop="{road[0]["id"]}"]')
+    click_copy(page, "road.fight.label")
     page.wait_for_selector('[data-copy="hud.round"]')
     page.wait_for_timeout(500)
     fails += every_visible_line_is_a_copy_string(page, name + " (road fight)")
     click_copy(page, "results.to_road.label")
-    page.wait_for_selector('[data-copy="road.does_heading"]')
+    page.wait_for_selector("#road-tree .node")
     click_copy(page, "menu.back.label")
     if not fails:
-        print(f"ok: {name}: the road states its numbers from the pilot data, locks what is ahead, and its first fight starts")
+        print(f"ok: {name}: the road is a tree with a row per count of requirements and a line per requirement; hovering a fight or a line says what it asks for; the first fight starts")
     return fails
 
 
@@ -526,11 +567,11 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     path = tmp / f"vagrancy-gate-{name}.save.json"
     d.value.save_as(path)
     data = json.loads(path.read_text())
-    if data.get("format") != "vagrancy.save" or data["state"]["road"]["cleared"] != []:
+    if data.get("format") != "vagrancy.save" or data["state"]["road"]["best"] != {}:
         fails.append(f"{name}: the downloaded save is not a fresh save: {data}")
     # The same file with the first stop cleared, loaded back.
-    first = json.loads((ROOT / "data" / "road.json").read_text())["stops"][0]
-    data["state"]["road"]["cleared"] = [first]
+    first = json.loads((ROOT / "data" / "road.json").read_text())["stops"][0]["id"]
+    data["state"]["road"]["best"] = {first: {"losses": 1, "ticks": 3000}}
     path.write_text(json.dumps(data))
     with page.expect_file_chooser() as fc:
         click_copy(page, "settings.save.load.label")
@@ -538,8 +579,11 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     page.wait_for_selector('[data-copy="settings.save.loaded"]')
     click_copy(page, "menu.back.label")
     click_copy(page, "menu.road.label")
-    if page.locator(f'[data-stop="{first}"] [data-copy="road.cleared"]').count() != 1:
-        fails.append(f"{name}: after loading a save with the first stop cleared, the road does not say so")
+    page.wait_for_selector("#road-tree .node")
+    if page.locator(f'[data-stop="{first}"].won').count() != 1 or page.locator('#stop-detail [data-copy="road.cleared"]').count() != 1:
+        fails.append(f"{name}: after loading a save with the first stop won, the road does not say so")
+    if page.locator("#road-tree .node.open").count() != 2:
+        fails.append(f"{name}: a win at the first stop with a round lost opens {page.locator('#road-tree .node.open').count()} fights, not the two that ask only for a win")
     click_copy(page, "menu.back.label")
     # A save from a newer version, and a file that is not a save.
     for content, key in ((json.dumps({**data, "version": 9}), "settings.save.error.newer"), ("not a save", "settings.save.error.format")):
@@ -555,7 +599,7 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     # And the convenience copy survives a reload.
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
-    if page.evaluate("window.vagrancy.save().state.road.cleared") != [first]:
+    if list(page.evaluate("window.vagrancy.save().state.road.best")) != [first]:
         fails.append(f"{name}: the road progress did not survive a reload")
     if not fails:
         print(f"ok: {name}: a save downloads, loads back with its progress, survives a reload, and newer or foreign files are refused by name")
@@ -569,9 +613,16 @@ def enter_goes_on_without_the_mouse(page, name):
     # keyboard alone (it does not fight back), pressing Enter after each
     # round, and Enter after the match starts the next stop.
     fails = []
-    stops = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    stops = [s["id"] for s in json.loads((ROOT / "data" / "road.json").read_text())["stops"]]
+    # From a fresh road, whatever the checks before this one won: a flawless
+    # win at the first stop opens the second, which comes first in the list
+    # of what it opened.
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     click_copy(page, "menu.road.label")
-    page.click(f'[data-stop="{stops[0]}"] [data-copy="road.fight.label"]')
+    page.click(f'[data-stop="{stops[0]}"]')
+    page.click('#stop-detail [data-copy="road.fight.label"]')
     page.wait_for_selector('[data-copy="hud.round"]')
     rounds = 0
     for _ in range(8):

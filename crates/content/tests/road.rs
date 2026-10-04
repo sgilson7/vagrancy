@@ -2,7 +2,8 @@
 //! order of the stops.
 
 use content::copy::{copy, placeholders};
-use content::road::{intro_numbers, pilot, pilots, stops};
+use content::road::{intro_numbers, pilot, pilots, record, road, stops, Best};
+use std::collections::BTreeMap;
 use pilot::{build, duel, gap, Pilot, Spec};
 use sim::fight::Phase;
 use sim::{Input, World};
@@ -158,22 +159,117 @@ fn what_an_introduction_says_a_pilot_usually_does_is_what_it_does() {
     }
 }
 
-#[test]
-fn the_road_is_ordered_by_the_yardstick() {
-    // A count comes from a command: `make ladder` plays 200 seeded matches
-    // per stop and writes analysis/ladder.md. This checks that the table is
-    // the current one and that the road's order follows it.
+/// The yardstick's wins out of 200 at each stop, from analysis/ladder.md,
+/// after checking the table is the current one. A count comes from a
+/// command: `make ladder`.
+fn ladder() -> std::collections::BTreeMap<String, u32> {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.md");
     let md = std::fs::read_to_string(path).expect("analysis/ladder.md: run `make ladder`");
     assert!(md.contains(&format!("fingerprint {}", content::road::ladder_fingerprint())), "analysis/ladder.md is stale for this data and simulation: run `make ladder`");
-    let mut rates = Vec::new();
-    for id in stops() {
-        let row = md.lines().find(|l| l.starts_with(&format!("| {id} |"))).unwrap_or_else(|| panic!("no row for {id}"));
-        let won: u32 = row.split('|').nth(2).unwrap().split_whitespace().next().unwrap().parse().unwrap();
-        rates.push((id, won));
+    stops()
+        .into_iter()
+        .map(|id| {
+            let row = md.lines().find(|l| l.starts_with(&format!("| {id} |"))).unwrap_or_else(|| panic!("no row for {id}"));
+            let won: u32 = row.split('|').nth(2).unwrap().split_whitespace().next().unwrap().parse().unwrap();
+            (id, won)
+        })
+        .collect()
+}
+
+#[test]
+fn the_tree_is_a_tree_whose_levels_are_counts_of_requirements() {
+    // Sam: "a downwards facing tree ... think a hasse diagram for a poset
+    // where each level is the number of requirements to unlock a fight".
+    let road = road();
+    let ids: Vec<&str> = road.iter().map(|s| s.id.as_str()).collect();
+    let c = copy();
+    let ps = pilots();
+    for (i, s) in road.iter().enumerate() {
+        assert!(!ids[..i].contains(&s.id.as_str()), "{} is on the road twice", s.id);
+        assert!(ps.contains_key(&s.id), "{} has no pilot", s.id);
+        assert!(c["opponents"][&s.id]["name"].is_string(), "{} has no strings", s.id);
+        let mut named = Vec::new();
+        for r in &s.requires {
+            let from = road.iter().find(|t| t.id == r.stop()).unwrap_or_else(|| panic!("{} requires {}, which is not on the road", s.id, r.stop()));
+            // Each requirement points up the tree, so nothing can require
+            // itself, however indirectly, and every fight can be opened.
+            assert!(from.level() < s.level(), "{} (level {}) requires {} (level {}), which is not above it", s.id, s.level(), from.id, from.level());
+            assert!(!named.contains(&r.stop()), "{} asks twice about {}", s.id, r.stop());
+            named.push(r.stop());
+        }
     }
-    for pair in rates.windows(2) {
-        assert!(pair[1].1 <= pair[0].1, "the yardstick wins more at {} ({}) than at {} ({}): reorder data/road.json", pair[1].0, pair[1].1, pair[0].0, pair[0].1);
+    let top: Vec<&str> = road.iter().filter(|s| s.level() == 0).map(|s| s.id.as_str()).collect();
+    assert_eq!(top, ["scarecrow"], "the only fight open from the start is the scarecrow");
+    // Every level from the top to the bottom has a fight in it.
+    let deepest = road.iter().map(|s| s.level()).max().unwrap();
+    for l in 0..=deepest {
+        assert!(road.iter().any(|s| s.level() == l), "level {l} is empty");
+    }
+}
+
+#[test]
+fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
+    let mut best = BTreeMap::new();
+    let open_now = |b: &BTreeMap<String, Best>| road().into_iter().filter(|s| content::road::open(s, b)).map(|s| s.id).collect::<Vec<_>>();
+    assert_eq!(open_now(&best), ["scarecrow"]);
+    // A win with a round lost opens what a win opens; the drover asks for a
+    // flawless one.
+    let opened = record(&mut best, "scarecrow", Best { losses: 1, ticks: 2000 });
+    assert_eq!(opened, ["thresher", "courier"]);
+    let opened = record(&mut best, "scarecrow", Best { losses: 0, ticks: 3000 });
+    assert_eq!(opened, ["drover"]);
+    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000 }, "each part of the best is kept on its own");
+    // A quick requirement: the ropewalker asks for the courier in 90 s.
+    for id in ["thresher", "drover", "sampler", "salt_trader"] {
+        record(&mut best, id, Best { losses: 2, ticks: 99_999 });
+    }
+    record(&mut best, "courier", Best { losses: 2, ticks: 90 * 60 + 1 });
+    assert!(!open_now(&best).contains(&"ropewalker".to_string()), "a courier win a tick over 90 s opened the ropewalker");
+    let opened = record(&mut best, "courier", Best { losses: 2, ticks: 90 * 60 });
+    assert!(opened.contains(&"ropewalker".to_string()), "a courier win in 90 s did not open the ropewalker: {opened:?}");
+}
+
+#[test]
+fn the_tree_gets_no_easier_going_down() {
+    // Along every requirement, the fight below is no easier for the
+    // yardstick than the fight that opens it, within the noise of two
+    // 200-match rates (two standard errors of their difference near 40 %:
+    // 2·√(2·0.24/200) ≈ 10 points, 20 wins). And each level, on average, is
+    // no easier than the level above it.
+    let rates = ladder();
+    const NOISE: u32 = 20;
+    let road = road();
+    for s in &road {
+        for r in &s.requires {
+            let (above, below) = (rates[r.stop()], rates[&s.id]);
+            assert!(below <= above + NOISE, "the yardstick wins {below} of 200 at {} and {above} at {}, which opens it", s.id, r.stop());
+        }
+    }
+    let deepest = road.iter().map(|s| s.level()).max().unwrap();
+    let mean = |l: usize| {
+        let v: Vec<u32> = road.iter().filter(|s| s.level() == l).map(|s| rates[&s.id]).collect();
+        v.iter().sum::<u32>() as f64 / v.len() as f64
+    };
+    for l in 1..=deepest {
+        assert!(mean(l) <= mean(l - 1), "level {l} averages {:.0} wins and level {} {:.0}", mean(l), l - 1, mean(l - 1));
+    }
+}
+
+#[test]
+fn the_ten_and_the_five_added_with_the_tree_are_as_hard_as_the_reader_and_the_archivist() {
+    // Sam: "10 more fights that are as difficult as the reader, and 5 that
+    // are as difficult as the archivist". As hard as: within the same noise
+    // of the reader's or the archivist's own rate.
+    let rates = ladder();
+    const NOISE: i64 = 20;
+    for (like, ids) in [
+        ("reader", &["dyer", "potter", "carpenter", "mason", "weaver", "falconer", "boatwright", "brewer", "herbalist", "cartographer"][..]),
+        ("archivist", &["magistrate", "abbot", "warden", "hermit", "tanner"][..]),
+    ] {
+        for id in ids {
+            let d = rates[*id] as i64 - rates[like] as i64;
+            assert!(d.abs() <= NOISE, "the yardstick wins {} of 200 at {id} and {} at the {like}", rates[*id], rates[like]);
+        }
     }
 }
 
@@ -251,9 +347,16 @@ fn each_new_opponent_uses_the_moves_its_introduction_names() {
     assert!(presses >= 4, "the ropewalker jumped {presses} times; her bounce takes two presses");
     // Dodges: the bellringer, the courier, the salt trader, the smith, the
     // archivist and the watchman.
-    for id in ["bellringer", "courier", "salt_trader", "smith", "archivist", "watchman"] {
+    for id in ["bellringer", "courier", "salt_trader", "smith", "archivist", "watchman", "dyer", "herbalist", "magistrate", "abbot", "warden", "hermit"] {
         assert!(uses(id, Input::DODGE), "the {id} never dodged");
     }
+    // The tree's: the dyer sweeps low, the potter and the boatwright thrust,
+    // the falconer and the carpenter leave the ground.
+    assert!(keys_pressed("dyer").iter().any(|i| i.has(Input::SHOULDER_DOWN)), "the dyer never swept low");
+    for id in ["potter", "boatwright"] {
+        assert!(uses(id, Input::ELBOW_OUT), "the {id} never thrust");
+    }
+    assert!(uses("falconer", Input::JUMP), "the falconer never jumped");
     // The lamplighter thrusts: the elbow bends and straightens.
     assert!(uses("lamplighter", Input::ELBOW_OUT), "the lamplighter never thrust");
 }

@@ -1,5 +1,6 @@
 //! The setups the page can start, from the data files.
 
+use crate::road::Condition;
 use sim::balance::{self, ROUNDS_TO_WIN};
 use sim::body::{Mode, Physics, Seat, Setup};
 use sim::fx::Fx;
@@ -71,6 +72,19 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
         bodies.push(long);
         seat1 = (bodies.len() - 1) as u8;
     }
+    // The fight's condition, if it has one (data/road.json).
+    let rounds_to_win = ROUNDS_TO_WIN;
+    let mut physics = Physics::tuned(tuning);
+    match crate::road::stop(opponent).and_then(|s| s.condition) {
+        Some(Condition::DeepInk) => {
+            let mut deep = bodies[seat1 as usize].clone();
+            deep.ink *= 2;
+            bodies.push(deep);
+            seat1 = (bodies.len() - 1) as u8;
+        }
+        Some(Condition::Light) => physics.gravity = physics.gravity.scale(1, 2),
+        None => {}
+    }
     let seats = [Some(Seat { body: FIGHTER, x: balance::START_X }), Some(Seat { body: seat1, x: balance::START_X })];
-    Setup { seed, mode: Mode::Match, rounds_to_win: ROUNDS_TO_WIN, physics: Physics::tuned(tuning), bodies, seats }
+    Setup { seed, mode: Mode::Match, rounds_to_win, physics, bodies, seats }
 }

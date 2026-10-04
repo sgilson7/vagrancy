@@ -1,10 +1,10 @@
 # Handoff
 
-Written for a reader with none of this session's context, and rewritten at every deploy gate. This one is for gate 6, the MVP.
+Written for a reader with none of this session's context, and rewritten at every deploy gate. This one is for the road-as-a-tree deploy (2026-10-04), after the MVP.
 
 ## 1. What this is
 
-Vagrancy is a two-player physics sword-fighting game for the browser, at https://sgilson7.github.io/vagrancy/. Each player drives the shoulder and elbow of a sword arm with four keys; two more keys run on rigid legs. Everything in a fight is integer physics in `crates/sim`: particles and sticks relaxed in a fixed order, a blade swept against every part, a cut that drops whatever lies beyond it. A wasm shim carries frames to a canvas page that draws them and decides nothing. There is a road of eight opponents driven by pilots, versus at one keyboard, online play between two browsers with no server of ours, replays, and a save file. `PLANNING-BRIEF.md` is the brief; `PLAN.md` (approved 2026-10-03) is the plan, and it wins where the two disagree.
+Vagrancy is a two-player physics sword-fighting game for the browser, at https://sgilson7.github.io/vagrancy/. Each player drives the shoulder and elbow of a sword arm with four keys; two more keys run on rigid legs. Everything in a fight is integer physics in `crates/sim`: particles and sticks relaxed in a fixed order, a blade swept against every part, a cut that drops whatever lies beyond it. A wasm shim carries frames to a canvas page that draws them and decides nothing. There is a road of 33 opponents driven by pilots, laid out as a tree of fights: each opens when its requirements are met (`data/road.json`, DECISIONS.md "the road is a tree"). versus at one keyboard, online play between two browsers with no server of ours, replays, and a save file. `PLANNING-BRIEF.md` is the brief; `PLAN.md` (approved 2026-10-03) is the plan, and it wins where the two disagree.
 
 ## 2. Load-bearing rules, and what breaks silently when each is broken
 
@@ -21,11 +21,11 @@ Vagrancy is a two-player physics sword-fighting game for the browser, at https:/
 | crate | holds |
 |---|---|
 | `sim` | `fx` (12-bit fixed point), `world` (solver, balance, motors, traction), `contact` (the sweep), `fight` (cuts, clash, ink, rounds), `replay`, `frame` |
-| `content` | `data/*.json` into setups; `copy`, `messages` (which sentence for which outcome), `road`, `save` |
+| `content` | `data/*.json` into setups; `copy`, `messages` (which sentence for which outcome), `road` (the tree, requirements, conditions, `record`), `save` (v2) |
 | `pilot` | six kinds of opponent, `duel` |
 | `net` | `Session` (two-seat lockstep), `wire`, `Loopback` |
 | `wasm` | the shim: `Game`, `Road`, `Online` |
-| `lab` | recon commands, `ladder`, `golden`, `fixture-match`, `duel`, `trace` (not shipped) |
+| `lab` | recon commands, `ladder`, `rate <matches> <stop>...` (for tuning; rebuild first, the pilots are compiled in), `golden`, `fixture-match`, `duel`, `trace` (not shipped) |
 
 The page is `web/`: `app.js` (screens and the clock), `draw.js`, `keys.js`, `files.js`, `music.js`, `rtc.js`, `config.js`, `echo.html`. The gate is `testing/drive.py`; the online walk is `testing/online.py`.
 
@@ -37,7 +37,8 @@ The page is `web/`: `app.js` (screens and the clock), `draw.js`, `keys.js`, `fil
 
 ## 5. What will bite within the hour
 
-- `make ladder` takes about 10 minutes. `the_road_is_ordered_by_the_yardstick` reads `analysis/ladder.md` and fails if its fingerprint is stale: pilots, the set of stops and `SIM_VERSION`, but not the road's order.
+- `make ladder` takes about half an hour for 33 fights. `the_tree_gets_no_easier_going_down` and the tier test read `analysis/ladder.md`, and fail if its fingerprint is stale: pilots, the set of stops with their conditions, and `SIM_VERSION`, but not the requirements.
+- `hidden` must win over any `display` rule (`[hidden] { display: none !important; }`); twice a display rule beat it unseen.
 - WebKit online play works on macOS, but not on CI's Linux runner, so CI's online walk runs Chromium and Firefox only.
 - Replays play back in real time, so a long fixture makes a slow gate.
 - zsh does not word-split `$var`; use `${=var}` in shell helpers.
