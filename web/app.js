@@ -108,6 +108,9 @@ function popupShow(said) {
     el('p', { class: 'popup-head', 'data-copy': said.popup.key }, t(said.popup.key, said.popup.vars)),
     sayChosen(said.round, { class: 'popup-line' }));
   box.classList.toggle('headshot', !!said.focus);
+  // The winner's color; a draw keeps the paper's.
+  box.classList.remove('won-0', 'won-1');
+  if (said.popup.winner === 0 || said.popup.winner === 1) box.classList.add(`won-${said.popup.winner}`);
   box.hidden = false;
 }
 function popupHide() {
@@ -355,7 +358,10 @@ function roadData() {
 
 // One requirement as its sentence, with the opponent's name filled in.
 function reqLine(r, attrs = {}) {
-  return say(r.key, { ...r.vars, opponent_mid: t(`opponents.${r.stop}.name_mid`) }, attrs);
+  const vars = { ...r.vars, opponent_mid: t(`opponents.${r.stop}.name_mid`) };
+  // A weapon challenge names its weapon by id; the words are the copy's.
+  if (r.vars && r.vars.weapon) vars.weapon = t(`weapons.${r.vars.weapon}.name`);
+  return say(r.key, vars, attrs);
 }
 
 // A map of nodes in rows with a line from each requirement down to what
@@ -412,10 +418,20 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
       band.style.top = `${l * BAND}px`;
       band.style.height = `${BAND}px`;
       tree.append(band);
+      // Across: spread evenly, scattered a little, kept off the edges, and
+      // never closer than three quarters of the even spacing, so names in a
+      // full row do not run into each other.
+      const step = 100 / row.length;
+      let prevX = -Infinity;
+      const xs = row.map((n, i) => {
+        let x = Math.max(9, Math.min(91, (i + 0.5) * step + Math.sin(l * 1.7 + i * 2.3) * (24 / row.length)));
+        x = Math.max(x, prevX + step * 0.75);
+        prevX = x;
+        return x;
+      });
       row.forEach((n, i) => {
         const b = nodeButton(n);
-        // Kept off the edges, so a seal and its name stay on the chart.
-        const x = Math.max(9, Math.min(91, (i + 0.5) / row.length * 100 + Math.sin(l * 1.7 + i * 2.3) * (36 / row.length)));
+        const x = xs[i];
         const y = l * BAND + 30 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 14;
         b.style.left = `${x}%`;
         b.style.top = `${y}px`;

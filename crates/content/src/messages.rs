@@ -121,7 +121,9 @@ pub fn popup(w: &World, r: &RoundResult) -> Value {
         (Some(_), Cause::Neck) if headshot(w, r) => "results.popup.head",
         (Some(_), Cause::Neck) => "results.popup.neck",
     };
-    json!({ "key": key, "vars": {} })
+    // Who won it, so the card wears the winner's color (Sam: "colored based
+    // on who won the round"); none for a draw.
+    json!({ "key": key, "vars": {}, "winner": r.loser.map(|l| 1 - l) })
 }
 
 /// For a cut across the head, where the blade landed, in the world's raw
@@ -228,6 +230,10 @@ mod tests {
         assert_eq!(key(&w, &result(Some(1), Cause::Heart, chest, 0)), "results.popup.heart");
         assert_eq!(key(&w, &result(Some(0), Cause::Ink, chest, 0)), "results.popup.ink");
         assert_eq!(key(&w, &result(None, Cause::Neck, head, 0)), "results.popup.draw");
+        // The card says who won, for its color: none for a draw.
+        assert_eq!(popup(&w, &result(Some(1), Cause::Heart, chest, 0))["winner"], json!(0));
+        assert_eq!(popup(&w, &result(Some(0), Cause::Ink, chest, 0))["winner"], json!(1));
+        assert_eq!(popup(&w, &result(None, Cause::Neck, head, 0))["winner"], Value::Null);
         // Only a cut across the head stops the clock, and it looks where the
         // blade landed on that tick.
         let at = sim::fx::V2::cm(212, 151);

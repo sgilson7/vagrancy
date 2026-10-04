@@ -54,6 +54,11 @@ and anything decided since. Newest entries go at the bottom of their section.
   - **Weapons online:** the joiner's hello carries its weapon (wire PROTO 4). The host rebuilds the match with both weapons before its welcome sends it, so both sides step one world. At one keyboard, each seat picks from what the save has unlocked. The tutorial stays with the sword, since its goals were measured with it.
   - **Save version 4** keeps the weapon carried. One the player has not unlocked, an enemy's, or an unknown one becomes the sword rather than refusing the file.
   - **The road's designs:** the tree; a chart after Weapon Master's map (each row a named region, fights as seals scattered across it, dashed routes); and chapters after its chapter select (a list of chapters, and each chapter's fights as cards that list what they ask for). A switch above the map picks one and is remembered in the browser. The tree stays the default until Sam picks.
+- **2026-10-04: two weapon carriers per chapter, opened by weapon challenges.** Sam: "more of the enemies should have varying weapons early on, add 2 enemies per chapter that use different weapons, that are unlockable with weapon challenges like beat the courier with the trident". The agent added sixteen opponents, two to each row of the tree, each carrying a weapon from `data/weapons.json`. Three carry the enemies' longsword. Decisions:
+  - **A fourth kind of requirement,** "beat X carrying W" (`with`). The save keeps the weapons each fight was won with (format 5). A format 4 file reads as it is, with none named, so old wins count toward no challenge.
+  - **A weapon is won by beating the first opponent who carries it**, which puts every weapon in reach early: the short sword and scimitar in chapter 1 (the tinker and the pilgrim, open from the start), the kris and forked blade in chapter 2, and the trident in chapter 3. A test checks that a challenge's weapon is won in a row above the fight that asks for it, and never asks for the enemies' longsword.
+  - **Chapter 1 has no challenges.** Its fights are open from the start, which is what the first row means. Its two new opponents are where the first weapons are won.
+  - **Each new fight was measured on the ladder's own seeds and tuned** until every requirement and every row's average held, as for the rest of the tree.
 
 ## The build
 

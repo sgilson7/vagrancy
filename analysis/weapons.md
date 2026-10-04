@@ -1,8 +1,8 @@
 # Weapons
 
-The yardstick carrying each weapon against 8 opponents, 25 seeded matches each, written by `make weapons` (286 s). The sword should win most (`the_sword_is_the_strongest_weapon`).
+The yardstick carrying each weapon against 8 opponents, 25 seeded matches each, written by `make weapons` (301 s). The sword should win most (`the_sword_is_the_strongest_weapon`).
 
-fingerprint 6e2b1626ae6e4caa (data/weapons.json, data/pilots.json, the panel, SIM_VERSION 7)
+fingerprint d24cbb6f72cf94da (data/weapons.json, data/pilots.json, the panel, SIM_VERSION 7)
 
 | weapon | wins of 200 | thresher | drover | lamplighter | ferryman | windmill | gatekeeper | cooper | bellringer |
 |---|---|---|---|---|---|---|---|---|---|

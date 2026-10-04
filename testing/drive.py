@@ -422,6 +422,9 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
     page.wait_for_selector('[data-copy="replay.playing"]')
     page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
     fails += every_visible_line_is_a_copy_string(page, name + " (a headshot's card)")
+    # Sam: "colored based on who won the round".
+    if page.locator("#death-popup.won-0, #death-popup.won-1").count() != 1:
+        fails.append(f"{name}: the headshot's card is not in the winner's color")
     if page.inner_text("#death-popup .popup-head") != COPY["results"]["popup"]["head"]:
         fails.append(f"{name}: a headshot's card says {page.inner_text('#death-popup .popup-head')!r}")
     t0 = page.evaluate("window.vagrancy.tick()")
@@ -541,9 +544,10 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     got = page.locator("#road-tree .wires path.unmet, #road-tree .wires path.met").count()
     if got != want:
         fails.append(f"{name}: the tree draws {got} lines for {want} requirements")
-    # On a fresh road only the top fight is open.
-    if page.locator("#road-tree .node.open").count() != 1 or page.locator(f'[data-stop="{road[0]["id"]}"].open').count() != 1:
-        fails.append(f"{name}: a fresh road does not open exactly its first fight")
+    # On a fresh road only the first row is open.
+    first_row = [s["id"] for s in road if not s["requires"]]
+    if page.locator("#road-tree .node.open").count() != len(first_row) or any(page.locator(f'[data-stop="{i}"].open').count() != 1 for i in first_row):
+        fails.append(f"{name}: a fresh road does not open exactly its first row, {first_row}")
     # Hovering a locked fight lists what it asks for, and lights its lines.
     last = road[-1]
     page.hover(f'[data-stop="{last["id"]}"]')
@@ -657,9 +661,9 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     if page.locator('#weapons [data-weapon="longsword"]').count():
         fails.append(f"{name}: the enemies' longsword is offered to the player")
     click_copy(page, "menu.back.label")
-    # A save that has beaten the lamplighter, so the scimitar is open.
+    # A save that has beaten the pilgrim, who carries the scimitar.
     save = page.evaluate("window.vagrancy.save()")
-    save["state"]["road"]["best"] = {"lamplighter": {"losses": 1, "ticks": 3000}}
+    save["state"]["road"]["best"] = {"pilgrim": {"losses": 1, "ticks": 3000, "with": ["sword"]}}
     page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
@@ -679,8 +683,9 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
         fails += every_visible_line_is_a_copy_string(page, f"{name} (road as {view})")
         if view == "chart":
             lines = page.locator("#road-tree.chart .wires path.met, #road-tree.chart .wires path.unmet").count()
-            if lines != len(road) - 1:
-                fails.append(f"{name}: the chart draws {lines} routes, not one into each of the {len(road) - 1} fights below the first")
+            below = sum(1 for s in road if s["requires"])
+            if lines != below:
+                fails.append(f"{name}: the chart draws {lines} routes, not one into each of the {below} fights below the first row")
     page.click('#chapters [data-chapter="1"]')
     page.wait_for_selector("#chapter-stages .stage")
     if page.locator("#chapter-stages .stage").count() != sum(1 for s in road if len(s["requires"]) == 1):
@@ -729,8 +734,10 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     page.click(f'#road-tree [data-stop="{first}"]')
     if page.locator(f'[data-stop="{first}"].won').count() != 1 or page.locator('#stop-detail [data-copy="road.cleared"]').count() != 1:
         fails.append(f"{name}: after loading a save with the first stop won, the road does not say so")
-    if page.locator("#road-tree .node.open").count() != 2:
-        fails.append(f"{name}: a win at the first stop with a round lost opens {page.locator('#road-tree .node.open').count()} fights, not the two that ask only for a win")
+    # The two that ask only for a win, besides the rest of the first row.
+    want_open = 2 + sum(1 for s in json.loads((ROOT / "data" / "road.json").read_text())["stops"] if not s["requires"]) - 1
+    if page.locator("#road-tree .node.open").count() != want_open:
+        fails.append(f"{name}: a win at the first stop with a round lost leaves {page.locator('#road-tree .node.open').count()} fights open, not {want_open}")
     click_copy(page, "menu.back.label")
     # A save from a newer version, and a file that is not a save.
     for content, key in ((json.dumps({**data, "version": 9}), "settings.save.error.newer"), ("not a save", "settings.save.error.format")):

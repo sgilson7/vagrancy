@@ -1,5 +1,5 @@
 {
-  "_about": "The road is a tree of fights (Sam, 2026-10-04: a Hasse diagram where each level is the number of requirements to unlock a fight at that tier). A fight opens when every one of its requirements is met: beat a stop, beat it without losing a round (flawless), or beat it within a number of seconds (quick). A requirement names only a stop with fewer requirements of its own, so the levels run downward. Some fights carry a condition, after Soul Calibur II's Weapon Master map: deep_ink (the opponent starts each round with twice the ink), light (gravity is half). make ladder measures every stop with its condition; along every requirement the fight below is no easier for the yardstick than the one above (the_tree_gets_no_easier_going_down). Sam's play outranks the ladder.",
+  "_about": "The road is a tree of fights (Sam, 2026-10-04: a Hasse diagram where each level is the number of requirements to unlock a fight at that tier). A fight opens when every one of its requirements is met: beat a stop, beat it without losing a round (flawless), beat it within a number of seconds (quick), or beat it carrying a weapon (with: Sam's weapon challenges, 2026-10-04). An opponent may carry a weapon from data/weapons.json; two per row were added to carry them, and a weapon is won by beating the opponent who carries it. A requirement names only a stop with fewer requirements of its own, so the levels run downward. Some fights carry a condition, after Soul Calibur II's Weapon Master map: deep_ink (the opponent starts each round with twice the ink), light (gravity is half). make ladder measures every stop with its condition; along every requirement the fight below is no easier for the yardstick than the one above (the_tree_gets_no_easier_going_down). Sam's play outranks the ladder.",
   "stops": [
     {"id": "scarecrow", "requires": []},
     {"id": "thresher", "requires": [{"beat": "scarecrow"}]},
@@ -33,6 +33,22 @@
     {"id": "warden", "requires": [{"beat": "magistrate"}, {"beat": "brewer"}, {"beat": "falconer"}, {"beat": "weaver"}, {"beat": "boatwright"}, {"beat": "dyer"}, {"flawless": "gatekeeper"}]},
     {"id": "hermit", "requires": [{"beat": "abbot"}, {"beat": "archivist"}, {"beat": "potter"}, {"beat": "weaver"}, {"beat": "herbalist"}, {"beat": "bellringer"}, {"beat": "cooper"}], "condition": "light"},
     {"id": "tanner", "requires": [{"beat": "mason"}, {"beat": "magistrate"}, {"beat": "carpenter"}, {"beat": "cartographer"}, {"beat": "falconer"}, {"beat": "reader"}, {"flawless": "windmill"}]},
-    {"id": "vaulter", "requires": [{"beat": "archivist"}, {"beat": "magistrate"}, {"beat": "abbot"}, {"beat": "brewer"}, {"beat": "mason"}, {"beat": "potter"}, {"flawless": "reader"}]}
+    {"id": "vaulter", "requires": [{"beat": "archivist"}, {"beat": "magistrate"}, {"beat": "abbot"}, {"beat": "brewer"}, {"beat": "mason"}, {"beat": "potter"}, {"flawless": "reader"}]},
+    {"id": "tinker", "requires": [], "weapon": "short_sword"},
+    {"id": "pilgrim", "requires": [], "weapon": "scimitar"},
+    {"id": "knife_grinder", "requires": [{"with": {"stop": "scarecrow", "weapon": "short_sword"}}], "weapon": "kris"},
+    {"id": "ox_herd", "requires": [{"with": {"stop": "tinker", "weapon": "scimitar"}}], "weapon": "forked_blade"},
+    {"id": "eel_fisher", "requires": [{"beat": "knife_grinder"}, {"with": {"stop": "thresher", "weapon": "short_sword"}}], "weapon": "trident"},
+    {"id": "bargeman", "requires": [{"beat": "ox_herd"}, {"with": {"stop": "courier", "weapon": "scimitar"}}], "weapon": "longsword"},
+    {"id": "rice_broker", "requires": [{"beat": "eel_fisher"}, {"with": {"stop": "drover", "weapon": "kris"}}, {"beat": "sampler"}], "weapon": "scimitar"},
+    {"id": "bell_founder", "requires": [{"beat": "bargeman"}, {"with": {"stop": "lamplighter", "weapon": "forked_blade"}}, {"beat": "ferryman"}], "weapon": "kris"},
+    {"id": "porter", "requires": [{"beat": "rice_broker"}, {"with": {"stop": "courier", "weapon": "trident"}}, {"beat": "cooper"}, {"flawless": "knife_grinder"}], "weapon": "forked_blade"},
+    {"id": "lacquerer", "requires": [{"beat": "bell_founder"}, {"with": {"stop": "salt_trader", "weapon": "kris"}}, {"beat": "windmill"}, {"beat": "eel_fisher"}], "weapon": "trident"},
+    {"id": "post_rider", "requires": [{"beat": "porter"}, {"with": {"stop": "smith", "weapon": "trident"}}, {"beat": "gatekeeper"}, {"beat": "bargeman"}, {"beat": "ropewalker"}], "weapon": "longsword"},
+    {"id": "paper_maker", "requires": [{"beat": "lacquerer"}, {"with": {"stop": "reader", "weapon": "scimitar"}}, {"beat": "bellringer"}, {"beat": "rice_broker"}, {"flawless": "ox_herd"}], "weapon": "short_sword"},
+    {"id": "gambler", "requires": [{"beat": "post_rider"}, {"with": {"stop": "potter", "weapon": "forked_blade"}}, {"beat": "dyer"}, {"beat": "porter"}, {"beat": "carpenter"}, {"beat": "bell_founder"}], "weapon": "scimitar"},
+    {"id": "monk", "requires": [{"beat": "paper_maker"}, {"with": {"stop": "weaver", "weapon": "trident"}}, {"beat": "herbalist"}, {"beat": "lacquerer"}, {"beat": "falconer"}, {"beat": "boatwright"}], "weapon": "trident"},
+    {"id": "general", "requires": [{"beat": "gambler"}, {"with": {"stop": "archivist", "weapon": "short_sword"}}, {"beat": "mason"}, {"beat": "post_rider"}, {"beat": "magistrate"}, {"beat": "paper_maker"}, {"beat": "cartographer"}], "weapon": "longsword"},
+    {"id": "duelist", "requires": [{"beat": "monk"}, {"with": {"stop": "abbot", "weapon": "kris"}}, {"beat": "brewer"}, {"beat": "gambler"}, {"beat": "lacquerer"}, {"beat": "porter"}, {"beat": "archivist"}], "weapon": "kris"}
   ]
 }

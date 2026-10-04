@@ -136,3 +136,10 @@ button.bind.listening { outline: 3px solid var(--focus); }
 @keyframes pop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { #death-popup { animation: none; } }
 @media (max-width: 600px) { #death-popup .popup-head { font-size: 1.4em; } #death-popup.headshot .popup-head { font-size: 1.7em; } }
+#road-tree.chart .node { max-width: 104px; }
+/* The card wears the color of the fighter who won the round. */
+#death-popup.won-0 { border-color: var(--fighters-left-body); border-top: 10px solid var(--fighters-left-body); }
+#death-popup.won-0 .popup-head { color: var(--fighters-left-body); }
+#death-popup.won-1 { border-color: var(--fighters-right-body); border-top: 10px solid var(--fighters-right-body); }
+#death-popup.won-1 .popup-head { color: var(--fighters-right-stripe); }
+#death-popup.headshot.won-0, #death-popup.headshot.won-1 { border-width: 3px; border-top-width: 12px; }

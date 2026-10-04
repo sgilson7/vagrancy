@@ -2,7 +2,7 @@
 //! order of the stops.
 
 use content::copy::{copy, placeholders};
-use content::road::{intro_numbers, pilot, pilots, record, road, stops, Best};
+use content::road::{intro_numbers, pilot, pilots, record, road, stops, Best, Req};
 use std::collections::BTreeMap;
 use pilot::{build, duel, gap, Pilot, Spec};
 use sim::fight::Phase;
@@ -199,8 +199,11 @@ fn the_tree_is_a_tree_whose_levels_are_counts_of_requirements() {
             named.push(r.stop());
         }
     }
-    let top: Vec<&str> = road.iter().filter(|s| s.level() == 0).map(|s| s.id.as_str()).collect();
-    assert_eq!(top, ["scarecrow"], "the only fight open from the start is the scarecrow");
+    // Open from the start: the scarecrow, and the fights added to carry
+    // weapons (Sam: two per chapter).
+    for s in road.iter().filter(|s| s.level() == 0) {
+        assert!(s.id == "scarecrow" || s.weapon.is_some(), "{} is open from the start and carries no weapon", s.id);
+    }
     // Every level from the top to the bottom has a fight in it.
     let deepest = road.iter().map(|s| s.level()).max().unwrap();
     for l in 0..=deepest {
@@ -220,24 +223,58 @@ fn the_chart_has_a_route_into_every_fight_from_the_row_above() {
 }
 
 #[test]
+fn each_chapter_has_two_weapon_carriers_and_each_challenge_can_be_met() {
+    // Sam: "add 2 enemies per chapter that use different weapons, that are
+    // unlockable with weapon challenges like beat the courier with the
+    // trident".
+    let road = road();
+    let deepest = road.iter().map(|s| s.level()).max().unwrap();
+    for l in 0..=deepest {
+        let carriers = road.iter().filter(|s| s.level() == l && s.weapon.is_some()).count();
+        assert!(carriers >= 2, "row {l} has {carriers} opponents carrying a weapon");
+        if l > 0 {
+            let challenged = road.iter().filter(|s| s.level() == l && s.requires.iter().any(|r| matches!(r, Req::With { .. }))).count();
+            assert!(challenged >= 2, "row {l} has {challenged} fights opened by a weapon challenge");
+        }
+    }
+    // A challenge's weapon is won in a row above the fight that asks for
+    // it, so it can be in hand by then; and an enemy's weapon is never asked
+    // for.
+    let level = |id: &str| road.iter().find(|s| s.id == id).unwrap().level();
+    for s in &road {
+        for r in &s.requires {
+            if let Req::With { weapon, .. } = r {
+                let w = content::weapons::weapon(weapon).unwrap_or_else(|| panic!("{} asks for {weapon}, which is not a weapon", s.id));
+                assert!(!w.enemy_only, "{} asks the player to carry the {weapon}, which is the enemies'", s.id);
+                if let Some(u) = &w.unlock {
+                    assert!(level(u.stop()) < s.level(), "{} asks for the {weapon}, which is won at {} in a row not above it", s.id, u.stop());
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     let mut best = BTreeMap::new();
     let open_now = |b: &BTreeMap<String, Best>| road().into_iter().filter(|s| content::road::open(s, b)).map(|s| s.id).collect::<Vec<_>>();
-    assert_eq!(open_now(&best), ["scarecrow"]);
+    assert_eq!(open_now(&best), ["scarecrow", "tinker", "pilgrim"]);
     // A win with a round lost opens what a win opens; the drover asks for a
     // flawless one.
-    let opened = record(&mut best, "scarecrow", Best { losses: 1, ticks: 2000 });
+    let opened = record(&mut best, "scarecrow", Best::won(1, 2000, "sword"));
     assert_eq!(opened, ["thresher", "courier"]);
-    let opened = record(&mut best, "scarecrow", Best { losses: 0, ticks: 3000 });
-    assert_eq!(opened, ["drover"]);
-    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000 }, "each part of the best is kept on its own");
+    // A flawless win carrying the short sword opens the drover (flawless)
+    // and the knife grinder (the short sword's challenge).
+    let opened = record(&mut best, "scarecrow", Best::won(0, 3000, "short_sword"));
+    assert_eq!(opened, ["drover", "knife_grinder"]);
+    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000, with: vec!["short_sword".into(), "sword".into()] }, "each part of the best is kept on its own");
     // A quick requirement: the ropewalker asks for the courier in 90 s.
     for id in ["thresher", "drover", "sampler", "salt_trader"] {
-        record(&mut best, id, Best { losses: 2, ticks: 99_999 });
+        record(&mut best, id, Best::won(2, 99_999, "sword"));
     }
-    record(&mut best, "courier", Best { losses: 2, ticks: 90 * 60 + 1 });
+    record(&mut best, "courier", Best::won(2, 90 * 60 + 1, "sword"));
     assert!(!open_now(&best).contains(&"ropewalker".to_string()), "a courier win a tick over 90 s opened the ropewalker");
-    let opened = record(&mut best, "courier", Best { losses: 2, ticks: 90 * 60 });
+    let opened = record(&mut best, "courier", Best::won(2, 90 * 60, "sword"));
     assert!(opened.contains(&"ropewalker".to_string()), "a courier win in 90 s did not open the ropewalker: {opened:?}");
 }
 

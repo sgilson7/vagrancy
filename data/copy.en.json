@@ -74,6 +74,7 @@
     "road": "new: condition_heading, condition.deep_ink, condition.light, req.*, tier.*, flawless, opened; locked rewritten (it described a line, and the road is now a tree)",
     "tutorial, menu.tutorial": "new: every string",
     "results.popup": "new: every string",
+    "opponents (weapon carriers), road.req.with": "new: tinker, pilgrim, knife_grinder, ox_herd, eel_fisher, bargeman, rice_broker, bell_founder, porter, lacquerer, post_rider, paper_maker, gambler, monk, general, duelist (all five strings each), and road.req.with",
     "weapons, road.weapon_heading, road.carry, road.carried, road.weapon_locked, road.reward, road.carries, road.view, road.region, road.chapter, road.chapter_progress, local.weapon_left, local.weapon_right": "new: every string",
     "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
@@ -328,6 +329,7 @@
       "beat": "Beat {opponent_mid}.",
       "flawless": "Beat {opponent_mid} without losing a round.",
       "quick": "Beat {opponent_mid} in {seconds} seconds or less.",
+      "with": "Beat {opponent_mid} carrying the {weapon}.",
       "met": "Done."
     },
     "tier": {
@@ -599,6 +601,118 @@
       "place": "A tannery downwind of the town, with a refrigerator humming in the shed.",
       "does": "The tanner tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
       "try": "She reacts faster than anyone before her. A steady guard does better against her than a feint."
+    },
+    "tinker": {
+      "name": "The Tinker",
+      "name_mid": "the tinker",
+      "place": "A cart of pots and pans, with a car battery wired to a lamp.",
+      "does": "The tinker walks toward you with a short sword and swings it overhead, resting about {pause_s} seconds between swings.",
+      "try": "His sword is short. Stay beyond it, and cut as the swing ends."
+    },
+    "pilgrim": {
+      "name": "The Pilgrim",
+      "name_mid": "the pilgrim",
+      "place": "A roadside shrine, with a vending machine beside the offering box.",
+      "does": "The pilgrim stands where she is and swings a curved blade overhead, resting about {pause_s} seconds between swings.",
+      "try": "The curve reaches wide but not far. Let the swing pass, then step in."
+    },
+    "knife_grinder": {
+      "name": "The Knife Grinder",
+      "name_mid": "the knife grinder",
+      "place": "A grinding wheel on a bicycle, with a radio taped to the handlebars.",
+      "does": "The knife grinder walks toward you swinging a wavy kris overhead, resting about {pause_s} seconds between swings.",
+      "try": "The kris cuts along each of its bends. Keep clear of its whole length, not its tip alone."
+    },
+    "ox_herd": {
+      "name": "The Ox Herd",
+      "name_mid": "the ox herd",
+      "place": "A muddy pasture, with a pickup truck parked by the gate.",
+      "does": "The ox herd walks at you and sweeps low with a forked blade as soon as you are in reach. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "His prongs sweep low. Meet them from above, or jump them."
+    },
+    "eel_fisher": {
+      "name": "The Eel Fisher",
+      "name_mid": "the eel fisher",
+      "place": "A weir on the river, with a cooler full of ice on the bank.",
+      "does": "The eel fisher holds a trident high, and thrusts when you come close. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "A trident reaches with its prongs. Step aside from a thrust, then come in under the high guard."
+    },
+    "bargeman": {
+      "name": "The Bargeman",
+      "name_mid": "the bargeman",
+      "place": "A barge tied up at a lock, with a diesel engine ticking as it cools.",
+      "does": "The bargeman's longsword is about {reach_pct} percent longer than your sword. It is heavy, so it takes him longer to start a swing and to stop one.",
+      "try": "Let him swing first. While his blade is still traveling, you have time that he does not."
+    },
+    "rice_broker": {
+      "name": "The Rice Broker",
+      "name_mid": "the rice broker",
+      "place": "A rice exchange where the prices are written on a whiteboard.",
+      "does": "The rice broker often spins a scimitar as he closes in. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "A spinning curve is hard to meet head on. Block it, then strike while he builds speed again."
+    },
+    "bell_founder": {
+      "name": "The Bell Founder",
+      "name_mid": "the bell founder",
+      "place": "A foundry yard with a bell cooling in a sand pit and a forklift beside it.",
+      "does": "The bell founder plants a kris to vault at you now and then, cuts overhead when you are close, and otherwise keeps her guard up. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Her vault is a path she has already chosen. Be somewhere else when she lands."
+    },
+    "porter": {
+      "name": "The Porter",
+      "name_mid": "the porter",
+      "place": "A station platform stacked with crates, under a clock that runs fast.",
+      "does": "The porter sometimes sweeps low with a forked blade. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Jump his sweep, and cut as you come down."
+    },
+    "lacquerer": {
+      "name": "The Lacquerer",
+      "name_mid": "the lacquerer",
+      "place": "A workshop of drying trays, with an electric heater humming in the corner.",
+      "does": "The lacquerer dodges away from many attacks at her head and thrusts a trident when you are close. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Aim at her body, which she does not dodge, and stay clear of the thrust."
+    },
+    "post_rider": {
+      "name": "The Post Rider",
+      "name_mid": "the post rider",
+      "place": "A relay stable with a motorcycle in one of the stalls.",
+      "does": "The post rider carries a longsword and closes in to use it. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "His reach is longer than yours. Get inside it, where the long blade is slow to turn."
+    },
+    "paper_maker": {
+      "name": "The Paper Maker",
+      "name_mid": "the paper maker",
+      "place": "A mill where sheets hang to dry above a photocopier.",
+      "does": "The paper maker carries a short sword and tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
+      "try": "Her sword is short. Keep your distance and let your reach do the work."
+    },
+    "gambler": {
+      "name": "The Gambler",
+      "name_mid": "the gambler",
+      "place": "A back room with a card table and a television showing horse races.",
+      "does": "The gambler dodges away from most attacks at his head. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "He wins on your head. Aim at his body and legs."
+    },
+    "monk": {
+      "name": "The Monk",
+      "name_mid": "the monk",
+      "place": "A temple courtyard with a raked gravel garden and a security camera.",
+      "does": "The monk cuts overhead when you leave the ground near her, and dodges in through attacks at her body. Otherwise she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Stay on the ground, and keep your blade where she will be when her dodge ends."
+    },
+    "general": {
+      "name": "The General",
+      "name_mid": "the general",
+      "place": "A command tent with maps on the table and a field telephone.",
+      "does": "The general carries a longsword and dodges away from most attacks at his head. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Get inside his reach, and aim at his body."
+    },
+    "duelist": {
+      "name": "The Duelist",
+      "name_mid": "the duelist",
+      "place": "A walled garden with a stopwatch hanging on the gate.",
+      "does": "The duelist carries a kris and tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
+      "try": "She reacts faster than almost anyone on the road. A steady guard does better against her than a feint."
     }
   },
   "local": {

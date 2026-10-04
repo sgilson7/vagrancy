@@ -17,7 +17,9 @@ pub const FORMAT: &str = "vagrancy.save";
 /// because a fight can ask for a flawless or a quick win (Sam's tree).
 /// 3: the tutorial's finished missions.
 /// 4: the weapon the player carries.
-pub const VERSION: u32 = 4;
+/// 5: each fight's best result names the weapons it was won with (weapon
+/// challenges). A version 4 file reads as it is, with none named.
+pub const VERSION: u32 = 5;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -260,7 +262,9 @@ fn validate(s: &SaveState) -> bool {
         keys.len() == actions.len() && actions.iter().all(|a| g.contains_key(*a)) && codes.len() == g.len() && g.values().all(|c| !c.is_empty())
     };
     let parts: Vec<String> = crate::tutorial::missions().iter().flat_map(|m| (0..m.tasks.len()).map(|i| crate::tutorial::part_key(m, i)).collect::<Vec<_>>()).collect();
+    let weapons: Vec<String> = crate::weapons::weapons().into_iter().map(|w| w.id).collect();
     s.road.best.keys().all(|c| stops.contains(c))
+        && s.road.best.values().all(|b| b.with.iter().all(|w| weapons.contains(w)))
         && s.tutorial.iter().all(|t| parts.contains(t))
         && group_ok(&s.bindings.solo)
         && group_ok(&s.bindings.left)
@@ -275,8 +279,8 @@ mod tests {
     #[test]
     fn a_save_round_trips() {
         let mut s = fresh();
-        s.road.best.insert("scarecrow".into(), crate::road::Best { losses: 0, ticks: 900 });
-        s.road.best.insert("gatekeeper".into(), crate::road::Best { losses: 2, ticks: 4000 });
+        s.road.best.insert("scarecrow".into(), crate::road::Best::won(0, 900, "sword"));
+        s.road.best.insert("gatekeeper".into(), crate::road::Best::won(2, 4000, "sword"));
         s.bindings.solo.insert("shoulder_up".into(), "KeyZ".into());
         s.options.music_volume = 35;
         assert_eq!(decode(&encode(&s)), Ok(s));
@@ -284,8 +288,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 4", "\"version\": 5");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 5, ours: 4 }));
+        let text = encode(&fresh()).replace("\"version\": 5", "\"version\": 6");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 6, ours: 5 }));
     }
 
     #[test]
@@ -330,10 +334,10 @@ mod tests {
 
     #[test]
     fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
-        let v1 = encode(&fresh()).replace("\"version\": 4", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
+        let v1 = encode(&fresh()).replace("\"version\": 5", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         let s = decode(&v1).expect("a version 1 save loads");
         let unknown = crate::road::Best::UNKNOWN;
-        assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown), ("thresher".to_string(), unknown)]));
+        assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown.clone()), ("thresher".to_string(), unknown)]));
         // A win of unknown margin opens what a win opens, and nothing that
         // asks for a flawless or a quick one.
         use crate::road::Req;
@@ -345,7 +349,7 @@ mod tests {
 
     #[test]
     fn a_version_2_save_loads_with_no_tutorial_done_and_a_finished_mission_round_trips() {
-        let v2 = encode(&fresh()).replace("\"version\": 4", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
+        let v2 = encode(&fresh()).replace("\"version\": 5", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         assert!(!v2.contains("tutorial"), "{v2}");
         let s = decode(&v2).expect("a version 2 save loads");
         assert!(s.tutorial.is_empty());
@@ -359,24 +363,43 @@ mod tests {
 
     #[test]
     fn a_save_carries_an_unlocked_weapon_and_any_other_becomes_the_sword() {
-        // The scimitar opens with a win at the lamplighter (data/weapons.json).
+        // The scimitar opens with a win at the pilgrim, who carries it
+        // (data/weapons.json).
         let mut s = fresh();
         s.weapon = "scimitar".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a locked weapon was carried");
-        s.road.best.insert("lamplighter".into(), crate::road::Best { losses: 1, ticks: 2000 });
+        s.road.best.insert("pilgrim".into(), crate::road::Best::won(1, 2000, "sword"));
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "scimitar");
         // The longsword is the enemies' alone, whatever the player has won.
         for id in crate::road::stops() {
-            s.road.best.insert(id, crate::road::Best { losses: 0, ticks: 1 });
+            s.road.best.insert(id, crate::road::Best::won(0, 1, "sword"));
         }
         s.weapon = "longsword".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a player carried an enemy's weapon");
         s.weapon = "no such weapon".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
         // A version 3 save carries the sword.
-        let v3 = encode(&fresh()).replace("\"version\": 4", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "");
+        let v3 = encode(&fresh()).replace("\"version\": 5", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "");
         assert!(!v3.contains("weapon"), "{v3}");
         assert_eq!(decode(&v3).unwrap().weapon, "sword");
+    }
+
+    #[test]
+    fn a_version_4_save_keeps_its_wins_with_no_weapon_named_and_a_win_names_its_weapon() {
+        let mut s = fresh();
+        s.road.best.insert("scarecrow".into(), crate::road::Best::won(0, 900, "sword"));
+        let v4 = encode(&s).replace("\"version\": 5", "\"version\": 4").replace(",\n          \"with\": [\n            \"sword\"\n          ]", "");
+        assert!(!v4.contains("with"), "{v4}");
+        let back = decode(&v4).expect("a version 4 save loads");
+        assert!(back.road.best["scarecrow"].with.is_empty());
+        use crate::road::Req;
+        let challenge = Req::With { stop: "scarecrow".into(), weapon: "sword".into() };
+        assert!(!challenge.met(&back.road.best), "a win of unknown weapon met a weapon challenge");
+        assert!(challenge.met(&s.road.best));
+        // A weapon this build does not know is damage.
+        let mut bad = s.clone();
+        bad.road.best.insert("thresher".into(), crate::road::Best::won(0, 900, "spoon"));
+        assert_eq!(decode(&encode(&bad)), Err(SaveError::Damaged));
     }
 
     #[test]

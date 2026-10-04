@@ -233,6 +233,8 @@ pub struct Road {
     pilot: Box<dyn pilot::Pilot>,
     last: Input,
     opponent: String,
+    /// What the player carries, as the save will record a win.
+    weapon: String,
 }
 
 #[wasm_bindgen]
@@ -244,6 +246,7 @@ impl Road {
             pilot: pilot::build(&content::road::pilot(opponent)),
             last: Input::NONE,
             opponent: opponent.into(),
+            weapon: weapon.into(),
         }
     }
     /// One tick: the pilot sees the player's last input and the world, and
@@ -290,7 +293,7 @@ impl Road {
             return Ok(json!({ "save": content::save::encode(&s), "opened": [] }).to_string());
         }
         let w = &self.rec.world;
-        let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best { losses: w.wins[1], ticks: w.tick });
+        let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best::won(w.wins[1], w.tick, &self.weapon));
         Ok(json!({ "save": content::save::encode(&s), "opened": opened }).to_string())
     }
 }

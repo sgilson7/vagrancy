@@ -48,12 +48,15 @@ pub enum Req {
     Flawless(String),
     /// Won it with the match lasting no longer than this.
     Quick { stop: String, seconds: u32 },
+    /// Won it carrying this weapon (Sam: "weapon challenges like beat the
+    /// courier with the trident").
+    With { stop: String, weapon: String },
 }
 
 impl Req {
     pub fn stop(&self) -> &str {
         match self {
-            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } => s,
+            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } => s,
         }
     }
 
@@ -63,6 +66,7 @@ impl Req {
             Req::Beat(_) => true,
             Req::Flawless(_) => b.losses == 0,
             Req::Quick { seconds, .. } => (b.ticks as u64) <= *seconds as u64 * sim::balance::TICKS_PER_SECOND as u64,
+            Req::With { weapon, .. } => b.with.iter().any(|w| w == weapon),
         }
     }
 
@@ -73,6 +77,8 @@ impl Req {
             Req::Beat(_) => ("road.req.beat", BTreeMap::new()),
             Req::Flawless(_) => ("road.req.flawless", BTreeMap::new()),
             Req::Quick { seconds, .. } => ("road.req.quick", BTreeMap::from([("seconds".to_string(), seconds.to_string())])),
+            // The page names the weapon from `weapons.<id>.name`.
+            Req::With { weapon, .. } => ("road.req.with", BTreeMap::from([("weapon".to_string(), weapon.clone())])),
         }
     }
 }
@@ -102,24 +108,38 @@ impl Condition {
 }
 
 /// The best won match at a stop. A save written before these were recorded
-/// keeps its wins with `u32::MAX` in both, so a win it holds opens what a
-/// win opens and nothing that asks for more.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, serde::Serialize, Deserialize)]
+/// keeps its wins with `u32::MAX` in both and no weapons, so a win it holds
+/// opens what a win opens and nothing that asks for more.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Best {
     /// Rounds lost in that match.
     pub losses: u32,
     /// How long the match took, in ticks.
     pub ticks: u32,
+    /// Every weapon a match here has been won with, sorted. A save from
+    /// before weapons were recorded has none.
+    #[serde(default)]
+    pub with: Vec<String>,
 }
 
 impl Best {
-    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX };
+    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new() };
+
+    /// One won match, carrying `weapon`.
+    pub fn won(losses: u32, ticks: u32, weapon: &str) -> Best {
+        Best { losses, ticks, with: vec![weapon.to_string()] }
+    }
 
     /// The better of two results, each part on its own: the fewest losses
-    /// and the shortest match need not be the same match.
+    /// and the shortest match need not be the same match, and every weapon
+    /// either was won with counts.
     pub fn merge(self, other: Best) -> Best {
-        Best { losses: self.losses.min(other.losses), ticks: self.ticks.min(other.ticks) }
+        let mut with = self.with;
+        with.extend(other.with);
+        with.sort();
+        with.dedup();
+        Best { losses: self.losses.min(other.losses), ticks: self.ticks.min(other.ticks), with }
     }
 }
 
@@ -141,7 +161,10 @@ pub fn stop(id: &str) -> Option<Stop> {
 pub fn record(best: &mut BTreeMap<String, Best>, id: &str, this: Best) -> Vec<String> {
     let road = road();
     let before: Vec<bool> = road.iter().map(|st| open(st, best)).collect();
-    let merged = best.get(id).map(|b| b.merge(this)).unwrap_or(this);
+    let merged = match best.get(id) {
+        Some(b) => b.clone().merge(this),
+        None => this,
+    };
     best.insert(id.to_string(), merged);
     road.into_iter().zip(before).filter(|(st, was)| !was && open(st, best)).map(|(st, _)| st.id).collect()
 }
