@@ -99,6 +99,22 @@ pub struct SwordDef {
     /// fraction from the butt) each one holds. The lead grip also fixes the
     /// wrist: `stiff` is the point whose distance to the tip is held (D7).
     pub grips: Vec<Grip>,
+    /// More points of a weapon that is not one straight blade (a curved
+    /// blade's belly, a fork's prongs), in the rest pose. Each is held to
+    /// the butt and the tip by sticks, so the weapon keeps its shape.
+    pub extra: Vec<V2>,
+    /// The edges that cut and meet other blades, between the weapon's
+    /// points: 0 is the butt, 1 the tip, 2 on the extra points. Each cuts
+    /// from `from` (a fraction from `a`) to `b`. Empty means one edge, butt
+    /// to tip, cutting from the end of the hilt: a plain sword.
+    pub edges: Vec<BladeEdge>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct BladeEdge {
+    pub a: u8,
+    pub b: u8,
+    pub from: Fx,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

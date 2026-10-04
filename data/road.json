@@ -8,7 +8,7 @@
     {"id": "sampler", "requires": [{"beat": "thresher"}, {"beat": "courier"}]},
     {"id": "salt_trader", "requires": [{"beat": "courier"}, {"beat": "drover"}]},
     {"id": "lamplighter", "requires": [{"beat": "thresher"}, {"beat": "drover"}]},
-    {"id": "ferryman", "requires": [{"flawless": "thresher"}, {"beat": "courier"}]},
+    {"id": "ferryman", "requires": [{"flawless": "thresher"}, {"beat": "courier"}], "weapon": "longsword"},
     {"id": "cooper", "requires": [{"beat": "sampler"}, {"beat": "lamplighter"}, {"flawless": "drover"}]},
     {"id": "windmill", "requires": [{"beat": "salt_trader"}, {"beat": "ferryman"}, {"beat": "thresher"}]},
     {"id": "ropewalker", "requires": [{"beat": "sampler"}, {"beat": "salt_trader"}, {"quick": {"stop": "courier", "seconds": 90}}]},

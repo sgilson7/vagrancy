@@ -166,6 +166,9 @@ fn build(b: BodyJson) -> BodyDef {
                     stiff: g.stiff.as_deref().map(ix),
                 })
                 .collect(),
+            // A plain sword; data/weapons.json reshapes it (crate::weapons).
+            extra: Vec::new(),
+            edges: Vec::new(),
         }
     });
     BodyDef {

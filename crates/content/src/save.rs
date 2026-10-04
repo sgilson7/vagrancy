@@ -16,7 +16,8 @@ pub const FORMAT: &str = "vagrancy.save";
 /// 2: the road keeps each stop's best result, not only that it was won,
 /// because a fight can ask for a flawless or a quick win (Sam's tree).
 /// 3: the tutorial's finished missions.
-pub const VERSION: u32 = 3;
+/// 4: the weapon the player carries.
+pub const VERSION: u32 = 4;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -26,6 +27,8 @@ pub struct SaveState {
     pub options: Options,
     /// Finished tutorial tasks, by `content::tutorial::part_key`.
     pub tutorial: Vec<String>,
+    /// The weapon carried on the road, in the yard and online, by id.
+    pub weapon: String,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -83,12 +86,13 @@ pub fn fresh() -> SaveState {
         bindings: Bindings { solo: group("solo"), left: group("left"), right: group("right") },
         options: Options { music_volume: 70, remember_track: false },
         tutorial: Vec::new(),
+        weapon: crate::weapons::DEFAULT.to_string(),
     }
 }
 
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
-    let SaveState { road, bindings, options, tutorial } = s;
+    let SaveState { road, bindings, options, tutorial, weapon } = s;
     let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
@@ -100,6 +104,7 @@ pub fn encode(s: &SaveState) -> String {
             "bindings": { "solo": solo, "left": left, "right": right },
             "options": { "music_volume": music_volume, "remember_track": remember_track },
             "tutorial": tutorial,
+            "weapon": weapon,
         }
     });
     serde_json::to_string_pretty(&body).expect("a save always encodes")
@@ -109,6 +114,26 @@ pub fn encode(s: &SaveState) -> String {
 struct Envelope {
     format: Value,
     version: Value,
+}
+
+/// A version 3 file: no weapon.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FileV3 {
+    #[allow(dead_code)]
+    format: String,
+    #[allow(dead_code)]
+    version: u32,
+    state: StateV3,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StateV3 {
+    road: Road,
+    bindings: Bindings,
+    options: Options,
+    tutorial: Vec<String>,
 }
 
 /// A version 2 file: no tutorial.
@@ -180,12 +205,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV1 { road, bindings, options } = v1.state;
         let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
-        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new() }
+        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into() }
     } else if version < 3 {
         // No tutorial yet.
         let v2: FileV2 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV2 { road, bindings, options } = v2.state;
-        SaveState { road, bindings, options, tutorial: Vec::new() }
+        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into() }
+    } else if version < 4 {
+        // No weapon chosen yet: the sword.
+        let v3: FileV3 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
+        let StateV3 { road, bindings, options, tutorial } = v3.state;
+        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into() }
     } else {
         let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         file.state
@@ -211,6 +241,9 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
             }
         }
     }
+    // A weapon the player has not unlocked, or an enemy's, or one this
+    // build does not know, becomes the sword rather than refusing the file.
+    s.weapon = crate::weapons::usable(&s.weapon, &s.road.best);
     validate(&s).then_some(s).ok_or(SaveError::Damaged)
 }
 
@@ -251,8 +284,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 3", "\"version\": 4");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 4, ours: 3 }));
+        let text = encode(&fresh()).replace("\"version\": 4", "\"version\": 5");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 5, ours: 4 }));
     }
 
     #[test]
@@ -297,7 +330,7 @@ mod tests {
 
     #[test]
     fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
-        let v1 = encode(&fresh()).replace("\"version\": 3", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "");
+        let v1 = encode(&fresh()).replace("\"version\": 4", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         let s = decode(&v1).expect("a version 1 save loads");
         let unknown = crate::road::Best::UNKNOWN;
         assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown), ("thresher".to_string(), unknown)]));
@@ -312,7 +345,7 @@ mod tests {
 
     #[test]
     fn a_version_2_save_loads_with_no_tutorial_done_and_a_finished_mission_round_trips() {
-        let v2 = encode(&fresh()).replace("\"version\": 3", "\"version\": 2").replace(",\n    \"tutorial\": []", "");
+        let v2 = encode(&fresh()).replace("\"version\": 4", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         assert!(!v2.contains("tutorial"), "{v2}");
         let s = decode(&v2).expect("a version 2 save loads");
         assert!(s.tutorial.is_empty());
@@ -322,6 +355,28 @@ mod tests {
         let mut bad = done;
         bad.tutorial.push("no_such_mission".into());
         assert_eq!(decode(&encode(&bad)), Err(SaveError::Damaged));
+    }
+
+    #[test]
+    fn a_save_carries_an_unlocked_weapon_and_any_other_becomes_the_sword() {
+        // The scimitar opens with a win at the lamplighter (data/weapons.json).
+        let mut s = fresh();
+        s.weapon = "scimitar".into();
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a locked weapon was carried");
+        s.road.best.insert("lamplighter".into(), crate::road::Best { losses: 1, ticks: 2000 });
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "scimitar");
+        // The longsword is the enemies' alone, whatever the player has won.
+        for id in crate::road::stops() {
+            s.road.best.insert(id, crate::road::Best { losses: 0, ticks: 1 });
+        }
+        s.weapon = "longsword".into();
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a player carried an enemy's weapon");
+        s.weapon = "no such weapon".into();
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
+        // A version 3 save carries the sword.
+        let v3 = encode(&fresh()).replace("\"version\": 4", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "");
+        assert!(!v3.contains("weapon"), "{v3}");
+        assert_eq!(decode(&v3).unwrap().weapon, "sword");
     }
 
     #[test]

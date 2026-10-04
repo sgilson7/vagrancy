@@ -531,6 +531,55 @@ fn rate(args: &[String]) {
     }
 }
 
+/// The yardstick carrying each weapon against a panel of opponents, written
+/// to analysis/weapons.md (Sam: "the normal sword is the most powerful /
+/// balanced sword"; `the_sword_is_the_strongest_weapon` reads it).
+fn weapons(args: &[String]) {
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(50);
+    let max_ticks = 60 * 120;
+    let t0 = std::time::Instant::now();
+    let panel = content::weapons::PANEL;
+    // The weapons a player can carry; the enemies' own are not the player's
+    // to compare.
+    let ids: Vec<String> = content::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
+    let jobs: Vec<(String, &str)> = ids.iter().flat_map(|w| panel.iter().map(move |o| (w.clone(), *o))).collect();
+    let rows: Vec<(String, &str, u32)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = jobs
+            .into_iter()
+            .map(|(w, o)| {
+                scope.spawn(move || {
+                    let mut won = 0u32;
+                    for seed in 0..matches {
+                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
+                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(o))];
+                        let r = pilot::duel(content::setup::road_with(seed, sim::balance::DEFAULT_TUNING, o, &w), &mut pilots, max_ticks);
+                        if r.finished && r.wins[0] > r.wins[1] {
+                            won += 1;
+                        }
+                    }
+                    (w, o, won)
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let total = matches * panel.len() as u64;
+    let mut md = format!(
+        "# Weapons\n\nThe yardstick carrying each weapon against {} opponents, {matches} seeded matches each, written by `make weapons` \
+         ({:.0} s). The sword should win most (`the_sword_is_the_strongest_weapon`).\n\nfingerprint {} (data/weapons.json, data/pilots.json, the panel, SIM_VERSION {})\n\n",
+        panel.len(), t0.elapsed().as_secs_f64(), content::weapons::fingerprint(), sim::SIM_VERSION
+    );
+    md += &format!("| weapon | wins of {total} | {} |\n|---|---|{}\n", panel.join(" | "), "---|".repeat(panel.len()));
+    for id in &ids {
+        let per: Vec<u32> = panel.iter().map(|o| rows.iter().find(|(w, p, _)| w == id && p == o).unwrap().2).collect();
+        let sum: u32 = per.iter().sum();
+        md += &format!("| {id} | {sum} ({:.0} %) | {} |\n", 100.0 * sum as f64 / total as f64, per.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" | "));
+    }
+    print!("{md}");
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/weapons.md");
+    std::fs::write(path, md).unwrap();
+}
+
 /// One road match between the yardstick (seat 0) and a stop, told as events.
 fn duel_trace(args: &[String]) {
     use sim::fight::Event;
@@ -578,6 +627,7 @@ fn main() {
         Some("recon-m5") => recon_m5(),
         Some("ladder") => ladder(&args[1..]),
         Some("rate") => rate(&args[1..]),
+        Some("weapons") => weapons(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),

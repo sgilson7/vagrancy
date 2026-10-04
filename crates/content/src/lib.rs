@@ -10,3 +10,4 @@ pub mod messages;
 pub mod road;
 pub mod save;
 pub mod tutorial;
+pub mod weapons;

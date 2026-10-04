@@ -107,6 +107,10 @@ pub struct Session {
     /// Who has said they are ready, in the lobby.
     pub me_ready: bool,
     pub them_ready: bool,
+    /// Host: the weapon the joiner said it carries. Whoever builds matches
+    /// (the page's shim, which knows the weapons) arms the joiner's seat
+    /// with it through `rearm` before the welcome goes out.
+    pub joiner_weapon: Option<String>,
 }
 
 impl Session {
@@ -132,6 +136,7 @@ impl Session {
             heard_input: false,
             me_ready: false,
             them_ready: false,
+            joiner_weapon: None,
         }
     }
 
@@ -141,9 +146,9 @@ impl Session {
     }
 
     /// A joiner. It says hello at once; it plays seat 1.
-    pub fn join(build: &str) -> Session {
+    pub fn join(build: &str, weapon: &str) -> Session {
         let mut s = Session::new(false, build, None);
-        s.send(Msg::Hello { proto: PROTO, build: build.into() });
+        s.send(Msg::Hello { proto: PROTO, build: build.into(), weapon: weapon.into() });
         s
     }
 
@@ -192,7 +197,8 @@ impl Session {
             return;
         }
         match m {
-            Msg::Hello { proto, build } if self.host => {
+            Msg::Hello { proto, build, weapon } if self.host => {
+                self.joiner_weapon = Some(weapon);
                 if proto != PROTO || build != self.build {
                     self.send(Msg::Bye { reason: Bye::Build });
                 } else if self.status == Status::Waiting {
@@ -254,6 +260,17 @@ impl Session {
         self.next_ping += 1;
         self.pings_sent.insert(n, now);
         self.send(Msg::Ping { n });
+    }
+
+    /// Host: replace the match on offer, before the welcome sends it. After
+    /// that both sides hold it, and a change here would part them.
+    pub fn rearm(&mut self, setup: Setup) -> bool {
+        if self.host && matches!(self.status, Status::Waiting | Status::Measuring) {
+            self.setup = Some(setup);
+            true
+        } else {
+            false
+        }
     }
 
     fn welcome(&mut self) {

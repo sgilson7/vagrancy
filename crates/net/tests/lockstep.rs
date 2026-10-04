@@ -26,7 +26,7 @@ impl Pair {
     fn with_setup(setup: sim::Setup, latency_ms: u64, jitter_ms: u64) -> Pair {
         Pair {
             host: Session::host(setup, BUILD),
-            join: Session::join(BUILD),
+            join: Session::join(BUILD, "sword"),
             wire: Loopback::new(Conditions { latency_ms, jitter_ms }, 99),
             now: 0,
             cut_join_to_host: false,
@@ -409,4 +409,47 @@ fn after_a_match_both_stay_connected_and_play_the_next_without_finding_each_othe
     let (hi, ji) = (inputs(&p.host), inputs(&p.join));
     let n = hi.len().min(ji.len());
     assert_eq!(hi[..n], ji[..n], "the two sides stepped the next match on different inputs");
+}
+
+#[test]
+fn two_players_carrying_different_weapons_see_the_same_match() {
+    // Sam: "the various weapons should also work online too". The joiner's
+    // hello names its weapon; the host rebuilds the match with both before
+    // the welcome, and both sides then step the same world.
+    let mut p = Pair::new(30, 5);
+    p.host = Session::host(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", "sword"]), BUILD);
+    p.join = Session::join(BUILD, "scimitar");
+    let mut armed = false;
+    for _ in 0..20_000 {
+        p.now += 1;
+        p.pump();
+        if !armed {
+            if let Some(w) = p.host.joiner_weapon.clone() {
+                armed = p.host.rearm(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", &w]));
+            }
+        }
+        p.host.poll(p.now);
+        p.join.poll(p.now);
+        if matches!((&p.host.status, &p.join.status), (Status::Connected { .. }, Status::Connected { .. })) {
+            break;
+        }
+    }
+    assert!(armed, "the host never heard the joiner's weapon in time to arm it");
+    p.both_ready();
+    p.host.start(p.now);
+    p.pump();
+    p.play(900, |seat, t| Input(((t * 7 + seat as u32 * 3) / 11 % 64) as u16));
+    for (who, s) in [("host", &p.host), ("joiner", &p.join)] {
+        let w = s.world().unwrap();
+        let points = |seat: u8| w.swords.iter().find(|x| x.fighter == seat).map(|x| x.points.len()).unwrap();
+        // The trident is five points (butt, tip, fork, two prongs); the
+        // scimitar three (butt, tip, the belly of its curve).
+        assert_eq!((points(0), points(1)), (5, 3), "{who} built the wrong weapons");
+    }
+    let (h, j) = (inputs(&p.host), inputs(&p.join));
+    let n = h.len().min(j.len());
+    assert!(n > 600, "only {n} ticks were played");
+    assert_eq!(h[..n], j[..n]);
+    assert!(matches!(p.host.status, Status::Playing | Status::WaitingOn), "{:?}: the checksums parted", p.host.status);
+    assert!(matches!(p.join.status, Status::Playing | Status::WaitingOn), "{:?}: the checksums parted", p.join.status);
 }

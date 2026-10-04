@@ -1,0 +1,12 @@
+{
+  "_about": "Weapons a player can carry on the road and in the yard, after Soul Calibur II's Weapon Master (Sam, 2026-10-04: \"add the ability to change your weapon like weapon master, and you unlock new ones as you go ... long swords, multi pronged swords, curvy swords. the intent is the normal sword is the most powerful / balanced sword\"). Each reshapes the fighter's sword from data/body.json: length, mass and hilt (the part that does not cut) as percentages of the sword's, and a shape. A curve bends the blade through points set off the line from butt to tip (each as a percentage of the length along it and across it); prongs branch from a fork on the line. unlock is a requirement on the road tree, as in data/road.json. An enemy_only weapon no player can choose: the longsword measured stronger than the sword however it was weighted, so Sam made it the enemies' (2026-10-04); the ferryman carries it (data/road.json). make weapons measures each against the sword (analysis/weapons.md), and the_sword_is_the_strongest_weapon checks the sword wins most.",
+  "weapons": [
+    {"id": "sword", "length_pct": 100, "mass_pct": 100, "shape": {"straight": {}}},
+    {"id": "short_sword", "length_pct": 72, "mass_pct": 60, "shape": {"straight": {}}, "unlock": {"beat": "courier"}},
+    {"id": "longsword", "length_pct": 133, "mass_pct": 133, "shape": {"straight": {}}, "enemy_only": true},
+    {"id": "scimitar", "length_pct": 85, "mass_pct": 110, "shape": {"curve": [[50, 14]]}, "unlock": {"beat": "lamplighter"}},
+    {"id": "kris", "length_pct": 95, "mass_pct": 140, "shape": {"curve": [[30, 6], [55, -6], [80, 6]]}, "unlock": {"flawless": "salt_trader"}},
+    {"id": "forked_blade", "length_pct": 90, "mass_pct": 190, "shape": {"prongs": {"fork_pct": 75, "prongs": [[100, 10], [100, -10]]}}, "unlock": {"beat": "windmill"}},
+    {"id": "trident", "length_pct": 88, "mass_pct": 210, "shape": {"prongs": {"fork_pct": 70, "prongs": [[95, 16], [95, -16]]}}, "unlock": {"beat": "smith"}}
+  ]
+}

@@ -24,6 +24,53 @@ pub fn alone(seed: u64, tuning: u8) -> Setup {
     setup(seed, Mode::Practice, tuning, [Some(Seat { body: FIGHTER, x: balance::START_X }), None])
 }
 
+/// The player's body carrying `weapon`: the fighter's own body for the
+/// sword, or a copy of it with the sword reshaped, added to `bodies`.
+fn armed(bodies: &mut Vec<sim::body::BodyDef>, weapon: &str) -> u8 {
+    match crate::weapons::weapon(weapon) {
+        Some(w) if w.id != crate::weapons::DEFAULT => {
+            let mut b = bodies[FIGHTER as usize].clone();
+            if let Some(sd) = b.sword.as_ref() {
+                b.sword = Some(crate::weapons::reshape(sd, &w));
+            }
+            bodies.push(b);
+            (bodies.len() - 1) as u8
+        }
+        _ => FIGHTER,
+    }
+}
+
+/// Two players, each carrying their weapon: at one keyboard or online. An
+/// enemy's weapon, or one this build does not know, is the sword.
+pub fn versus_with(seed: u64, tuning: u8, weapons: [&str; 2]) -> Setup {
+    let mut s = versus(seed, tuning);
+    for (seat, w) in weapons.iter().enumerate() {
+        let w = match crate::weapons::weapon(w) {
+            Some(x) if !x.enemy_only => x.id,
+            _ => crate::weapons::DEFAULT.to_string(),
+        };
+        let body = armed(&mut s.bodies, &w);
+        s.seats[seat] = Some(Seat { body, x: balance::START_X });
+    }
+    s
+}
+
+/// The practice yard with the player carrying `weapon`.
+pub fn practice_with(seed: u64, tuning: u8, weapon: &str) -> Setup {
+    let mut s = practice(seed, tuning);
+    let body = armed(&mut s.bodies, weapon);
+    s.seats[0] = Some(Seat { body, x: balance::START_X });
+    s
+}
+
+/// A stop on the road with the player carrying `weapon`.
+pub fn road_with(seed: u64, tuning: u8, opponent: &str, weapon: &str) -> Setup {
+    let mut s = road(seed, tuning, opponent);
+    let body = armed(&mut s.bodies, weapon);
+    s.seats[0] = Some(Seat { body, x: balance::START_X });
+    s
+}
+
 /// The practice yard: a fighter and a post that does not fight back.
 pub fn practice(seed: u64, tuning: u8) -> Setup {
     setup(
@@ -41,9 +88,8 @@ pub fn versus(seed: u64, tuning: u8) -> Setup {
 }
 
 /// A stop on the road: the player in seat 0 against an opponent in seat 1.
-/// An opponent whose pilot names a `sword_len` fights with a longer sword
-/// (the ferryman), as a third body: the fighter's own, its sword stretched
-/// along its length.
+/// An opponent the road gives a weapon (the ferryman's longsword) carries it
+/// as another body: the fighter's own, its sword reshaped.
 pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
     let mut bodies = crate::body::bodies();
     let mut seat1 = FIGHTER;
@@ -56,21 +102,9 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
         bodies.push(bare);
         seat1 = (bodies.len() - 1) as u8;
     }
-    if let pilot::Spec::Machine { sword_len: Some(len), .. } = crate::road::pilot(opponent) {
-        let mut long = bodies[0].clone();
-        let s = long.sword.as_mut().expect("the fighter has a sword");
-        let axis = s.tip - s.butt;
-        let now = axis.len().trunc();
-        s.tip = s.butt + axis.scale(len as i64, now as i64);
-        // The grips' places along the sword are fractions; keep the hands
-        // where they were by rescaling them.
-        for g in &mut s.grips {
-            g.at = g.at.scale(now as i64, len as i64);
-        }
-        // A heavier blade: a third more mass at each end.
-        s.mass = s.mass * 4 / 3 + 1;
-        bodies.push(long);
-        seat1 = (bodies.len() - 1) as u8;
+    // The weapon the opponent carries, if the road names one.
+    if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon) {
+        seat1 = armed(&mut bodies, &w);
     }
     // The fight's condition, if it has one (data/road.json).
     let rounds_to_win = ROUNDS_TO_WIN;

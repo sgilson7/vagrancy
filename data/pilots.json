@@ -16,8 +16,7 @@
   },
   "ferryman": {
     "kind": "machine",
-    "script": "late_heavy",
-    "sword_len": 138
+    "script": "late_heavy"
   },
   "vaulter": {
     "kind": "machine",

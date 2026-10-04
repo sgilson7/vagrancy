@@ -108,8 +108,10 @@ export function renderer(canvas, palette, numbers) {
       const b = pts[s.tip];
       const f = s.hilt / one;
       const h = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+      // Each edge of the weapon (one for a sword; a curve's bends, a fork's
+      // prongs), then the hilt over them.
+      for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 1.1, palette.sword);
       capsule(a, h, one * 1.6, palette.hilt);
-      capsule(h, b, one * 1.1, palette.sword);
     }
     cur.fighters.forEach((f, seat) => {
       if (f && f.ink_max > 0) meter(seat === 0 ? 16 : W - 236, f, seat);

@@ -24,6 +24,9 @@
     "first, second": "the names of the two opponents a comparison mission pairs",
     "n": "which task of a comparison mission this is",
     "mission": "the name of a tutorial mission: the first component it teaches, or its two opponents",
+    "weapon": "weapons.<id>.name, from data/weapons.json",
+    "region": "road.region.<row>, the name of a row of the road's tree",
+    "won": "how many fights in a chapter of the road the player has won",
     "count": "how many requirements a level of the road's tree has, from data/road.json"
   },
   "_depends": {
@@ -70,6 +73,7 @@
     "settings.youtube": "new: all six strings",
     "road": "new: condition_heading, condition.deep_ink, condition.light, req.*, tier.*, flawless, opened; locked rewritten (it described a line, and the road is now a tree)",
     "tutorial, menu.tutorial": "new: every string",
+    "weapons, road.weapon_heading, road.carry, road.carried, road.weapon_locked, road.reward, road.carries, road.view, road.region, road.chapter, road.chapter_progress, local.weapon_left, local.weapon_right": "new: every string",
     "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
   },
@@ -325,6 +329,31 @@
     },
     "flawless": "You have beaten {opponent_mid} without losing a round.",
     "opened": "Now open: {opponent}.",
+    "weapon_heading": "Your weapon",
+    "carry": {
+      "label": "Carry the {weapon}"
+    },
+    "carried": "You carry the {weapon}.",
+    "weapon_locked": "To unlock it:",
+    "reward": "Reward: the {weapon}, for this:",
+    "carries": "{opponent} carries a {weapon}.",
+    "region": {
+      "0": "The rice fields",
+      "1": "The village road",
+      "2": "The river crossing",
+      "3": "The market towns",
+      "4": "The hill country",
+      "5": "The mountain pass",
+      "6": "The high plateau",
+      "7": "The far gate"
+    },
+    "chapter": "Chapter {n}: {region}",
+    "chapter_progress": "{won} of {count} won.",
+    "view": {
+      "tree": {"label": "Tree"},
+      "chart": {"label": "Chart"},
+      "chapters": {"label": "Chapters"}
+    },
     "fight": {
       "label": "Fight {opponent_mid}"
     },
@@ -566,6 +595,8 @@
   },
   "local": {
     "intro": "Two players share this keyboard. {left_name} is on the left and uses {left_keys}. {right_name} is on the right and uses {right_keys}.",
+    "weapon_left": "{left_name} carries:",
+    "weapon_right": "{right_name} carries:",
     "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding, try different key bindings in Settings.",
     "start": {
       "label": "Start the match"
@@ -1025,6 +1056,36 @@
     },
     "next": {
       "label": "Start the next task"
+    }
+  },
+  "weapons": {
+    "sword": {
+      "name": "sword",
+      "desc": "Balanced in reach, weight and speed."
+    },
+    "short_sword": {
+      "name": "short sword",
+      "desc": "Short and light. It turns quickly and reaches little."
+    },
+    "longsword": {
+      "name": "longsword",
+      "desc": "Long and heavy."
+    },
+    "scimitar": {
+      "name": "scimitar",
+      "desc": "A curved blade, shorter than the sword. The curve cuts along a wider arc."
+    },
+    "kris": {
+      "name": "kris",
+      "desc": "A wavy blade, heavier than the sword, that cuts along each of its bends."
+    },
+    "forked_blade": {
+      "name": "forked blade",
+      "desc": "A heavy blade that splits into two prongs near the tip."
+    },
+    "trident": {
+      "name": "trident",
+      "desc": "A center blade and two side prongs. The heaviest weapon you can carry."
     }
   }
 }

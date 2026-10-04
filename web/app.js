@@ -4,7 +4,7 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission,
-  road_json, tutorial_json, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, save_choose_weapon, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -206,6 +206,24 @@ function menu() {
   );
 }
 
+// What each seat at one keyboard carries; both choose from what this save
+// has unlocked.
+const LOCAL_WEAPONS = ['sword', 'sword'];
+
+function weaponList() {
+  return JSON.parse(weapons_json(JSON.stringify(SAVE)));
+}
+
+function weaponPicker(seat, labelKey, vars) {
+  const id = `weapon-${seat}`;
+  const open = weaponList().filter((w) => w.unlocked);
+  if (!open.some((w) => w.id === LOCAL_WEAPONS[seat])) LOCAL_WEAPONS[seat] = 'sword';
+  const pick = el('select', { id, on: { change: () => { LOCAL_WEAPONS[seat] = pick.value; } } },
+    ...open.map((w) => el('option', { value: w.id, 'data-copy': `weapons.${w.id}.name` }, t(`weapons.${w.id}.name`))));
+  pick.value = LOCAL_WEAPONS[seat];
+  return el('p', {}, el('label', { for: id, 'data-copy': labelKey }, t(labelKey, vars)), ' ', pick);
+}
+
 function local() {
   stop();
   show(
@@ -213,6 +231,8 @@ function local() {
       left_name: t('fighters.left.name'), left_keys: keyList(BINDINGS.left),
       right_name: t('fighters.right.name'), right_keys: keyList(BINDINGS.right),
     }),
+    weaponPicker(0, 'local.weapon_left', { left_name: t('fighters.left.name') }),
+    weaponPicker(1, 'local.weapon_right', { right_name: t('fighters.right.name') }),
     say('local.keyboard_limit', {}, { class: 'desc' }),
     el('div', { class: 'actions' }, button('local.start.label', startLocal), button('menu.back.label', menu)),
   );
@@ -225,7 +245,7 @@ function startLocal() {
     button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')),
     button('menu.back.label', menu))]);
   show(watch.panel, el('div', { class: 'actions' }, button('menu.back.label', menu)));
-  start(Game.versus(seed(), tuning()),
+  start(Game.versus(seed(), tuning(), LOCAL_WEAPONS[0], LOCAL_WEAPONS[1]),
     withReady(() => [bits(BINDINGS.left, ACTION_BITS), bits(BINDINGS.right, ACTION_BITS)]),
     (f) => watch.tick(f));
 }
@@ -246,7 +266,7 @@ function practice() {
       button('replay.load.label', loadReplay),
       button('menu.back.label', menu)),
   );
-  start(Game.practice(seed(), tuning()), () => [bits(binding, ACTION_BITS), 0]);
+  start(Game.practice(seed(), tuning(), SAVE.state.weapon), () => [bits(binding, ACTION_BITS), 0]);
 }
 
 // `?tuning=0|1|2` picks one of the candidate tunings in sim::balance, so Sam
@@ -308,7 +328,7 @@ function reqLine(r, attrs = {}) {
 //   nodes: [{ id, row, name: element text key, nameVars, state:
 //            'open'|'won'|'flawless'|'locked', requires: [{ from, met, line() }] }]
 //   rowLabel(row) -> element; detail(id, card) fills the card; first: id
-function mapScreen({ nodes, rowLabel, detail, first, attr }) {
+function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout = 'rows' }) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const rows = [];
   for (const n of nodes) (rows[n.row] ||= []).push(n);
@@ -326,28 +346,53 @@ function mapScreen({ nodes, rowLabel, detail, first, attr }) {
   const card = el('section', { id: 'stop-detail' });
   const tip = el('div', { id: 'road-tip', role: 'tooltip', hidden: '' });
   const buttons = new Map();
-  const tree = el('div', { id: 'road-tree' });
+  const tree = el('div', { id: 'road-tree', class: layout });
   const wires = document.createElementNS(SVG, 'svg');
   wires.setAttribute('class', 'wires');
   wires.setAttribute('aria-hidden', 'true');
   tree.append(wires);
-  rows.forEach((row, l) => {
-    if (!row) return;
-    const tier = el('div', { class: 'tier' });
-    for (const n of row) {
-      const b = el('button', { type: 'button', class: `node ${n.state}`, [attr]: n.id, 'data-copy': n.name,
-        on: {
-          click: () => pick(n.id),
-          mouseenter: () => hoverNode(n.id),
-          focus: () => hoverNode(n.id),
-          mouseleave: unhover,
-          blur: unhover,
-        } }, t(n.name, n.nameVars));
-      buttons.set(n.id, b);
-      tier.append(b);
-    }
-    tree.append(el('div', { class: 'level', 'data-level': String(l) }, rowLabel(l), tier));
-  });
+  const nodeButton = (n) => {
+    const b = el('button', { type: 'button', class: `node ${n.state}${n.reward ? ' reward' : ''}`, [attr]: n.id, 'data-copy': n.name,
+      on: {
+        click: () => pick(n.id),
+        mouseenter: () => hoverNode(n.id),
+        focus: () => hoverNode(n.id),
+        mouseleave: unhover,
+        blur: unhover,
+      } }, t(n.name, n.nameVars));
+    buttons.set(n.id, b);
+    return b;
+  };
+  if (layout === 'chart') {
+    // A chart, after Weapon Master's map: each row a region in its own
+    // band, its fights as seals set about it rather than in a line, joined
+    // by routes. The scatter is a fixed pattern, so the chart is the same
+    // each time it is drawn.
+    const BAND = 132;
+    tree.style.height = `${rows.length * BAND}px`;
+    rows.forEach((row, l) => {
+      if (!row) return;
+      const band = el('div', { class: `band band-${l % 2}`, 'data-level': String(l) }, rowLabel(l));
+      band.style.top = `${l * BAND}px`;
+      band.style.height = `${BAND}px`;
+      tree.append(band);
+      row.forEach((n, i) => {
+        const b = nodeButton(n);
+        // Kept off the edges, so a seal and its name stay on the chart.
+        const x = Math.max(9, Math.min(91, (i + 0.5) / row.length * 100 + Math.sin(l * 1.7 + i * 2.3) * (36 / row.length)));
+        const y = l * BAND + 30 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 14;
+        b.style.left = `${x}%`;
+        b.style.top = `${y}px`;
+        tree.append(b);
+      });
+    });
+  } else {
+    rows.forEach((row, l) => {
+      if (!row) return;
+      const tier = el('div', { class: 'tier' }, ...row.map(nodeButton));
+      tree.append(el('div', { class: 'level', 'data-level': String(l) }, rowLabel(l), tier));
+    });
+  }
   const paths = [];
   function wire() {
     wires.replaceChildren();
@@ -410,10 +455,54 @@ function mapScreen({ nodes, rowLabel, detail, first, attr }) {
     for (const [k, b] of buttons) b.classList.toggle('picked', k === id);
     detail(id, card);
   }
-  show(card, tree, tip, button('menu.back.label', menu));
+  show(...before, card, tree, tip, button('menu.back.label', menu));
   pick(first);
   wire();
   new ResizeObserver(() => { if (tree.isConnected) wire(); }).observe(tree);
+}
+
+// Weapon Master's equipment: what you carry, and what the road has yet to
+// give you.
+function weaponPanel(redraw) {
+  const cards = weaponList().map((w) => {
+    const name = t(`weapons.${w.id}.name`);
+    const kids = [
+      el('h4', { 'data-copy': `weapons.${w.id}.name` }, name),
+      say(`weapons.${w.id}.desc`, {}, { class: 'desc' }),
+    ];
+    if (w.carried) kids.push(say('road.carried', { weapon: name }));
+    else if (w.unlocked) {
+      kids.push(button('road.carry.label', () => {
+        SAVE = JSON.parse(save_choose_weapon(JSON.stringify(SAVE), w.id));
+        persist();
+        redraw();
+      }, { weapon: name }));
+    } else {
+      kids.push(say('road.weapon_locked'), reqLine(w.unlock, { class: w.unlock.met ? 'met' : 'unmet' }));
+    }
+    return el('div', { class: `weapon ${w.carried ? 'carried' : w.unlocked ? 'open' : 'locked'}`, 'data-weapon': w.id }, ...kids);
+  });
+  return el('section', { id: 'weapons' }, el('h3', { 'data-copy': 'road.weapon_heading' }, t('road.weapon_heading')), el('div', { class: 'weapon-list' }, ...cards));
+}
+
+// Which design the road is drawn in, remembered in this browser only.
+const ROAD_VIEWS = ['tree', 'chart', 'chapters'];
+function roadView() {
+  try { const v = localStorage.getItem('vagrancy.roadView'); if (ROAD_VIEWS.includes(v)) return v; } catch { /* storage off */ }
+  return 'tree';
+}
+
+function viewSwitch() {
+  const now = roadView();
+  return el('div', { id: 'road-views', class: 'actions', role: 'group' }, ...ROAD_VIEWS.map((v) => {
+    const b = button(`road.view.${v}.label`, () => {
+      try { localStorage.setItem('vagrancy.roadView', v); } catch { /* storage off */ }
+      road();
+    });
+    b.setAttribute('aria-pressed', String(v === now));
+    b.dataset.view = v;
+    return b;
+  }));
 }
 
 function road() {
@@ -425,12 +514,16 @@ function road() {
     row: s.level,
     name: `opponents.${s.id}.name`,
     state: s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked',
+    reward: s.rewards.length > 0,
     lockedKey: 'road.locked',
     requires: s.requires.map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
   }));
-  const rowLabel = (l) => l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
-    : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
-    : say('road.tier.many', { count: l }, { class: 'tier-label' });
+  const view = roadView();
+  const rowLabel = view === 'chart'
+    ? (l) => say(`road.region.${l}`, {}, { class: 'tier-label' })
+    : (l) => l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
+      : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
+      : say('road.tier.many', { count: l }, { class: 'tier-label' });
   const detail = (id, card) => {
     ROAD_PICK = id;
     const s = byId.get(id);
@@ -440,7 +533,11 @@ function road() {
       el('h3', { 'data-copy': o('name') }, t(o('name'))),
       say(o('place'), {}, { class: 'desc' }),
     ];
+    if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
     if (s.condition) kids.push(el('h4', { 'data-copy': 'road.condition_heading' }, t('road.condition_heading')), say(s.condition));
+    for (const r of s.rewards) {
+      kids.push(say('road.reward', { weapon: t(`weapons.${r.weapon}.name`) }), reqLine(r, { class: r.met ? 'met' : 'unmet' }));
+    }
     kids.push(
       el('h4', { 'data-copy': 'road.does_heading' }, t('road.does_heading')), say(o('does'), s.numbers),
       el('h4', { 'data-copy': 'road.try_heading' }, t('road.try_heading')), say(o('try'), s.numbers));
@@ -456,7 +553,43 @@ function road() {
   };
   // The fight picked last, or the first open one not yet won.
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
-  mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop' });
+  const before = [weaponPanel(road), viewSwitch()];
+  if (view === 'chapters') chaptersScreen({ stops, detail, first: first.id, before });
+  else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' ? 'chart' : 'rows' });
+}
+
+// Weapon Master's chapter select: a chapter for each row of the tree, and
+// the chosen chapter's fights as cards that say what each asks for.
+let CHAPTER_PICK = null;
+function chaptersScreen({ stops, detail, first, before }) {
+  const card = el('section', { id: 'stop-detail' });
+  const levels = [...new Set(stops.map((s) => s.level))].sort((a, b) => a - b);
+  const firstStop = stops.find((s) => s.id === first);
+  if (CHAPTER_PICK === null || !levels.includes(CHAPTER_PICK)) CHAPTER_PICK = firstStop.level;
+  const list = el('ol', { id: 'chapters' }, ...levels.map((l) => {
+    const here = stops.filter((s) => s.level === l);
+    const won = here.filter((s) => s.won).length;
+    const open = here.some((s) => s.open);
+    const b = button('road.chapter', () => { CHAPTER_PICK = l; road(); }, { n: l + 1, region: t(`road.region.${l}`) });
+    b.classList.toggle('picked', l === CHAPTER_PICK);
+    if (!open) b.classList.add('locked');
+    b.dataset.chapter = String(l);
+    return el('li', {}, b, say('road.chapter_progress', { won, count: here.length }, { class: 'desc' }));
+  }));
+  const cards = stops.filter((s) => s.level === CHAPTER_PICK).map((s) => {
+    const state = s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked';
+    const b = el('button', { type: 'button', class: `stage ${state}${s.rewards.length ? ' reward' : ''}`, 'data-stop': s.id,
+      on: { click: () => { for (const x of stage.querySelectorAll('.stage')) x.classList.toggle('picked', x === b); detail(s.id, card); } } },
+    el('strong', { 'data-copy': `opponents.${s.id}.name` }, t(`opponents.${s.id}.name`)),
+    ...s.requires.map((r) => reqLine(r, { class: r.met ? 'met' : 'unmet' })));
+    return b;
+  });
+  const stage = el('div', { id: 'chapter-stages' }, ...cards);
+  show(...before, el('div', { id: 'chapter-view' }, list, stage), card, button('menu.back.label', menu));
+  const pickId = stops.some((s) => s.id === first && s.level === CHAPTER_PICK) ? first : stops.find((s) => s.level === CHAPTER_PICK).id;
+  const pb = stage.querySelector(`[data-stop="${pickId}"]`);
+  if (pb) pb.classList.add('picked');
+  detail(pickId, card);
 }
 
 // --- the tutorial: a map of missions in the order the knowledge-component
@@ -612,7 +745,7 @@ function fight(id) {
         button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
   });
   show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
-  const g = new Road(seed(), tuning(), id);
+  const g = new Road(seed(), tuning(), id, SAVE.state.weapon);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     // Kept before the result is drawn, so the result can name what opened.
     if (!won && game && game.won && game.won()) {
@@ -714,7 +847,7 @@ function roomCode() {
 // Open the transport and the session together. `paint` redraws the lobby.
 function openNet(isHost, mode, code, paint) {
   hangUpOnline();
-  const sess = isHost ? Online.host(seed(), tuning(), BUILD) : Online.join(BUILD);
+  const sess = isHost ? Online.host(seed(), tuning(), BUILD, SAVE.state.weapon) : Online.join(BUILD, SAVE.state.weapon);
   const net = { sess, peer: null, error: null, link: null, timer: null, started: false, shown: null };
   NET = net;
   // Redraw the lobby only when what it says has changed. It used to redraw
@@ -1075,6 +1208,7 @@ async function main() {
     recordedChecksum: () => game && game.recorded_checksum(),
     music: () => music.current(),
     phase: () => curFrame && curFrame.phase,
+    edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
     save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };

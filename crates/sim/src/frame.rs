@@ -42,6 +42,8 @@ pub struct SwordView {
     pub hilt: i32,
     pub fighter: u8,
     pub held: bool,
+    /// Every cutting edge, as two particle indices: one for a plain sword.
+    pub edges: Vec<[u16; 2]>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -79,6 +81,7 @@ pub fn frame(w: &World) -> Frame {
                 hilt: (crate::fx::Fx::ratio(s.hilt.0 as i64, s.len.0.max(1) as i64)).0,
                 fighter: s.fighter,
                 held: w.cons.iter().any(|c| matches!(c.tag, crate::world::Tag::Grip { fighter, .. } if fighter == s.fighter)),
+                edges: s.edges.iter().map(|e| [e.0, e.1]).collect(),
             })
             .collect(),
         fighters: w

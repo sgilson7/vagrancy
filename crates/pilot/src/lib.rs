@@ -25,7 +25,7 @@ pub enum Spec {
     },
     Pose { shoulder: i32, elbow: i32 },
     Loop { pattern: String, #[serde(default)] pause_ticks: u32, #[serde(default)] drift: bool },
-    Machine { script: String, #[serde(default)] sword_len: Option<i32> },
+    Machine { script: String },
     Replayer { first_round: String, mirror: bool },
     Search { horizon_ticks: u32, reaction_ticks: u32, branches: u32, #[serde(default = "default_period")] period: u32 },
     Tree { reaction_ticks: u32, rules: Vec<Rule>, #[serde(default)] salt: u64 },
@@ -521,16 +521,12 @@ pub fn duel(setup: sim::Setup, pilots: &mut [Box<dyn Pilot>; 2], max_ticks: u32)
 /// For the page and the tests: the integer value placeholders are filled
 /// with, from a pilot's data (D16). `{pause_s}` and the rest are derived
 /// here, never typed into a sentence.
-pub fn numbers(spec: &Spec, default_sword_len: i32) -> Vec<(&'static str, String)> {
+pub fn numbers(spec: &Spec) -> Vec<(&'static str, String)> {
     let ms = |ticks: u32| (ticks * 1000).div_ceil(sim::balance::TICKS_PER_SECOND);
     match spec {
         Spec::Loop { pause_ticks, .. } if *pause_ticks > 0 => {
             let tenths = (pause_ticks * 10).div_ceil(sim::balance::TICKS_PER_SECOND);
             vec![("pause_s", if tenths % 10 == 0 { format!("{}", tenths / 10) } else { format!("{}.{}", tenths / 10, tenths % 10) })]
-        }
-        Spec::Machine { sword_len: Some(l), .. } => {
-            let pct = ((l - default_sword_len) * 100 + default_sword_len / 2) / default_sword_len;
-            vec![("reach_pct", pct.to_string())]
         }
         Spec::Search { horizon_ticks, reaction_ticks, .. } => {
             vec![("horizon_ms", ms(*horizon_ticks).to_string()), ("reaction_ms", ms(*reaction_ticks).to_string())]

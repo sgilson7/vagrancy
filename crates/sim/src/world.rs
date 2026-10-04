@@ -62,8 +62,9 @@ pub enum Con {
     Stick { a: u16, b: u16, len: Fx },
     /// Pushes apart only: `a` and `b` stay at least `len` apart.
     Min { a: u16, b: u16, len: Fx },
-    /// `a` stays at the point `at` of the way from `b` to `c`.
-    Pin { a: u16, b: u16, c: u16, at: Fx },
+    /// `a` stays at the point `at` of the way from `b` to `c`, moving `b`,
+    /// `c` and the `extra` points after `c` together (a weapon's own points).
+    Pin { a: u16, b: u16, c: u16, at: Fx, extra: u8 },
     /// `j→c` may not bend past straight the wrong way from `a→j`.
     Hinge { a: u16, j: u16, c: u16, sign: i8 },
 }
@@ -128,6 +129,12 @@ pub struct Sword {
     pub tip: u16,
     pub len: Fx,
     pub hilt: Fx,
+    /// Every point of the weapon: the butt, the tip, then its extra points,
+    /// in that order and contiguous.
+    pub points: Vec<u16>,
+    /// The cutting edges, as particle indices and where along `a`→`b` each
+    /// begins to cut.
+    pub edges: Vec<(u16, u16, Fx)>,
 }
 
 /// A held joint key this tick: the servo's target and who it turns.
@@ -266,11 +273,27 @@ impl World {
             }
             let tip = butt + 1;
             let len = (sd.tip - sd.butt).len();
-            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt });
             self.cons.push(Constraint { con: Con::Stick { a: butt, b: tip, len }, tag: Tag::Sword(si) });
+            // A weapon's other points, each held to the butt and the tip.
+            for &e in &sd.extra {
+                let i = self.particles.len() as u16;
+                let p = place(e);
+                self.particles.push(Particle { p, q: p, m: sd.mass, rad: Fx(0), grip: balance::GRIP_TIP, foot: false, owner: Owner::Sword(seat) });
+                for (end, at_end) in [(butt, sd.butt), (tip, sd.tip)] {
+                    self.cons.push(Constraint { con: Con::Stick { a: end, b: i, len: (e - at_end).len() }, tag: Tag::Sword(si) });
+                }
+            }
+            let points: Vec<u16> = (butt..self.particles.len() as u16).collect();
+            let edges = if sd.edges.is_empty() {
+                vec![(butt, tip, Fx::ratio(sd.hilt.0 as i64, len.0.max(1) as i64))]
+            } else {
+                sd.edges.iter().map(|e| (butt + e.a as u16, butt + e.b as u16, e.from)).collect()
+            };
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges });
+            let extra = sd.extra.len() as u8;
             for g in &sd.grips {
                 let hand = base + g.hand as u16;
-                self.cons.push(Constraint { con: Con::Pin { a: hand, b: butt, c: tip, at: g.at }, tag: Tag::Grip { fighter: seat, hand } });
+                self.cons.push(Constraint { con: Con::Pin { a: hand, b: butt, c: tip, at: g.at, extra }, tag: Tag::Grip { fighter: seat, hand } });
                 if let Some(s) = g.stiff {
                     let len = (sd.tip - at(s)).len();
                     self.cons.push(Constraint { con: Con::Stick { a: base + s as u16, b: tip, len }, tag: Tag::Grip { fighter: seat, hand } });
@@ -384,10 +407,11 @@ impl World {
             }
         }
         for c in &self.cons {
-            if let (Con::Pin { a, b, c: tip, .. }, Tag::Grip { fighter, .. }) = (c.con, c.tag) {
+            if let (Con::Pin { a, b, c: tip, extra, .. }, Tag::Grip { fighter, .. }) = (c.con, c.tag) {
                 if fighter == root.fighter && set.contains(&a) && !set.contains(&b) {
                     set.push(b);
                     set.push(tip);
+                    set.extend((0..extra as u16).map(|k| tip + 1 + k));
                 }
             }
         }
@@ -737,7 +761,8 @@ impl World {
         if let (Some(sd), Some(si)) = (def.sword.as_ref(), f.sword) {
             let s = self.swords[si as usize].clone();
             if self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat)) {
-                for (i, at) in [(s.butt, sd.butt), (s.tip, sd.tip)] {
+                let ats = [sd.butt, sd.tip].into_iter().chain(sd.extra.iter().copied());
+                for (i, at) in s.points.iter().copied().zip(ats) {
                     let p = place(at);
                     self.particles[i as usize].p = p;
                     self.particles[i as usize].q = p;
@@ -788,10 +813,17 @@ impl World {
             match self.cons[k].con {
                 Con::Stick { a, b, len } => self.stick(a, b, len, false),
                 Con::Min { a, b, len } => self.stick(a, b, len, true),
-                Con::Pin { a, b, c, at } => {
+                Con::Pin { a, b, c, at, extra } => {
                     let target = V2::lerp(self.particles[b as usize].p, self.particles[c as usize].p, at);
                     let d = target - self.particles[a as usize].p;
-                    self.shift_group(a, &[b, c], d);
+                    // The whole weapon moves as one: its butt, its tip, and
+                    // the points after them.
+                    if extra == 0 {
+                        self.shift_group(a, &[b, c], d);
+                    } else {
+                        let group: Vec<u16> = [b, c].into_iter().chain((0..extra as u16).map(|k| c + 1 + k)).collect();
+                        self.shift_group(a, &group, d);
+                    }
                 }
                 Con::Hinge { a, j, c, sign } => {
                     let (pa, pj, pc) = (self.particles[a as usize].p, self.particles[j as usize].p, self.particles[c as usize].p);

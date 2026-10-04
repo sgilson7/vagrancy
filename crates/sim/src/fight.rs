@@ -69,12 +69,12 @@ impl World {
         Swept { a0: pa.q, b0: pb.q, a1: pa.p, b1: pb.p }
     }
 
-    /// The cutting part of a sword: from the end of the hilt to the tip.
-    fn blade(&self, si: usize) -> Swept {
-        let s = &self.swords[si];
-        let h = Fx::ratio(s.hilt.0 as i64, s.len.0.max(1) as i64);
-        let whole = self.swept(s.butt, s.tip);
-        Swept { a0: V2::lerp(whole.a0, whole.b0, h), b0: whole.b0, a1: V2::lerp(whole.a1, whole.b1, h), b1: whole.b1 }
+    /// The cutting part of one edge of a weapon: from where it begins to
+    /// cut to its end. A plain sword's one edge runs from the end of the
+    /// hilt to the tip.
+    fn edge(&self, (a, b, from): (u16, u16, Fx)) -> Swept {
+        let whole = self.swept(a, b);
+        Swept { a0: V2::lerp(whole.a0, whole.b0, from), b0: whole.b0, a1: V2::lerp(whole.a1, whole.b1, from), b1: whole.b1 }
     }
 
     /// A sword cuts only while a hand holds it (PLAN.md §8 Q15).
@@ -118,32 +118,38 @@ impl World {
                 continue;
             }
             let owner = self.swords[si].fighter;
-            let blade = self.blade(si);
             let n = self.parts.len();
             for pi in 0..n {
-                let part = self.parts[pi].clone();
-                if !self.may_cut(si, pi) {
-                    continue;
-                }
-                let swept = self.swept(part.a, part.b);
-                if !boxes_meet(&blade, &swept, part.radius) {
-                    continue;
-                }
-                let Some(hit) = contact::sweep(&blade, &swept, part.radius, s_max, 0) else { continue };
-                now.push((si as u8, pi as u16));
-                if self.touching.contains(&(si as u8, pi as u16)) {
-                    continue;
-                }
-                // A blade that drifts into a part rests against it; a blade
-                // that arrives at speed cuts it. Without this every fighter
-                // cut itself within a second of standing still (M3.0).
-                let (speed, _) = self.contact_speed(si, &part, hit);
-                if speed < balance::MIN_CUT_SPEED {
-                    continue;
-                }
-                let f = hit.f.clamp(Fx::ratio(1, 20), Fx::ratio(19, 20));
-                if let Some(far) = self.cut(pi, f, owner) {
-                    now.push((si as u8, far));
+                // The first edge, in the weapon's order, that touches the
+                // part is the one that cuts it.
+                for e in self.swords[si].edges.clone() {
+                    let blade = self.edge(e);
+                    let part = self.parts[pi].clone();
+                    if !self.may_cut(si, pi) {
+                        break;
+                    }
+                    let swept = self.swept(part.a, part.b);
+                    if !boxes_meet(&blade, &swept, part.radius) {
+                        continue;
+                    }
+                    let Some(hit) = contact::sweep(&blade, &swept, part.radius, s_max, 0) else { continue };
+                    now.push((si as u8, pi as u16));
+                    if self.touching.contains(&(si as u8, pi as u16)) {
+                        break;
+                    }
+                    // A blade that drifts into a part rests against it; a
+                    // blade that arrives at speed cuts it. Without this every
+                    // fighter cut itself within a second of standing still
+                    // (M3.0).
+                    let (speed, _) = self.contact_speed(e, &part, hit);
+                    if speed < balance::MIN_CUT_SPEED {
+                        break;
+                    }
+                    let f = hit.f.clamp(Fx::ratio(1, 20), Fx::ratio(19, 20));
+                    if let Some(far) = self.cut(pi, f, owner) {
+                        now.push((si as u8, far));
+                    }
+                    break;
                 }
             }
         }
@@ -153,16 +159,14 @@ impl World {
     /// How fast the blade's touching point moves against the part's touching
     /// point, cm per tick; and how much of that is along the blade toward the
     /// tip (a thrust).
-    fn contact_speed(&self, si: usize, part: &Part, hit: contact::Hit) -> (Fx, Fx) {
-        let s = &self.swords[si];
-        let h = Fx::ratio(s.hilt.0 as i64, s.len.0.max(1) as i64);
-        // The hit's `g` is along the cutting part; map it back onto the sword.
-        let g = h + (ONE - h) * hit.g;
+    fn contact_speed(&self, (a, b, from): (u16, u16, Fx), part: &Part, hit: contact::Hit) -> (Fx, Fx) {
+        // The hit's `g` is along the cutting part; map it back onto the edge.
+        let g = from + (ONE - from) * hit.g;
         let vel = |i: u16| self.particles[i as usize].p - self.particles[i as usize].q;
-        let blade_v = V2::lerp(vel(s.butt), vel(s.tip), g);
+        let blade_v = V2::lerp(vel(a), vel(b), g);
         let part_v = V2::lerp(vel(part.a), vel(part.b), hit.f);
         let rel = blade_v - part_v;
-        let axis = (self.particles[s.tip as usize].p - self.particles[s.butt as usize].p).with_len(ONE);
+        let axis = (self.particles[b as usize].p - self.particles[a as usize].p).with_len(ONE);
         (rel.len(), rel.dot(axis))
     }
 
@@ -231,7 +235,7 @@ impl World {
         self.cons.retain(|c| {
             let pts: Vec<u16> = match c.con {
                 Con::Stick { a, b, .. } | Con::Min { a, b, .. } => vec![a, b],
-                Con::Pin { a, b, c, .. } => vec![a, b, c],
+                Con::Pin { a, b, c, extra, .. } => [a, b, c].into_iter().chain((0..extra as u16).map(|k| c + 1 + k)).collect(),
                 Con::Hinge { a, j, c, .. } => vec![a, j, c],
             };
             match c.tag {
@@ -290,49 +294,71 @@ impl World {
             return;
         }
         let s_max = self.s_max().max(8);
-        let (ib, it, jb, jt) = (self.swords[0].butt, self.swords[0].tip, self.swords[1].butt, self.swords[1].tip);
-        let a = self.swept(ib, it);
-        let b = self.swept(jb, jt);
+        // Every edge of one weapon against every edge of the other, whole,
+        // hilt included: a plain sword is one edge, butt to tip.
+        let ends = |si: usize| self.swords[si].edges.iter().map(|e| (e.0, e.1)).collect::<Vec<_>>();
+        let (ea, eb) = (ends(0), ends(1));
+        let pairs: Vec<((u16, u16), (u16, u16))> = ea.iter().flat_map(|&x| eb.iter().map(move |&y| (x, y))).collect();
+        let points: Vec<u16> = self.swords[0].points.iter().chain(self.swords[1].points.iter()).copied().collect();
         // Blades that start the tick already touching may slide along each
         // other and part freely; they are only stopped if they would cross.
         // Without this they glued together: every tick found contact at its
         // first substep and went back to where it began.
-        let resting = contact::near(a.a0, a.b0, b.a0, b.b0, BLADE_GAP).is_some();
-        let (k, s) = if resting {
-            if !segments_cross(a.a1, a.b1, b.a1, b.b1) {
-                self.clashing = contact::near(a.a1, a.b1, b.a1, b.b1, BLADE_GAP).is_some();
+        let resting = pairs.iter().any(|&(x, y)| {
+            let (a, b) = (self.swept(x.0, x.1), self.swept(y.0, y.1));
+            contact::near(a.a0, a.b0, b.a0, b.b0, BLADE_GAP).is_some()
+        });
+        let p = |w: &World, i: u16| w.particles[i as usize].p;
+        let crossing = |w: &World| pairs.iter().copied().find(|&(x, y)| segments_cross(p(w, x.0), p(w, x.1), p(w, y.0), p(w, y.1)));
+        let near_now = |w: &World| pairs.iter().copied().find(|&(x, y)| contact::near(p(w, x.0), p(w, x.1), p(w, y.0), p(w, y.1), BLADE_GAP).is_some());
+        let (k, s, pair) = if resting {
+            let Some(pair) = crossing(self) else {
+                self.clashing = near_now(self).is_some();
                 return;
-            }
-            (0i64, 1i64)
+            };
+            (0i64, 1i64, pair)
         } else {
-            let Some(hit) = contact::sweep(&a, &b, BLADE_GAP, s_max, 1) else {
+            // The earliest contact of any pair of edges.
+            let mut first: Option<(u32, u32, ((u16, u16), (u16, u16)))> = None;
+            for &(x, y) in &pairs {
+                let (a, b) = (self.swept(x.0, x.1), self.swept(y.0, y.1));
+                if let Some(hit) = contact::sweep(&a, &b, BLADE_GAP, s_max, 1) {
+                    let earlier = first.is_none_or(|(k, s, _)| (hit.k as u64) * (s as u64) < (k as u64) * (hit.s as u64));
+                    if earlier {
+                        first = Some((hit.k, hit.s, (x, y)));
+                    }
+                }
+            }
+            let Some((hk, hs, pair)) = first else {
                 self.clashing = false;
                 return;
             };
-            (hit.k.saturating_sub(1) as i64, hit.s as i64)
+            (hk.saturating_sub(1) as i64, hs as i64, pair)
         };
-        let at = |w: &Swept| (w.a0 + (w.a1 - w.a0).scale(k, s), w.b0 + (w.b1 - w.b0).scale(k, s));
-        let (safe_a, safe_b) = (at(&a), at(&b));
-        let put = |w: &mut World, (p0, p1): (V2, V2), (q0, q1): (V2, V2)| {
-            w.particles[ib as usize].p = p0;
-            w.particles[it as usize].p = p1;
-            w.particles[jb as usize].p = q0;
-            w.particles[jt as usize].p = q1;
+        // Both weapons, every point, back to that substep.
+        let safe: Vec<(u16, V2)> = points
+            .iter()
+            .map(|&i| {
+                let pt = &self.particles[i as usize];
+                (i, pt.q + (pt.p - pt.q).scale(k, s))
+            })
+            .collect();
+        let put = |w: &mut World| {
+            for &(i, at) in &safe {
+                w.particles[i as usize].p = at;
+            }
         };
-        put(self, safe_a, safe_b);
+        put(self);
         self.relax(drives);
         self.relax(drives);
-        let p = |w: &World, i: u16| w.particles[i as usize].p;
-        let ok = if resting {
-            !segments_cross(p(self, ib), p(self, it), p(self, jb), p(self, jt))
-        } else {
-            contact::near(p(self, ib), p(self, it), p(self, jb), p(self, jt), BLADE_GAP).is_none()
-        };
+        let ok = if resting { crossing(self).is_none() } else { near_now(self).is_none() };
         if !ok {
-            put(self, safe_a, safe_b);
+            put(self);
         }
         if !self.clashing {
-            let (_, _, pe, qe) = contact::closest(safe_a.0, safe_a.1, safe_b.0, safe_b.1);
+            let at = |i: u16| safe.iter().find(|(j, _)| *j == i).map(|(_, v)| *v).unwrap();
+            let ((a0, a1), (b0, b1)) = pair;
+            let (_, _, pe, qe) = contact::closest(at(a0), at(a1), at(b0), at(b1));
             self.events.push(Event::Clash { at: V2::lerp(pe, qe, Fx(ONE.0 / 2)) });
         }
         self.clashing = true;

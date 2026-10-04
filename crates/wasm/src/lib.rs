@@ -59,11 +59,11 @@ impl Game {
     pub fn alone(seed: u32, tuning: u8) -> Game {
         Game { rec: Some(Recording::new(content::setup::alone(seed as u64, tuning))), play: None }
     }
-    pub fn practice(seed: u32, tuning: u8) -> Game {
-        Game { rec: Some(Recording::new(content::setup::practice(seed as u64, tuning))), play: None }
+    pub fn practice(seed: u32, tuning: u8, weapon: &str) -> Game {
+        Game { rec: Some(Recording::new(content::setup::practice_with(seed as u64, tuning, weapon))), play: None }
     }
-    pub fn versus(seed: u32, tuning: u8) -> Game {
-        Game { rec: Some(Recording::new(content::setup::versus(seed as u64, tuning))), play: None }
+    pub fn versus(seed: u32, tuning: u8, left: &str, right: &str) -> Game {
+        Game { rec: Some(Recording::new(content::setup::versus_with(seed as u64, tuning, [left, right]))), play: None }
     }
     /// A replay file, or the copy key and values of the sentence that refuses it.
     pub fn load_replay(bytes: &[u8]) -> Result<Game, String> {
@@ -132,18 +132,33 @@ impl Game {
 #[wasm_bindgen]
 pub struct Online {
     s: net::Session,
+    /// Host: what the match is built from, so it can be rebuilt with the
+    /// joiner's weapon once the joiner says what it is.
+    seed: u32,
+    tuning: u8,
+    weapon: String,
+    armed: bool,
 }
 
 #[wasm_bindgen]
 impl Online {
-    pub fn host(seed: u32, tuning: u8, build: &str) -> Online {
-        Online { s: net::Session::host(content::setup::versus(seed as u64, tuning), build) }
+    pub fn host(seed: u32, tuning: u8, build: &str, weapon: &str) -> Online {
+        let setup = content::setup::versus_with(seed as u64, tuning, [weapon, content::weapons::DEFAULT]);
+        Online { s: net::Session::host(setup, build), seed, tuning, weapon: weapon.into(), armed: false }
     }
-    pub fn join(build: &str) -> Online {
-        Online { s: net::Session::join(build) }
+    pub fn join(build: &str, weapon: &str) -> Online {
+        Online { s: net::Session::join(build, weapon), seed: 0, tuning: 0, weapon: weapon.into(), armed: true }
     }
     pub fn receive(&mut self, now: f64, bytes: &[u8]) {
         self.s.receive(now as u64, bytes);
+        // The joiner's hello names its weapon; the match is rebuilt with it
+        // before the welcome carries it to both.
+        if !self.armed {
+            if let Some(w) = self.s.joiner_weapon.clone() {
+                let setup = content::setup::versus_with(self.seed as u64, self.tuning, [&self.weapon, &w]);
+                self.armed = self.s.rearm(setup);
+            }
+        }
     }
     pub fn poll(&mut self, now: f64) {
         self.s.poll(now as u64);
@@ -223,9 +238,9 @@ pub struct Road {
 #[wasm_bindgen]
 impl Road {
     #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32, tuning: u8, opponent: &str) -> Road {
+    pub fn new(seed: u32, tuning: u8, opponent: &str, weapon: &str) -> Road {
         Road {
-            rec: Recording::new(content::setup::road(seed as u64, tuning, opponent)),
+            rec: Recording::new(content::setup::road_with(seed as u64, tuning, opponent, weapon)),
             pilot: pilot::build(&content::road::pilot(opponent)),
             last: Input::NONE,
             opponent: opponent.into(),
@@ -299,9 +314,21 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
                     json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(best) })
                 })
                 .collect();
+            // The weapons a win here unlocks, Weapon Master's rewards.
+            let rewards: Vec<serde_json::Value> = content::weapons::weapons()
+                .into_iter()
+                .filter(|w| !w.enemy_only && w.unlock.as_ref().is_some_and(|r| r.stop() == st.id))
+                .map(|w| {
+                    let r = w.unlock.clone().unwrap();
+                    let (key, vars) = r.sentence();
+                    json!({ "weapon": w.id, "key": key, "vars": vars, "stop": r.stop(), "met": r.met(best) })
+                })
+                .collect();
             json!({
                 "id": st.id,
                 "level": st.level(),
+                "rewards": rewards,
+                "weapon": st.weapon,
                 "open": content::road::open(st, best),
                 "won": won.is_some(),
                 "flawless": won.is_some_and(|b| b.losses == 0),
@@ -399,6 +426,39 @@ impl Mission {
 pub fn tutorial_json(save_text: &str) -> Result<String, String> {
     let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
     Ok(content::tutorial::map(&s.tutorial).to_string())
+}
+
+/// The weapons for a save: each a player can carry, whether it is
+/// unlocked, the requirement that unlocks it with whether it is met, and
+/// whether it is the one carried.
+#[wasm_bindgen]
+pub fn weapons_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let list: Vec<serde_json::Value> = content::weapons::weapons()
+        .into_iter()
+        .filter(|w| !w.enemy_only)
+        .map(|w| {
+            let unlock = w.unlock.as_ref().map(|r| {
+                let (key, vars) = r.sentence();
+                json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(&s.road.best) })
+            });
+            json!({
+                "id": w.id,
+                "unlocked": content::weapons::unlocked(&w, &s.road.best),
+                "carried": s.weapon == w.id,
+                "unlock": unlock,
+            })
+        })
+        .collect();
+    Ok(serde_json::Value::Array(list).to_string())
+}
+
+/// The save with `weapon` carried, if the player may carry it.
+#[wasm_bindgen]
+pub fn save_choose_weapon(save_text: &str, weapon: &str) -> Result<String, String> {
+    let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    s.weapon = content::weapons::usable(weapon, &s.road.best);
+    Ok(content::save::encode(&s))
 }
 
 /// A new save file's state, as JSON.

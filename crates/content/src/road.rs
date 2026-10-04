@@ -26,6 +26,9 @@ pub struct Stop {
     pub requires: Vec<Req>,
     #[serde(default)]
     pub condition: Option<Condition>,
+    /// What the opponent carries, from data/weapons.json; the sword if none.
+    #[serde(default)]
+    pub weapon: Option<String>,
 }
 
 impl Stop {
@@ -171,9 +174,19 @@ pub fn default_sword_len() -> i32 {
     (s.tip - s.butt).len().trunc()
 }
 
-/// The values for an opponent's introduction placeholders, from its pilot.
+/// The values for an opponent's introduction placeholders: from its pilot,
+/// and `{reach_pct}` from the weapon it carries, how much longer than the
+/// sword, rounded.
 pub fn intro_numbers(id: &str) -> BTreeMap<String, String> {
-    pilot::numbers(&pilot(id), default_sword_len()).into_iter().map(|(k, v)| (k.to_string(), v)).collect()
+    let mut n: BTreeMap<String, String> = pilot::numbers(&pilot(id)).into_iter().map(|(k, v)| (k.to_string(), v)).collect();
+    if let Some(w) = stop(id).and_then(|s| s.weapon).and_then(|w| crate::weapons::weapon(&w)) {
+        let base = default_sword_len();
+        let len = base * w.length_pct as i32 / 100;
+        if len != base {
+            n.insert("reach_pct".into(), (((len - base) * 100 + base / 2) / base).to_string());
+        }
+    }
+    n
 }
 
 /// What a ladder was measured on: the pilots, the set of stops with their
@@ -182,7 +195,7 @@ pub fn intro_numbers(id: &str) -> BTreeMap<String, String> {
 /// fingerprint differs is stale.
 pub fn ladder_fingerprint() -> String {
     // A stop's condition changes its matches; its requirements do not.
-    let mut stops: Vec<String> = road().iter().map(|s| format!("{}:{:?}", s.id, s.condition)).collect();
+    let mut stops: Vec<String> = road().iter().map(|s| format!("{}:{:?}:{:?}", s.id, s.condition, s.weapon)).collect();
     stops.sort();
     let data = format!("{}{}{}", PILOTS_JSON, stops.join(","), sim::SIM_VERSION);
     format!("{:016x}", sim::world::fnv1a(data.as_bytes()))

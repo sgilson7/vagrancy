@@ -1,8 +1,8 @@
 # Ladder
 
-The yardstick pilot against every fight on the road, 200 seeded matches each, written by `make ladder` (2073 s). A match unfinished after 7200 ticks is not a win. Each fight is played with its condition. Along every requirement in the tree, the yardstick should not win much more often below than above (`the_tree_gets_no_easier_going_down`).
+The yardstick pilot against every fight on the road, 200 seeded matches each, written by `make ladder` (2189 s). A match unfinished after 7200 ticks is not a win. Each fight is played with its condition. Along every requirement in the tree, the yardstick should not win much more often below than above (`the_tree_gets_no_easier_going_down`).
 
-fingerprint a4aff9a24e74161d (data/pilots.json, the set of stops with their conditions, SIM_VERSION 6)
+fingerprint 15b759fc6e34aced (data/pilots.json, the set of stops with their conditions, SIM_VERSION 7)
 
 | stop | yardstick wins | unfinished | mean ticks |
 |---|---|---|---|
@@ -13,7 +13,7 @@ fingerprint a4aff9a24e74161d (data/pilots.json, the set of stops with their cond
 | sampler | 155 of 200 (78 %) | 0 | 520 |
 | salt_trader | 154 of 200 (77 %) | 0 | 523 |
 | lamplighter | 149 of 200 (74 %) | 0 | 482 |
-| ferryman | 131 of 200 (66 %) | 0 | 633 |
+| ferryman | 164 of 200 (82 %) | 0 | 683 |
 | cooper | 112 of 200 (56 %) | 0 | 501 |
 | windmill | 110 of 200 (55 %) | 0 | 403 |
 | ropewalker | 108 of 200 (54 %) | 0 | 468 |

@@ -522,7 +522,7 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     fails += every_visible_line_is_a_copy_string(page, name + " (road, hovering a locked fight)")
     # Hovering a line says the one requirement it stands for.
     page.mouse.move(0, 0)
-    page.evaluate("window.scrollTo(0, 0)")
+    page.evaluate("document.querySelector('#road-tree .wires path.hit').scrollIntoView({ block: 'center' })")
     hit = page.locator("#road-tree .wires path.hit").first
     box = hit.bounding_box()
     pt = page.evaluate("""() => { const p = document.querySelector('#road-tree .wires path.hit');
@@ -610,6 +610,63 @@ def the_tutorial_is_a_map_of_missions_and_its_first_mission_is_played_with_the_k
 
 
 @check
+def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name):
+    # Sam: change your weapon like Weapon Master, unlocking new ones as you
+    # go; and road designs closer to Weapon Master's map.
+    fails = []
+    weapons = json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"]
+    carryable = [w for w in weapons if not w.get("enemy_only")]
+    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#weapons")
+    if page.locator("#weapons .weapon").count() != len(carryable):
+        fails.append(f"{name}: the road shows {page.locator('#weapons .weapon').count()} weapons, not the {len(carryable)} a player can carry")
+    if page.locator('#weapons [data-weapon="longsword"]').count():
+        fails.append(f"{name}: the enemies' longsword is offered to the player")
+    click_copy(page, "menu.back.label")
+    # A save that has beaten the lamplighter, so the scimitar is open.
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {"lamplighter": {"losses": 1, "ticks": 3000}}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#weapons")
+    page.click('[data-weapon="scimitar"] [data-copy="road.carry.label"]')
+    page.wait_for_selector('[data-weapon="scimitar"].carried')
+    fails += every_visible_line_is_a_copy_string(page, name + " (road, carrying the scimitar)")
+    if page.evaluate("window.vagrancy.save().state.weapon") != "scimitar":
+        fails.append(f"{name}: carrying the scimitar did not reach the save")
+    # The three designs.
+    for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("chapters", "#chapters li", len({len(s['requires']) for s in road}))):
+        page.click(f'#road-views [data-view="{view}"]')
+        page.wait_for_selector(sel)
+        if page.locator(sel).count() != want:
+            fails.append(f"{name}: the {view} shows {page.locator(sel).count()} of {want}")
+        fails += every_visible_line_is_a_copy_string(page, f"{name} (road as {view})")
+    page.click('#chapters [data-chapter="1"]')
+    page.wait_for_selector("#chapter-stages .stage")
+    if page.locator("#chapter-stages .stage").count() != sum(1 for s in road if len(s["requires"]) == 1):
+        fails.append(f"{name}: chapter 2 does not show the fights with one requirement")
+    page.click('#road-views [data-view="tree"]')
+    page.wait_for_selector("#road-tree.rows .node")
+    click_copy(page, "menu.back.label")
+    # In the yard the scimitar is drawn with its two edges.
+    click_copy(page, "menu.practice.label")
+    page.wait_for_timeout(500)
+    if page.evaluate("window.vagrancy.edges()") != [2]:
+        fails.append(f"{name}: the yard's sword has {page.evaluate('window.vagrancy.edges()')} edges, not the scimitar's 2")
+    click_copy(page, "menu.back.label")
+    # Back to a fresh save for the checks that follow.
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: a weapon won on the road is carried into the yard; the enemies' longsword is not offered; the road draws as a tree, a chart and chapters")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")
@@ -632,6 +689,7 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     click_copy(page, "menu.back.label")
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#road-tree .node")
+    page.click(f'#road-tree [data-stop="{first}"]')
     if page.locator(f'[data-stop="{first}"].won').count() != 1 or page.locator('#stop-detail [data-copy="road.cleared"]').count() != 1:
         fails.append(f"{name}: after loading a save with the first stop won, the road does not say so")
     if page.locator("#road-tree .node.open").count() != 2:

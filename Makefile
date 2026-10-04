@@ -43,6 +43,9 @@ test-ui-setup:
 ladder:
 	@cargo run -q --release -p lab -- ladder
 
+weapons:
+	@cargo run -q --release -p lab -- weapons
+
 ## count: how many tests there are (packaging/count-tests.sh)
 count:
 	@$(ROOT)/packaging/count-tests.sh

@@ -52,15 +52,16 @@ fn every_number_in_an_introduction_comes_from_the_pilot_data() {
             }
         }
     }
-    // Derived, never typed: 90 ticks is 1.5 s; a 138 cm sword against the
-    // default 104 cm is round(100 · 34 / 104) = 33 % longer; 18 and 12 ticks
+    // Derived, never typed: 90 ticks is 1.5 s; the ferryman's longsword,
+    // 133 % of the default 104 cm, is 138 cm, round(100 · 34 / 104) = 33 %
+    // longer (data/weapons.json); 18 and 12 ticks
     // are 300 and 200 ms.
     assert_eq!(intro_numbers("thresher")["pause_s"], "1.5");
     assert_eq!(intro_numbers("ferryman")["reach_pct"], "33");
     assert_eq!(intro_numbers("reader")["horizon_ms"], "300");
     assert_eq!(intro_numbers("reader")["reaction_ms"], "200");
     // And they move when the data does.
-    let changed = pilot::numbers(&Spec::Loop { pattern: "overhead".into(), pause_ticks: 120, drift: false }, 95);
+    let changed = pilot::numbers(&Spec::Loop { pattern: "overhead".into(), pause_ticks: 120, drift: false });
     assert_eq!(changed, vec![("pause_s", "2".to_string())]);
 }
 

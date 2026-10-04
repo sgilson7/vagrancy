@@ -73,3 +73,54 @@ button.bind.listening { outline: 3px solid var(--focus); }
 @media (max-width: 600px) { #road-tree .node { width: 104px; font-size: 0.85em; } }
 #mission-goal { border-left: 3px solid var(--focus); padding: 2px 12px; margin-bottom: 8px; }
 #mission-goal p, #mission-status p { margin: 2px 0; }
+/* The weapons (Weapon Master's equipment). */
+#weapons { margin-bottom: 16px; }
+#weapons .weapon-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+#weapons .weapon { border: 1px solid var(--ground-line); padding: 6px 10px; }
+#weapons .weapon h4 { margin: 2px 0; }
+#weapons .weapon h4::first-letter { text-transform: uppercase; }
+#weapons .weapon p { margin: 2px 0 6px; }
+#weapons .weapon.carried { border: 2px solid var(--focus); }
+#weapons .weapon.locked { border-style: dashed; color: var(--muted); }
+#weapons .weapon p.met { text-decoration: line-through; }
+/* The road's other designs. */
+#road-views button[aria-pressed="true"] { border-width: 2px; border-color: var(--focus); }
+#road-tree.chart { display: block; position: relative; border: 1px solid var(--ground-line); }
+#road-tree.chart .band { position: absolute; left: 0; right: 0; z-index: 0; }
+#road-tree.chart .band-0 { background: var(--paper); }
+#road-tree.chart .band-1 { background: var(--meter-back); opacity: 0.55; }
+#road-tree.chart .band .tier-label { text-align: left; margin: 4px 8px; font-style: italic; }
+#road-tree.chart .node { position: absolute; z-index: 1; transform: translateX(-50%); width: auto; max-width: 120px;
+  border: none; background: transparent; padding: 30px 2px 0; font-size: 0.85em; line-height: 1.2; }
+#road-tree.chart .node::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); background: var(--paper); }
+#road-tree.chart .node.locked::before { border-style: dashed; border-color: var(--ground-line); }
+#road-tree.chart .node.won::before, #road-tree.chart .node.flawless::before { background: var(--fighters-right-body); border-color: var(--fighters-right-stripe); }
+#road-tree.chart .node.flawless::before { box-shadow: 0 0 0 3px var(--fighters-right-body); }
+#road-tree.chart .node.open::before { border-color: var(--focus); border-width: 3px; }
+#road-tree.chart .node.picked { outline: none; text-decoration: underline; }
+#road-tree.chart .wires path.met, #road-tree.chart .wires path.unmet { stroke-dasharray: 5 4; }
+/* A fight that rewards a weapon: a small diamond. */
+#road-tree .node.reward::after, #chapter-stages .stage.reward::after { content: ""; display: inline-block; width: 7px; height: 7px;
+  margin-left: 6px; transform: rotate(45deg); background: var(--focus); vertical-align: middle; }
+#road-tree.chart .node.reward::after { position: absolute; top: 8px; left: calc(50% + 14px); margin: 0; }
+#chapter-view { display: grid; grid-template-columns: minmax(200px, 260px) 1fr; gap: 16px; margin-bottom: 16px; }
+#chapters { list-style: none; padding: 0; margin: 0; }
+#chapters li { margin-bottom: 4px; }
+#chapters li p { margin: 0 0 0 4px; font-size: 0.85em; }
+#chapters button { width: 100%; text-align: left; margin: 0; }
+#chapters button.picked { border-width: 2px; border-color: var(--focus); }
+#chapters button.locked { color: var(--muted); border-style: dashed; }
+#chapter-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; align-content: start; }
+#chapter-stages .stage { text-align: left; margin: 0; display: block; }
+#chapter-stages .stage p { margin: 2px 0; font-size: 0.85em; }
+#chapter-stages .stage p.met { text-decoration: line-through; color: var(--muted); }
+#chapter-stages .stage.locked { color: var(--muted); border-style: dashed; }
+#chapter-stages .stage.won, #chapter-stages .stage.flawless { border: 2px solid var(--fighters-right-body); }
+#chapter-stages .stage.picked { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 600px) { #chapter-view { grid-template-columns: 1fr; } }
+#road-tree.chart .wires { z-index: 1; }
+#road-tree.chart .node { z-index: 2; }
+@media (max-width: 600px) {
+  #road-tree.chart .node { font-size: 0.7em; max-width: 70px; }
+}

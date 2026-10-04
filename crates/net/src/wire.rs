@@ -7,12 +7,13 @@ use sim::Setup;
 
 /// Bumped when a message changes shape; a peer on another version is
 /// refused, like a peer on another build.
-pub const PROTO: u32 = 3;
+pub const PROTO: u32 = 4;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Msg {
-    /// Joiner to host, first: who I am.
-    Hello { proto: u32, build: String },
+    /// Joiner to host, first: who I am, and the weapon I carry (Sam: "the
+    /// various weapons should also work online too").
+    Hello { proto: u32, build: String, weapon: String },
     /// Host to joiner and back, to measure the round trip.
     Ping { n: u32 },
     Pong { n: u32 },
@@ -57,7 +58,8 @@ mod tests {
     #[test]
     fn every_message_round_trips() {
         for m in [
-            Msg::Hello { proto: PROTO, build: "3f9a01c2".into() },
+            Msg::Hello { proto: PROTO, build: "3f9a01c2".into(), weapon: "scimitar".into() },
+            Msg::Ready,
             Msg::Ping { n: 7 },
             Msg::Pong { n: 7 },
             Msg::Start,
