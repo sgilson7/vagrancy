@@ -429,8 +429,18 @@ function roomCode() {
 function openNet(isHost, mode, code, paint) {
   hangUpOnline();
   const sess = isHost ? Online.host(seed(), tuning(), BUILD) : Online.join(BUILD);
-  const net = { sess, peer: null, error: null, link: null, timer: null, started: false };
+  const net = { sess, peer: null, error: null, link: null, timer: null, started: false, shown: null };
   NET = net;
+  // Redraw the lobby only when what it says has changed. It used to redraw
+  // ten times a second, which replaced the Start button under the player's
+  // mouse: a press on one button and a release on its replacement is not a
+  // click, so Start did nothing (reported by Sam; SECOND-ORDER-M5).
+  net.paint = (force) => {
+    const now = JSON.stringify([sess.status(), net.error, net.left, net.peer !== null]);
+    if (!force && now === net.shown) return;
+    net.shown = now;
+    paint();
+  };
   const flush = () => {
     if (net.peer === null) return;
     const out = net.sess.outbox();
@@ -445,19 +455,19 @@ function openNet(isHost, mode, code, paint) {
   net.link = rtc.open({
     isHost, mode, room: code, build: BUILD,
     onPeer: (id) => {
-      if (net.peer === null) { net.peer = id; flush(); paint(); } else net.link.send(id, Online.refusal_full());
+      if (net.peer === null) { net.peer = id; flush(); net.paint(); } else net.link.send(id, Online.refusal_full());
     },
-    onLeft: (id) => { if (id === net.peer) { net.left = true; paint(); } },
+    onLeft: (id) => { if (id === net.peer) { net.left = true; net.paint(); } },
     onMessage: (id, bytes) => {
       if (id !== net.peer) return;
       sess.receive(performance.now(), bytes);
       flush();
       if (!net.started && JSON.parse(sess.status()).kind === 'playing') beginOnline(net);
-      paint();
+      if (!net.started) net.paint();
     },
-    onError: (key) => { net.error = key; paint(); },
+    onError: (key) => { net.error = key; net.paint(); },
   });
-  net.timer = setInterval(() => { sess.poll(performance.now()); flush(); if (!net.started) paint(); }, 100);
+  net.timer = setInterval(() => { sess.poll(performance.now()); flush(); if (!net.started) net.paint(); }, 100);
   return net;
 }
 
@@ -482,11 +492,19 @@ function lobbyLines(net, waitingKey, vars) {
   if (st.kind === 'build') return [say('online.error.build', {}, { role: 'alert' })];
   if (net.left || st.kind === 'left') return [say('online.status.left', {}, { role: 'alert' })];
   if (st.kind === 'connected') {
-    if (net.sess.seat() === 0) {
-      return [say('online.connected.host', { delay_ms: st.delay_ms }),
-        button('online.start.label', () => { net.sess.start(performance.now()); net.flush(); beginOnline(net); })];
+    // A first exchange both players can see (Sam): each says they are ready,
+    // each sees the other's answer, and the host's Start appears once both
+    // have.
+    const host = net.sess.seat() === 0;
+    const lines = [say(host ? 'online.connected.host' : 'online.connected.join', { delay_ms: st.delay_ms })];
+    lines.push(st.me_ready
+      ? say('online.ready.you')
+      : button('online.ready.label', () => { net.sess.ready(); net.flush(); net.paint(true); }));
+    lines.push(say(st.them_ready ? 'online.ready.friend' : 'online.ready.friend_not'));
+    if (host && st.me_ready && st.them_ready) {
+      lines.push(button('online.start.label', () => { net.sess.start(performance.now()); net.flush(); beginOnline(net); }));
     }
-    return [say('online.connected.join', { delay_ms: st.delay_ms })];
+    return lines;
   }
   return waitingKey ? [say(waitingKey, vars)] : [];
 }

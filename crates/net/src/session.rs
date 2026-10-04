@@ -103,6 +103,9 @@ pub struct Session {
     /// Host: whether the joiner's first input has arrived, which is the only
     /// proof that it heard Start.
     heard_input: bool,
+    /// Who has said they are ready, in the lobby.
+    pub me_ready: bool,
+    pub them_ready: bool,
 }
 
 impl Session {
@@ -126,6 +129,8 @@ impl Session {
             blocked_since: None,
             kept_at: 0,
             heard_input: false,
+            me_ready: false,
+            them_ready: false,
         }
     }
 
@@ -196,6 +201,7 @@ impl Session {
                 }
             }
             Msg::Ping { n } if !self.host => self.send(Msg::Pong { n }),
+            Msg::Ready => self.them_ready = true,
             // Pongs after the measurement are keep-alives: heard, and that is all.
             Msg::Pong { .. } if self.host && self.status != Status::Measuring => {}
             Msg::Pong { n } if self.host => {
@@ -250,9 +256,19 @@ impl Session {
         self.status = Status::Connected { delay: self.delay };
     }
 
-    /// Host: begin the match on both sides.
+    /// Tell the other side this one is ready. Repeated on every poll until
+    /// the match starts would be noise; the reliable channel carries it once.
+    pub fn ready(&mut self) {
+        if matches!(self.status, Status::Connected { .. }) && !self.me_ready {
+            self.me_ready = true;
+            self.send(Msg::Ready);
+        }
+    }
+
+    /// Host: begin the match on both sides, once both have said they are
+    /// ready.
     pub fn start(&mut self, now: u64) {
-        if self.host && matches!(self.status, Status::Connected { .. }) {
+        if self.host && matches!(self.status, Status::Connected { .. }) && self.me_ready && self.them_ready {
             self.send(Msg::Start);
             self.begin(now);
         }

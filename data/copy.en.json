@@ -48,7 +48,8 @@
     "settings.motion.desc": "M6; ship this string only if screen shake and slow motion exist",
     "settings.sound.volume.label": "M6",
     "game.content_note": "Part I questions 2 and 3",
-    "game.about_link": "Part I question 5"
+    "game.about_link": "Part I question 5",
+    "online.ready.you": "the Ready message (net::wire, PROTO 3); the_match_starts_only_when_both_players_are_ready_and_each_sees_the_other"
   },
   "_universals": {},
   "_review": {
@@ -57,7 +58,8 @@
     "settings.keys.actions.dodge": "new",
     "settings.keys.actions.stand": "new",
     "opponents": "new: drover, lamplighter, cooper, bellringer, courier, ropewalker, salt_trader, smith, archivist, watchman (all five strings each)",
-    "results.key_hint": "new"
+    "results.key_hint": "new",
+    "online.ready": "new: label, you, friend, friend_not"
   },
   "_glossary": {
     "ink": {
@@ -485,6 +487,12 @@
       "waiting_on": "Waiting for your friend's input. If this continues, one of the two connections is slow.",
       "left": "Your friend's browser stopped responding, so the match has ended.",
       "desync": "The two copies of the match disagreed at tick {tick}. The match has stopped so that it does not continue as two different fights. You can download the replay to report it."
+    },
+    "ready": {
+      "label": "Tell your friend you are ready",
+      "you": "You are ready, and your friend has been told.",
+      "friend": "Your friend is ready.",
+      "friend_not": "Your friend has not said they are ready yet."
     }
   },
   "settings": {

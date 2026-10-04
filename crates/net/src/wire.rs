@@ -7,7 +7,7 @@ use sim::Setup;
 
 /// Bumped when a message changes shape; a peer on another version is
 /// refused, like a peer on another build.
-pub const PROTO: u32 = 2;
+pub const PROTO: u32 = 3;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Msg {
@@ -18,6 +18,9 @@ pub enum Msg {
     Pong { n: u32 },
     /// Host to joiner: the match, and the input delay both will use.
     Welcome { delay: u32, setup: Setup },
+    /// Either side, in the lobby: I am ready (Sam asked for a first exchange
+    /// both players can see before the match).
+    Ready,
     /// Host to joiner: tick 0 begins.
     Start,
     /// Joiner to host: my input for `tick`, and my checksum after `checked`.

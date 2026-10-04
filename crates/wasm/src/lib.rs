@@ -151,6 +151,9 @@ impl Online {
     pub fn start(&mut self, now: f64) {
         self.s.start(now as u64);
     }
+    pub fn ready(&mut self) {
+        self.s.ready();
+    }
     /// One tick of the page's clock with this side's input. True if the
     /// world stepped.
     pub fn step(&mut self, now: f64, mine: u16) -> bool {
@@ -185,7 +188,8 @@ impl Online {
             Status::Refused(net::wire::Bye::Full) => ("full", 0),
             Status::Refused(_) => ("build", 0),
         };
-        json!({ "kind": kind, "delay_ms": net::session::delay_ms(self.s.delay()), "tick": tick }).to_string()
+        json!({ "kind": kind, "delay_ms": net::session::delay_ms(self.s.delay()), "tick": tick,
+                "me_ready": self.s.me_ready, "them_ready": self.s.them_ready }).to_string()
     }
     pub fn playing(&self) -> bool {
         self.s.world().is_some()

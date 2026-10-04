@@ -52,6 +52,15 @@ def page_for(browser, problems, offsite, who):
     return ctx, page
 
 
+def slow_click(page, sel):
+    page.locator(sel).scroll_into_view_if_needed()
+    box = page.locator(sel).bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.mouse.down()
+    time.sleep(0.15)
+    page.mouse.up()
+
+
 def play(browser, name, seconds):
     problems, offsite = [], []
     hctx, host = page_for(browser, problems, offsite, "host")
@@ -76,7 +85,14 @@ def play(browser, name, seconds):
         time.sleep(20)
         if not (host.locator('[data-copy="online.connected.host"]').count() and join.locator('[data-copy="online.connected.join"]').count()):
             raise RuntimeError("the connected lobby did not survive 20 s of waiting for Start")
-        host.click('[data-copy="online.start.label"]')
+        # Both say they are ready, each sees the other, and the host starts.
+        # Every press is held for 150 ms, as a person's is: the lobby once
+        # redrew ten times a second and a held press never became a click.
+        slow_click(join, '[data-copy="online.ready.label"]')
+        slow_click(host, '[data-copy="online.ready.label"]')
+        host.wait_for_selector('[data-copy="online.ready.friend"]', timeout=10000)
+        join.wait_for_selector('[data-copy="online.ready.friend"]', timeout=10000)
+        slow_click(host, '[data-copy="online.start.label"]')
         join.wait_for_function("document.body.dataset.online === 'playing'", timeout=10000)
         print(f"ok: {name}: two tabs met by pasted codes: {delay_text}")
         keys = ["KeyI", "KeyK", "KeyJ", "KeyL", "KeyA", "KeyD"]

@@ -62,12 +62,27 @@ impl Pair {
             self.join.poll(self.now);
             if let (Status::Connected { delay }, Status::Connected { .. }) = (&self.host.status, &self.join.status) {
                 let d = *delay;
+                self.both_ready();
                 self.host.start(self.now);
                 self.pump();
                 return d;
             }
         }
         panic!("never connected: host {:?}, joiner {:?}", self.host.status, self.join.status);
+    }
+
+    /// Both say they are ready, and the word crosses the wire.
+    fn both_ready(&mut self) {
+        self.host.ready();
+        self.join.ready();
+        for _ in 0..200 {
+            self.now += 1;
+            self.pump();
+            if self.host.them_ready && self.join.them_ready {
+                return;
+            }
+        }
+        panic!("the ready messages never crossed");
     }
 
     fn connect_without_start(&mut self) {
@@ -255,6 +270,7 @@ fn a_connected_lobby_waits_for_the_host_to_start_however_long_it_takes() {
     }
     assert!(matches!(p.host.status, Status::Connected { .. }), "host: {:?}", p.host.status);
     assert!(matches!(p.join.status, Status::Connected { .. }), "joiner: {:?}", p.join.status);
+    p.both_ready();
     p.host.start(p.now);
     p.play(60, |_, _| Input::NONE);
     assert_eq!(p.join.status, Status::Playing, "and the match still starts");
@@ -278,6 +294,7 @@ fn a_lobby_whose_other_side_has_really_gone_still_gives_up() {
 fn a_start_that_is_lost_is_sent_again_and_the_match_begins() {
     let mut p = Pair::new(30, 0);
     p.connect_without_start();
+    p.both_ready();
     // The host presses Start, and the message is lost on the way.
     p.host.start(p.now);
     let lost = p.host.take_outbox();
@@ -293,4 +310,30 @@ fn a_start_that_is_lost_is_sent_again_and_the_match_begins() {
     p.play(120, |_, _| Input::NONE);
     assert!(p.host.world().unwrap().tick > 60, "the match is stuck at tick {}", p.host.world().unwrap().tick);
     assert_eq!(p.host.status, Status::Playing);
+}
+
+#[test]
+fn the_match_starts_only_when_both_players_are_ready_and_each_sees_the_other() {
+    let mut p = Pair::new(30, 5);
+    p.connect_without_start();
+    p.host.start(p.now);
+    p.pump();
+    assert!(p.host.world().is_none(), "the host started before anyone was ready");
+    p.join.ready();
+    for _ in 0..200 {
+        p.now += 1;
+        p.pump();
+    }
+    assert!(p.host.them_ready && !p.join.them_ready, "the host sees the joiner ready; the joiner sees the host not yet");
+    p.host.start(p.now);
+    assert!(p.host.world().is_none(), "the host started before it was ready itself");
+    p.host.ready();
+    for _ in 0..200 {
+        p.now += 1;
+        p.pump();
+    }
+    assert!(p.join.them_ready, "the joiner never saw the host ready");
+    p.host.start(p.now);
+    p.play(60, |_, _| Input::NONE);
+    assert_eq!(p.join.status, Status::Playing);
 }
