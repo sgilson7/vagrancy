@@ -389,7 +389,7 @@ fn w_names() -> Vec<String> {
 /// can see the clock held for a headshot and then run on (Sam: "if someone
 /// gets headshot, stop the simulation to focus on it"). Written to
 /// testing/replays/headshot.replay: the first seed whose flailing does it,
-/// played to the tick the next round has run a second.
+/// played on four seconds after it, with no other round ending.
 fn fixture_headshot() {
     use sim::fight::{Event, Phase};
     for seed in 0..2000u64 {
@@ -397,6 +397,7 @@ fn fixture_headshot() {
         let mut r = sim::rng::Rng::new(seed ^ 0xBEEF);
         let mut held = [Input::NONE; 2];
         let mut first: Option<(u32, String)> = None;
+        let mut ends = 0;
         for t in 0..2400u32 {
             if t % 12 == 0 {
                 let toward = [Input::STEP_RIGHT, Input::STEP_LEFT];
@@ -406,6 +407,7 @@ fn fixture_headshot() {
             rec.step(if ready { [Input(Input::READY); 2] } else { held });
             for e in &rec.world.events {
                 if let Event::RoundEnd { result } = e {
+                    ends += 1;
                     if first.is_none() {
                         let part = result.loser.map(|l| {
                             let body = rec.world.setup.seats[l as usize].unwrap().body as usize;
@@ -416,7 +418,10 @@ fn fixture_headshot() {
                 }
             }
             if let Some((at, part)) = &first {
-                if part != "head" {
+                // One round end only, so the replay's one headshot is the
+                // one the gate sees (CI's Firefox once caught a second, on
+                // the replay's last ticks, where the clock stops anyway).
+                if part != "head" || ends > 1 {
                     break;
                 }
                 if rec.world.tick >= at + 60 * 4 && matches!(rec.world.phase, Phase::Fight) {
