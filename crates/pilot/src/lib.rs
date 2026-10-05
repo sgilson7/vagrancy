@@ -587,6 +587,12 @@ pub struct Tree {
 }
 
 impl Tree {
+    /// The move it is running and the tick within it, for a trace (lab
+    /// roles); reading it changes nothing.
+    pub fn current_move(&self) -> Option<(&str, u32)> {
+        self.current.as_ref().map(|(n, t)| (n.as_str(), *t))
+    }
+
     pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
         Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None }
     }

@@ -385,6 +385,47 @@ fn w_names() -> Vec<String> {
     v["fighter"]["parts"].as_array().unwrap().iter().map(|p| p["id"].as_str().unwrap().to_string()).collect()
 }
 
+/// The roles a tree pilot holds through one match, as runs of ticks:
+/// `roles <pilot> <opponent> <seed> [ticks]`, the tree in seat 0. Prints one
+/// line per run: first tick, last tick, the move, and whether the run ended
+/// before its move finished (cut short by an interrupt).
+fn roles(args: &[String]) {
+    let id = &args[0];
+    let pilot::Spec::Tree { reaction_ticks, rules, salt } = content::road::pilot(id) else { panic!("{id} is not a tree pilot") };
+    let seed: u64 = args.get(2).and_then(|a| a.parse().ok()).unwrap_or(0);
+    let limit: u32 = args.get(3).and_then(|a| a.parse().ok()).unwrap_or(1200);
+    let mut tree = pilot::Tree::new(rules, reaction_ticks, salt);
+    let mut other = pilot::build(&content::road::pilot(&args[1]));
+    let mut w = World::new(content::setup::versus(seed, sim::balance::DEFAULT_TUNING));
+    let mut last = [Input::NONE; 2];
+    let mut runs: Vec<(u32, u32, String, u32)> = Vec::new();
+    while w.tick < limit && !matches!(w.phase, sim::fight::Phase::MatchOver { .. }) {
+        use pilot::Pilot;
+        tree.observe(last[1]);
+        other.observe(last[0]);
+        let i = [tree.input(&w, 0), other.input(&w, 1)];
+        let fighting = matches!(w.phase, sim::fight::Phase::Fight);
+        let now = if fighting { tree.current_move().map(|(m, t)| (m.to_string(), t)).unwrap_or(("idle".into(), 0)) } else { ("between rounds".into(), 0) };
+        match runs.last_mut() {
+            Some(r) if r.2 == now.0 && now.1 > r.3 => {
+                r.1 = w.tick;
+                r.3 = now.1;
+            }
+            _ => runs.push((w.tick, w.tick, now.0, now.1)),
+        }
+        w.step(i);
+        for e in &w.events {
+            if let sim::fight::Event::RoundEnd { result } = e {
+                println!("round end at {}: loser {:?} {:?}", w.tick, result.loser, result.cause);
+            }
+        }
+        last = i;
+    }
+    for (a, b, m, t) in runs {
+        println!("{a} {b} {m} {t}");
+    }
+}
+
 /// Two pilots head to head at one keyboard's setup, both with the sword:
 /// `versus <matches> <a> <b>`, each a pilot id or a pilot spec as JSON. For
 /// a strategist against a baseline, Homework 6 style. Seeds 0.., the first
@@ -719,6 +760,7 @@ fn main() {
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
         Some("versus") => versus(&args[1..]),
+        Some("roles") => roles(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),
