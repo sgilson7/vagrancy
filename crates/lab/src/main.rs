@@ -385,6 +385,44 @@ fn w_names() -> Vec<String> {
     v["fighter"]["parts"].as_array().unwrap().iter().map(|p| p["id"].as_str().unwrap().to_string()).collect()
 }
 
+/// Two pilots head to head at one keyboard's setup, both with the sword:
+/// `versus <matches> <a> <b>`, each a pilot id or a pilot spec as JSON. For
+/// a strategist against a baseline, Homework 6 style. Seeds 0.., the first
+/// pilot in seat 0; prints wins, losses and unfinished matches.
+fn versus(args: &[String]) {
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(200);
+    let spec = |s: &str| -> pilot::Spec {
+        if s.trim_start().starts_with('{') { serde_json::from_str(s).expect("a pilot spec") } else { content::road::pilot(s) }
+    };
+    let (a, b) = (spec(&args[1]), spec(&args[2]));
+    let threads = 8u64;
+    let rows: Vec<(u32, u32, u32)> = std::thread::scope(|scope| {
+        let hs: Vec<_> = (0..threads)
+            .map(|k| {
+                let (a, b) = (a.clone(), b.clone());
+                scope.spawn(move || {
+                    let (mut w, mut l, mut u) = (0, 0, 0);
+                    for seed in (k..matches).step_by(threads as usize) {
+                        let mut ps: [Box<dyn pilot::Pilot>; 2] = [pilot::build(&a), pilot::build(&b)];
+                        let o = pilot::duel(content::setup::versus(seed, sim::balance::DEFAULT_TUNING), &mut ps, 60 * 120);
+                        if !o.finished {
+                            u += 1;
+                        } else if o.wins[0] > o.wins[1] {
+                            w += 1;
+                        } else {
+                            l += 1;
+                        }
+                    }
+                    (w, l, u)
+                })
+            })
+            .collect();
+        hs.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let (w, l, u) = rows.iter().fold((0, 0, 0), |t, r| (t.0 + r.0, t.1 + r.1, t.2 + r.2));
+    println!("{} vs {}: {w} won, {l} lost, {u} unfinished of {matches}", args[1], args[2]);
+}
+
 /// A replay whose first round ends with a cut across the head, so the gate
 /// can see the clock held for a headshot and then run on (Sam: "if someone
 /// gets headshot, stop the simulation to focus on it"). Written to
@@ -680,6 +718,7 @@ fn main() {
         Some("rate") => rate(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
+        Some("versus") => versus(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
         Some("script-checksum") => script_checksum(&args[1..]),
