@@ -140,6 +140,6 @@ If a line breaks a rule and is clearly right anyway, change the rule in this fil
 
 **Two registers, kept apart.** A sentence is written by a person and lives in the copy file. A number is derived by core and fills a placeholder. A sentence that states a mechanic is listed in `_depends` with the decision it rests on, so that a change to the decision surfaces the sentence.
 
-**Humor.** The road has a few plain anachronisms: a radio at a ferry landing, a turntable in a tea house. They are stated once, flat, as facts of the place. Nobody remarks on them.
+**Places.** Each opponent's place line is one plain sentence about where the fight happens. The earlier lines each carried an anachronism (a radio at a ferry landing, a turntable in a tea house); Sam called them weird, and the 2026-10-05 rewrite in his voice removed them.
 
 **Where the strings live.** `data/copy.en.json`. If you are editing a `.rs`, `.js` or `.html` file to change what a player reads, you are in the wrong file.
