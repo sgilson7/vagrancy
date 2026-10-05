@@ -201,7 +201,7 @@ mod tests {
             (result(Some(0), Cause::Heart, 0, 1), "Ochre won the round. Ochre's blade cut across Indigo's heart."),
             (result(Some(1), Cause::Ink, 6, 1), "Indigo won the round. Ochre ran out of ink."),
             (result(Some(1), Cause::Neck, 2, 1), "Indigo won the round. Ochre's own blade made the cut that ended it."),
-            (result(None, Cause::Neck, 1, 0), "Nobody won the round. Both fighters stopped at the same moment, so the round is played again."),
+            (result(None, Cause::Neck, 1, 0), "Neither fighter won the round. Both stopped at the same moment, so the round is played again."),
         ];
         for (r, want) in cases {
             assert_eq!(fill(&round_result(&w, &r, Audience::Versus)), want);
