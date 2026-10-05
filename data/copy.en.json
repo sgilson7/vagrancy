@@ -159,7 +159,7 @@
   },
   "menu": {
     "road": {
-      "label": "Play arcade mode",
+      "label": "Arcade mode",
       "desc": "Fight down a tree of opponents. A fight opens when you meet its requirements, such as beating the opponents above it."
     },
     "local": {
@@ -175,7 +175,7 @@
       "desc": "Swing at a post that does not fight back. Use the yard to learn the keys."
     },
     "tutorial": {
-      "label": "Start the tutorial",
+      "label": "Tutorial",
       "desc": "Learn the game through short missions on a map. Each mission teaches one idea and builds on one you already have."
     },
     "replay": {

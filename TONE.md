@@ -58,6 +58,8 @@ Swing, plant, push, cut, drop, spill, step, block, load, download. The words tha
 
 "Download replay", not "Replay". "Host with a room code", not "Host". A label is a verb and its object.
 
+One exception, Sam's (2026-10-05): a main-menu button that opens a game mode is that mode's name, "Arcade mode" and "Tutorial", because the name is what a player looks for there.
+
 *Check:* read the label with no screen around it. Is it clear what pressing it does?
 
 ### 7. A refusal names what is in the way and what to do next
