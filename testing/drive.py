@@ -709,6 +709,63 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
 
 
 @check
+def a_flanked_fight_puts_an_opponent_on_each_side_and_ledges_are_drawn(page, name):
+    # Sam: "an enemy on each side of you", "fights that have platforms",
+    # and "select different weapons when fighting online, and different
+    # maps with platforms".
+    fails = []
+    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    maps = {m["id"]: m for m in json.loads((ROOT / "data" / "maps.json").read_text())["maps"]}
+    stop = next(s for s in road if s.get("companion") and s.get("map"))
+    # A save that has met every requirement on the road.
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {s["id"]: {"losses": 0, "ticks": 1, "with": ["sword"], "headshot": True, "untouched": True} for s in road}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#road-tree .node")
+    page.click(f'[data-stop="{stop["id"]}"]')
+    page.wait_for_selector('#stop-detail [data-copy="road.companion"]')
+    if not page.locator('#stop-detail [data-copy="road.map_heading"]').count():
+        fails.append(f"{name}: the {stop['id']}'s card does not say what ground it is fought on")
+    fails += every_visible_line_is_a_copy_string(page, name + " (a flanked fight's card)")
+    click_copy(page, "road.fight.label")
+    page.wait_for_timeout(700)
+    got = (page.evaluate("window.vagrancy.fighters()"), page.evaluate("window.vagrancy.platforms()"))
+    want = (3, len(maps[stop["map"]]["platforms"]))
+    if got != want:
+        fails.append(f"{name}: the {stop['id']} draws {got[0]} fighters and {got[1]} ledges, not {want[0]} and {want[1]}")
+    fails += every_visible_line_is_a_copy_string(page, name + " (a flanked fight)")
+    click_copy(page, "results.to_road.label")
+    page.wait_for_selector("#road-tree .node")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    # At one keyboard, on the bridge.
+    click_copy(page, "menu.local.label")
+    page.wait_for_selector("#map-local")
+    page.select_option("#map-local", "bridge")
+    page.wait_for_selector('[data-copy="maps.bridge.desc"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (local, the bridge chosen)")
+    click_copy(page, "local.start.label")
+    page.wait_for_timeout(500)
+    if page.evaluate("window.vagrancy.platforms()") != len(maps["bridge"]["platforms"]):
+        fails.append(f"{name}: a match at one keyboard on the bridge draws {page.evaluate('window.vagrancy.platforms()')} ledges")
+    click_copy(page, "menu.back.label")
+    # The online lobby offers a weapon and the ground.
+    click_copy(page, "menu.online.label")
+    page.wait_for_selector("#weapon-online")
+    if not page.locator("#map-online").count():
+        fails.append(f"{name}: the online lobby offers no choice of ground")
+    click_copy(page, "menu.back.label")
+    if not fails:
+        print(f"ok: {name}: the {stop['id']} puts an opponent on each side of the player on ledges; a match at one keyboard can be on the bridge; online, a player picks a weapon and the host the ground")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

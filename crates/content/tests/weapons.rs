@@ -58,7 +58,7 @@ fn blades_of_any_shape_stay_solid_against_each_other() {
     let mut met = std::collections::BTreeSet::new();
     for a in &ids {
         for b in &ids {
-            let mut w = World::new(content::setup::versus_with(3, sim::balance::DEFAULT_TUNING, [a, b]));
+            let mut w = World::new(content::setup::versus_with(3, sim::balance::DEFAULT_TUNING, [a, b], "flat"));
             let mut clashes = 0;
             for t in 0..900u32 {
                 let x = (t / 9).wrapping_mul(2654435761);

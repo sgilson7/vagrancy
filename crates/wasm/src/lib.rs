@@ -18,6 +18,12 @@ pub fn palette_json() -> String {
     include_str!("../../../data/palette.json").to_string()
 }
 
+/// The grounds a match can be on (data/maps.json): the pickers list them.
+#[wasm_bindgen]
+pub fn maps_json() -> String {
+    content::maps::MAPS_JSON.to_string()
+}
+
 #[wasm_bindgen]
 pub fn controls_json() -> String {
     include_str!("../../../data/controls.json").to_string()
@@ -62,8 +68,8 @@ impl Game {
     pub fn practice(seed: u32, tuning: u8, weapon: &str) -> Game {
         Game { rec: Some(Recording::new(content::setup::practice_with(seed as u64, tuning, weapon))), play: None }
     }
-    pub fn versus(seed: u32, tuning: u8, left: &str, right: &str) -> Game {
-        Game { rec: Some(Recording::new(content::setup::versus_with(seed as u64, tuning, [left, right]))), play: None }
+    pub fn versus(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Game {
+        Game { rec: Some(Recording::new(content::setup::versus_with(seed as u64, tuning, [left, right], map))), play: None }
     }
     /// A replay file, or the copy key and values of the sentence that refuses it.
     pub fn load_replay(bytes: &[u8]) -> Result<Game, String> {
@@ -137,17 +143,20 @@ pub struct Online {
     seed: u32,
     tuning: u8,
     weapon: String,
+    map: String,
     armed: bool,
 }
 
 #[wasm_bindgen]
 impl Online {
-    pub fn host(seed: u32, tuning: u8, build: &str, weapon: &str) -> Online {
-        let setup = content::setup::versus_with(seed as u64, tuning, [weapon, content::weapons::DEFAULT]);
-        Online { s: net::Session::host(setup, build), seed, tuning, weapon: weapon.into(), armed: false }
+    /// The host chooses the map; the welcome carries it to the joiner
+    /// inside the setup.
+    pub fn host(seed: u32, tuning: u8, build: &str, weapon: &str, map: &str) -> Online {
+        let setup = content::setup::versus_with(seed as u64, tuning, [weapon, content::weapons::DEFAULT], map);
+        Online { s: net::Session::host(setup, build), seed, tuning, weapon: weapon.into(), map: map.into(), armed: false }
     }
     pub fn join(build: &str, weapon: &str) -> Online {
-        Online { s: net::Session::join(build, weapon), seed: 0, tuning: 0, weapon: weapon.into(), armed: true }
+        Online { s: net::Session::join(build, weapon), seed: 0, tuning: 0, weapon: weapon.into(), map: String::new(), armed: true }
     }
     pub fn receive(&mut self, now: f64, bytes: &[u8]) {
         self.s.receive(now as u64, bytes);
@@ -155,7 +164,7 @@ impl Online {
         // before the welcome carries it to both.
         if !self.armed {
             if let Some(w) = self.s.joiner_weapon.clone() {
-                let setup = content::setup::versus_with(self.seed as u64, self.tuning, [&self.weapon, &w]);
+                let setup = content::setup::versus_with(self.seed as u64, self.tuning, [&self.weapon, &w], &self.map);
                 self.armed = self.s.rearm(setup);
             }
         }
@@ -226,12 +235,14 @@ impl Online {
     }
 }
 
-/// A stop on the road: the player in seat 0, a pilot in seat 1 (D16).
+/// A stop on the road: the player in seat 0, a pilot in seat 1 (D16), and
+/// on a flanked stop a second in seat 2.
 #[wasm_bindgen]
 pub struct Road {
     rec: Recording,
-    pilot: Box<dyn pilot::Pilot>,
-    last: Input,
+    pilots: Vec<Box<dyn pilot::Pilot>>,
+    last: [Input; sim::body::SEATS],
+    feats: content::road::Feats,
     opponent: String,
     /// What the player carries, as the save will record a win.
     weapon: String,
@@ -243,19 +254,24 @@ impl Road {
     pub fn new(seed: u32, tuning: u8, opponent: &str, weapon: &str) -> Road {
         Road {
             rec: Recording::new(content::setup::road_with(seed as u64, tuning, opponent, weapon)),
-            pilot: pilot::build(&content::road::pilot(opponent)),
-            last: Input::NONE,
+            pilots: content::road::crew(opponent).iter().map(pilot::build).collect(),
+            last: [Input::NONE; sim::body::SEATS],
+            feats: content::road::Feats::default(),
             opponent: opponent.into(),
             weapon: weapon.into(),
         }
     }
-    /// One tick: the pilot sees the player's last input and the world, and
-    /// answers with an input of its own.
+    /// One tick: each pilot sees every seat's last input and the world,
+    /// and answers with an input of its own.
     pub fn step(&mut self, mine: u16, _other: u16) {
-        self.pilot.observe(self.last);
-        let theirs = self.pilot.input(&self.rec.world, 1);
-        self.rec.step([Input(mine), theirs]);
-        self.last = Input(mine);
+        let mut i = [Input(mine), Input::NONE, Input::NONE];
+        for (k, p) in self.pilots.iter_mut().enumerate() {
+            p.observe(self.last);
+            i[k + 1] = p.input(&self.rec.world, k + 1);
+        }
+        self.rec.step_all(i);
+        self.feats.observe(&self.rec.world);
+        self.last = i;
     }
     pub fn frame(&self) -> String {
         serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
@@ -293,7 +309,7 @@ impl Road {
             return Ok(json!({ "save": content::save::encode(&s), "opened": [] }).to_string());
         }
         let w = &self.rec.world;
-        let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best::won(w.wins[1], w.tick, &self.weapon));
+        let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best::won(w.wins[1], w.tick, &self.weapon).with_feats(self.feats));
         Ok(json!({ "save": content::save::encode(&s), "opened": opened }).to_string())
     }
 }
@@ -336,6 +352,8 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
                 "won": won.is_some(),
                 "flawless": won.is_some_and(|b| b.losses == 0),
                 "condition": st.condition.map(|c| c.copy_key()),
+                "companion": st.companion.as_ref().map(|c| json!({ "pilot": c.pilot, "weapon": c.weapon.clone().unwrap_or(content::weapons::DEFAULT.into()) })),
+                "map": st.map,
                 "numbers": content::road::intro_numbers(&st.id),
                 "requires": requires,
             })
@@ -349,8 +367,8 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
 #[wasm_bindgen]
 pub struct Mission {
     rec: Recording,
-    pilot: Option<Box<dyn pilot::Pilot>>,
-    last: Input,
+    pilots: Vec<Box<dyn pilot::Pilot>>,
+    last: [Input; sim::body::SEATS],
     tracker: content::tutorial::Tracker,
     mission: content::tutorial::Mission,
     part: usize,
@@ -362,24 +380,22 @@ impl Mission {
     pub fn new(seed: u32, tuning: u8, id: &str, part: usize) -> Mission {
         let mission = content::tutorial::mission(id).expect("a mission in data/tutorial.json");
         let task = mission.tasks[part].clone();
-        let (setup, pilot) = if task.at == "yard" {
-            (content::setup::practice(seed as u64, tuning), None)
+        let (setup, pilots) = if task.at == "yard" {
+            (content::setup::practice(seed as u64, tuning), Vec::new())
         } else {
-            (content::setup::road(seed as u64, tuning, &task.at), Some(pilot::build(&content::road::pilot(&task.at))))
+            (content::setup::road(seed as u64, tuning, &task.at), content::road::crew(&task.at).iter().map(pilot::build).collect())
         };
-        Mission { rec: Recording::new(setup), pilot, last: Input::NONE, tracker: content::tutorial::Tracker::new(task.goal), mission, part }
+        Mission { rec: Recording::new(setup), pilots, last: [Input::NONE; sim::body::SEATS], tracker: content::tutorial::Tracker::new(task.goal), mission, part }
     }
     pub fn step(&mut self, mine: u16, _other: u16) {
-        let theirs = match self.pilot.as_mut() {
-            Some(p) => {
-                p.observe(self.last);
-                p.input(&self.rec.world, 1)
-            }
-            None => Input::NONE,
-        };
-        self.rec.step([Input(mine), theirs]);
+        let mut i = [Input(mine), Input::NONE, Input::NONE];
+        for (k, p) in self.pilots.iter_mut().enumerate() {
+            p.observe(self.last);
+            i[k + 1] = p.input(&self.rec.world, k + 1);
+        }
+        self.rec.step_all(i);
         self.tracker.observe(&self.rec.world, Input(mine));
-        self.last = Input(mine);
+        self.last = i;
     }
     pub fn frame(&self) -> String {
         serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()

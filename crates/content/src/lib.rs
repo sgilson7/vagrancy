@@ -6,6 +6,7 @@
 pub mod copy;
 pub mod body;
 pub mod setup;
+pub mod maps;
 pub mod messages;
 pub mod road;
 pub mod save;

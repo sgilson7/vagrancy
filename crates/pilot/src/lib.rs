@@ -1,6 +1,6 @@
 //! Opponents (D16). A pilot returns an `Input` and nothing else, so it holds
 //! nothing a player cannot press. It reads the world as a player's eyes
-//! would, and it is shown the other side's last input (`observe`), as a
+//! would, and it is shown every seat's last input (`observe`), as a
 //! person beside you sees what you do.
 //!
 //! No learned policy: a search baseline must be beaten before any network is
@@ -11,6 +11,7 @@ use serde::Deserialize;
 use sim::fight::Phase;
 use sim::fx::{cos_deg, sin_deg, V2, ONE};
 use sim::world::Owner;
+use sim::body::{side, SEATS};
 use sim::{Input, World};
 use std::collections::VecDeque;
 
@@ -38,8 +39,8 @@ fn default_period() -> u32 {
 pub trait Pilot {
     /// This tick's input for `seat`.
     fn input(&mut self, w: &World, seat: usize) -> Input;
-    /// The other side's input last tick.
-    fn observe(&mut self, _other: Input) {}
+    /// Every seat's input last tick, its own included.
+    fn observe(&mut self, _last: [Input; SEATS]) {}
 }
 
 pub fn build(spec: &Spec) -> Box<dyn Pilot> {
@@ -48,7 +49,7 @@ pub fn build(spec: &Spec) -> Box<dyn Pilot> {
         Spec::Pose { shoulder, elbow } => Box::new(Pose { shoulder, elbow }),
         Spec::Loop { pattern, pause_ticks, drift } => Box::new(Looper::new(&pattern, pause_ticks, drift)),
         Spec::Machine { script, .. } => Box::new(Machine::new(&script)),
-        Spec::Replayer { mirror, .. } => Box::new(Replayer { mirror, now: Vec::new(), last: Vec::new(), round: 0, t: 0 }),
+        Spec::Replayer { mirror, .. } => Box::new(Replayer { mirror, now: Vec::new(), last: Vec::new(), seen: [Input::NONE; SEATS], round: 0, t: 0 }),
         Spec::Search { horizon_ticks, reaction_ticks, branches, period } => {
             Box::new(Search::new(horizon_ticks, reaction_ticks, branches, period))
         }
@@ -94,19 +95,62 @@ fn tip(w: &World, seat: usize) -> Option<V2> {
 }
 
 /// Horizontal distance between the two pelvises, in whole cm.
-/// No foot still attached to the fighter is on the ground.
+/// No foot still attached to the fighter stands on the ground or a ledge.
 pub fn airborne(w: &World, seat: usize) -> bool {
     w.fighters[seat].as_ref().is_some_and(|f| {
         let def = &w.setup.bodies[f.body as usize];
         !def.roles.feet.iter().any(|&i| {
-            let p = &w.particles[(f.base + i as u16) as usize];
-            p.owner == Owner::Body(seat as u8) && p.p.y <= p.rad + ONE
+            let k = (f.base + i as u16) as usize;
+            w.particles[k].owner == Owner::Body(seat as u8) && w.supported(k as u16)
         })
     })
 }
 
+/// How far inside a ledge's ends a pilot must stand to climb onto it, cm.
+const LEDGE_ROOM: i32 = 40;
+
+/// How high the lowest attached foot's sole is above the ground.
+fn feet_height(w: &World, seat: usize) -> sim::fx::Fx {
+    let Some(f) = w.fighters[seat].as_ref() else { return sim::fx::Fx(0) };
+    let def = &w.setup.bodies[f.body as usize];
+    def.roles.feet.iter().map(|&i| &w.particles[(f.base + i as u16) as usize]).filter(|p| p.owner == Owner::Body(seat as u8)).map(|p| p.p.y - p.rad).min().unwrap_or(sim::fx::Fx(0))
+}
+
+/// A foot stands on a ledge rather than the ground.
+pub fn on_ledge(w: &World, seat: usize) -> bool {
+    w.fighters[seat].as_ref().is_some_and(|f| {
+        let def = &w.setup.bodies[f.body as usize];
+        def.roles.feet.iter().any(|&i| {
+            let k = (f.base + i as u16) as usize;
+            w.particles[k].owner == Owner::Body(seat as u8) && w.particles[k].p.y > w.particles[k].rad + ONE && w.supported(k as u16)
+        })
+    })
+}
+
+/// The fighter `seat` fights: the nearest one on the other side still in
+/// the round, or, when every one of them is out, the nearest at all. With
+/// two seats this is always the other seat.
+pub fn foe(w: &World, seat: usize) -> usize {
+    let me = pelvis(w, seat).map(|p| p.x);
+    let mut best: Option<(bool, i32, usize)> = None;
+    for k in 0..SEATS {
+        if k == seat || side(k) == side(seat) || w.fighters[k].is_none() {
+            continue;
+        }
+        let d = match (me, pelvis(w, k)) {
+            (Some(a), Some(b)) => (b.x - a).abs().trunc(),
+            _ => i32::MAX,
+        };
+        let key = (w.out(k), d, k);
+        if best.is_none_or(|b| key < b) {
+            best = Some(key);
+        }
+    }
+    best.map(|b| b.2).unwrap_or(if seat == 0 { 1 } else { 0 })
+}
+
 pub fn gap(w: &World, seat: usize) -> i32 {
-    match (pelvis(w, seat), pelvis(w, 1 - seat)) {
+    match (pelvis(w, seat), pelvis(w, foe(w, seat))) {
         (Some(a), Some(b)) => (b.x - a.x).abs().trunc(),
         _ => 0,
     }
@@ -114,7 +158,7 @@ pub fn gap(w: &World, seat: usize) -> i32 {
 
 /// The step bit that moves `seat` toward (or away from) the other fighter.
 fn step_toward(w: &World, seat: usize, toward: bool) -> u16 {
-    let (Some(a), Some(b)) = (pelvis(w, seat), pelvis(w, 1 - seat)) else { return 0 };
+    let (Some(a), Some(b)) = (pelvis(w, seat), pelvis(w, foe(w, seat))) else { return 0 };
     let right = (b.x > a.x) == toward;
     if right { Input::STEP_RIGHT } else { Input::STEP_LEFT }
 }
@@ -331,15 +375,18 @@ struct Replayer {
     mirror: bool,
     now: Vec<Input>,
     last: Vec<Input>,
+    seen: [Input; SEATS],
     round: u32,
     t: usize,
 }
 
 impl Pilot for Replayer {
-    fn observe(&mut self, other: Input) {
-        self.now.push(Input(other.0 & !Input::READY));
+    fn observe(&mut self, last: [Input; SEATS]) {
+        self.seen = last;
     }
-    fn input(&mut self, w: &World, _: usize) -> Input {
+    fn input(&mut self, w: &World, seat: usize) -> Input {
+        let other = self.seen[foe(w, seat)];
+        self.now.push(Input(other.0 & !Input::READY));
         if w.round != self.round {
             // A new round (or a draw played again): what was just watched
             // becomes what is played.
@@ -372,12 +419,12 @@ pub struct Search {
     seen: VecDeque<World>,
     chosen: Input,
     left: u32,
-    other: Input,
+    others: [Input; SEATS],
 }
 
 impl Search {
     pub fn new(horizon: u32, reaction: u32, branches: u32, period: u32) -> Search {
-        Search { horizon, reaction, branches, period: period.max(1), seen: VecDeque::new(), chosen: Input::NONE, left: 0, other: Input::NONE }
+        Search { horizon, reaction, branches, period: period.max(1), seen: VecDeque::new(), chosen: Input::NONE, left: 0, others: [Input::NONE; SEATS] }
     }
 
     fn candidates(&self, w: &World, seat: usize) -> Vec<Input> {
@@ -402,11 +449,11 @@ impl Search {
     /// How good a world is for `seat`, in whole points.
     fn score(w: &World, seat: usize) -> i64 {
         let me = seat;
-        let them = 1 - seat;
+        let them = foe(w, seat);
         let mut s: i64 = 0;
         match w.phase {
             Phase::RoundOver { result, .. } | Phase::MatchOver { result } => match result.loser {
-                Some(l) if l as usize == them => s += 100_000,
+                Some(l) if l != side(me) => s += 100_000,
                 Some(_) => s -= 100_000,
                 None => s -= 20_000,
             },
@@ -445,8 +492,8 @@ impl Search {
 }
 
 impl Pilot for Search {
-    fn observe(&mut self, other: Input) {
-        self.other = Input(other.0 & !Input::READY);
+    fn observe(&mut self, last: [Input; SEATS]) {
+        self.others = last.map(|i| Input(i.0 & !Input::READY));
     }
 
     fn input(&mut self, w: &World, seat: usize) -> Input {
@@ -465,9 +512,8 @@ impl Pilot for Search {
         let mut best = (i64::MIN, Input::NONE);
         for c in self.candidates(base, seat) {
             let mut trial = base.clone();
-            let mut inputs = [Input::NONE; 2];
+            let mut inputs = self.others;
             inputs[seat] = c;
-            inputs[1 - seat] = self.other;
             // Look ahead on the candidate. A cut that lands during the look-
             // ahead counts heavily, against the pilot when it is on itself:
             // without this the search stabbed toward the other head through
@@ -475,10 +521,16 @@ impl Pilot for Search {
             // (`lab ladder 4`, SECOND-ORDER-M5).
             let mut cuts: i64 = 0;
             for _ in 0..self.horizon {
-                trial.step(inputs);
+                trial.step_all(inputs);
                 for e in &trial.events {
                     if let sim::fight::Event::Cut { seat: s, spilled: true, .. } = *e {
-                        cuts += if s as usize == seat { -3_000 } else { 3_000 };
+                        cuts += if s as usize == seat {
+                            -3_000
+                        } else if side(s as usize) != side(seat) {
+                            3_000
+                        } else {
+                            0
+                        };
                     }
                 }
                 if !matches!(trial.phase, Phase::Fight) {
@@ -504,15 +556,18 @@ pub struct Outcome {
     pub finished: bool,
 }
 
-/// Play a match between two pilots to its end, or to `max_ticks`.
-pub fn duel(setup: sim::Setup, pilots: &mut [Box<dyn Pilot>; 2], max_ticks: u32) -> Outcome {
+/// Play a match between pilots, one per seat in order (two, or three when
+/// the setup seats a second opponent), to its end or to `max_ticks`.
+pub fn duel(setup: sim::Setup, pilots: &mut [Box<dyn Pilot>], max_ticks: u32) -> Outcome {
     let mut w = World::new(setup);
-    let mut last = [Input::NONE; 2];
+    let mut last = [Input::NONE; SEATS];
     while w.tick < max_ticks && !matches!(w.phase, Phase::MatchOver { .. }) {
-        pilots[0].observe(last[1]);
-        pilots[1].observe(last[0]);
-        let i = [pilots[0].input(&w, 0), pilots[1].input(&w, 1)];
-        w.step(i);
+        let mut i = [Input::NONE; SEATS];
+        for (k, p) in pilots.iter_mut().enumerate() {
+            p.observe(last);
+            i[k] = p.input(&w, k);
+        }
+        w.step_all(i);
         last = i;
     }
     Outcome { wins: w.wins, ticks: w.tick, finished: matches!(w.phase, Phase::MatchOver { .. }) }
@@ -565,6 +620,18 @@ pub enum Cond {
     MyInkBelow(i32),
     /// A seeded chance, in percent, drawn when the rule is considered.
     Chance(u32),
+    /// A fighter on my side is within this of the one I fight, cm: a
+    /// partner has engaged (flanked stops, Sam 2026-10-05).
+    AllyEngaged(i32),
+    /// The one I fight stands higher than me by more than this, cm.
+    OppAbove(i32),
+    /// … or lower.
+    OppBelow(i32),
+    /// A ledge spans where I stand, with room to spare, and its top is above
+    /// my feet: a jump and a stand would set me on it.
+    LedgeOverhead,
+    /// I stand on a ledge.
+    OnLedge,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -598,7 +665,7 @@ impl Tree {
     }
 
     fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
-        let them = 1 - me;
+        let them = foe(w, me);
         let near = |a: Option<V2>, b: Option<V2>, cm: i32| match (a, b) {
             (Some(a), Some(b)) => (a - b).len().trunc() < cm,
             _ => false,
@@ -619,6 +686,18 @@ impl Tree {
                 f.ink * 100 < max * pct
             }),
             Cond::Chance(pct) => self.rng.below(100) < *pct,
+            Cond::AllyEngaged(cm) => (0..SEATS).any(|k| k != me && side(k) == side(me) && w.fighters[k].is_some() && !w.out(k) && {
+                matches!((pelvis(w, k), pelvis(w, them)), (Some(a), Some(b)) if (a.x - b.x).abs().trunc() < *cm)
+            }),
+            Cond::OppAbove(cm) => matches!((pelvis(w, me), pelvis(w, them)), (Some(a), Some(b)) if (b.y - a.y).trunc() > *cm),
+            Cond::OppBelow(cm) => matches!((pelvis(w, me), pelvis(w, them)), (Some(a), Some(b)) if (a.y - b.y).trunc() > *cm),
+            // With room to spare: a pilot acts on what it saw some ticks ago, and
+            // a climb begun at a ledge's very end came down beside it.
+            Cond::LedgeOverhead => pelvis(w, me).is_some_and(|p| {
+                let room = sim::fx::Fx::int(LEDGE_ROOM);
+                w.setup.platforms.iter().any(|pl| p.x > pl.x0 + room && p.x < pl.x1 - room && pl.y > feet_height(w, me))
+            }),
+            Cond::OnLedge => on_ledge(w, me),
         }
     }
 
@@ -668,6 +747,12 @@ impl Tree {
             ("pogo", 13..=21) => to,
             ("pogo", 22..=55) => I::SHOULDER_DOWN | I::ELBOW_OUT | to,
             ("stand", 0) => I::STAND,
+            // Up onto the ledge overhead: a jump, and the stand key once the
+            // pelvis has risen past the ledge's top (one jump lifts it about
+            // 120 cm in 27 ticks; by tick 16 it has risen 100).
+            ("climb", 0) => I::JUMP,
+            ("climb", 1..=15) => 0,
+            ("climb", 16) => I::STAND,
             ("wait", 0..=9) => 0,
             ("search", 0..=11) => {
                 // The search sees the world as old as the tree does: built
@@ -683,9 +768,9 @@ impl Tree {
 }
 
 impl Pilot for Tree {
-    fn observe(&mut self, other: Input) {
+    fn observe(&mut self, last: [Input; SEATS]) {
         if let Some(s) = self.search.as_mut() {
-            s.observe(other);
+            s.observe(last);
         }
     }
 

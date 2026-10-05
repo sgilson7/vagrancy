@@ -32,4 +32,7 @@ pub use world::World;
 /// version is refused with a sentence.
 /// 7: a weapon may have more points and edges than a straight sword (Sam,
 /// 2026-10-04); a plain sword plays exactly as in 6.
-pub const SIM_VERSION: u32 = 7;
+/// 8: a third seat on the opponents' side, and ledges a fighter stands on
+/// (Sam, 2026-10-05). A replay carries three inputs a tick. A duel on open
+/// ground plays exactly as in 7.
+pub const SIM_VERSION: u32 = 8;

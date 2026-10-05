@@ -28,11 +28,15 @@ export function renderer(canvas, palette, numbers) {
     g.stroke();
     return ctx.createPattern(c, 'repeat');
   })();
+  // Colors go by side: on a flanked stop both opponents wear the right
+  // fighter's ochre stripes. `sides` is the latest frame's, from core.
+  let sides = [0, 1, 1];
+  const side = (seat) => sides[seat] ?? (seat === 0 ? 0 : 1);
   const fill = (part) => {
     if (part.body === 1) return palette.post;
-    return part.fighter === 0 ? palette.fighters.left.body : stripes;
+    return side(part.fighter) === 0 ? palette.fighters.left.body : stripes;
   };
-  const inkColor = (seat) => (seat === 0 ? palette.fighters.left.ink : palette.fighters.right.ink);
+  const inkColor = (seat) => (side(seat) === 0 ? palette.fighters.left.ink : palette.fighters.right.ink);
 
   // Where cuts landed this round, as core reported them. They are drawn
   // where they happened and do not move: the page does not integrate.
@@ -63,15 +67,15 @@ export function renderer(canvas, palette, numbers) {
     ctx.fill();
   }
 
-  function meter(x, f, seat) {
+  function meter(x, y, f, seat, toLeft) {
     const w = 220;
     const h = 10;
     ctx.fillStyle = palette.meter_back;
-    ctx.fillRect(x, 14, w, h);
+    ctx.fillRect(x, y, w, h);
     ctx.fillStyle = inkColor(seat);
     const filled = Math.max(0, Math.min(1, f.ink / Math.max(1, f.ink_max))) * w;
-    // The left meter empties toward the left fighter, the right toward the right.
-    ctx.fillRect(seat === 0 ? x : x + w - filled, 14, filled, h);
+    // A meter empties toward the side of the screen its fighter started on.
+    ctx.fillRect(toLeft ? x : x + w - filled, y, filled, h);
   }
 
   // A headshot is looked at: the page holds the clock, and the view closes
@@ -88,6 +92,7 @@ export function renderer(canvas, palette, numbers) {
 
   function draw(prev, cur, alpha) {
     const pts = lerp(prev, cur, alpha);
+    sides = cur.fighters.map((f, seat) => (f ? f.side : seat === 0 ? 0 : 1));
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = palette.paper;
     ctx.fillRect(0, 0, W, H);
@@ -107,6 +112,16 @@ export function renderer(canvas, palette, numbers) {
     ctx.moveTo(0, ground + 0.5);
     ctx.lineTo(W, ground + 0.5);
     ctx.stroke();
+    // Ledges: a slab of the ground's color with the ground's line on top.
+    for (const [x0, x1, y] of cur.platforms || []) {
+      const top = sy(y);
+      ctx.fillStyle = palette.ground;
+      ctx.fillRect(sx(x0), top, sx(x1) - sx(x0), 8);
+      ctx.beginPath();
+      ctx.moveTo(sx(x0), top + 0.5);
+      ctx.lineTo(sx(x1), top + 0.5);
+      ctx.stroke();
+    }
     // A dodging fighter is drawn see-through for the moment it cannot be cut.
     const dodging = (seat) => cur.fighters[seat] && cur.fighters[seat].dodging;
     for (const part of cur.parts) {
@@ -151,8 +166,13 @@ export function renderer(canvas, palette, numbers) {
       ctx.globalAlpha = 1;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // Seat 0's meter at the top left, seat 1's at the top right, and on a
+    // flanked stop seat 2's (the opponent on the left) under seat 0's.
     cur.fighters.forEach((f, seat) => {
-      if (f && f.ink_max > 0) meter(seat === 0 ? 16 : W - 236, f, seat);
+      if (!f || f.ink_max <= 0) return;
+      if (seat === 0) meter(16, 14, f, seat, true);
+      else if (seat === 1) meter(W - 236, 14, f, seat, false);
+      else meter(16, 30, f, seat, true);
     });
   }
 

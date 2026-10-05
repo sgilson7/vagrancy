@@ -33,7 +33,7 @@ pub(crate) fn test_world(bodies: Vec<BodyDef>, seats: [Option<Seat>; 2], gravity
     ph.walls = false;
     ph.tuning.drag = Fx(0);
     ph.tuning.cap = Fx::int(100_000);
-    World::new(Setup { seed: 1, mode: Mode::Practice, rounds_to_win: 3, physics: ph, bodies, seats })
+    World::new(Setup { seed: 1, mode: Mode::Practice, rounds_to_win: 3, physics: ph, bodies, seats: [seats[0], seats[1], None], platforms: Vec::new() })
 }
 
 /// H1 — the order of the integrator.

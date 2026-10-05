@@ -171,7 +171,8 @@ pub enum Mode {
     Practice,
 }
 
-/// One seat: which body stands in it.
+/// One seat: which body stands in it. `x` is how far behind the middle it
+/// starts, along its own facing: seat 0 at `x` stands at -x.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Seat {
     pub body: u8,
@@ -186,6 +187,33 @@ pub struct Setup {
     pub rounds_to_win: u32,
     pub physics: Physics,
     pub bodies: Vec<BodyDef>,
-    /// Seat 0 faces +x on the left; seat 1 faces -x on the right.
-    pub seats: [Option<Seat>; 2],
+    /// Seat 0 faces +x on the left; seat 1 faces -x on the right; seat 2,
+    /// when a fight has one, is a second opponent on the left facing +x
+    /// (Sam, 2026-10-05: "an enemy on each side of you"). Seat 0 is one
+    /// side; seats 1 and 2 are the other.
+    pub seats: [Option<Seat>; SEATS],
+    /// Ledges a fighter can stand on, besides the ground.
+    pub platforms: Vec<Platform>,
+}
+
+/// How many fighters a world can hold.
+pub const SEATS: usize = 3;
+
+/// The side a seat fights on: 0 for seat 0, 1 for the others.
+pub fn side(seat: usize) -> u8 {
+    if seat == 0 { 0 } else { 1 }
+}
+
+/// Which way a seat faces: +1 (toward +x) or -1.
+pub fn facing(seat: usize) -> i32 {
+    if seat == 1 { -1 } else { 1 }
+}
+
+/// A one-way ledge: solid from above, passable from below and the sides.
+/// Its top runs from `x0` to `x1` at height `y`, in cm.
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct Platform {
+    pub x0: Fx,
+    pub x1: Fx,
+    pub y: Fx,
 }

@@ -27,7 +27,8 @@
     "weapon": "weapons.<id>.name, from data/weapons.json",
     "region": "road.region.<row>, the name of a row of the road's tree",
     "won": "how many fights in a chapter of the road the player has won",
-    "count": "how many requirements a level of the road's tree has, from data/road.json"
+    "count": "how many requirements a level of the road's tree has, from data/road.json",
+    "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -77,7 +78,8 @@
     "opponents (weapon carriers), road.req.with": "new: tinker, pilgrim, knife_grinder, ox_herd, eel_fisher, bargeman, rice_broker, bell_founder, porter, lacquerer, post_rider, paper_maker, gambler, monk, general, duelist (all five strings each), and road.req.with",
     "weapons, road.weapon_heading, road.carry, road.carried, road.weapon_locked, road.reward, road.carries, road.view, road.region, road.chapter, road.chapter_progress, local.weapon_left, local.weapon_right": "new: every string",
     "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
-    "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)"
+    "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)",
+    "opponents (flanked), road.req.headshot, road.req.untouched, road.companion, road.map_heading, maps, local.map, online.weapon, online.map, online.map_join": "new: roofer, well_digger, charcoal_burner, tea_picker, bridge_keeper, kite_maker, net_mender, stone_cutter, shrine_keeper, toll_collector (all five strings each), and every other string named here"
   },
   "_glossary": {
     "ink": {
@@ -330,7 +332,9 @@
       "flawless": "Beat {opponent_mid} without losing a round.",
       "quick": "Beat {opponent_mid} in {seconds} seconds or less.",
       "with": "Beat {opponent_mid} carrying the {weapon}.",
-      "met": "Done."
+      "met": "Done.",
+      "headshot": "Beat {opponent_mid}, ending a round with a cut across the head.",
+      "untouched": "Beat {opponent_mid}, winning a round without being cut."
     },
     "tier": {
       "none": "Open from the start",
@@ -360,15 +364,23 @@
     "chapter": "Chapter {n}: {region}",
     "chapter_progress": "{won} of {count} won.",
     "view": {
-      "tree": {"label": "Tree"},
-      "chart": {"label": "Chart"},
-      "chapters": {"label": "Chapters"}
+      "tree": {
+        "label": "Tree"
+      },
+      "chart": {
+        "label": "Chart"
+      },
+      "chapters": {
+        "label": "Chapters"
+      }
     },
     "fight": {
       "label": "Fight {opponent_mid}"
     },
     "locked": "To fight here, first:",
-    "cleared": "You have won here. You can fight {opponent_mid} again."
+    "cleared": "You have won here. You can fight {opponent_mid} again.",
+    "companion": "{companion} stands at your back, carrying a {weapon}. The round ends when both of them, or you, can no longer fight.",
+    "map_heading": "The ground"
   },
   "opponents": {
     "scarecrow": {
@@ -713,6 +725,76 @@
       "place": "A walled garden with a stopwatch hanging on the gate.",
       "does": "The duelist carries a kris and tries several moves a short way ahead before she chooses. She looks about {horizon_ms} milliseconds into the future, and she acts on what she saw {reaction_ms} milliseconds ago.",
       "try": "She reacts faster than almost anyone on the road. A steady guard does better against her than a feint."
+    },
+    "roofer": {
+      "name": "The Roofer",
+      "name_mid": "the roofer",
+      "place": "A row of tiled roofs, with a satellite dish on the highest one.",
+      "does": "The roofer carries a scimitar and likes high ground. When a ledge is above her she sometimes jumps and stands on it, and from there she swings overhead at you below. On the ground she sweeps low.",
+      "try": "Stay out from under her ledge. When she comes down to reach you, she has to fight from the ground like anyone else."
+    },
+    "well_digger": {
+      "name": "The Well digger",
+      "name_mid": "the well digger",
+      "place": "A half-dug well in a courtyard, with a pump running off a generator.",
+      "does": "The well digger carries a kris and walks straight at you. Close in, he sweeps low or bounces in with a thrust, and between attacks he holds his blade low.",
+      "try": "His attacks come from below. Keep your blade low enough to meet them, and keep the tinker in view behind you."
+    },
+    "charcoal_burner": {
+      "name": "The Charcoal burner",
+      "name_mid": "the charcoal burner",
+      "place": "A clearing of smoking earth mounds, with a pickup truck parked at the edge.",
+      "does": "The charcoal burner carries a forked blade and waits with it raised, backing away if you come close. Once the drover has reached you, she steps in and thrusts from the other side.",
+      "try": "Beat the drover quickly, because the charcoal burner waits to attack until the drover keeps you busy."
+    },
+    "tea_picker": {
+      "name": "The Tea picker",
+      "name_mid": "the tea picker",
+      "place": "A terraced tea garden with raised stone walls, and a radio hanging from a post.",
+      "does": "The tea picker carries a short sword. He dodges away from about half the attacks at his head, and from close range he often dodges in through yours. When a ledge is above him he sometimes jumps up and stands on it. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "His sword is short. Stay a little beyond it, and cut as his dodge ends."
+    },
+    "bridge_keeper": {
+      "name": "The Bridge keeper",
+      "name_mid": "the bridge keeper",
+      "place": "A wooden footbridge over a canal, lit by a string of bulbs.",
+      "does": "The bridge keeper carries a trident and climbs onto the bridge when he can. From above, he strikes overhead at anyone below him. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Fight him away from the bridge, or get up onto it with him, so that your head is not under his trident."
+    },
+    "kite_maker": {
+      "name": "The Kite maker",
+      "name_mid": "the kite maker",
+      "place": "A hillside of terraces, with kites tied to a fence and a weather radio.",
+      "does": "The kite maker carries a scimitar and climbs the terraces when she can. From higher ground she jumps down at you with a cut, and close in she sometimes bounces before she strikes. Otherwise she looks a short way ahead before she chooses.",
+      "try": "Take the high terrace before she does, so that she has to come up to you."
+    },
+    "net_mender": {
+      "name": "The Net mender",
+      "name_mid": "the net mender",
+      "place": "A jetty hung with drying nets, under a fluorescent work light.",
+      "does": "The net mender carries a trident and keeps his distance until the courier has reached you. Then he looks a short way ahead and attacks from the other side. He sometimes dodges away from an attack at his head, and he reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Turn to face him when the courier arrives, because that is when he comes in."
+    },
+    "stone_cutter": {
+      "name": "The Stone cutter",
+      "name_mid": "the stone cutter",
+      "place": "A quarry with a crane and a radio reading out the weather.",
+      "does": "The stone cutter carries a longsword, about {reach_pct} percent longer than your sword, and swings it overhead when you come within reach. Otherwise she looks a short way ahead before she chooses. The gatekeeper stands at your back with a trident held out.",
+      "try": "The gatekeeper waits for you. Fight the stone cutter first, and keep your back clear of the trident."
+    },
+    "shrine_keeper": {
+      "name": "The Shrine keeper",
+      "name_mid": "the shrine keeper",
+      "place": "A mountain shrine on terraces, with a vending machine by the gate.",
+      "does": "The shrine keeper carries a sword and dodges away from about half the attacks at his head. When you stand above him, he climbs after you. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Fight him on the ground, where he has no reason to climb."
+    },
+    "toll_collector": {
+      "name": "The Toll collector",
+      "name_mid": "the toll collector",
+      "place": "A toll gate on a mountain pass, with ledges cut into the rock and a ticket printer.",
+      "does": "The toll collector carries a kris. She dodges away from most attacks at her head, climbs a ledge when she is under one, and from above swings overhead at you. Otherwise she looks a short way ahead before she chooses.",
+      "try": "Keep moving, so that she does not get to stand above you."
     }
   },
   "local": {
@@ -722,7 +804,8 @@
     "keyboard_limit": "Some keyboards stop registering new keys when several are held at once. If an arm stops responding, try different key bindings in Settings.",
     "start": {
       "label": "Start the match"
-    }
+    },
+    "map": "Ground for this match:"
   },
   "online": {
     "privacy": "A direct connection means your friend's browser learns your IP address, and yours learns theirs. Play online with people you are willing to share that with.",
@@ -778,7 +861,10 @@
       "friend": "Your friend is ready.",
       "friend_not": "Your friend has not said they are ready yet.",
       "again": "Tell your friend you want another match"
-    }
+    },
+    "weapon": "You carry:",
+    "map": "Ground for this match:",
+    "map_join": "The host chooses the ground for the match."
   },
   "settings": {
     "music": {
@@ -881,233 +967,233 @@
       "damaged": "This replay file is incomplete or damaged, so nothing was loaded."
     }
   },
-    "kc": {
-      "K01": {
-        "name": "Turning the shoulder",
-        "when": "You want the sword higher or lower.",
-        "then": "Hold a shoulder key, and the arm turns for as long as you hold it."
-      },
-      "K02": {
-        "name": "Bending and straightening the elbow",
-        "when": "The target is nearer or farther than your blade.",
-        "then": "Straighten the elbow to reach farther, and bend it to pull the blade in."
-      },
-      "K03": {
-        "name": "The sword carries on",
-        "when": "A swing is moving.",
-        "then": "Let go of the key before the blade gets where you want it, because the heavy sword keeps turning the arm."
-      },
-      "K04": {
-        "name": "Stepping",
-        "when": "You are too far from your opponent, or too close.",
-        "then": "Hold a step key, and the ground carries you that way while the legs keep you upright."
-      },
-      "K05": {
-        "name": "Jumping",
-        "when": "You need to leave the ground.",
-        "then": "Press jump: you get one jump from the ground."
-      },
-      "K06": {
-        "name": "The bounce in the air",
-        "when": "You are in the air and still have your second jump.",
-        "then": "Press jump to bounce off the air, holding a direction to push that way; a jump late in a fall rises higher, because the fall turns into a rise at the same speed."
-      },
-      "K07": {
-        "name": "Getting up",
-        "when": "You are knocked down and still have both legs.",
-        "then": "Press stand."
-      },
-      "K08": {
-        "name": "Dodging",
-        "when": "A blade is about to touch you.",
-        "then": "Press dodge so that the moment no blade can cut you covers the touch; your own blade cuts nothing in that moment either."
-      },
-      "K09": {
-        "name": "Rolling",
-        "when": "You want to dodge and change place on the ground.",
-        "then": "Hold a direction as you press dodge."
-      },
-      "K10": {
-        "name": "Dodging in the air",
-        "when": "You are in the air and need to get out of the way.",
-        "then": "Press dodge to be carried sideways, at the cost of your second jump."
-      },
-      "K11": {
-        "name": "The wait after a dodge",
-        "when": "You dodged a moment ago.",
-        "then": "Expect a short wait before the next dodge, so choose the moment rather than pressing again."
-      },
-      "K12": {
-        "name": "Blocking",
-        "when": "A swing is coming at you.",
-        "then": "Put your blade in its path, because swords are solid and a blade that meets yours stops."
-      },
-      "K13": {
-        "name": "What a cut is",
-        "when": "Your moving blade touches a part of a fighter.",
-        "then": "The blade cuts straight across that part where it touched, and what lies beyond the cut drops off; a slow blade does not cut."
-      },
-      "K14": {
-        "name": "Where a cut ends the round",
-        "when": "You choose where to aim.",
-        "then": "Aim across the neck, the head or the heart, because a cut there ends the round."
-      },
-      "K15": {
-        "name": "Ink",
-        "when": "A cut lands somewhere that does not end the round.",
-        "then": "The stump spills ink until the round ends, faster for a larger cut, and a fighter who runs out of ink loses the round."
-      },
-      "K16": {
-        "name": "Swinging for speed",
-        "when": "You need to cross ground fast or leave it.",
-        "then": "Swing in one direction again and again: each swing adds speed to your whole fighter."
-      },
-      "K17": {
-        "name": "Planting the sword",
-        "when": "You want to rise or vault.",
-        "then": "Put the tip on the ground and straighten the arm; the sword cannot go into the ground, so the push lifts you."
-      },
-      "K18": {
-        "name": "Reach",
-        "when": "The opponent's blade is longer than yours.",
-        "then": "Let them swing first and move in while their blade travels, because a longer, heavier blade is slower to start and to stop."
-      },
-      "K19": {
-        "name": "The opening after a committed move",
-        "when": "The opponent has finished a swing, a thrust or a landing.",
-        "then": "Attack in that moment, before they can move again."
-      },
-      "K20": {
-        "name": "A path already chosen",
-        "when": "The opponent is in the air or has planted the sword.",
-        "then": "Move to where they are not going, and cut where they land."
-      },
-      "K21": {
-        "name": "Getting around a guard",
-        "when": "The opponent holds the sword out in front.",
-        "then": "Go over or under the blade, toward the part it does not cover."
-      },
-      "K22": {
-        "name": "Stopping a turning blade",
-        "when": "The opponent keeps the sword turning.",
-        "then": "Meet it with a firm block, then strike while they build speed again."
-      },
-      "K23": {
-        "name": "High against low",
-        "when": "An attack comes low, or a guard sits high, or an overhead waits for your jump.",
-        "then": "Answer from the other height: over a sweep, under a high guard, and on the ground against an overhead."
-      },
-      "K24": {
-        "name": "Aim where they do not defend",
-        "when": "The opponent dodges attacks at one part of the body.",
-        "then": "Aim at another part that still ends the round or drains it."
-      },
-      "K25": {
-        "name": "Drawing a move",
-        "when": "The opponent answers a threat rather than attacking.",
-        "then": "Make the threat, let them answer, and strike as the answer ends."
-      },
-      "K26": {
-        "name": "Your own moves returned",
-        "when": "The opponent copies what you did last round.",
-        "then": "Do this round what you know how to answer next round."
-      },
-      "K27": {
-        "name": "A late change",
-        "when": "The opponent looks a short time ahead before choosing.",
-        "then": "Start a move that looks harmless and change it late."
-      },
-      "K28": {
-        "name": "Inside their reaction",
-        "when": "The opponent reacts some time after you move.",
-        "then": "Finish what you start before they can answer it."
-      },
-      "K29": {
-        "name": "Distance",
-        "when": "The opponent keeps away from you, or waits for you to come.",
-        "then": "Close in with your guard up, and keep your blade where they will be."
-      },
-      "K30": {
-        "name": "A guard above",
-        "when": "The opponent comes down at you from the air.",
-        "then": "Hold your sword above you, because a blade that meets yours stops."
-      },
-      "K31": {
-        "name": "Light gravity",
-        "when": "Gravity is weaker than usual.",
-        "then": "Jump later and expect to hang longer, for you and for them."
-      },
-      "K32": {
-        "name": "An opponent with more ink",
-        "when": "The opponent has twice your ink.",
-        "then": "Go for a cut that ends the round rather than waiting for them to run dry."
-      },
-      "I1": {
-        "name": "Winning a round",
-        "when": "A round starts against an opponent who does not fight back.",
-        "then": "Close the distance and land a cut that ends the round."
-      },
-      "I2": {
-        "name": "Winning a match",
-        "when": "An opponent fights back.",
-        "then": "Find what they commit to, answer it, and do that again in the next round."
-      },
-      "S1": {
-        "name": "Watch before you commit",
-        "when": "You meet a new opponent.",
-        "then": "Watch what they repeat before you attack."
-      },
-      "S2": {
-        "name": "Compare two opponents",
-        "when": "Two opponents differ in one thing.",
-        "then": "Find that difference, and change the part of your plan it touches."
-      }
+  "kc": {
+    "K01": {
+      "name": "Turning the shoulder",
+      "when": "You want the sword higher or lower.",
+      "then": "Hold a shoulder key, and the arm turns for as long as you hold it."
     },
-    "kc_edge": {
-      "K01_K03": "Letting go early is the same shoulder key, timed against the weight of the sword.",
-      "K01_K13": "A cut needs a moving blade, and the shoulder is what moves it.",
-      "K02_K13": "The elbow decides whether the blade reaches the part you aim at.",
-      "K13_K14": "A cut that ends the round is an ordinary cut across a different part.",
-      "K13_K15": "A cut that does not end the round still costs ink.",
-      "K01_K12": "A block is the shoulder holding the blade in the path of a swing.",
-      "K12_K22": "Stopping a turning blade is a block held against something that keeps coming.",
-      "K12_K30": "A guard above is a block against a swing that comes down.",
-      "K12_K21": "A guard that waits is a block you have to go around.",
-      "K05_K06": "The second jump is the first with the ground replaced by a bounce.",
-      "K08_K09": "A roll is a dodge with a direction held.",
-      "K08_K10": "An air dodge is a dodge with the ground taken away.",
-      "K06_K10": "An air dodge spends the second jump.",
-      "K08_K11": "The wait comes after the dodge.",
-      "K01_K16": "Speed comes from swinging the shoulder one way.",
-      "K02_K17": "Straightening the arm is what pushes the planted tip.",
-      "K16_K17": "A plant is a swing whose push goes into the ground.",
-      "K04_K29": "Distance is your steps chosen against theirs.",
-      "K02_K18": "Reach is your straightened arm measured against theirs.",
-      "K13_K19": "An opening is worth something when you have a cut to land in it.",
-      "K19_K20": "A jump or a plant is a committed move that lasts longer.",
-      "K17_K20": "An opponent who plants has done what you can do, and their path is fixed until they land.",
-      "K19_K25": "Drawing a move makes the opening instead of waiting for it.",
-      "K11_K25": "The wait after their dodge is the opening a drawn dodge gives you.",
-      "K05_K23": "A jump is one way over a low attack.",
-      "K12_K23": "Meeting a sweep from above is a block from another height.",
-      "K14_K24": "If one part that ends the round is defended, another still ends it.",
-      "K08_K24": "Their dodge is the move you learned, used against you, so aim at a part that does not trigger it.",
-      "K19_K26": "Your own last round is the committed move you face.",
-      "K19_K28": "An opening lasts as long as they take to react.",
-      "K28_K27": "Looking ahead is reacting early, and a late change lands past what they looked at.",
-      "K06_K31": "Light gravity is the same jump with the fall slowed.",
-      "K15_K32": "With twice the ink to drain, waiting for them to run dry takes twice as long.",
-      "K14_K32": "A cut that ends the round does not depend on how much ink is left.",
-      "K04_I1": "A round starts with closing the distance.",
-      "K14_I1": "A round ends with a cut across the neck, the head or the heart.",
-      "I1_I2": "A match is rounds won against someone who answers back.",
-      "K12_I2": "Against someone who swings back, your blade is also your shield.",
-      "K19_I2": "What wins rounds against a real opponent is the opening after what they commit to.",
-      "S1_K19": "Watching first shows which moves they commit to.",
-      "S1_K26": "Watching your own round is how you see what comes back.",
-      "S2_K24": "Comparing two opponents shows what changed, and so where to aim.",
-      "S2_K32": "Comparing a fight with and without its condition shows what the condition changes."
+    "K02": {
+      "name": "Bending and straightening the elbow",
+      "when": "The target is nearer or farther than your blade.",
+      "then": "Straighten the elbow to reach farther, and bend it to pull the blade in."
     },
+    "K03": {
+      "name": "The sword carries on",
+      "when": "A swing is moving.",
+      "then": "Let go of the key before the blade gets where you want it, because the heavy sword keeps turning the arm."
+    },
+    "K04": {
+      "name": "Stepping",
+      "when": "You are too far from your opponent, or too close.",
+      "then": "Hold a step key, and the ground carries you that way while the legs keep you upright."
+    },
+    "K05": {
+      "name": "Jumping",
+      "when": "You need to leave the ground.",
+      "then": "Press jump: you get one jump from the ground."
+    },
+    "K06": {
+      "name": "The bounce in the air",
+      "when": "You are in the air and still have your second jump.",
+      "then": "Press jump to bounce off the air, holding a direction to push that way; a jump late in a fall rises higher, because the fall turns into a rise at the same speed."
+    },
+    "K07": {
+      "name": "Getting up",
+      "when": "You are knocked down and still have both legs.",
+      "then": "Press stand."
+    },
+    "K08": {
+      "name": "Dodging",
+      "when": "A blade is about to touch you.",
+      "then": "Press dodge so that the moment no blade can cut you covers the touch; your own blade cuts nothing in that moment either."
+    },
+    "K09": {
+      "name": "Rolling",
+      "when": "You want to dodge and change place on the ground.",
+      "then": "Hold a direction as you press dodge."
+    },
+    "K10": {
+      "name": "Dodging in the air",
+      "when": "You are in the air and need to get out of the way.",
+      "then": "Press dodge to be carried sideways, at the cost of your second jump."
+    },
+    "K11": {
+      "name": "The wait after a dodge",
+      "when": "You dodged a moment ago.",
+      "then": "Expect a short wait before the next dodge, so choose the moment rather than pressing again."
+    },
+    "K12": {
+      "name": "Blocking",
+      "when": "A swing is coming at you.",
+      "then": "Put your blade in its path, because swords are solid and a blade that meets yours stops."
+    },
+    "K13": {
+      "name": "What a cut is",
+      "when": "Your moving blade touches a part of a fighter.",
+      "then": "The blade cuts straight across that part where it touched, and what lies beyond the cut drops off; a slow blade does not cut."
+    },
+    "K14": {
+      "name": "Where a cut ends the round",
+      "when": "You choose where to aim.",
+      "then": "Aim across the neck, the head or the heart, because a cut there ends the round."
+    },
+    "K15": {
+      "name": "Ink",
+      "when": "A cut lands somewhere that does not end the round.",
+      "then": "The stump spills ink until the round ends, faster for a larger cut, and a fighter who runs out of ink loses the round."
+    },
+    "K16": {
+      "name": "Swinging for speed",
+      "when": "You need to cross ground fast or leave it.",
+      "then": "Swing in one direction again and again: each swing adds speed to your whole fighter."
+    },
+    "K17": {
+      "name": "Planting the sword",
+      "when": "You want to rise or vault.",
+      "then": "Put the tip on the ground and straighten the arm; the sword cannot go into the ground, so the push lifts you."
+    },
+    "K18": {
+      "name": "Reach",
+      "when": "The opponent's blade is longer than yours.",
+      "then": "Let them swing first and move in while their blade travels, because a longer, heavier blade is slower to start and to stop."
+    },
+    "K19": {
+      "name": "The opening after a committed move",
+      "when": "The opponent has finished a swing, a thrust or a landing.",
+      "then": "Attack in that moment, before they can move again."
+    },
+    "K20": {
+      "name": "A path already chosen",
+      "when": "The opponent is in the air or has planted the sword.",
+      "then": "Move to where they are not going, and cut where they land."
+    },
+    "K21": {
+      "name": "Getting around a guard",
+      "when": "The opponent holds the sword out in front.",
+      "then": "Go over or under the blade, toward the part it does not cover."
+    },
+    "K22": {
+      "name": "Stopping a turning blade",
+      "when": "The opponent keeps the sword turning.",
+      "then": "Meet it with a firm block, then strike while they build speed again."
+    },
+    "K23": {
+      "name": "High against low",
+      "when": "An attack comes low, or a guard sits high, or an overhead waits for your jump.",
+      "then": "Answer from the other height: over a sweep, under a high guard, and on the ground against an overhead."
+    },
+    "K24": {
+      "name": "Aim where they do not defend",
+      "when": "The opponent dodges attacks at one part of the body.",
+      "then": "Aim at another part that still ends the round or drains it."
+    },
+    "K25": {
+      "name": "Drawing a move",
+      "when": "The opponent answers a threat rather than attacking.",
+      "then": "Make the threat, let them answer, and strike as the answer ends."
+    },
+    "K26": {
+      "name": "Your own moves returned",
+      "when": "The opponent copies what you did last round.",
+      "then": "Do this round what you know how to answer next round."
+    },
+    "K27": {
+      "name": "A late change",
+      "when": "The opponent looks a short time ahead before choosing.",
+      "then": "Start a move that looks harmless and change it late."
+    },
+    "K28": {
+      "name": "Inside their reaction",
+      "when": "The opponent reacts some time after you move.",
+      "then": "Finish what you start before they can answer it."
+    },
+    "K29": {
+      "name": "Distance",
+      "when": "The opponent keeps away from you, or waits for you to come.",
+      "then": "Close in with your guard up, and keep your blade where they will be."
+    },
+    "K30": {
+      "name": "A guard above",
+      "when": "The opponent comes down at you from the air.",
+      "then": "Hold your sword above you, because a blade that meets yours stops."
+    },
+    "K31": {
+      "name": "Light gravity",
+      "when": "Gravity is weaker than usual.",
+      "then": "Jump later and expect to hang longer, for you and for them."
+    },
+    "K32": {
+      "name": "An opponent with more ink",
+      "when": "The opponent has twice your ink.",
+      "then": "Go for a cut that ends the round rather than waiting for them to run dry."
+    },
+    "I1": {
+      "name": "Winning a round",
+      "when": "A round starts against an opponent who does not fight back.",
+      "then": "Close the distance and land a cut that ends the round."
+    },
+    "I2": {
+      "name": "Winning a match",
+      "when": "An opponent fights back.",
+      "then": "Find what they commit to, answer it, and do that again in the next round."
+    },
+    "S1": {
+      "name": "Watch before you commit",
+      "when": "You meet a new opponent.",
+      "then": "Watch what they repeat before you attack."
+    },
+    "S2": {
+      "name": "Compare two opponents",
+      "when": "Two opponents differ in one thing.",
+      "then": "Find that difference, and change the part of your plan it touches."
+    }
+  },
+  "kc_edge": {
+    "K01_K03": "Letting go early is the same shoulder key, timed against the weight of the sword.",
+    "K01_K13": "A cut needs a moving blade, and the shoulder is what moves it.",
+    "K02_K13": "The elbow decides whether the blade reaches the part you aim at.",
+    "K13_K14": "A cut that ends the round is an ordinary cut across a different part.",
+    "K13_K15": "A cut that does not end the round still costs ink.",
+    "K01_K12": "A block is the shoulder holding the blade in the path of a swing.",
+    "K12_K22": "Stopping a turning blade is a block held against something that keeps coming.",
+    "K12_K30": "A guard above is a block against a swing that comes down.",
+    "K12_K21": "A guard that waits is a block you have to go around.",
+    "K05_K06": "The second jump is the first with the ground replaced by a bounce.",
+    "K08_K09": "A roll is a dodge with a direction held.",
+    "K08_K10": "An air dodge is a dodge with the ground taken away.",
+    "K06_K10": "An air dodge spends the second jump.",
+    "K08_K11": "The wait comes after the dodge.",
+    "K01_K16": "Speed comes from swinging the shoulder one way.",
+    "K02_K17": "Straightening the arm is what pushes the planted tip.",
+    "K16_K17": "A plant is a swing whose push goes into the ground.",
+    "K04_K29": "Distance is your steps chosen against theirs.",
+    "K02_K18": "Reach is your straightened arm measured against theirs.",
+    "K13_K19": "An opening is worth something when you have a cut to land in it.",
+    "K19_K20": "A jump or a plant is a committed move that lasts longer.",
+    "K17_K20": "An opponent who plants has done what you can do, and their path is fixed until they land.",
+    "K19_K25": "Drawing a move makes the opening instead of waiting for it.",
+    "K11_K25": "The wait after their dodge is the opening a drawn dodge gives you.",
+    "K05_K23": "A jump is one way over a low attack.",
+    "K12_K23": "Meeting a sweep from above is a block from another height.",
+    "K14_K24": "If one part that ends the round is defended, another still ends it.",
+    "K08_K24": "Their dodge is the move you learned, used against you, so aim at a part that does not trigger it.",
+    "K19_K26": "Your own last round is the committed move you face.",
+    "K19_K28": "An opening lasts as long as they take to react.",
+    "K28_K27": "Looking ahead is reacting early, and a late change lands past what they looked at.",
+    "K06_K31": "Light gravity is the same jump with the fall slowed.",
+    "K15_K32": "With twice the ink to drain, waiting for them to run dry takes twice as long.",
+    "K14_K32": "A cut that ends the round does not depend on how much ink is left.",
+    "K04_I1": "A round starts with closing the distance.",
+    "K14_I1": "A round ends with a cut across the neck, the head or the heart.",
+    "I1_I2": "A match is rounds won against someone who answers back.",
+    "K12_I2": "Against someone who swings back, your blade is also your shield.",
+    "K19_I2": "What wins rounds against a real opponent is the opening after what they commit to.",
+    "S1_K19": "Watching first shows which moves they commit to.",
+    "S1_K26": "Watching your own round is how you see what comes back.",
+    "S2_K24": "Comparing two opponents shows what changed, and so where to aim.",
+    "S2_K32": "Comparing a fight with and without its condition shows what the condition changes."
+  },
   "kc_compare": {
     "c_swing_plant": "The same push from the shoulder and the arm, sent into the air or into the ground.",
     "p_jump_air_jump": "A jump from the ground and a bounce off the air.",
@@ -1208,6 +1294,24 @@
     "trident": {
       "name": "trident",
       "desc": "A center blade and two side prongs. The heaviest weapon you can carry."
+    }
+  },
+  "maps": {
+    "flat": {
+      "name": "Open ground",
+      "desc": "Flat ground with nothing to stand on."
+    },
+    "ledges": {
+      "name": "Ledges",
+      "desc": "A raised ledge at each end. Jump, and press {key.stand} while you are above a ledge, to stand on it."
+    },
+    "bridge": {
+      "name": "Bridge",
+      "desc": "A raised walkway across the middle. Jump, and press {key.stand} while you are above it, to stand on it."
+    },
+    "tiers": {
+      "name": "Terraces",
+      "desc": "A low terrace at each side and a high one in the middle. Jump, and press {key.stand} while you are above a terrace, to stand on it."
     }
   }
 }

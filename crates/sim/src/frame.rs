@@ -14,6 +14,8 @@ pub struct Frame {
     pub parts: Vec<PartView>,
     pub swords: Vec<SwordView>,
     pub fighters: Vec<Option<FighterView>>,
+    /// Ledges, as `[x0, x1, y]` in raw fixed point.
+    pub platforms: Vec<[i32; 3]>,
     pub round: u32,
     pub wins: [u32; 2],
     /// "fight", "round_over" or "match_over".
@@ -49,6 +51,8 @@ pub struct SwordView {
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct FighterView {
     pub body: u8,
+    /// 0 for seat 0, 1 for its opponents: the page colors a fighter by it.
+    pub side: u8,
     pub facing: i32,
     pub ink: i32,
     pub ink_max: i32,
@@ -90,6 +94,7 @@ pub fn frame(w: &World) -> Frame {
             .map(|f| {
                 f.as_ref().map(|f| FighterView {
                     body: f.body,
+                    side: f.side,
                     facing: f.facing,
                     ink: f.ink,
                     ink_max: w.setup.bodies[f.body as usize].ink,
@@ -97,6 +102,7 @@ pub fn frame(w: &World) -> Frame {
                 })
             })
             .collect(),
+        platforms: w.setup.platforms.iter().map(|p| [p.x0.0, p.x1.0, p.y.0]).collect(),
         round: w.round,
         wins: w.wins,
         phase: match w.phase {

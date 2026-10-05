@@ -116,7 +116,7 @@ impl Pair {
     }
 }
 
-fn inputs(s: &Session) -> Vec<[u16; 2]> {
+fn inputs(s: &Session) -> Vec<[u16; sim::body::SEATS]> {
     s.recording().map(|r| r.inputs.clone()).unwrap_or_default()
 }
 
@@ -146,10 +146,10 @@ fn an_input_takes_effect_delay_ticks_later_on_both_peers() {
     for (who, s) in [("host", &p.host), ("joiner", &p.join)] {
         let i = inputs(s);
         assert!(i.len() > 60, "{who} only played {} ticks", i.len());
-        let pressed: Vec<(usize, [u16; 2])> = i.iter().copied().enumerate().filter(|(_, x)| *x != [0, 0]).collect();
+        let pressed: Vec<(usize, [u16; 3])> = i.iter().copied().enumerate().filter(|(_, x)| *x != [0, 0, 0]).collect();
         assert_eq!(
             pressed,
-            vec![(10 + delay as usize, [Input::SHOULDER_UP, 0]), (20 + delay as usize, [0, Input::ELBOW_IN])],
+            vec![(10 + delay as usize, [Input::SHOULDER_UP, 0, 0]), (20 + delay as usize, [0, Input::ELBOW_IN, 0])],
             "{who}: each key lands {delay} ticks after it was pressed"
         );
     }
@@ -173,7 +173,7 @@ fn two_peers_stay_together_for_ten_thousand_ticks() {
     assert!(matches!(p.host.status, Status::Playing | Status::WaitingOn), "{:?}", p.host.status);
     assert!(matches!(p.join.status, Status::Playing | Status::WaitingOn), "{:?}", p.join.status);
     // Replay both up to the shorter, and they are the same world.
-    let replay = |r: &[[u16; 2]]| {
+    let replay = |r: &[[u16; 3]]| {
         let mut w = World::new(content::setup::versus(7, sim::balance::DEFAULT_TUNING));
         for x in r {
             w.step([Input(x[0]), Input(x[1])]);
@@ -417,7 +417,7 @@ fn two_players_carrying_different_weapons_see_the_same_match() {
     // hello names its weapon; the host rebuilds the match with both before
     // the welcome, and both sides then step the same world.
     let mut p = Pair::new(30, 5);
-    p.host = Session::host(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", "sword"]), BUILD);
+    p.host = Session::host(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", "sword"], "flat"), BUILD);
     p.join = Session::join(BUILD, "scimitar");
     let mut armed = false;
     for _ in 0..20_000 {
@@ -425,7 +425,7 @@ fn two_players_carrying_different_weapons_see_the_same_match() {
         p.pump();
         if !armed {
             if let Some(w) = p.host.joiner_weapon.clone() {
-                armed = p.host.rearm(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", &w]));
+                armed = p.host.rearm(content::setup::versus_with(7, sim::balance::DEFAULT_TUNING, ["trident", &w], "flat"));
             }
         }
         p.host.poll(p.now);

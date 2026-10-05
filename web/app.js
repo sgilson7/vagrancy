@@ -4,7 +4,7 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission,
-  road_json, tutorial_json, weapons_json, save_choose_weapon, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, maps_json, save_choose_weapon, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -248,6 +248,31 @@ function menu() {
 // What each seat at one keyboard carries; both choose from what this save
 // has unlocked.
 const LOCAL_WEAPONS = ['sword', 'sword'];
+// The ground for a match at one keyboard, and for one this page hosts.
+const MAP_CHOICE = { local: 'flat', online: 'flat' };
+// What this player carries online, from what the save has unlocked.
+let ONLINE_WEAPON = null;
+
+function mapPicker(which, labelKey) {
+  const id = `map-${which}`;
+  const ids = JSON.parse(maps_json()).maps.map((m) => m.id);
+  const desc = say(`maps.${MAP_CHOICE[which]}.desc`, keyVars(BINDINGS.solo), { class: 'desc' });
+  const pick = el('select', { id, on: { change: () => {
+    MAP_CHOICE[which] = pick.value;
+    desc.replaceWith(say(`maps.${pick.value}.desc`, keyVars(BINDINGS.solo), { class: 'desc' }));
+  } } }, ...ids.map((m) => el('option', { value: m, 'data-copy': `maps.${m}.name` }, t(`maps.${m}.name`))));
+  pick.value = MAP_CHOICE[which];
+  return el('div', {}, el('p', {}, el('label', { for: id, 'data-copy': labelKey }, t(labelKey)), ' ', pick), desc);
+}
+
+function onlineWeaponPicker() {
+  const open = weaponList().filter((w) => w.unlocked);
+  if (!ONLINE_WEAPON || !open.some((w) => w.id === ONLINE_WEAPON)) ONLINE_WEAPON = SAVE.state.weapon;
+  const pick = el('select', { id: 'weapon-online', on: { change: () => { ONLINE_WEAPON = pick.value; } } },
+    ...open.map((w) => el('option', { value: w.id, 'data-copy': `weapons.${w.id}.name` }, t(`weapons.${w.id}.name`))));
+  pick.value = ONLINE_WEAPON;
+  return el('p', {}, el('label', { for: 'weapon-online', 'data-copy': 'online.weapon' }, t('online.weapon')), ' ', pick);
+}
 
 function weaponList() {
   return JSON.parse(weapons_json(JSON.stringify(SAVE)));
@@ -272,6 +297,7 @@ function local() {
     }),
     weaponPicker(0, 'local.weapon_left', { left_name: t('fighters.left.name') }),
     weaponPicker(1, 'local.weapon_right', { right_name: t('fighters.right.name') }),
+    mapPicker('local', 'local.map'),
     say('local.keyboard_limit', {}, { class: 'desc' }),
     el('div', { class: 'actions' }, button('local.start.label', startLocal), button('menu.back.label', menu)),
   );
@@ -284,7 +310,7 @@ function startLocal() {
     button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')),
     button('menu.back.label', menu))]);
   show(watch.panel, el('div', { class: 'actions' }, button('menu.back.label', menu)));
-  start(Game.versus(seed(), tuning(), LOCAL_WEAPONS[0], LOCAL_WEAPONS[1]),
+  start(Game.versus(seed(), tuning(), LOCAL_WEAPONS[0], LOCAL_WEAPONS[1], MAP_CHOICE.local),
     withReady(() => [bits(BINDINGS.left, ACTION_BITS), bits(BINDINGS.right, ACTION_BITS)]),
     (f) => watch.tick(f));
 }
@@ -599,7 +625,11 @@ function road() {
       say(o('place'), {}, { class: 'desc' }),
     ];
     if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
+    if (s.companion) {
+      kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
+    }
     if (s.condition) kids.push(el('h4', { 'data-copy': 'road.condition_heading' }, t('road.condition_heading')), say(s.condition));
+    if (s.map) kids.push(el('h4', { 'data-copy': 'road.map_heading' }, t('road.map_heading')), say(`maps.${s.map}.desc`, keyVars(BINDINGS.solo)));
     for (const r of s.rewards) {
       kids.push(say('road.reward', { weapon: t(`weapons.${r.weapon}.name`) }), reqLine(r, { class: r.met ? 'met' : 'unmet' }));
     }
@@ -892,6 +922,9 @@ function online() {
   const field = el('input', { id: 'room-code', type: 'text', autocomplete: 'off', spellcheck: 'false' });
   show(
     say('online.privacy', {}, { class: 'desc' }),
+    onlineWeaponPicker(),
+    mapPicker('online', 'online.map'),
+    say('online.map_join', {}, { class: 'desc' }),
     el('div', { class: 'item' }, button('online.host_room.label', () => hostRoom()), say('online.host_room.desc', {}, { class: 'desc' })),
     el('div', { class: 'item' },
       button('online.join_room.label', () => field.value.trim() && joinRoom(field.value.trim().toUpperCase())),
@@ -912,7 +945,8 @@ function roomCode() {
 // Open the transport and the session together. `paint` redraws the lobby.
 function openNet(isHost, mode, code, paint) {
   hangUpOnline();
-  const sess = isHost ? Online.host(seed(), tuning(), BUILD, SAVE.state.weapon) : Online.join(BUILD, SAVE.state.weapon);
+  const sess = isHost ? Online.host(seed(), tuning(), BUILD, ONLINE_WEAPON || SAVE.state.weapon, MAP_CHOICE.online)
+    : Online.join(BUILD, ONLINE_WEAPON || SAVE.state.weapon);
   const net = { sess, peer: null, error: null, link: null, timer: null, started: false, shown: null };
   NET = net;
   // Redraw the lobby only when what it says has changed. It used to redraw
@@ -1279,6 +1313,8 @@ async function main() {
     music: () => music.current(),
     phase: () => curFrame && curFrame.phase,
     edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
+    fighters: () => curFrame && curFrame.fighters.filter(Boolean).length,
+    platforms: () => curFrame && (curFrame.platforms || []).length,
     save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };

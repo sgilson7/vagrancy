@@ -12,13 +12,15 @@
 use crate::body::Setup;
 use crate::input::Input;
 use crate::world::World;
+use crate::body::SEATS;
 use crate::SIM_VERSION;
 use serde::{Deserialize, Serialize};
 
 /// A lowercase identifier, not a player-read string (PLAN.md §8 Q12).
 pub const FORMAT: &str = "vagrancy.replay";
 /// 2: inputs are 16 bits wide, for the jump and the dodge.
-pub const VERSION: u32 = 2;
+/// 3: three seats a tick, for a fight with an opponent on each side.
+pub const VERSION: u32 = 3;
 pub const CHECKPOINT_EVERY: u32 = 60;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -27,7 +29,7 @@ pub struct Replay {
     pub version: u32,
     pub sim_version: u32,
     pub setup: Setup,
-    pub inputs: Vec<[u16; 2]>,
+    pub inputs: Vec<[u16; SEATS]>,
     pub ticks: u32,
     pub checksum: u64,
     pub checkpoints: Vec<u64>,
@@ -56,7 +58,7 @@ pub enum ReplayError {
 #[derive(Clone, Debug)]
 pub struct Recording {
     pub world: World,
-    pub inputs: Vec<[u16; 2]>,
+    pub inputs: Vec<[u16; SEATS]>,
     pub checkpoints: Vec<u64>,
 }
 
@@ -65,9 +67,14 @@ impl Recording {
         Recording { world: World::new(setup), inputs: Vec::new(), checkpoints: Vec::new() }
     }
 
+    /// One tick of two seats; a third, if the setup has one, presses nothing.
     pub fn step(&mut self, inputs: [Input; 2]) {
-        self.world.step(inputs);
-        self.inputs.push([inputs[0].0, inputs[1].0]);
+        self.step_all([inputs[0], inputs[1], Input::NONE]);
+    }
+
+    pub fn step_all(&mut self, inputs: [Input; SEATS]) {
+        self.world.step_all(inputs);
+        self.inputs.push(inputs.map(|i| i.0));
         if self.world.tick % CHECKPOINT_EVERY == 0 {
             self.checkpoints.push(self.world.checksum());
         }
@@ -127,7 +134,7 @@ pub fn verify(r: &Replay) -> Result<World, Divergence> {
     let mut w = World::new(r.setup.clone());
     let mut next = 0;
     for pair in &r.inputs {
-        w.step([Input(pair[0]), Input(pair[1])]);
+        w.step_all(pair.map(Input));
         if w.tick % CHECKPOINT_EVERY == 0 {
             if r.checkpoints.get(next) != Some(&w.checksum()) {
                 return Err(Divergence { tick: w.tick });
@@ -157,7 +164,7 @@ impl Playback {
     pub fn step(&mut self) -> bool {
         match self.replay.inputs.get(self.world.tick as usize) {
             Some(p) => {
-                self.world.step([Input(p[0]), Input(p[1])]);
+                self.world.step_all(p.map(Input));
                 true
             }
             None => false,

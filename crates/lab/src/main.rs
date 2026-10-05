@@ -397,12 +397,12 @@ fn roles(args: &[String]) {
     let mut tree = pilot::Tree::new(rules, reaction_ticks, salt);
     let mut other = pilot::build(&content::road::pilot(&args[1]));
     let mut w = World::new(content::setup::versus(seed, sim::balance::DEFAULT_TUNING));
-    let mut last = [Input::NONE; 2];
+    let mut last = [Input::NONE; sim::body::SEATS];
     let mut runs: Vec<(u32, u32, String, u32)> = Vec::new();
     while w.tick < limit && !matches!(w.phase, sim::fight::Phase::MatchOver { .. }) {
         use pilot::Pilot;
-        tree.observe(last[1]);
-        other.observe(last[0]);
+        tree.observe(last);
+        other.observe(last);
         let i = [tree.input(&w, 0), other.input(&w, 1)];
         let fighting = matches!(w.phase, sim::fight::Phase::Fight);
         let now = if fighting { tree.current_move().map(|(m, t)| (m.to_string(), t)).unwrap_or(("idle".into(), 0)) } else { ("between rounds".into(), 0) };
@@ -419,7 +419,7 @@ fn roles(args: &[String]) {
                 println!("round end at {}: loser {:?} {:?}", w.tick, result.loser, result.cause);
             }
         }
-        last = i;
+        last = [i[0], i[1], Input::NONE];
     }
     for (a, b, m, t) in runs {
         println!("{a} {b} {m} {t}");
@@ -595,8 +595,7 @@ fn ladder(args: &[String]) {
                 scope.spawn(move || {
                     let (mut won, mut unfinished, mut ticks) = (0u32, 0u32, 0u64);
                     for seed in 0..matches {
-                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
-                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(&id))];
+                        let mut pilots = content::road::lineup(&content::road::pilot("yardstick"), &id);
                         let o = pilot::duel(content::setup::road(seed, sim::balance::DEFAULT_TUNING, &id), &mut pilots, max_ticks);
                         ticks += o.ticks as u64;
                         if !o.finished {
@@ -626,6 +625,16 @@ fn ladder(args: &[String]) {
     print!("{md}");
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.md");
     std::fs::write(path, md).unwrap();
+    // A finished ladder ends the wait `ladder-pending` began.
+    let _ = std::fs::remove_file(concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.pending"));
+}
+
+/// Mark the ladder as pending for the current data and simulation, so the
+/// checks that read it wait for it (`make ladder-pending`).
+fn ladder_pending() {
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.pending");
+    std::fs::write(path, format!("{}\n", content::road::ladder_fingerprint())).unwrap();
+    println!("analysis/ladder.pending: {}", content::road::ladder_fingerprint());
 }
 
 /// The yardstick's win rate against a few stops, for tuning a pilot: `rate
@@ -641,8 +650,7 @@ fn rate(args: &[String]) {
                 scope.spawn(move || {
                     let (mut won, mut unfinished) = (0u32, 0u32);
                     for seed in 0..matches {
-                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
-                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(&id))];
+                        let mut pilots = content::road::lineup(&content::road::pilot("yardstick"), &id);
                         let o = pilot::duel(content::setup::road(seed, sim::balance::DEFAULT_TUNING, &id), &mut pilots, max_ticks);
                         if !o.finished {
                             unfinished += 1;
@@ -680,8 +688,7 @@ fn weapons(args: &[String]) {
                 scope.spawn(move || {
                     let mut won = 0u32;
                     for seed in 0..matches {
-                        let mut pilots: [Box<dyn pilot::Pilot>; 2] =
-                            [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(o))];
+                        let mut pilots = content::road::lineup(&content::road::pilot("yardstick"), o);
                         let r = pilot::duel(content::setup::road_with(seed, sim::balance::DEFAULT_TUNING, o, &w), &mut pilots, max_ticks);
                         if r.finished && r.wins[0] > r.wins[1] {
                             won += 1;
@@ -718,13 +725,13 @@ fn duel_trace(args: &[String]) {
     let names = w_names();
     let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
     let mut ps: [Box<dyn pilot::Pilot>; 2] = [pilot::build(&content::road::pilot("yardstick")), pilot::build(&content::road::pilot(id))];
-    let mut last = [Input::NONE; 2];
+    let mut last = [Input::NONE; sim::body::SEATS];
     while w.tick < 4000 && !matches!(w.phase, sim::fight::Phase::MatchOver { .. }) {
-        ps[0].observe(last[1]);
-        ps[1].observe(last[0]);
+        ps[0].observe(last);
+        ps[1].observe(last);
         let i = [ps[0].input(&w, 0), ps[1].input(&w, 1)];
         w.step(i);
-        last = i;
+        last = [i[0], i[1], Input::NONE];
         for e in &w.events {
             match e {
                 Event::Cut { seat, part, by, spilled, .. } => println!("{:>5}: seat {by}'s blade cut seat {seat}'s {}{}", w.tick, names[*part as usize], if *spilled { "" } else { " (dropped piece)" }),
@@ -736,6 +743,54 @@ fn duel_trace(args: &[String]) {
             println!("{:>5}: gap {} cm, ink {:?}", w.tick, pilot::gap(&w, 0), w.fighters.iter().map(|f| f.as_ref().map(|f| f.ink)).collect::<Vec<_>>());
         }
     }
+}
+
+/// Record one match for showing: `film <a> <b> <seeds> <out.replay> [map]`
+/// plays opponent `a` against `b` (or, with `a` = `road`, the yardstick at
+/// stop `b`, companion and ground included) on each seed, and keeps the
+/// longest finished match with the most changes of lead.
+fn film(args: &[String]) {
+    let (a, b) = (args[0].as_str(), args[1].as_str());
+    let seeds: u64 = args[2].parse().unwrap();
+    let out = &args[3];
+    let map = args.get(4).map(String::as_str).unwrap_or(content::maps::FLAT);
+    let best = std::thread::scope(|scope| {
+        let hs: Vec<_> = (0..seeds)
+            .map(|seed| {
+                scope.spawn(move || {
+                    let (setup, mut ps) = if a == "road" {
+                        (content::setup::road(seed, sim::balance::DEFAULT_TUNING, b), content::road::lineup(&content::road::pilot("yardstick"), b))
+                    } else {
+                        let ps: Vec<Box<dyn pilot::Pilot>> = vec![pilot::build(&content::road::pilot(a)), pilot::build(&content::road::pilot(b))];
+                        (content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [a, b], map), ps)
+                    };
+                    let mut rec = sim::replay::Recording::new(setup);
+                    let mut last = [Input::NONE; sim::body::SEATS];
+                    let (mut changes, mut lead) = (0u32, 0i32);
+                    while rec.world.tick < 60 * 120 && !matches!(rec.world.phase, sim::fight::Phase::MatchOver { .. }) {
+                        let mut i = [Input::NONE; sim::body::SEATS];
+                        for (k, p) in ps.iter_mut().enumerate() {
+                            p.observe(last);
+                            i[k] = p.input(&rec.world, k);
+                        }
+                        rec.step_all(i);
+                        last = i;
+                        let now = (rec.world.wins[0] as i32 - rec.world.wins[1] as i32).signum();
+                        if now != 0 && now != lead {
+                            changes += 1;
+                            lead = now;
+                        }
+                    }
+                    let done = matches!(rec.world.phase, sim::fight::Phase::MatchOver { .. });
+                    (done, changes, rec.world.wins[0].min(rec.world.wins[1]), rec.world.tick, seed, rec)
+                })
+            })
+            .collect();
+        hs.into_iter().map(|h| h.join().unwrap()).filter(|r| r.0).max_by_key(|r| (r.1, r.2, std::cmp::Reverse(r.3))).expect("a finished match")
+    });
+    let (_, changes, close, ticks, seed, rec) = best;
+    std::fs::write(out, rec.bytes()).unwrap();
+    println!("{a} vs {b}: seed {seed}, wins {:?}, {changes} changes of lead, loser's rounds {close}, {ticks} ticks -> {out}", rec.world.wins);
 }
 
 fn main() {
@@ -756,10 +811,12 @@ fn main() {
         Some("fixture-match") => fixture_match(),
         Some("recon-m5") => recon_m5(),
         Some("ladder") => ladder(&args[1..]),
+        Some("ladder-pending") => ladder_pending(),
         Some("rate") => rate(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
         Some("versus") => versus(&args[1..]),
+        Some("film") => film(&args[1..]),
         Some("roles") => roles(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),

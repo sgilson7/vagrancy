@@ -13,7 +13,7 @@
 //! nothing else creates momentum, H5 and its control H5c can show it.
 
 use crate::balance::{self, ITERATIONS};
-use crate::body::{BodyDef, Motor, Setup};
+use crate::body::{BodyDef, Motor, Setup, SEATS};
 use crate::fx::{Fx, ONE, V2};
 use crate::input::Input;
 use crate::rng::Rng;
@@ -89,6 +89,8 @@ pub struct Constraint {
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Fighter {
     pub seat: u8,
+    /// 0 for seat 0, 1 for its opponents.
+    pub side: u8,
     pub body: u8,
     /// +1 faces +x (the left seat), -1 faces -x.
     pub facing: i32,
@@ -118,6 +120,8 @@ pub struct Fighter {
     /// round, including stumps since removed. `results.road.lose_ink` names
     /// the part that spilled the most.
     pub spilled: Vec<i32>,
+    /// The tick this fighter went out of the round, once it has.
+    pub out_at: Option<u32>,
     /// A cut this tick that ends the round for this fighter.
     pub fatal: Option<crate::fight::Fatal>,
 }
@@ -159,7 +163,7 @@ pub struct World {
     pub particles: Vec<Particle>,
     pub parts: Vec<Part>,
     pub cons: Vec<Constraint>,
-    pub fighters: [Option<Fighter>; 2],
+    pub fighters: [Option<Fighter>; SEATS],
     pub swords: Vec<Sword>,
     pub phase: crate::fight::Phase,
     /// 1-based. A drawn round is played again under the same number.
@@ -168,8 +172,8 @@ pub struct World {
     /// Blade and part pairs in contact at the end of last tick: one cut per
     /// blade, per part, per contact (D11).
     pub touching: Vec<(u8, u16)>,
-    /// Pairs of swords in contact at the end of last tick.
-    pub clashing: bool,
+    /// Pairs of swords, by index, in contact at the end of last tick.
+    pub clashing: Vec<(u8, u8)>,
     /// What happened this tick, for the page to draw and later to sound.
     pub events: Vec<crate::fight::Event>,
     pub next_piece: u16,
@@ -184,13 +188,13 @@ impl World {
             particles: Vec::new(),
             parts: Vec::new(),
             cons: Vec::new(),
-            fighters: [None, None],
+            fighters: [None, None, None],
             swords: Vec::new(),
             phase: crate::fight::Phase::Fight,
             round: 1,
             wins: [0, 0],
             touching: Vec::new(),
-            clashing: false,
+            clashing: Vec::new(),
             events: Vec::new(),
             next_piece: 0,
         };
@@ -202,17 +206,17 @@ impl World {
     /// applied mirrored so neither seat is favored.
     pub(crate) fn spawn_round(&mut self) {
         self.touching.clear();
-        self.clashing = false;
+        self.clashing.clear();
         self.next_piece = 0;
         self.particles.clear();
         self.parts.clear();
         self.cons.clear();
         self.swords.clear();
-        self.fighters = [None, None];
+        self.fighters = [None, None, None];
         let jitter = Fx::int(self.rng.range(-balance::SPAWN_JITTER_CM, balance::SPAWN_JITTER_CM));
-        for seat in 0..2u8 {
+        for seat in 0..SEATS as u8 {
             if let Some(s) = self.setup.seats[seat as usize] {
-                let facing = if seat == 0 { 1 } else { -1 };
+                let facing = crate::body::facing(seat as usize);
                 let x = (s.x + jitter) * -facing;
                 self.spawn(seat, s.body, facing, x);
             }
@@ -309,6 +313,7 @@ impl World {
         let n = self.particles.len() as u16 - base;
         self.fighters[seat as usize] = Some(Fighter {
             seat,
+            side: crate::body::side(seat as usize),
             body,
             facing,
             base,
@@ -325,23 +330,34 @@ impl World {
             neck: dist(r.head, r.shoulder),
             spilled: vec![0; def.parts.len()],
             fatal: None,
+            out_at: None,
         });
     }
 
-    /// The only way the world changes.
+    /// One tick of a fight between two seats; the third, if any, presses
+    /// nothing.
     pub fn step(&mut self, inputs: [Input; 2]) {
+        self.step_all([inputs[0], inputs[1], Input::NONE]);
+    }
+
+    /// The only way the world changes.
+    pub fn step_all(&mut self, inputs: [Input; SEATS]) {
         self.events.clear();
         // Between rounds the fighters are limp and only "ready" counts.
-        let inputs = if self.between_rounds(inputs) { [Input::NONE; 2] } else { inputs };
+        let inputs = if self.between_rounds(inputs) { [Input::NONE; SEATS] } else { inputs };
         let mut inputs = inputs;
-        for seat in 0..2 {
+        for seat in 0..SEATS {
+            // A fighter already out of the round goes limp until it ends.
+            if self.out(seat) {
+                inputs[seat] = Input::NONE;
+            }
             if self.fighters[seat].is_some() {
                 inputs[seat] = self.jump_and_dodge(seat, inputs[seat]);
             }
         }
         let mut acc = vec![V2::ZERO; self.particles.len()];
         let mut drives = Vec::new();
-        for seat in 0..2 {
+        for seat in 0..SEATS {
             if self.fighters[seat].is_some() {
                 drives.extend(self.drive_motors(seat, inputs[seat], &mut acc));
                 self.set_drive(seat, inputs[seat]);
@@ -529,9 +545,27 @@ impl World {
 
     // --- the legs (D8) ---------------------------------------------------------
 
-    fn grounded(&self, i: u16) -> bool {
+    /// Whether a point stands on something: the ground, or the top of a
+    /// platform it came down onto.
+    pub fn supported(&self, i: u16) -> bool {
         let p = &self.particles[i as usize];
-        self.setup.physics.ground && p.p.y <= p.rad + ONE
+        if self.setup.physics.ground && p.p.y <= p.rad + ONE {
+            return true;
+        }
+        p.foot && self.setup.platforms.iter().any(|pl| {
+            let top = pl.y + p.rad;
+            p.p.x >= pl.x0 && p.p.x <= pl.x1 && p.p.y <= top + ONE && p.p.y >= top - ONE && p.q.y >= top - ONE
+        })
+    }
+
+    fn grounded(&self, i: u16) -> bool {
+        self.supported(i)
+    }
+
+    /// The height of the surface under `x` at or below `y`: the highest
+    /// platform top there, or the ground.
+    pub fn surface_below(&self, x: Fx, y: Fx) -> Fx {
+        self.setup.platforms.iter().filter(|pl| x >= pl.x0 && x <= pl.x1 && pl.y <= y).map(|pl| pl.y).fold(Fx(0), |a, b| a.max(b))
     }
 
     /// The attached feet of a fighter, in the order the body lists them.
@@ -547,10 +581,22 @@ impl World {
         (self.particles[i as usize].owner == Owner::Body(seat as u8)).then_some(i)
     }
 
+    /// Whether a fighter went out of the round (a fatal cut, or no ink) on
+    /// an earlier tick, as the judge recorded it. With two seats the round
+    /// ends that same tick, so this is never true while they fight; with
+    /// three, an opponent who is out goes limp while its partner fights on.
+    /// Read from the judge's record, not the fatal cut itself, so two
+    /// fighters cut in one tick still both cut (a draw), as before.
+    pub fn out(&self, seat: usize) -> bool {
+        let Some(f) = &self.fighters[seat] else { return false };
+        matches!(self.phase, crate::fight::Phase::Fight) && f.out_at.is_some()
+    }
+
     /// The balance rule holds a fighter up while it stands on a foot.
     fn balanced(&self, seat: usize) -> bool {
         let Some(f) = &self.fighters[seat] else { return false };
-        self.setup.bodies[f.body as usize].balance
+        !self.out(seat)
+            && self.setup.bodies[f.body as usize].balance
             && self.role(seat, |r| r.pelvis).is_some()
             && self.role(seat, |r| r.shoulder).is_some()
             && self.feet(seat).iter().any(|&i| self.grounded(i))
@@ -618,6 +664,15 @@ impl World {
     fn jump_and_dodge(&mut self, seat: usize, input: Input) -> Input {
         let grounded = self.feet(seat).iter().any(|&i| self.grounded(i)) && self.balanced(seat);
         let down = self.knocked_down(seat);
+        // Stand works in the air over a platform, and sets the fighter on
+        // it (Sam, 2026-10-05: the stand "sets you on top of the platform
+        // thats immediately below you"); like getting up, it needs both
+        // legs. Over open ground it does nothing in the air, as before: a
+        // stand there would cancel any jump, and the tree pilots, pressing
+        // it on what they saw some ticks ago, began to (SECOND-ORDER-M5 row 48).
+        let pelvis = self.fighters[seat].as_ref().and_then(|f| self.setup.bodies[f.body as usize].roles.pelvis.map(|k| self.particles[(f.base + k as u16) as usize].p));
+        let over_ledge = pelvis.is_some_and(|p| self.surface_below(p.x, p.y) > Fx(0));
+        let aloft = over_ledge && !self.feet(seat).iter().any(|&i| self.grounded(i)) && self.feet(seat).len() == 2 && matches!(self.phase, crate::fight::Phase::Fight);
         let f = self.fighters[seat].as_mut().unwrap();
         let buttons = Input::JUMP | Input::DODGE | Input::STAND;
         let pressed = input.0 & !f.held & buttons;
@@ -636,7 +691,7 @@ impl World {
             Stand,
         }
         let mut act = Act::None;
-        if pressed & Input::STAND != 0 && down && f.dodge == 0 {
+        if pressed & Input::STAND != 0 && (down || aloft) && f.dodge == 0 {
             act = Act::Stand;
         } else if pressed & Input::DODGE != 0 && f.dodge == 0 && f.dodge_cooldown == 0 {
             f.dodge = balance::DODGE_TICKS;
@@ -719,7 +774,8 @@ impl World {
         let (pp, sp) = (self.particles[pe as usize].p, self.particles[sh as usize].p);
         let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at.y;
         let upright = (sp.y - pp.y).scale(10, 7) >= f.torso;
-        let tall = pp.y.scale(10, 6) >= rest_pelvis;
+        // Measured from what it stands on: the ground, or a platform.
+        let tall = (pp.y - self.surface_below(pp.x, pp.y)).scale(10, 6) >= rest_pelvis;
         !(upright && tall)
     }
 
@@ -732,7 +788,10 @@ impl World {
         let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at;
         let lim = balance::ARENA_HALF - Fx::int(60);
         let x = (self.particles[pe].p.x - rest_pelvis.x * f.facing).clamp(-lim, lim);
-        let place = |at: V2| V2::new(x + at.x * f.facing, at.y);
+        // On the surface immediately below the pelvis: a platform, or the
+        // ground.
+        let base = self.surface_below(self.particles[pe].p.x, self.particles[pe].p.y);
+        let place = |at: V2| V2::new(x + at.x * f.facing, at.y + base);
         let mine = |w: &World, i: usize| w.particles[i].owner == Owner::Body(seat as u8);
         for (k, pt) in def.points.iter().enumerate() {
             let i = (f.base + k as u16) as usize;
@@ -930,7 +989,8 @@ impl World {
     /// endpoint is the swept answer for a straight stick too (D10).
     fn bounds(&mut self) {
         let ph = self.setup.physics;
-        let drive = [0usize, 1].map(|s| self.fighters[s].as_ref().map(|f| f.drive).unwrap_or(Fx(0)));
+        let drive = [0usize, 1, 2].map(|s| self.fighters[s].as_ref().map(|f| f.drive).unwrap_or(Fx(0)));
+        let platforms = self.setup.platforms.clone();
         for pt in &mut self.particles {
             if pt.m == 0 {
                 continue;
@@ -949,6 +1009,24 @@ impl World {
                 };
                 let slide = pt.p.x - pt.q.x - want;
                 pt.p.x -= slide * pt.grip;
+            }
+            // A platform holds a foot that comes down onto it from above,
+            // with the ground's friction and drive; from below and the sides
+            // it is passed through. Feet only: when it held every point, a
+            // fighter standing under a ledge lower than its shoulders was
+            // caught by an arm dipping onto the ledge and hoisted up
+            // (SECOND-ORDER-M5 row 51).
+            for pl in &platforms {
+                let top = pl.y + pt.rad;
+                if pt.foot && pt.p.x >= pl.x0 && pt.p.x <= pl.x1 && pt.q.y >= top - ONE && pt.p.y < top {
+                    pt.p.y = top;
+                    let want = match pt.owner {
+                        Owner::Body(s) if pt.foot => drive[s as usize],
+                        _ => Fx(0),
+                    };
+                    let slide = pt.p.x - pt.q.x - want;
+                    pt.p.x -= slide * pt.grip;
+                }
             }
             if ph.walls {
                 let lim = balance::ARENA_HALF - pt.rad;

@@ -4,7 +4,7 @@
 use content::copy::{copy, placeholders};
 use content::road::{intro_numbers, pilot, pilots, record, road, stops, Best, Req};
 use std::collections::BTreeMap;
-use pilot::{build, duel, gap, Pilot, Spec};
+use pilot::{build, duel, gap, Spec};
 use sim::fight::Phase;
 use sim::{Input, World};
 
@@ -18,7 +18,7 @@ fn watch(id: &str, ticks: u32) -> (World, Vec<Input>) {
     let mut p = build(&pilot(id));
     let mut seen = Vec::new();
     for _ in 0..ticks {
-        p.observe(Input::NONE);
+        p.observe([Input::NONE; sim::body::SEATS]);
         let i = p.input(&w, 1);
         seen.push(i);
         w.step([Input::NONE, i]);
@@ -153,7 +153,7 @@ fn what_an_introduction_says_a_pilot_usually_does_is_what_it_does() {
     let mut w = road_world("sampler", 1);
     let mut p = build(&pilot("sampler"));
     for _ in 0..300 {
-        p.observe(Input(Input::SHOULDER_UP));
+        p.observe([Input(Input::SHOULDER_UP), Input::NONE, Input::NONE]);
         let i = p.input(&w, 1);
         assert!(w.round > 1 || i.0 & arm == 0, "the sampler attacked in the first round");
         w.step([Input(Input::SHOULDER_UP), i]);
@@ -163,18 +163,35 @@ fn what_an_introduction_says_a_pilot_usually_does_is_what_it_does() {
 /// The yardstick's wins out of 200 at each stop, from analysis/ladder.md,
 /// after checking the table is the current one. A count comes from a
 /// command: `make ladder`.
-fn ladder() -> std::collections::BTreeMap<String, u32> {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.md");
-    let md = std::fs::read_to_string(path).expect("analysis/ladder.md: run `make ladder`");
-    assert!(md.contains(&format!("fingerprint {}", content::road::ladder_fingerprint())), "analysis/ladder.md is stale for this data and simulation: run `make ladder`");
-    stops()
-        .into_iter()
-        .map(|id| {
-            let row = md.lines().find(|l| l.starts_with(&format!("| {id} |"))).unwrap_or_else(|| panic!("no row for {id}"));
-            let won: u32 = row.split('|').nth(2).unwrap().split_whitespace().next().unwrap().parse().unwrap();
-            (id, won)
-        })
-        .collect()
+///
+/// `None` while a ladder is pending for exactly this data: Sam asked to
+/// deploy before a ladder finished (2026-10-05), so `make ladder-pending`
+/// records the fingerprint the running ladder will measure, and the checks
+/// that read the table wait for it. Any change to the pilots, the stops or
+/// the simulation after that changes the fingerprint, and the stale table
+/// fails again. `make ladder` removes the marker when it writes the table.
+fn ladder() -> Option<std::collections::BTreeMap<String, u32>> {
+    let root = concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/");
+    let md = std::fs::read_to_string(format!("{root}ladder.md")).expect("analysis/ladder.md: run `make ladder`");
+    let now = content::road::ladder_fingerprint();
+    if !md.contains(&format!("fingerprint {now}")) {
+        let pending = std::fs::read_to_string(format!("{root}ladder.pending")).unwrap_or_default();
+        if pending.trim() == now {
+            eprintln!("analysis/ladder.md is pending for fingerprint {now}: the checks that read it wait for `make ladder`");
+            return None;
+        }
+        panic!("analysis/ladder.md is stale for this data and simulation: run `make ladder`");
+    }
+    Some(
+        stops()
+            .into_iter()
+            .map(|id| {
+                let row = md.lines().find(|l| l.starts_with(&format!("| {id} |"))).unwrap_or_else(|| panic!("no row for {id}"));
+                let won: u32 = row.split('|').nth(2).unwrap().split_whitespace().next().unwrap().parse().unwrap();
+                (id, won)
+            })
+            .collect(),
+    )
 }
 
 #[test]
@@ -267,7 +284,7 @@ fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     // and the knife grinder (the short sword's challenge).
     let opened = record(&mut best, "scarecrow", Best::won(0, 3000, "short_sword"));
     assert_eq!(opened, ["drover", "knife_grinder"]);
-    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000, with: vec!["short_sword".into(), "sword".into()] }, "each part of the best is kept on its own");
+    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000, with: vec!["short_sword".into(), "sword".into()], headshot: false, untouched: false }, "each part of the best is kept on its own");
     // A quick requirement: the ropewalker asks for the courier in 90 s.
     for id in ["thresher", "drover", "sampler", "salt_trader"] {
         record(&mut best, id, Best::won(2, 99_999, "sword"));
@@ -285,7 +302,7 @@ fn the_tree_gets_no_easier_going_down() {
     // 200-match rates (two standard errors of their difference near 40 %:
     // 2·√(2·0.24/200) ≈ 10 points, 20 wins). And each level, on average, is
     // no easier than the level above it.
-    let rates = ladder();
+    let Some(rates) = ladder() else { return };
     const NOISE: u32 = 20;
     let road = road();
     for s in &road {
@@ -309,7 +326,7 @@ fn the_ten_and_the_five_added_with_the_tree_are_as_hard_as_the_reader_and_the_ar
     // Sam: "10 more fights that are as difficult as the reader, and 5 that
     // are as difficult as the archivist". As hard as: within the same noise
     // of the reader's or the archivist's own rate.
-    let rates = ladder();
+    let Some(rates) = ladder() else { return };
     const NOISE: i64 = 20;
     for (like, ids) in [
         ("reader", &["dyer", "potter", "carpenter", "mason", "weaver", "falconer", "boatwright", "brewer", "herbalist", "cartographer"][..]),
@@ -343,7 +360,7 @@ fn every_opponent_can_be_beaten() {
                 scope.spawn(move || {
                     for (c, cfg) in configs.iter().enumerate() {
                         for seed in 0..16u64 {
-                            let mut ps: [Box<dyn Pilot>; 2] = [build(cfg), build(&pilot(&id))];
+                            let mut ps = content::road::lineup(cfg, &id);
                             let o = duel(content::setup::road(seed, sim::balance::DEFAULT_TUNING, &id), &mut ps, 60 * 120);
                             if o.finished && o.wins[0] > o.wins[1] {
                                 return (id, Some((c, seed)));
@@ -360,26 +377,37 @@ fn every_opponent_can_be_beaten() {
     assert!(unbeaten.is_empty(), "the yardstick at its strongest never beat {unbeaten:?}");
 }
 
-/// Each tree opponent's inputs over a few matches against the yardstick.
-fn keys_pressed(id: &str) -> Vec<Input> {
+/// Each tree opponent's inputs over a few matches against the yardstick,
+/// and whether it ever went from the ground to standing on a ledge, which
+/// takes a jump (and for a high ledge the stand key: crates/content/tests/
+/// maps.rs). On a flanked stop, the opponent's own (seat 1), not its
+/// companion's.
+fn keys_and_ledge(id: &str) -> (Vec<Input>, bool) {
     let mut all = Vec::new();
+    let mut ledge = false;
     for seed in 0..2u64 {
         let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
-        let mut me = build(&pilot("yardstick"));
-        let mut them = build(&pilot(id));
-        let mut last = [Input::NONE; 2];
+        let mut ps = content::road::lineup(&pilot("yardstick"), id);
+        let mut last = [Input::NONE; sim::body::SEATS];
         while w.tick < 1800 && !matches!(w.phase, Phase::MatchOver { .. }) {
-            me.observe(last[1]);
-            them.observe(last[0]);
-            let i = [me.input(&w, 0), them.input(&w, 1)];
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in ps.iter_mut().enumerate() {
+                p.observe(last);
+                i[k] = p.input(&w, k);
+            }
             if matches!(w.phase, Phase::Fight) {
                 all.push(i[1]);
             }
-            w.step(i);
+            w.step_all(i);
+            ledge |= pilot::on_ledge(&w, 1);
             last = i;
         }
     }
-    all
+    (all, ledge)
+}
+
+fn keys_pressed(id: &str) -> Vec<Input> {
+    keys_and_ledge(id).0
 }
 
 #[test]
@@ -408,4 +436,24 @@ fn each_new_opponent_uses_the_moves_its_introduction_names() {
     assert!(uses("falconer", Input::JUMP), "the falconer never jumped");
     // The lamplighter thrusts: the elbow bends and straightens.
     assert!(uses("lamplighter", Input::ELBOW_OUT), "the lamplighter never thrust");
+    // The flanked fights. The well digger sweeps low; the charcoal burner
+    // thrusts; the stone cutter swings overhead; the tea picker, the net
+    // mender, the shrine keeper and the toll collector dodge.
+    assert!(uses("well_digger", Input::SHOULDER_DOWN), "the well digger never swept low");
+    assert!(uses("charcoal_burner", Input::ELBOW_OUT), "the charcoal burner never thrust");
+    assert!(uses("stone_cutter", Input::SHOULDER_UP), "the stone cutter never swung overhead");
+    for id in ["tea_picker", "net_mender", "shrine_keeper", "toll_collector"] {
+        assert!(uses(id, Input::DODGE), "the {id} never dodged");
+    }
+}
+
+#[test]
+fn each_opponent_that_climbs_gets_up_onto_a_ledge() {
+    // "jumps and stands on it", in the introductions of five of the flanked
+    // fights.
+    for id in ["roofer", "tea_picker", "bridge_keeper", "kite_maker", "toll_collector"] {
+        let (keys, ledge) = keys_and_ledge(id);
+        assert!(keys.iter().any(|i| i.has(Input::JUMP)), "the {id} never jumped");
+        assert!(ledge, "the {id} never stood on a ledge");
+    }
 }

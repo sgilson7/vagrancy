@@ -29,6 +29,23 @@ pub struct Stop {
     /// What the opponent carries, from data/weapons.json; the sword if none.
     #[serde(default)]
     pub weapon: Option<String>,
+    /// A second opponent, at the player's back (Sam, 2026-10-05: "an enemy
+    /// on each side of you").
+    #[serde(default)]
+    pub companion: Option<Companion>,
+    /// The ground the fight is on, from data/maps.json; flat if none.
+    #[serde(default)]
+    pub map: Option<String>,
+}
+
+/// The opponent at the player's back on a flanked stop: another stop's
+/// pilot, by that stop's id, carrying its own weapon.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Companion {
+    pub pilot: String,
+    #[serde(default)]
+    pub weapon: Option<String>,
 }
 
 impl Stop {
@@ -51,12 +68,17 @@ pub enum Req {
     /// Won it carrying this weapon (Sam: "weapon challenges like beat the
     /// courier with the trident").
     With { stop: String, weapon: String },
+    /// Won it, in a match where the player ended a round with a cut across
+    /// an opponent's head.
+    Headshot(String),
+    /// Won it, in a match where the player won a round without being cut.
+    Untouched(String),
 }
 
 impl Req {
     pub fn stop(&self) -> &str {
         match self {
-            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } => s,
+            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) => s,
         }
     }
 
@@ -67,6 +89,8 @@ impl Req {
             Req::Flawless(_) => b.losses == 0,
             Req::Quick { seconds, .. } => (b.ticks as u64) <= *seconds as u64 * sim::balance::TICKS_PER_SECOND as u64,
             Req::With { weapon, .. } => b.with.iter().any(|w| w == weapon),
+            Req::Headshot(_) => b.headshot,
+            Req::Untouched(_) => b.untouched,
         }
     }
 
@@ -79,6 +103,8 @@ impl Req {
             Req::Quick { seconds, .. } => ("road.req.quick", BTreeMap::from([("seconds".to_string(), seconds.to_string())])),
             // The page names the weapon from `weapons.<id>.name`.
             Req::With { weapon, .. } => ("road.req.with", BTreeMap::from([("weapon".to_string(), weapon.clone())])),
+            Req::Headshot(_) => ("road.req.headshot", BTreeMap::new()),
+            Req::Untouched(_) => ("road.req.untouched", BTreeMap::new()),
         }
     }
 }
@@ -121,14 +147,26 @@ pub struct Best {
     /// before weapons were recorded has none.
     #[serde(default)]
     pub with: Vec<String>,
+    /// A won match here had a round ended by the player's cut across an
+    /// opponent's head. A save from before version 6 has none.
+    #[serde(default)]
+    pub headshot: bool,
+    /// A won match here had a round the player won without being cut.
+    #[serde(default)]
+    pub untouched: bool,
 }
 
 impl Best {
-    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new() };
+    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new(), headshot: false, untouched: false };
 
-    /// One won match, carrying `weapon`.
+    /// One won match, carrying `weapon`, with no feats.
     pub fn won(losses: u32, ticks: u32, weapon: &str) -> Best {
-        Best { losses, ticks, with: vec![weapon.to_string()] }
+        Best { losses, ticks, with: vec![weapon.to_string()], headshot: false, untouched: false }
+    }
+
+    /// The same result with the feats a match showed.
+    pub fn with_feats(self, f: Feats) -> Best {
+        Best { headshot: f.headshot, untouched: f.untouched, ..self }
     }
 
     /// The better of two results, each part on its own: the fewest losses
@@ -139,7 +177,42 @@ impl Best {
         with.extend(other.with);
         with.sort();
         with.dedup();
-        Best { losses: self.losses.min(other.losses), ticks: self.ticks.min(other.ticks), with }
+        Best {
+            losses: self.losses.min(other.losses),
+            ticks: self.ticks.min(other.ticks),
+            with,
+            headshot: self.headshot || other.headshot,
+            untouched: self.untouched || other.untouched,
+        }
+    }
+}
+
+/// What the player did in a match beyond winning it, watched tick by tick
+/// from the world's events. The road's newer requirements ask for these.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub struct Feats {
+    pub headshot: bool,
+    pub untouched: bool,
+    /// The player has been cut in the round under way.
+    cut: bool,
+}
+
+impl Feats {
+    /// Read one tick's events. Call it after every step.
+    pub fn observe(&mut self, w: &sim::World) {
+        for e in &w.events {
+            match *e {
+                sim::fight::Event::Cut { seat: 0, spilled: true, .. } => self.cut = true,
+                sim::fight::Event::RoundEnd { result } => {
+                    if result.loser == Some(1) {
+                        self.headshot |= result.by == 0 && crate::messages::headshot(w, &result);
+                        self.untouched |= !self.cut;
+                    }
+                    self.cut = false;
+                }
+                _ => {}
+            }
+        }
     }
 }
 
@@ -186,6 +259,22 @@ pub fn pilots() -> BTreeMap<String, Spec> {
         .collect()
 }
 
+/// The pilots of a stop's opponents, by seat from seat 1: the stop's own,
+/// then its companion's if it has one.
+pub fn crew(id: &str) -> Vec<Spec> {
+    let mut v = vec![pilot(id)];
+    if let Some(c) = stop(id).and_then(|s| s.companion) {
+        v.push(pilot(&c.pilot));
+    }
+    v
+}
+
+/// Every seat's pilot at a stop, `player` in seat 0, built and ready for
+/// `pilot::duel`.
+pub fn lineup(player: &Spec, id: &str) -> Vec<Box<dyn pilot::Pilot>> {
+    std::iter::once(player.clone()).chain(crew(id)).map(|s| pilot::build(&s)).collect()
+}
+
 pub fn pilot(id: &str) -> Spec {
     pilots().remove(id).unwrap_or_else(|| panic!("no pilot named {id}"))
 }
@@ -218,8 +307,8 @@ pub fn intro_numbers(id: &str) -> BTreeMap<String, String> {
 /// fingerprint differs is stale.
 pub fn ladder_fingerprint() -> String {
     // A stop's condition changes its matches; its requirements do not.
-    let mut stops: Vec<String> = road().iter().map(|s| format!("{}:{:?}:{:?}", s.id, s.condition, s.weapon)).collect();
+    let mut stops: Vec<String> = road().iter().map(|s| format!("{}:{:?}:{:?}:{:?}:{:?}", s.id, s.condition, s.weapon, s.companion, s.map)).collect();
     stops.sort();
-    let data = format!("{}{}{}", PILOTS_JSON, stops.join(","), sim::SIM_VERSION);
+    let data = format!("{}{}{}{}", PILOTS_JSON, stops.join(","), crate::maps::MAPS_JSON, sim::SIM_VERSION);
     format!("{:016x}", sim::world::fnv1a(data.as_bytes()))
 }

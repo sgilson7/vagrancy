@@ -19,7 +19,10 @@ pub const FORMAT: &str = "vagrancy.save";
 /// 4: the weapon the player carries.
 /// 5: each fight's best result names the weapons it was won with (weapon
 /// challenges). A version 4 file reads as it is, with none named.
-pub const VERSION: u32 = 5;
+/// 6: each best result says whether a won match there had a headshot and a
+/// round won untouched (the flanked fights' requirements). A version 5 file
+/// reads as it is, with neither.
+pub const VERSION: u32 = 6;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -288,8 +291,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 5", "\"version\": 6");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 6, ours: 5 }));
+        let text = encode(&fresh()).replace("\"version\": 6", "\"version\": 7");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 7, ours: 6 }));
     }
 
     #[test]
@@ -334,7 +337,7 @@ mod tests {
 
     #[test]
     fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
-        let v1 = encode(&fresh()).replace("\"version\": 5", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
+        let v1 = encode(&fresh()).replace("\"version\": 6", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         let s = decode(&v1).expect("a version 1 save loads");
         let unknown = crate::road::Best::UNKNOWN;
         assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown.clone()), ("thresher".to_string(), unknown)]));
@@ -349,7 +352,7 @@ mod tests {
 
     #[test]
     fn a_version_2_save_loads_with_no_tutorial_done_and_a_finished_mission_round_trips() {
-        let v2 = encode(&fresh()).replace("\"version\": 5", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
+        let v2 = encode(&fresh()).replace("\"version\": 6", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "");
         assert!(!v2.contains("tutorial"), "{v2}");
         let s = decode(&v2).expect("a version 2 save loads");
         assert!(s.tutorial.is_empty());
@@ -379,7 +382,7 @@ mod tests {
         s.weapon = "no such weapon".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
         // A version 3 save carries the sword.
-        let v3 = encode(&fresh()).replace("\"version\": 5", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "");
+        let v3 = encode(&fresh()).replace("\"version\": 6", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "");
         assert!(!v3.contains("weapon"), "{v3}");
         assert_eq!(decode(&v3).unwrap().weapon, "sword");
     }
@@ -388,7 +391,7 @@ mod tests {
     fn a_version_4_save_keeps_its_wins_with_no_weapon_named_and_a_win_names_its_weapon() {
         let mut s = fresh();
         s.road.best.insert("scarecrow".into(), crate::road::Best::won(0, 900, "sword"));
-        let v4 = encode(&s).replace("\"version\": 5", "\"version\": 4").replace(",\n          \"with\": [\n            \"sword\"\n          ]", "");
+        let v4 = encode(&s).replace("\"version\": 6", "\"version\": 4").replace(",\n          \"with\": [\n            \"sword\"\n          ]", "");
         assert!(!v4.contains("with"), "{v4}");
         let back = decode(&v4).expect("a version 4 save loads");
         assert!(back.road.best["scarecrow"].with.is_empty());
@@ -400,6 +403,24 @@ mod tests {
         let mut bad = s.clone();
         bad.road.best.insert("thresher".into(), crate::road::Best::won(0, 900, "spoon"));
         assert_eq!(decode(&encode(&bad)), Err(SaveError::Damaged));
+    }
+
+    #[test]
+    fn a_version_5_save_keeps_its_wins_with_no_feats_and_a_win_keeps_its_feats() {
+        let mut s = fresh();
+        let mut f = crate::road::Feats::default();
+        f.headshot = true;
+        f.untouched = true;
+        s.road.best.insert("thresher".into(), crate::road::Best::won(0, 900, "sword").with_feats(f));
+        let v5 = encode(&s).replace("\"version\": 6", "\"version\": 5").replace("\"headshot\": true,\n          ", "").replace(",\n          \"untouched\": true", "");
+        assert!(!v5.contains("headshot") && !v5.contains("untouched"), "{v5}");
+        let back = decode(&v5).expect("a version 5 save loads");
+        use crate::road::Req;
+        assert!(Req::Beat("thresher".into()).met(&back.road.best));
+        assert!(!Req::Headshot("thresher".into()).met(&back.road.best), "a version 5 win met a headshot requirement");
+        assert!(!Req::Untouched("thresher".into()).met(&back.road.best));
+        let now = decode(&encode(&s)).unwrap();
+        assert!(Req::Headshot("thresher".into()).met(&now.road.best) && Req::Untouched("thresher".into()).met(&now.road.best));
     }
 
     #[test]

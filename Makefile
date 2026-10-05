@@ -1,7 +1,7 @@
 ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 PY := $(ROOT)/.venv-test/bin/python
 
-.PHONY: help test check web serve test-ui test-ui-online referee test-ui-setup ladder count publish clean
+.PHONY: help test check web serve test-ui test-ui-online referee test-ui-setup ladder ladder-pending count publish clean
 
 ## test: the whole suite, native, no window and no network
 test:
@@ -42,6 +42,10 @@ test-ui-setup:
 ## ladder: play the yardstick pilot against every opponent; writes analysis/ladder.md
 ladder:
 	@cargo run -q --release -p lab -- ladder
+
+## ladder-pending: let the suite pass while a ladder for exactly this data is still running
+ladder-pending:
+	@cargo run -q -p lab -- ladder-pending
 
 weapons:
 	@cargo run -q --release -p lab -- weapons

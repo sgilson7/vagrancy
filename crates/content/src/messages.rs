@@ -39,8 +39,10 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
     let copy = crate::copy::copy();
     let Some(loser) = r.loser else { return json!({ "key": "results.draw", "vars": {} }) };
     let winner = 1 - loser;
-    let own = r.by == loser && r.cause != Cause::Ink;
-    let part = part_word(&copy, w, loser, r.part);
+    // With a second opponent a side is two fighters: the one who fell last
+    // is `r.seat`, and a cut by its own blade is a cut by that one.
+    let own = r.by == r.seat && r.cause != Cause::Ink;
+    let part = part_word(&copy, w, r.seat, r.part);
     match who {
         Audience::Versus => {
             let names = json!({ "winner": fighter_name(&copy, winner), "loser": fighter_name(&copy, loser), "part": part });
@@ -53,9 +55,14 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
             json!({ "key": key, "vars": names })
         }
         Audience::Road { opponent } => {
-            let name = copy_at(&copy, &format!("opponents.{opponent}.name")).to_string();
-            let mid = copy_at(&copy, &format!("opponents.{opponent}.name_mid")).to_string();
             let won = loser == 1;
+            // The opponent the sentence is about: the one who fell, or the
+            // one whose blade did it, which on a flanked stop may be the one
+            // at the player's back.
+            let them = if won { r.seat } else { r.by };
+            let id = if them == 2 { crate::road::stop(opponent).and_then(|s| s.companion).map(|c| c.pilot).unwrap_or(opponent.to_string()) } else { opponent.to_string() };
+            let name = copy_at(&copy, &format!("opponents.{id}.name")).to_string();
+            let mid = copy_at(&copy, &format!("opponents.{id}.name_mid")).to_string();
             let key = match (won, own, r.cause) {
                 (true, true, _) => "results.road.win_self",
                 (true, false, Cause::Neck) => "results.road.win_neck",
@@ -105,9 +112,11 @@ pub fn phase_text(w: &World, who: Audience) -> Value {
 
 /// Whether the round's deciding cut crossed the head (Sam: "if someone gets
 /// headshot"), as against the neck, which the same cause covers.
-fn headshot(w: &World, r: &RoundResult) -> bool {
-    let Some(loser) = r.loser else { return false };
-    let body = w.setup.seats[loser as usize].map(|s| s.body as usize).unwrap_or(0);
+pub fn headshot(w: &World, r: &RoundResult) -> bool {
+    if r.loser.is_none() {
+        return false;
+    }
+    let body = w.setup.seats[r.seat as usize].map(|s| s.body as usize).unwrap_or(0);
     r.cause == Cause::Neck && w.setup.bodies[body].parts.get(r.part as usize).is_some_and(|p| p.copy == "head")
 }
 
@@ -134,7 +143,7 @@ pub fn focus(w: &World, r: &RoundResult) -> Value {
     if !headshot(w, r) {
         return Value::Null;
     }
-    let loser = r.loser.unwrap();
+    let loser = r.seat;
     let at = w
         .events
         .iter()
@@ -176,7 +185,7 @@ mod tests {
     }
 
     fn result(loser: Option<u8>, cause: Cause, part: u8, by: u8) -> RoundResult {
-        RoundResult { loser, cause, part, by }
+        RoundResult { loser, seat: loser.unwrap_or(0), cause, part, by }
     }
 
     fn world() -> World {

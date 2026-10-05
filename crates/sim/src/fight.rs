@@ -1,7 +1,7 @@
 //! Cuts, clashes, ink, and how a round and a match end (D10–D13).
 
 use crate::balance;
-use crate::body::{Cause, Mode};
+use crate::body::{Cause, Mode, SEATS};
 use crate::contact::{self, Swept};
 use crate::fx::{Fx, V2, ONE};
 use crate::input::Input;
@@ -21,9 +21,12 @@ pub struct Fatal {
 /// How a round ended.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct RoundResult {
-    /// The seat that lost; `None` when both stopped on the same tick (a draw,
-    /// played again).
+    /// The side that lost (0 is seat 0; 1 is its opponents); `None` when
+    /// both stopped on the same tick (a draw, played again). With two seats
+    /// a side is a seat.
     pub loser: Option<u8>,
+    /// The fighter whose fall decided it: the last of the losing side out.
+    pub seat: u8,
     pub cause: Cause,
     /// For a cut, the part it crossed; for ink, the part that spilled most.
     pub part: u8,
@@ -35,7 +38,7 @@ pub struct RoundResult {
 pub enum Phase {
     Fight,
     /// The round is over; the next starts when both seats have pressed ready.
-    RoundOver { result: RoundResult, ready: [bool; 2] },
+    RoundOver { result: RoundResult, ready: [bool; SEATS] },
     MatchOver { result: RoundResult },
 }
 
@@ -94,7 +97,17 @@ impl World {
         // And a fighter's own blade never cuts that fighter: Sam removed
         // self-cuts on 2026-10-03, reversing his answer in brief 0.7, because
         // why one happened was too hard to see.
-        part.fighter != owner && self.held(si) && !self.dodging(owner as usize) && !dodged
+        // Nor a fighter on its own side. A fighter already out of the round
+        // cuts nothing and is cut no more: with three seats it lies there
+        // while the round goes on, and a blade resting in it cut it into
+        // slivers every tick until the particle count overflowed
+        // (SECOND-ORDER-M5 row 49).
+        crate::body::side(part.fighter as usize) != crate::body::side(owner as usize)
+            && self.held(si)
+            && !self.dodging(owner as usize)
+            && !dodged
+            && !self.out(owner as usize)
+            && !self.out(part.fighter as usize)
     }
 
     fn fighter_body(&self, seat: u8) -> usize {
@@ -290,16 +303,36 @@ impl World {
     /// still closer than the gap, or crossed, they go back again, and the
     /// pose they end the tick in is one where they have not passed through.
     pub(crate) fn clash(&mut self, drives: &[Drive]) {
-        if self.swords.len() < 2 {
-            return;
+        // Every pair of swords, in index order: with two seats, the one pair.
+        let n = self.swords.len();
+        for ia in 0..n {
+            for ib in ia + 1..n {
+                self.clash_pair(ia, ib, drives);
+            }
         }
+    }
+
+    fn is_clashing(&self, ia: usize, ib: usize) -> bool {
+        self.clashing.contains(&(ia as u8, ib as u8))
+    }
+
+    fn set_clashing(&mut self, ia: usize, ib: usize, on: bool) {
+        let k = (ia as u8, ib as u8);
+        self.clashing.retain(|&x| x != k);
+        if on {
+            self.clashing.push(k);
+            self.clashing.sort();
+        }
+    }
+
+    fn clash_pair(&mut self, ia: usize, ib: usize, drives: &[Drive]) {
         let s_max = self.s_max().max(8);
         // Every edge of one weapon against every edge of the other, whole,
         // hilt included: a plain sword is one edge, butt to tip.
         let ends = |si: usize| self.swords[si].edges.iter().map(|e| (e.0, e.1)).collect::<Vec<_>>();
-        let (ea, eb) = (ends(0), ends(1));
+        let (ea, eb) = (ends(ia), ends(ib));
         let pairs: Vec<((u16, u16), (u16, u16))> = ea.iter().flat_map(|&x| eb.iter().map(move |&y| (x, y))).collect();
-        let points: Vec<u16> = self.swords[0].points.iter().chain(self.swords[1].points.iter()).copied().collect();
+        let points: Vec<u16> = self.swords[ia].points.iter().chain(self.swords[ib].points.iter()).copied().collect();
         // Blades that start the tick already touching may slide along each
         // other and part freely; they are only stopped if they would cross.
         // Without this they glued together: every tick found contact at its
@@ -313,7 +346,8 @@ impl World {
         let near_now = |w: &World| pairs.iter().copied().find(|&(x, y)| contact::near(p(w, x.0), p(w, x.1), p(w, y.0), p(w, y.1), BLADE_GAP).is_some());
         let (k, s, pair) = if resting {
             let Some(pair) = crossing(self) else {
-                self.clashing = near_now(self).is_some();
+                let near = near_now(self).is_some();
+                self.set_clashing(ia, ib, near);
                 return;
             };
             (0i64, 1i64, pair)
@@ -330,7 +364,7 @@ impl World {
                 }
             }
             let Some((hk, hs, pair)) = first else {
-                self.clashing = false;
+                self.set_clashing(ia, ib, false);
                 return;
             };
             (hk.saturating_sub(1) as i64, hs as i64, pair)
@@ -355,13 +389,13 @@ impl World {
         if !ok {
             put(self);
         }
-        if !self.clashing {
+        if !self.is_clashing(ia, ib) {
             let at = |i: u16| safe.iter().find(|(j, _)| *j == i).map(|(_, v)| *v).unwrap();
             let ((a0, a1), (b0, b1)) = pair;
             let (_, _, pe, qe) = contact::closest(at(a0), at(a1), at(b0), at(b1));
             self.events.push(Event::Clash { at: V2::lerp(pe, qe, Fx(ONE.0 / 2)) });
         }
-        self.clashing = true;
+        self.set_clashing(ia, ib, true);
     }
 
     // --- ink and the end of a round (D12, D13) -----------------------------------------
@@ -369,7 +403,7 @@ impl World {
     /// Every attached stump drains ink, once, at the end of every tick,
     /// including the tick its cut lands on (H4).
     pub(crate) fn drain(&mut self) {
-        for seat in 0..2 {
+        for seat in 0..SEATS {
             let Some(f) = self.fighters[seat].as_ref() else { continue };
             let defs = &self.setup.bodies[f.body as usize].parts;
             let mut flow = vec![0i32; defs.len()];
@@ -387,28 +421,47 @@ impl World {
         }
     }
 
-    /// Whether either fighter cannot continue, and what follows (D12, D13).
+    /// Whether a side cannot continue, and what follows (D12, D13). A side
+    /// is beaten when every fighter on it is out; the fighter who went out
+    /// last decides how the round is told.
     pub(crate) fn judge(&mut self) {
         if self.setup.mode != Mode::Match || !matches!(self.phase, Phase::Fight) {
             return;
         }
-        let mut out: [Option<RoundResult>; 2] = [None, None];
-        for seat in 0..2u8 {
+        let tick = self.tick;
+        let mut fell: [Option<(u32, RoundResult)>; SEATS] = [None, None, None];
+        for seat in 0..SEATS as u8 {
             let Some(f) = self.fighters[seat as usize].as_ref() else { continue };
             if self.setup.bodies[f.body as usize].ink == 0 {
                 continue;
             }
-            if let Some(fatal) = f.fatal {
-                out[seat as usize] = Some(RoundResult { loser: Some(seat), cause: fatal.cause, part: fatal.part, by: fatal.by });
+            let side = f.side;
+            let r = if let Some(fatal) = f.fatal {
+                Some(RoundResult { loser: Some(side), seat, cause: fatal.cause, part: fatal.part, by: fatal.by })
             } else if f.ink <= 0 {
                 let most = (0..f.spilled.len()).max_by_key(|&k| (f.spilled[k], std::cmp::Reverse(k))).unwrap_or(0) as u8;
-                out[seat as usize] = Some(RoundResult { loser: Some(seat), cause: Cause::Ink, part: most, by: seat });
+                Some(RoundResult { loser: Some(side), seat, cause: Cause::Ink, part: most, by: seat })
+            } else {
+                None
+            };
+            if let Some(r) = r {
+                let f = self.fighters[seat as usize].as_mut().unwrap();
+                let at = *f.out_at.get_or_insert(tick);
+                fell[seat as usize] = Some((at, r));
             }
         }
-        let result = match out {
-            [None, None] => return,
-            [Some(a), Some(_)] => RoundResult { loser: None, ..a },
-            [Some(r), None] | [None, Some(r)] => r,
+        // Each side's result, if every fighter on it is out: the last out.
+        let side_result = |side: u8| -> Option<RoundResult> {
+            let seats: Vec<usize> = (0..SEATS).filter(|&s| self.fighters[s].as_ref().is_some_and(|f| f.side == side && self.setup.bodies[f.body as usize].ink > 0)).collect();
+            if seats.is_empty() || seats.iter().any(|&s| fell[s].is_none()) {
+                return None;
+            }
+            seats.iter().map(|&s| fell[s].unwrap()).max_by_key(|(at, r)| (*at, std::cmp::Reverse(r.seat))).map(|(_, r)| r)
+        };
+        let result = match (side_result(0), side_result(1)) {
+            (None, None) => return,
+            (Some(a), Some(_)) => RoundResult { loser: None, ..a },
+            (Some(r), None) | (None, Some(r)) => r,
         };
         if let Some(l) = result.loser {
             self.wins[1 - l as usize] += 1;
@@ -420,24 +473,24 @@ impl World {
                 self.events.push(Event::MatchEnd { winner: w as u8 });
                 Phase::MatchOver { result }
             }
-            None => Phase::RoundOver { result, ready: [false, false] },
+            None => Phase::RoundOver { result, ready: [false; SEATS] },
         };
     }
 
     /// Between rounds: latch each seat's ready bit, and start the next round
     /// once every seat with a fighter has pressed it. Returns whether the
     /// fighters should be limp this tick.
-    pub(crate) fn between_rounds(&mut self, inputs: [Input; 2]) -> bool {
+    pub(crate) fn between_rounds(&mut self, inputs: [Input; SEATS]) -> bool {
         match self.phase {
             Phase::Fight => false,
             Phase::MatchOver { .. } => true,
             Phase::RoundOver { result, mut ready } => {
-                for s in 0..2 {
+                for s in 0..SEATS {
                     if inputs[s].has(Input::READY) || self.setup.seats[s].is_none() {
                         ready[s] = true;
                     }
                 }
-                if ready == [true, true] {
+                if ready == [true; SEATS] {
                     if result.loser.is_some() {
                         self.round += 1;
                     }

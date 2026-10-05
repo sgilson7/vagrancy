@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 use sim::Setup;
 
 /// Bumped when a message changes shape; a peer on another version is
-/// refused, like a peer on another build.
-pub const PROTO: u32 = 4;
+/// refused, like a peer on another build. 5: the setup a welcome carries
+/// has three seats and the ground's ledges.
+pub const PROTO: u32 = 5;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Msg {

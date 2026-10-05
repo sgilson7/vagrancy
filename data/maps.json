@@ -1,0 +1,9 @@
+{
+  "_about": "The grounds a fight can be on (Sam, 2026-10-05: \"a couple of fights that have platforms you can jump on top of, that when you execute the s button stand motion it sets you on top of the platform thats immediately below you ... different maps with platforms\" online). Each platform is [x0, x1, y] in whole cm: a one-way ledge from x0 to x1 whose top is y above the ground, solid from above and passable from below and the sides, so a fighter jumps up through it and stands on it. The arena runs from -600 to 600 cm; on a flanked stop the player starts at the middle and the two opponents at -520 and 520; otherwise the two fighters start at -260 and 260. One jump lifts a standing fighter's pelvis from 93 cm to about 214, and every ledge's top is below 200, so a jump and then the stand key, pressed while the pelvis is above the ledge, set a fighter on it (crates/content/tests/maps.rs climbs every ledge that way). flat is the arena with no ledges.",
+  "maps": [
+    {"id": "flat", "platforms": []},
+    {"id": "ledges", "platforms": [[-600, -200, 140], [200, 600, 140]]},
+    {"id": "bridge", "platforms": [[-330, 330, 120]]},
+    {"id": "tiers", "platforms": [[-590, -330, 80], [-120, 120, 170], [330, 590, 80]]}
+  ]
+}
