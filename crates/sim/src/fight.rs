@@ -103,7 +103,7 @@ impl World {
         // while the round goes on, and a blade resting in it cut it into
         // slivers every tick until the particle count overflowed
         // (SECOND-ORDER-M5 row 49).
-        crate::body::side(part.fighter as usize) != crate::body::side(owner as usize)
+        self.side_of(part.fighter as usize) != self.side_of(owner as usize)
             && (self.held(si) || self.swords[si].flying)
             && !self.dodging(owner as usize)
             && !dodged
@@ -426,6 +426,19 @@ impl World {
     /// Whether a side cannot continue, and what follows (D12, D13). A side
     /// is beaten when every fighter on it is out; the fighter who went out
     /// last decides how the round is told.
+    /// Which side a seat fights on: its fighter's, or the seat's own.
+    pub fn side_of(&self, seat: usize) -> u8 {
+        self.fighters[seat].as_ref().map(|f| f.side).unwrap_or(crate::body::side(seat))
+    }
+
+    /// Story mode's stage to cross: seat 0's pelvis has got to the end.
+    fn reached(&self) -> bool {
+        let crate::body::Objective::Reach { x } = self.setup.objective else { return false };
+        let Some(f) = self.fighters[0].as_ref() else { return false };
+        let def = &self.setup.bodies[f.body as usize];
+        def.roles.pelvis.is_some_and(|p| self.particles[(f.base + p as u16) as usize].p.x >= x)
+    }
+
     pub(crate) fn judge(&mut self) {
         if self.setup.mode != Mode::Match || !matches!(self.phase, Phase::Fight) {
             return;
@@ -461,6 +474,7 @@ impl World {
             seats.iter().map(|&s| fell[s].unwrap()).max_by_key(|(at, r)| (*at, std::cmp::Reverse(r.seat))).map(|(_, r)| r)
         };
         let result = match (side_result(0), side_result(1)) {
+            (None, None) if self.reached() => RoundResult { loser: Some(1), seat: 1, cause: Cause::Reached, part: 0, by: 0 },
             (None, None) if matches!(self.setup.objective, crate::body::Objective::HoldOut { ticks } if self.round_ticks + 1 >= ticks) => {
                 // Story mode's hold-out: seat 0 is still in the round when
                 // the time is up, so its side has won it.

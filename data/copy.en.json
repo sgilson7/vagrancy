@@ -320,7 +320,9 @@
       "match_win": "You won the match, {wins} rounds to {losses}.",
       "match_lose": "You lost the match, {losses} rounds to {wins}.",
       "win_held_out": "You won the round. You held out until the time ran out.",
-      "lose_held_out": "You lost the round. {opponent} held out until the time ran out."
+      "lose_held_out": "You lost the round. {opponent} held out until the time ran out.",
+      "win_reached": "You won the round. You reached the end of the stage.",
+      "lose_reached": "You lost the round. {opponent} reached the end of the stage."
     },
     "versus": {
       "neck": "{winner} won the round. {winner}'s blade cut across {loser}'s {part}.",
@@ -328,7 +330,8 @@
       "ink": "{winner} won the round. {loser} ran out of ink.",
       "self": "{winner} won the round. {loser}'s own blade made the cut that ended it.",
       "match": "{winner} won the match, {wins} rounds to {losses}.",
-      "held_out": "{winner} won the round by holding out until the time ran out."
+      "held_out": "{winner} won the round by holding out until the time ran out.",
+      "reached": "{winner} won the round by reaching the end of the stage."
     },
     "draw": "Neither fighter won the round. Both stopped at the same moment, so the round is played again.",
     "popup": {
@@ -339,7 +342,8 @@
       "draw": "Both down at once",
       "match_won": "You won the match",
       "disarmed": "No blades left",
-      "held_out": "Held out"
+      "held_out": "Held out",
+      "reached": "Reached the end"
     },
     "next_round": {
       "label": "Play the next round"
@@ -1499,9 +1503,9 @@
       "continue": "You have no lives left, so the chapter starts again with {lives} lives."
     },
     "chapter_intro": {
-      "0": "The walk starts at the edge of the rice fields. Two farmers wait there, one who does not fight back and one who swings in a steady rhythm.",
+      "0": "The walk starts at the edge of the rice fields. Cross the paddies to the shrine, then face the thresher, who swings in a steady rhythm.",
       "1": "On the village road the drovers come one after another, and the courier keeps her distance.",
-      "2": "At the river the ferryman carries a longsword, and on the far bank the tea picker fights from the ledges with the knife grinder at your back.",
+      "2": "At the river the ferryman carries a longsword. Beat him, then fight beside him, and on the far bank meet the tea picker on the ledges with the knife grinder at your back.",
       "3": "In the market towns you face two at once, and then the cooper, grown to a giant.",
       "4": "In the hill country the reader looks ahead before each move. Stay alive against him, then face the smith.",
       "5": "The mountain pass is ledges and terraces. The roofer and the kite maker both fight from above.",
@@ -1509,11 +1513,12 @@
       "7": "At the far gate the gatekeeper, the bellringer and the monk come one after another. The archivist stands last, grown to a giant, and she takes two rounds to beat."
     },
     "scene": {
-      "c1_scarecrow": "The scarecrow: cut it anywhere, then across the neck.",
+      "c1_cross": "Cross the paddies to the shrine at the far end. The scarecrow stands in the way, and the thresher waits near the shrine.",
       "c1_thresher": "The thresher: count its pause, then move in after a swing.",
       "c2_drovers": "Drovers, one after another: {fights} of them.",
       "c2_courier": "The courier, who backs away and dodges in.",
       "c3_ferryman": "The ferryman and his longsword.",
+      "c3_team": "You and the ferryman together, against the eel fisher.",
       "c3_tea_picker": "The tea picker on the ledges, with the knife grinder at your back.",
       "c4_well_digger": "The well digger, with the tinker at your back.",
       "c4_cooper": "The cooper, grown to a giant half again your size.",

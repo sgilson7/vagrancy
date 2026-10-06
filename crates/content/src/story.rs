@@ -4,7 +4,8 @@
 //! state core reports and presses the buttons it offers.
 
 use serde::Deserialize;
-use sim::body::{Objective, Setup};
+use sim::body::{Objective, Seat, Setup};
+use sim::fx::Fx;
 use sim::fight::Phase;
 use sim::World;
 
@@ -34,6 +35,20 @@ pub enum Kind {
     Duel,
     Waves,
     Hold,
+    /// A stage to cross: reach its end, past the opponents.
+    Cross,
+    /// You and an ally against one.
+    Team,
+}
+
+/// A stage to cross, in whole cm.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Stage {
+    /// The walls stand at plus and minus this.
+    pub half: i32,
+    /// Reach this to win the round.
+    pub exit: i32,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -52,6 +67,14 @@ pub struct Scene {
     /// opponents).
     #[serde(default)]
     pub giant: bool,
+    /// Cross: the stage, and a second opponent (a stop) waiting near its end.
+    #[serde(default)]
+    pub stage: Option<Stage>,
+    #[serde(default)]
+    pub ahead: Option<String>,
+    /// Team: the ally fighting beside you (a stop's pilot and weapon).
+    #[serde(default)]
+    pub ally: Option<String>,
 }
 
 fn one() -> u32 {
@@ -77,10 +100,46 @@ pub fn setup(seed: u64, tuning: u8, scene: &Scene, fight: usize, weapon: &str) -
             seat.body = (s.bodies.len() - 1) as u8;
         }
     }
+    // A second fighter in seat 2: the opponent ahead on a stage, facing the
+    // player, or the ally beside the player, on the player's side.
+    let extra = |s: &mut Setup, id: &str, x: i32, side: Option<u8>, facing: i8| {
+        let w = crate::road::stop(id).and_then(|st| st.weapon).unwrap_or(crate::weapons::DEFAULT.to_string());
+        let body = crate::setup::armed(&mut s.bodies, &w);
+        s.seats[2] = Some(Seat { body, x: Fx::int(x), side, facing: Some(facing) });
+    };
+    if let (Kind::Cross, Some(st)) = (scene.kind, scene.stage.as_ref()) {
+        s.arena_half = Fx::int(st.half);
+        s.objective = Objective::Reach { x: Fx::int(st.exit) };
+        // The player near the left wall, the opponent mid-stage facing it.
+        if let Some(p) = s.seats[0].as_mut() {
+            p.x = Fx::int(st.half - 300);
+        }
+        if let Some(o) = s.seats[1].as_mut() {
+            o.x = Fx::int(0);
+        }
+        if let Some(a) = &scene.ahead {
+            extra(&mut s, a, st.exit - 450, None, -1);
+        }
+    }
+    if let (Kind::Team, Some(a)) = (scene.kind, scene.ally.as_ref()) {
+        // Beside the player, a little behind it, facing the same way.
+        let at = s.seats[0].map(|p| p.x).unwrap_or(sim::balance::START_X).trunc() + 160;
+        extra(&mut s, a, at, Some(0), 1);
+    }
     if let (Kind::Hold, Some(secs)) = (scene.kind, scene.hold_s) {
         s.objective = Objective::HoldOut { ticks: secs * sim::balance::TICKS_PER_SECOND };
     }
     s
+}
+
+/// Each opponent's and ally's pilot, by seat from seat 1: the stop's own,
+/// then whoever sits in seat 2 (a companion, the opponent ahead, the ally).
+pub fn crew(scene: &Scene, fight: usize) -> Vec<pilot::Spec> {
+    let id = &scene.fights[fight];
+    match (scene.kind, &scene.ahead, &scene.ally) {
+        (Kind::Cross, Some(a), _) | (Kind::Team, _, Some(a)) => vec![crate::road::pilot(id), crate::road::pilot(a)],
+        _ => crate::road::crew(id),
+    }
 }
 
 /// How a fight stands.

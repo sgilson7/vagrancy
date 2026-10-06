@@ -56,6 +56,9 @@ jobs:
       # console error or any request that leaves the origin. `--with-deps`
       # because a fresh runner lacks the shared libraries a laptop has.
       - name: Walk the gate in three browsers
+        # A hung check fails here with its log, rather than holding the run
+        # for an hour (2026-10-06: one did, and left no log to read).
+        timeout-minutes: 30
         run: |
           python3 -m venv .venv-test
           ./.venv-test/bin/pip -q install playwright

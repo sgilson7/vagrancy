@@ -44,4 +44,7 @@ pub use world::World;
 /// 12: a setup carries an objective (story mode's hold-out), and the world
 /// counts the ticks of the round under way. A match with no objective plays
 /// exactly as in 11.
-pub const SIM_VERSION: u32 = 12;
+/// 13: a seat may set its side and facing, the arena's width is in the
+/// setup, and a stage to cross is won by reaching its end. A match that sets
+/// none of them plays exactly as in 12.
+pub const SIM_VERSION: u32 = 13;

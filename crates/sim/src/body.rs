@@ -19,6 +19,8 @@ pub enum Cause {
     Ink,
     /// The other side held out for the whole of a hold-out round.
     HeldOut,
+    /// The other side reached the end of a stage to cross.
+    Reached,
     /// Nobody had a blade: every fighter in the round had thrown its sword
     /// (or lost it), none was in the air, and nobody went out for
     /// `balance::DISARMED_DRAW_TICKS`. Only ever a draw.
@@ -184,6 +186,19 @@ pub struct Seat {
     pub body: u8,
     /// Where this seat's feet start; mirrored for the right seat.
     pub x: Fx,
+    /// Its side, when not the seat's own (`side`): story mode's ally on
+    /// the player's side.
+    pub side: Option<u8>,
+    /// Its facing, when not the seat's own (`facing`): story mode's
+    /// opponents ahead on a stage to cross face the player.
+    pub facing: Option<i8>,
+}
+
+impl Seat {
+    /// A seat with its own side and facing.
+    pub const fn at(body: u8, x: Fx) -> Seat {
+        Seat { body, x, side: None, facing: None }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -202,6 +217,9 @@ pub struct Setup {
     pub platforms: Vec<Platform>,
     /// How a round is won, besides putting the other side out (story mode).
     pub objective: Objective,
+    /// Half the arena's width: the walls stand at plus and minus this.
+    /// `balance::ARENA_HALF` except on story mode's stages to cross.
+    pub arena_half: Fx,
 }
 
 /// What else ends a round in the player's favor (Sam, 2026-10-06: story
@@ -213,6 +231,8 @@ pub enum Objective {
     Rounds,
     /// Seat 0 wins the round by still being in it after this many ticks.
     HoldOut { ticks: u32 },
+    /// Seat 0 wins the round by getting its pelvis to `x` (a stage to cross).
+    Reach { x: Fx },
 }
 
 /// How many fighters a world can hold.

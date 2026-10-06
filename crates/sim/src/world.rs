@@ -228,14 +228,15 @@ impl World {
         let jitter = Fx::int(self.rng.range(-balance::SPAWN_JITTER_CM, balance::SPAWN_JITTER_CM));
         for seat in 0..SEATS as u8 {
             if let Some(s) = self.setup.seats[seat as usize] {
-                let facing = crate::body::facing(seat as usize);
+                let facing = s.facing.map(i32::from).unwrap_or(crate::body::facing(seat as usize));
                 let x = (s.x + jitter) * -facing;
-                self.spawn(seat, s.body, facing, x);
+                let side = s.side.unwrap_or(crate::body::side(seat as usize));
+                self.spawn(seat, s.body, facing, x, side);
             }
         }
     }
 
-    fn spawn(&mut self, seat: u8, body: u8, facing: i32, x: Fx) {
+    fn spawn(&mut self, seat: u8, body: u8, facing: i32, x: Fx, side: u8) {
         let def: BodyDef = self.setup.bodies[body as usize].clone();
         let base = self.particles.len() as u16;
         let place = |at: V2| V2::new(x + at.x * facing, at.y);
@@ -325,7 +326,7 @@ impl World {
         let n = self.particles.len() as u16 - base;
         self.fighters[seat as usize] = Some(Fighter {
             seat,
-            side: crate::body::side(seat as usize),
+            side,
             body,
             facing,
             base,
@@ -856,7 +857,7 @@ impl World {
         let def = self.setup.bodies[f.body as usize].clone();
         let pe = (f.base + def.roles.pelvis.unwrap() as u16) as usize;
         let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at;
-        let lim = balance::ARENA_HALF - Fx::int(60);
+        let lim = self.setup.arena_half - Fx::int(60);
         let x = (self.particles[pe].p.x - rest_pelvis.x * f.facing).clamp(-lim, lim);
         // In the air, on the surface immediately below the pelvis (a jump
         // and the stand key set a fighter on a ledge); with a foot down, on
@@ -1067,6 +1068,7 @@ impl World {
         let ph = self.setup.physics;
         let drive = [0usize, 1, 2].map(|s| self.fighters[s].as_ref().map(|f| f.drive).unwrap_or(Fx(0)));
         let platforms = self.setup.platforms.clone();
+        let arena_half = self.setup.arena_half;
         for pt in &mut self.particles {
             if pt.m == 0 {
                 continue;
@@ -1105,7 +1107,7 @@ impl World {
                 }
             }
             if ph.walls {
-                let lim = balance::ARENA_HALF - pt.rad;
+                let lim = arena_half - pt.rad;
                 pt.p.x = pt.p.x.clamp(-lim, lim);
             }
         }

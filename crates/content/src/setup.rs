@@ -18,17 +18,18 @@ fn setup(seed: u64, mode: Mode, tuning: u8, seats: [Option<Seat>; 2]) -> Setup {
         seats: [seats[0], seats[1], None],
         platforms: Vec::new(),
         objective: sim::body::Objective::Rounds,
+        arena_half: balance::ARENA_HALF,
     }
 }
 
 /// One fighter alone (M1's page).
 pub fn alone(seed: u64, tuning: u8) -> Setup {
-    setup(seed, Mode::Practice, tuning, [Some(Seat { body: FIGHTER, x: balance::START_X }), None])
+    setup(seed, Mode::Practice, tuning, [Some(Seat::at(FIGHTER, balance::START_X)), None])
 }
 
 /// The player's body carrying `weapon`: the fighter's own body for the
 /// sword, or a copy of it with the sword reshaped, added to `bodies`.
-fn armed(bodies: &mut Vec<sim::body::BodyDef>, weapon: &str) -> u8 {
+pub fn armed(bodies: &mut Vec<sim::body::BodyDef>, weapon: &str) -> u8 {
     match crate::weapons::weapon(weapon) {
         Some(w) if w.id != crate::weapons::DEFAULT => {
             let mut b = bodies[FIGHTER as usize].clone();
@@ -53,7 +54,7 @@ pub fn versus_with(seed: u64, tuning: u8, weapons: [&str; 2], map: &str) -> Setu
             _ => crate::weapons::DEFAULT.to_string(),
         };
         let body = armed(&mut s.bodies, &w);
-        s.seats[seat] = Some(Seat { body, x: balance::START_X });
+        s.seats[seat] = Some(Seat::at(body, balance::START_X));
     }
     s
 }
@@ -66,7 +67,7 @@ pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
     for (seat, id) in ids.iter().enumerate() {
         let w = crate::road::stop(id).and_then(|s| s.weapon).unwrap_or(crate::weapons::DEFAULT.to_string());
         let body = armed(&mut s.bodies, &w);
-        s.seats[seat] = Some(Seat { body, x: balance::START_X });
+        s.seats[seat] = Some(Seat::at(body, balance::START_X));
     }
     s
 }
@@ -75,7 +76,7 @@ pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
 pub fn practice_with(seed: u64, tuning: u8, weapon: &str) -> Setup {
     let mut s = practice(seed, tuning);
     let body = armed(&mut s.bodies, weapon);
-    s.seats[0] = Some(Seat { body, x: balance::START_X });
+    s.seats[0] = Some(Seat::at(body, balance::START_X));
     s
 }
 
@@ -84,7 +85,7 @@ pub fn road_with(seed: u64, tuning: u8, opponent: &str, weapon: &str) -> Setup {
     let mut s = road(seed, tuning, opponent);
     let body = armed(&mut s.bodies, weapon);
     let x = s.seats[0].map(|seat| seat.x).unwrap_or(balance::START_X);
-    s.seats[0] = Some(Seat { body, x });
+    s.seats[0] = Some(Seat::at(body, x));
     s
 }
 
@@ -94,13 +95,13 @@ pub fn practice(seed: u64, tuning: u8) -> Setup {
         seed,
         Mode::Practice,
         tuning,
-        [Some(Seat { body: FIGHTER, x: balance::START_X }), Some(Seat { body: POST, x: Fx::int(60) })],
+        [Some(Seat::at(FIGHTER, balance::START_X)), Some(Seat::at(POST, Fx::int(60)))],
     )
 }
 
 /// Two fighters and a match.
 pub fn versus(seed: u64, tuning: u8) -> Setup {
-    let seat = Seat { body: FIGHTER, x: balance::START_X };
+    let seat = Seat::at(FIGHTER, balance::START_X);
     setup(seed, Mode::Match, tuning, [Some(seat), Some(seat)])
 }
 
@@ -141,16 +142,16 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
         None => {}
     }
     let stop = crate::road::stop(opponent);
-    let mut seats = [Some(Seat { body: FIGHTER, x: balance::START_X }), Some(Seat { body: seat1, x: balance::START_X }), None];
+    let mut seats = [Some(Seat::at(FIGHTER, balance::START_X)), Some(Seat::at(seat1, balance::START_X)), None];
     if let Some(c) = stop.as_ref().and_then(|s| s.companion.clone()) {
         let body = match c.weapon {
             Some(w) => armed(&mut bodies, &w),
             None => FIGHTER,
         };
-        seats[0] = Some(Seat { body: FIGHTER, x: Fx(0) });
+        seats[0] = Some(Seat::at(FIGHTER, Fx(0)));
         seats[1] = seats[1].map(|s| Seat { x: balance::START_X * 2, ..s });
-        seats[2] = Some(Seat { body, x: balance::START_X * 2 });
+        seats[2] = Some(Seat::at(body, balance::START_X * 2));
     }
-    let s = Setup { seed, mode: Mode::Match, rounds_to_win, physics, bodies, seats, platforms: Vec::new(), objective: sim::body::Objective::Rounds };
+    let s = Setup { seed, mode: Mode::Match, rounds_to_win, physics, bodies, seats, platforms: Vec::new(), objective: sim::body::Objective::Rounds, arena_half: balance::ARENA_HALF };
     crate::maps::on(s, stop.and_then(|s| s.map).as_deref().unwrap_or(crate::maps::FLAT))
 }

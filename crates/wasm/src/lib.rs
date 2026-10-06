@@ -380,10 +380,9 @@ impl StoryRun {
     }
     fn begin(&mut self) {
         let scene = self.run.scene(&self.story).clone();
-        let stop = scene.fights[self.run.fight].clone();
         self.seed = self.seed.wrapping_mul(1103515245).wrapping_add(12345);
         self.rec = Recording::new(content::story::setup(self.seed as u64, self.tuning, &scene, self.run.fight, &self.weapon));
-        self.pilots = content::road::crew(&stop).iter().map(pilot::build).collect();
+        self.pilots = content::story::crew(&scene, self.run.fight).iter().map(pilot::build).collect();
         self.last = [Input::NONE; sim::body::SEATS];
     }
     fn outcome(&self) -> content::story::Outcome {

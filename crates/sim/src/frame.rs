@@ -16,6 +16,10 @@ pub struct Frame {
     pub fighters: Vec<Option<FighterView>>,
     /// Ledges, as `[x0, x1, y]` in raw fixed point.
     pub platforms: Vec<[i32; 3]>,
+    /// Half the arena's width, raw: wider than a screen on a stage to cross.
+    pub arena_half: i32,
+    /// Where a stage to cross ends, raw, if this is one.
+    pub exit: Option<i32>,
     pub round: u32,
     pub wins: [u32; 2],
     /// "fight", "round_over" or "match_over".
@@ -106,6 +110,11 @@ pub fn frame(w: &World) -> Frame {
             })
             .collect(),
         platforms: w.setup.platforms.iter().map(|p| [p.x0.0, p.x1.0, p.y.0]).collect(),
+        arena_half: w.setup.arena_half.0,
+        exit: match w.setup.objective {
+            crate::body::Objective::Reach { x } => Some(x.0),
+            _ => None,
+        },
         round: w.round,
         wins: w.wins,
         phase: match w.phase {

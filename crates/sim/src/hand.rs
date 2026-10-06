@@ -33,7 +33,7 @@ pub(crate) fn test_world(bodies: Vec<BodyDef>, seats: [Option<Seat>; 2], gravity
     ph.walls = false;
     ph.tuning.drag = Fx(0);
     ph.tuning.cap = Fx::int(100_000);
-    World::new(Setup { seed: 1, mode: Mode::Practice, rounds_to_win: 3, physics: ph, bodies, seats: [seats[0], seats[1], None], platforms: Vec::new(), objective: crate::body::Objective::Rounds })
+    World::new(Setup { seed: 1, mode: Mode::Practice, rounds_to_win: 3, physics: ph, bodies, seats: [seats[0], seats[1], None], platforms: Vec::new(), objective: crate::body::Objective::Rounds, arena_half: crate::balance::ARENA_HALF })
 }
 
 /// H1 — the order of the integrator.
@@ -46,7 +46,7 @@ pub(crate) fn test_world(bodies: Vec<BodyDef>, seats: [Option<Seat>; 2], gravity
 #[test]
 fn h1_the_integrator_updates_speed_before_position() {
     for (n, want) in [(2u32, 14), (10, 230)] {
-        let mut w = test_world(vec![lone_point()], [Some(Seat { body: 0, x: Fx(0) }), None], Fx::int(4));
+        let mut w = test_world(vec![lone_point()], [Some(Seat::at(0, Fx(0))), None], Fx::int(4));
         let start = w.particles[0].p.y;
         w.particles[0].q.y = start + Fx::int(1);
         for _ in 0..n {
@@ -96,7 +96,7 @@ fn floating(seats: [Option<Seat>; 2], mode: BodyMode, ink: i32) -> World {
     w
 }
 
-const ONE_SEAT: [Option<Seat>; 2] = [Some(Seat { body: 0, x: Fx(0) }), None];
+const ONE_SEAT: [Option<Seat>; 2] = [Some(Seat::at(0, Fx(0))), None];
 
 /// H3 — which side drops. A uniform limb of mass 8, attached at its near
 /// end, cut a quarter of the way along: the fighter keeps 8·1/4 = 2 and the
@@ -157,7 +157,7 @@ fn a_cut_on_a_piece_that_has_dropped_spills_nothing() {
 fn the_part_that_spilled_most_counts_removed_stumps() {
     // Forearm stump for 60 ticks (600), then the upper arm's for the rest
     // (400 at 20 a tick): the forearm spilled most, though its stump is gone.
-    let both = [Some(Seat { body: 0, x: Fx::int(200) }), Some(Seat { body: 0, x: Fx::int(200) })];
+    let both = [Some(Seat::at(0, Fx::int(200))), Some(Seat::at(0, Fx::int(200)))];
     let mut w = floating(both, BodyMode::Match, 1000);
     w.cut(3, Fx::ratio(1, 2), 1);
     for _ in 0..60 {
@@ -179,7 +179,7 @@ fn the_part_that_spilled_most_counts_removed_stumps() {
 
 #[test]
 fn a_neck_cut_ends_the_round_on_the_tick_it_lands() {
-    let both = [Some(Seat { body: 0, x: Fx::int(200) }), Some(Seat { body: 0, x: Fx::int(200) })];
+    let both = [Some(Seat::at(0, Fx::int(200))), Some(Seat::at(0, Fx::int(200)))];
     let mut w = floating(both, BodyMode::Match, 1000);
     for _ in 0..10 {
         w.step([Input::NONE; 2]);
@@ -200,7 +200,7 @@ fn a_neck_cut_ends_the_round_on_the_tick_it_lands() {
 
 #[test]
 fn a_chest_cut_inside_the_heart_band_ends_the_round_and_one_below_it_does_not() {
-    let both = [Some(Seat { body: 0, x: Fx::int(200) }), Some(Seat { body: 0, x: Fx::int(200) })];
+    let both = [Some(Seat::at(0, Fx::int(200))), Some(Seat::at(0, Fx::int(200)))];
     let mut w = floating(both, BodyMode::Match, 1000);
     w.cut(0, Fx::ratio(8, 10), 1); // below the band: the waist and the limb drop
     w.step([Input::NONE; 2]);
@@ -213,7 +213,7 @@ fn a_chest_cut_inside_the_heart_band_ends_the_round_and_one_below_it_does_not() 
 
 #[test]
 fn both_fighters_stopping_on_one_tick_is_a_draw_played_again() {
-    let both = [Some(Seat { body: 0, x: Fx::int(200) }), Some(Seat { body: 0, x: Fx::int(200) })];
+    let both = [Some(Seat::at(0, Fx::int(200))), Some(Seat::at(0, Fx::int(200)))];
     let mut w = floating(both, BodyMode::Match, 1000);
     let n0 = w.parts.iter().position(|p| p.fighter == 0 && p.def == 1).unwrap();
     let n1 = w.parts.iter().position(|p| p.fighter == 1 && p.def == 1).unwrap();
@@ -233,7 +233,7 @@ fn both_fighters_stopping_on_one_tick_is_a_draw_played_again() {
 
 #[test]
 fn the_match_ends_when_a_fighter_wins_enough_rounds() {
-    let both = [Some(Seat { body: 0, x: Fx::int(200) }), Some(Seat { body: 0, x: Fx::int(200) })];
+    let both = [Some(Seat::at(0, Fx::int(200))), Some(Seat::at(0, Fx::int(200)))];
     let mut w = floating(both, BodyMode::Match, 1000);
     for r in 0..w.setup.rounds_to_win {
         let neck = w.parts.iter().position(|p| p.fighter == 1 && p.def == 1).unwrap();

@@ -11,7 +11,7 @@ use serde::Deserialize;
 use sim::fight::Phase;
 use sim::fx::{cos_deg, sin_deg, V2, ONE};
 use sim::world::Owner;
-use sim::body::{side, SEATS};
+use sim::body::SEATS;
 use sim::{Input, World};
 use std::collections::VecDeque;
 
@@ -146,7 +146,7 @@ pub fn foe(w: &World, seat: usize) -> usize {
     let me = pelvis(w, seat).map(|p| p.x);
     let mut best: Option<(bool, i32, usize)> = None;
     for k in 0..SEATS {
-        if k == seat || side(k) == side(seat) || w.fighters[k].is_none() {
+        if k == seat || w.fighters[k].is_none() || w.side_of(k) == w.side_of(seat) {
             continue;
         }
         let d = match (me, pelvis(w, k)) {
@@ -513,7 +513,7 @@ impl Search {
         let mut s: i64 = 0;
         match w.phase {
             Phase::RoundOver { result, .. } | Phase::MatchOver { result } => match result.loser {
-                Some(l) if l != side(me) => s += 100_000,
+                Some(l) if l != w.side_of(me) => s += 100_000,
                 Some(_) => s -= 100_000,
                 None => s -= 20_000,
             },
@@ -589,7 +589,7 @@ impl Pilot for Search {
                     if let sim::fight::Event::Cut { seat: s, spilled: true, .. } = *e {
                         cuts += if s as usize == seat {
                             -3_000
-                        } else if side(s as usize) != side(seat) {
+                        } else if trial.side_of(s as usize) != trial.side_of(seat) {
                             3_000
                         } else {
                             0
@@ -764,7 +764,7 @@ impl Tree {
                 f.ink * 100 < max * pct
             }),
             Cond::Chance(pct) => self.rng.below(100) < *pct,
-            Cond::AllyEngaged(cm) => (0..SEATS).any(|k| k != me && side(k) == side(me) && w.fighters[k].is_some() && !w.out(k) && {
+            Cond::AllyEngaged(cm) => (0..SEATS).any(|k| k != me && w.fighters[k].is_some() && w.side_of(k) == w.side_of(me) && !w.out(k) && {
                 matches!((pelvis(w, k), pelvis(w, them)), (Some(a), Some(b)) if (a.x - b.x).abs().trunc() < *cm)
             }),
             Cond::OppAbove(cm) => matches!((pelvis(w, me), pelvis(w, them)), (Some(a), Some(b)) if (b.y - a.y).trunc() > *cm),

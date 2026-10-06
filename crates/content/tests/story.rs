@@ -119,3 +119,61 @@ fn a_giant_stands_half_again_as_tall_and_can_be_beaten() {
     });
     assert!(won, "the yardstick never beat the giant cooper");
 }
+
+fn scene(id: &str) -> content::story::Scene {
+    story().chapters.iter().flat_map(|c| c.scenes.clone()).find(|s| s.id == id).unwrap_or_else(|| panic!("no scene {id}"))
+}
+
+#[test]
+fn a_stage_to_cross_is_won_by_walking_to_its_end() {
+    // The first chapter's stage: the player starts near the left wall of an
+    // arena three screens wide and wins the round on reaching the shrine,
+    // walking past opponents who press nothing.
+    let sc = scene("c1_cross");
+    let st = sc.stage.as_ref().unwrap();
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    let start = pilot::pelvis(&w, 0).unwrap().x.trunc();
+    assert!(start < -st.half + 400, "the player starts at {start} cm, not near the left wall");
+    let ahead = pilot::pelvis(&w, 2).unwrap().x.trunc();
+    assert!(w.fighters[2].as_ref().unwrap().facing == -1 && ahead > 0, "the opponent ahead stands at {ahead} cm facing away");
+    let mut ended = None;
+    while w.tick < 60 * 60 && ended.is_none() {
+        w.step_all([Input(Input::STEP_RIGHT), Input::NONE, Input::NONE]);
+        if let Some(Event::RoundEnd { result }) = w.events.iter().find(|e| matches!(e, Event::RoundEnd { .. })) {
+            ended = Some(*result);
+        }
+    }
+    let r = ended.expect("walking right never ended the round");
+    assert_eq!((r.loser, r.cause), (Some(1), sim::body::Cause::Reached), "the stage ended {r:?}");
+    assert!(pilot::pelvis(&w, 0).unwrap().x.trunc() >= st.exit);
+}
+
+#[test]
+fn in_a_team_fight_the_ally_fights_the_opponent_and_never_the_player() {
+    let sc = scene("c3_team");
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    assert_eq!((w.side_of(0), w.side_of(1), w.side_of(2)), (0, 1, 0));
+    assert_eq!(pilot::foe(&w, 2), 1, "the ally does not fight the opponent");
+    let mut ps: Vec<Box<dyn pilot::Pilot>> = content::story::crew(&sc, 0).iter().map(pilot::build).collect();
+    let mut last = [Input::NONE; sim::body::SEATS];
+    let mut ally_cuts = 0;
+    while w.tick < 60 * 30 && matches!(w.phase, sim::fight::Phase::Fight) {
+        let mut i = [Input::NONE; sim::body::SEATS];
+        for (k, p) in ps.iter_mut().enumerate() {
+            p.observe(last);
+            i[k + 1] = p.input(&w, k + 1);
+        }
+        w.step_all(i);
+        last = i;
+        for e in &w.events {
+            if let Event::Cut { seat, by: 2, .. } = *e {
+                assert_ne!(seat, 0, "the ally cut the player at tick {}", w.tick);
+                ally_cuts += 1;
+            }
+            if let Event::RoundEnd { result } = e {
+                assert!(result.loser != Some(0) || w.out(2) || w.fighters[2].as_ref().unwrap().out_at.is_some(), "the player's side lost with the ally still in");
+            }
+        }
+    }
+    assert!(ally_cuts > 0, "the ally never cut the opponent");
+}

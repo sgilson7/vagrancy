@@ -10,7 +10,10 @@ export function renderer(canvas, palette, numbers) {
   const H = canvas.height;
   const scale = W / (2 * half);
   const ground = H - 40;
-  const sx = (x) => (x / one + half) * scale;
+  // The camera: centred on the arena, or, on a stage wider than a screen,
+  // on the player as far as the walls allow. Set at the start of each draw.
+  let camX = 0;
+  const sx = (x) => (x / one - camX + half) * scale;
   const sy = (y) => ground - (y / one) * scale;
 
   // The right fighter is striped as well as ochre, so the two are told apart
@@ -92,6 +95,15 @@ export function renderer(canvas, palette, numbers) {
 
   function draw(prev, cur, alpha) {
     const pts = lerp(prev, cur, alpha);
+    const arena = (cur.arena_half || numbers.arena_half) / one;
+    if (arena > half) {
+      let sum = 0, n = 0;
+      for (const p of cur.parts) if (p.fighter === 0 && p.attached) { sum += pts[p.a][0]; n += 1; }
+      const px = n ? sum / n / one : 0;
+      camX = Math.max(-(arena - half), Math.min(arena - half, px));
+    } else {
+      camX = 0;
+    }
     sides = cur.fighters.map((f, seat) => (f ? f.side : seat === 0 ? 0 : 1));
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = palette.paper;
@@ -112,6 +124,20 @@ export function renderer(canvas, palette, numbers) {
     ctx.moveTo(0, ground + 0.5);
     ctx.lineTo(W, ground + 0.5);
     ctx.stroke();
+    // The end of a stage to cross: two posts and a lintel.
+    if (cur.exit !== null && cur.exit !== undefined) {
+      const ex = sx(cur.exit);
+      ctx.strokeStyle = palette.line;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(ex - 40, ground); ctx.lineTo(ex - 40, ground - 170);
+      ctx.moveTo(ex + 40, ground); ctx.lineTo(ex + 40, ground - 170);
+      ctx.moveTo(ex - 70, ground - 170); ctx.lineTo(ex + 70, ground - 170);
+      ctx.moveTo(ex - 55, ground - 145); ctx.lineTo(ex + 55, ground - 145);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = palette.ground_line;
+    }
     // Ledges: a slab of the ground's color with the ground's line on top.
     for (const [x0, x1, y] of cur.platforms || []) {
       const top = sy(y);
