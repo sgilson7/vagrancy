@@ -1,48 +1,949 @@
 {
-  "_about": "The tutorial's missions, in the order data/kc_graph.json teaches (Sam, 2026-10-04: a dedicated tutorial mode that is a map of missions following the teaching flow; analysis/kc/RESULTS.md). A mission teaches the components in teaches, shows the edges in builds_on (their sentences tie it to what the player already has), and makes them concrete in its tasks: a drill in the yard, or a fight on the road. A mission with two tasks is a comparison: two fights that differ in one thing, which kc_compare.<id> names, after Gick and Holyoak by way of the proposal (abstraction comes from comparison). c_swing_plant is the one new item: the graph found no item that asks for a swing and a plant together. crates/content/tests/tutorial.rs checks that every component is taught, after each component it builds on, and that each task's drill or fight requires what the mission teaches.",
-  "chapters": ["arm", "ground", "air", "defense", "reading", "ahead", "compare", "capstone"],
+  "_about": "The tutorial's missions, in the order data/kc_graph.json teaches (Sam, 2026-10-04: a dedicated tutorial mode that is a map of missions following the teaching flow; analysis/kc/RESULTS.md). A mission teaches the components in teaches, shows the edges in builds_on (their sentences tie it to what the player already has), and makes them concrete in its tasks: a drill in the yard, or a fight on the road. A mission with two tasks is a comparison: two fights that differ in one thing, which kc_compare.<id> names, after Gick and Holyoak by way of the proposal (abstraction comes from comparison). c_swing_plant is the one new item: the graph found no item that asks for a swing and a plant together. crates/content/tests/tutorial.rs checks that every component is taught, after each component it builds on, and that each task's drill or fight requires what the mission teaches. m_throw, m_ledge and m_flank (2026-10-06) teach throwing, standing on a ledge and fighting two at once. The yard goals' numbers were set (2026-10-06) so that loose timing meets them: every_yard_goal_is_met_with_loose_timing.",
+  "chapters": [
+    "arm",
+    "ground",
+    "air",
+    "defense",
+    "reading",
+    "ahead",
+    "compare",
+    "capstone"
+  ],
   "missions": [
-    {"id": "m_shoulder", "chapter": "arm", "teaches": ["K01", "K03"], "tasks": [{"at": "yard", "goal": "full_turn", "drill": "shoulder"}]},
-    {"id": "m_elbow", "chapter": "arm", "teaches": ["K02"], "requires": ["m_shoulder"], "tasks": [{"at": "yard", "goal": {"reach": 145}, "drill": "elbow"}]},
-    {"id": "m_cut", "chapter": "arm", "teaches": ["K13"], "builds_on": ["K01_K13", "K02_K13"], "requires": ["m_shoulder", "m_elbow"], "tasks": [{"at": "yard", "goal": "cut", "drill": "cut"}]},
-    {"id": "m_swing", "chapter": "arm", "teaches": ["K16"], "builds_on": ["K01_K16"], "requires": ["m_shoulder"], "tasks": [{"at": "yard", "goal": {"speed": 12}, "drill": "swing"}]},
-    {"id": "m_plant", "chapter": "arm", "teaches": ["K17"], "builds_on": ["K02_K17"], "requires": ["m_elbow", "m_swing"], "tasks": [{"at": "yard", "goal": {"plant": 150}, "drill": "plant"}]},
-    {"id": "c_swing_plant", "name": "tutorial.mission.c_swing_plant", "chapter": "arm", "teaches": ["K17"], "builds_on": ["K16_K17"], "requires": ["m_swing", "m_plant"], "tasks": [{"at": "yard", "goal": {"plant": 400}}]},
-    {"id": "m_move", "chapter": "ground", "teaches": ["K04"], "requires": ["m_shoulder"], "tasks": [{"at": "yard", "goal": {"step": 150}, "drill": "move"}]},
-    {"id": "m_round", "chapter": "ground", "teaches": ["I1", "K14"], "builds_on": ["K04_I1", "K14_I1", "K13_K14"], "requires": ["m_cut", "m_move"], "tasks": [{"at": "scarecrow", "goal": "win"}]},
-    {"id": "m_ink", "chapter": "ground", "teaches": ["K15"], "builds_on": ["K13_K15"], "requires": ["m_cut", "m_move"], "tasks": [{"at": "scarecrow", "goal": "spill_cut"}]},
-    {"id": "m_jump", "chapter": "air", "teaches": ["K05"], "requires": ["m_move"], "tasks": [{"at": "yard", "goal": "airborne", "drill": "jump"}]},
-    {"id": "m_air_jump", "chapter": "air", "teaches": ["K06"], "builds_on": ["K05_K06"], "requires": ["m_jump"], "tasks": [{"at": "yard", "goal": "air_jump", "drill": "air_jump"}]},
-    {"id": "m_dodge", "chapter": "defense", "teaches": ["K08"], "requires": ["m_move"], "tasks": [{"at": "yard", "goal": "dodge", "drill": "dodge"}]},
-    {"id": "m_roll", "chapter": "defense", "teaches": ["K09"], "builds_on": ["K08_K09"], "requires": ["m_dodge"], "tasks": [{"at": "yard", "goal": "roll", "drill": "roll"}]},
-    {"id": "m_air_dodge", "chapter": "air", "teaches": ["K10"], "builds_on": ["K08_K10", "K06_K10"], "requires": ["m_dodge", "m_air_jump"], "tasks": [{"at": "yard", "goal": "air_dodge", "drill": "air_dodge"}]},
-    {"id": "m_wait", "chapter": "defense", "teaches": ["K11"], "builds_on": ["K08_K11"], "requires": ["m_dodge"], "tasks": [{"at": "yard", "goal": {"dodges": 2}, "drill": "cooldown"}]},
-    {"id": "m_block", "chapter": "defense", "teaches": ["K12"], "builds_on": ["K01_K12"], "requires": ["m_cut"], "tasks": [{"at": "gatekeeper", "goal": {"clashes": 2}}]},
-    {"id": "m_opening", "chapter": "reading", "teaches": ["K19", "S1"], "builds_on": ["K13_K19", "S1_K19"], "requires": ["m_block", "m_round"], "tasks": [{"at": "thresher", "goal": "win"}]},
-    {"id": "m_reach", "chapter": "reading", "teaches": ["K18"], "builds_on": ["K02_K18"], "requires": ["m_opening"], "tasks": [{"at": "ferryman", "goal": "win"}]},
-    {"id": "m_distance", "chapter": "reading", "teaches": ["K29"], "builds_on": ["K04_K29"], "requires": ["m_opening", "m_roll"], "tasks": [{"at": "courier", "goal": "win"}]},
-    {"id": "m_high_low", "chapter": "reading", "teaches": ["K23"], "builds_on": ["K05_K23", "K12_K23"], "requires": ["m_jump", "m_opening"], "tasks": [{"at": "drover", "goal": "win"}]},
-    {"id": "m_guard", "chapter": "reading", "teaches": ["K21"], "builds_on": ["K12_K21"], "requires": ["m_opening"], "tasks": [{"at": "gatekeeper", "goal": "win"}]},
-    {"id": "m_turning", "chapter": "reading", "teaches": ["K22"], "builds_on": ["K12_K22"], "requires": ["m_opening", "m_swing"], "tasks": [{"at": "windmill", "goal": "win"}]},
-    {"id": "m_above", "chapter": "reading", "teaches": ["K30"], "builds_on": ["K12_K30"], "requires": ["m_opening", "m_air_jump"], "tasks": [{"at": "ropewalker", "goal": "win"}]},
-    {"id": "m_commit", "chapter": "reading", "teaches": ["K20", "K07"], "builds_on": ["K19_K20", "K17_K20"], "requires": ["m_opening", "m_plant", "m_roll"], "tasks": [{"at": "cooper", "goal": "win"}]},
-    {"id": "m_draw", "chapter": "reading", "teaches": ["K25"], "builds_on": ["K19_K25", "K11_K25"], "requires": ["m_opening", "m_wait"], "tasks": [{"at": "lamplighter", "goal": "win"}]},
-    {"id": "m_mirror", "chapter": "reading", "teaches": ["K26"], "builds_on": ["K19_K26", "S1_K26"], "requires": ["m_opening"], "tasks": [{"at": "sampler", "goal": "win"}]},
-    {"id": "m_aim", "chapter": "reading", "teaches": ["K24"], "builds_on": ["K14_K24", "K08_K24"], "requires": ["m_opening", "m_dodge"], "tasks": [{"at": "herbalist", "goal": "win"}]},
-    {"id": "m_deep", "chapter": "reading", "teaches": ["K32"], "builds_on": ["K15_K32", "K14_K32"], "requires": ["m_ink", "m_opening"], "tasks": [{"at": "potter", "goal": "win"}]},
-    {"id": "m_reaction", "chapter": "ahead", "teaches": ["K28"], "builds_on": ["K19_K28"], "requires": ["m_opening"], "tasks": [{"at": "reader", "goal": "win"}]},
-    {"id": "m_late", "chapter": "ahead", "teaches": ["K27"], "builds_on": ["K28_K27"], "requires": ["m_reaction"], "tasks": [{"at": "cartographer", "goal": "win"}]},
-    {"id": "m_light", "chapter": "air", "teaches": ["K31"], "builds_on": ["K06_K31"], "requires": ["m_air_dodge", "m_aim"], "tasks": [{"at": "hermit", "goal": "win"}]},
-    {"id": "c_opening", "chapter": "compare", "teaches": ["K19"], "requires": ["m_opening", "m_deep"], "tasks": [{"at": "thresher", "goal": "win"}, {"at": "potter", "goal": "win"}]},
-    {"id": "c_sweep", "chapter": "compare", "teaches": ["K23", "S2"], "requires": ["m_high_low", "m_aim"], "tasks": [{"at": "drover", "goal": "win"}, {"at": "dyer", "goal": "win"}]},
-    {"id": "c_overhead", "chapter": "compare", "teaches": ["K23"], "requires": ["m_high_low", "m_aim"], "tasks": [{"at": "brewer", "goal": "win"}, {"at": "abbot", "goal": "win"}]},
-    {"id": "c_turning", "chapter": "compare", "teaches": ["K22"], "requires": ["m_turning", "m_dodge"], "tasks": [{"at": "windmill", "goal": "win"}, {"at": "bellringer", "goal": "win"}]},
-    {"id": "c_draw", "chapter": "compare", "teaches": ["K25"], "requires": ["m_draw"], "tasks": [{"at": "lamplighter", "goal": "win"}, {"at": "salt_trader", "goal": "win"}]},
-    {"id": "c_above", "chapter": "compare", "teaches": ["K30"], "requires": ["m_above"], "tasks": [{"at": "ropewalker", "goal": "win"}, {"at": "falconer", "goal": "win"}]},
-    {"id": "c_aim", "chapter": "compare", "teaches": ["K24", "S2"], "builds_on": ["S2_K24"], "requires": ["m_aim", "m_reaction"], "tasks": [{"at": "herbalist", "goal": "win"}, {"at": "archivist", "goal": "win"}]},
-    {"id": "c_ink", "chapter": "compare", "teaches": ["K32", "S2"], "builds_on": ["S2_K32"], "requires": ["m_deep", "m_distance"], "tasks": [{"at": "boatwright", "goal": "win"}, {"at": "potter", "goal": "win"}]},
-    {"id": "c_lookahead", "chapter": "compare", "teaches": ["K27"], "requires": ["m_late"], "tasks": [{"at": "reader", "goal": "win"}, {"at": "cartographer", "goal": "win"}]},
-    {"id": "c_commit", "chapter": "compare", "teaches": ["K20"], "requires": ["m_commit", "c_swing_plant"], "tasks": [{"at": "carpenter", "goal": "win"}, {"at": "vaulter", "goal": "win"}]},
-    {"id": "m_match", "chapter": "capstone", "teaches": ["I2"], "builds_on": ["I1_I2", "K12_I2", "K19_I2"], "requires": ["m_commit", "m_above", "m_light", "c_aim", "c_lookahead"], "tasks": [{"at": "smith", "goal": "win"}]}
+    {
+      "id": "m_shoulder",
+      "chapter": "arm",
+      "teaches": [
+        "K01",
+        "K03"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "full_turn",
+          "drill": "shoulder"
+        }
+      ]
+    },
+    {
+      "id": "m_elbow",
+      "chapter": "arm",
+      "teaches": [
+        "K02"
+      ],
+      "requires": [
+        "m_shoulder"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "reach": 130
+          },
+          "drill": "elbow"
+        }
+      ]
+    },
+    {
+      "id": "m_cut",
+      "chapter": "arm",
+      "teaches": [
+        "K13"
+      ],
+      "builds_on": [
+        "K01_K13",
+        "K02_K13"
+      ],
+      "requires": [
+        "m_shoulder",
+        "m_elbow"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "cut",
+          "drill": "cut"
+        }
+      ]
+    },
+    {
+      "id": "m_swing",
+      "chapter": "arm",
+      "teaches": [
+        "K16"
+      ],
+      "builds_on": [
+        "K01_K16"
+      ],
+      "requires": [
+        "m_shoulder"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "speed": 12
+          },
+          "drill": "swing"
+        }
+      ]
+    },
+    {
+      "id": "m_plant",
+      "chapter": "arm",
+      "teaches": [
+        "K17"
+      ],
+      "builds_on": [
+        "K02_K17"
+      ],
+      "requires": [
+        "m_elbow",
+        "m_swing"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "plant": 30
+          },
+          "drill": "plant"
+        }
+      ]
+    },
+    {
+      "id": "c_swing_plant",
+      "name": "tutorial.mission.c_swing_plant",
+      "chapter": "arm",
+      "teaches": [
+        "K17"
+      ],
+      "builds_on": [
+        "K16_K17"
+      ],
+      "requires": [
+        "m_swing",
+        "m_plant"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "plant": 220
+          }
+        }
+      ]
+    },
+    {
+      "id": "m_move",
+      "chapter": "ground",
+      "teaches": [
+        "K04"
+      ],
+      "requires": [
+        "m_shoulder"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "step": 150
+          },
+          "drill": "move"
+        }
+      ]
+    },
+    {
+      "id": "m_round",
+      "chapter": "ground",
+      "teaches": [
+        "I1",
+        "K14"
+      ],
+      "builds_on": [
+        "K04_I1",
+        "K14_I1",
+        "K13_K14"
+      ],
+      "requires": [
+        "m_cut",
+        "m_move"
+      ],
+      "tasks": [
+        {
+          "at": "scarecrow",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_ink",
+      "chapter": "ground",
+      "teaches": [
+        "K15"
+      ],
+      "builds_on": [
+        "K13_K15"
+      ],
+      "requires": [
+        "m_cut",
+        "m_move"
+      ],
+      "tasks": [
+        {
+          "at": "scarecrow",
+          "goal": "spill_cut"
+        }
+      ]
+    },
+    {
+      "id": "m_jump",
+      "chapter": "air",
+      "teaches": [
+        "K05"
+      ],
+      "requires": [
+        "m_move"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "airborne",
+          "drill": "jump"
+        }
+      ]
+    },
+    {
+      "id": "m_air_jump",
+      "chapter": "air",
+      "teaches": [
+        "K06"
+      ],
+      "builds_on": [
+        "K05_K06"
+      ],
+      "requires": [
+        "m_jump"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "air_jump",
+          "drill": "air_jump"
+        }
+      ]
+    },
+    {
+      "id": "m_dodge",
+      "chapter": "defense",
+      "teaches": [
+        "K08"
+      ],
+      "requires": [
+        "m_move"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "dodge",
+          "drill": "dodge"
+        }
+      ]
+    },
+    {
+      "id": "m_roll",
+      "chapter": "defense",
+      "teaches": [
+        "K09"
+      ],
+      "builds_on": [
+        "K08_K09"
+      ],
+      "requires": [
+        "m_dodge"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "roll",
+          "drill": "roll"
+        }
+      ]
+    },
+    {
+      "id": "m_air_dodge",
+      "chapter": "air",
+      "teaches": [
+        "K10"
+      ],
+      "builds_on": [
+        "K08_K10",
+        "K06_K10"
+      ],
+      "requires": [
+        "m_dodge",
+        "m_air_jump"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "air_dodge",
+          "drill": "air_dodge"
+        }
+      ]
+    },
+    {
+      "id": "m_wait",
+      "chapter": "defense",
+      "teaches": [
+        "K11"
+      ],
+      "builds_on": [
+        "K08_K11"
+      ],
+      "requires": [
+        "m_dodge"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": {
+            "dodges": 2
+          },
+          "drill": "cooldown"
+        }
+      ]
+    },
+    {
+      "id": "m_block",
+      "chapter": "defense",
+      "teaches": [
+        "K12"
+      ],
+      "builds_on": [
+        "K01_K12"
+      ],
+      "requires": [
+        "m_cut"
+      ],
+      "tasks": [
+        {
+          "at": "gatekeeper",
+          "goal": {
+            "clashes": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "m_opening",
+      "chapter": "reading",
+      "teaches": [
+        "K19",
+        "S1"
+      ],
+      "builds_on": [
+        "K13_K19",
+        "S1_K19"
+      ],
+      "requires": [
+        "m_block",
+        "m_round"
+      ],
+      "tasks": [
+        {
+          "at": "thresher",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_reach",
+      "chapter": "reading",
+      "teaches": [
+        "K18"
+      ],
+      "builds_on": [
+        "K02_K18"
+      ],
+      "requires": [
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "ferryman",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_distance",
+      "chapter": "reading",
+      "teaches": [
+        "K29"
+      ],
+      "builds_on": [
+        "K04_K29"
+      ],
+      "requires": [
+        "m_opening",
+        "m_roll"
+      ],
+      "tasks": [
+        {
+          "at": "courier",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_high_low",
+      "chapter": "reading",
+      "teaches": [
+        "K23"
+      ],
+      "builds_on": [
+        "K05_K23",
+        "K12_K23"
+      ],
+      "requires": [
+        "m_jump",
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "drover",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_guard",
+      "chapter": "reading",
+      "teaches": [
+        "K21"
+      ],
+      "builds_on": [
+        "K12_K21"
+      ],
+      "requires": [
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "gatekeeper",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_turning",
+      "chapter": "reading",
+      "teaches": [
+        "K22"
+      ],
+      "builds_on": [
+        "K12_K22"
+      ],
+      "requires": [
+        "m_opening",
+        "m_swing"
+      ],
+      "tasks": [
+        {
+          "at": "windmill",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_above",
+      "chapter": "reading",
+      "teaches": [
+        "K30"
+      ],
+      "builds_on": [
+        "K12_K30"
+      ],
+      "requires": [
+        "m_opening",
+        "m_air_jump"
+      ],
+      "tasks": [
+        {
+          "at": "ropewalker",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_commit",
+      "chapter": "reading",
+      "teaches": [
+        "K20",
+        "K07"
+      ],
+      "builds_on": [
+        "K19_K20",
+        "K17_K20"
+      ],
+      "requires": [
+        "m_opening",
+        "m_plant",
+        "m_roll"
+      ],
+      "tasks": [
+        {
+          "at": "cooper",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_draw",
+      "chapter": "reading",
+      "teaches": [
+        "K25"
+      ],
+      "builds_on": [
+        "K19_K25",
+        "K11_K25"
+      ],
+      "requires": [
+        "m_opening",
+        "m_wait"
+      ],
+      "tasks": [
+        {
+          "at": "lamplighter",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_mirror",
+      "chapter": "reading",
+      "teaches": [
+        "K26"
+      ],
+      "builds_on": [
+        "K19_K26",
+        "S1_K26"
+      ],
+      "requires": [
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "sampler",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_aim",
+      "chapter": "reading",
+      "teaches": [
+        "K24"
+      ],
+      "builds_on": [
+        "K14_K24",
+        "K08_K24"
+      ],
+      "requires": [
+        "m_opening",
+        "m_dodge"
+      ],
+      "tasks": [
+        {
+          "at": "herbalist",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_deep",
+      "chapter": "reading",
+      "teaches": [
+        "K32"
+      ],
+      "builds_on": [
+        "K15_K32",
+        "K14_K32"
+      ],
+      "requires": [
+        "m_ink",
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "potter",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_reaction",
+      "chapter": "ahead",
+      "teaches": [
+        "K28"
+      ],
+      "builds_on": [
+        "K19_K28"
+      ],
+      "requires": [
+        "m_opening"
+      ],
+      "tasks": [
+        {
+          "at": "reader",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_late",
+      "chapter": "ahead",
+      "teaches": [
+        "K27"
+      ],
+      "builds_on": [
+        "K28_K27"
+      ],
+      "requires": [
+        "m_reaction"
+      ],
+      "tasks": [
+        {
+          "at": "cartographer",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_light",
+      "chapter": "air",
+      "teaches": [
+        "K31"
+      ],
+      "builds_on": [
+        "K06_K31"
+      ],
+      "requires": [
+        "m_air_dodge",
+        "m_aim"
+      ],
+      "tasks": [
+        {
+          "at": "hermit",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_opening",
+      "chapter": "compare",
+      "teaches": [
+        "K19"
+      ],
+      "requires": [
+        "m_opening",
+        "m_deep"
+      ],
+      "tasks": [
+        {
+          "at": "thresher",
+          "goal": "win"
+        },
+        {
+          "at": "potter",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_sweep",
+      "chapter": "compare",
+      "teaches": [
+        "K23",
+        "S2"
+      ],
+      "requires": [
+        "m_high_low",
+        "m_aim"
+      ],
+      "tasks": [
+        {
+          "at": "drover",
+          "goal": "win"
+        },
+        {
+          "at": "dyer",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_overhead",
+      "chapter": "compare",
+      "teaches": [
+        "K23"
+      ],
+      "requires": [
+        "m_high_low",
+        "m_aim"
+      ],
+      "tasks": [
+        {
+          "at": "brewer",
+          "goal": "win"
+        },
+        {
+          "at": "abbot",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_turning",
+      "chapter": "compare",
+      "teaches": [
+        "K22"
+      ],
+      "requires": [
+        "m_turning",
+        "m_dodge"
+      ],
+      "tasks": [
+        {
+          "at": "windmill",
+          "goal": "win"
+        },
+        {
+          "at": "bellringer",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_draw",
+      "chapter": "compare",
+      "teaches": [
+        "K25"
+      ],
+      "requires": [
+        "m_draw"
+      ],
+      "tasks": [
+        {
+          "at": "lamplighter",
+          "goal": "win"
+        },
+        {
+          "at": "salt_trader",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_above",
+      "chapter": "compare",
+      "teaches": [
+        "K30"
+      ],
+      "requires": [
+        "m_above"
+      ],
+      "tasks": [
+        {
+          "at": "ropewalker",
+          "goal": "win"
+        },
+        {
+          "at": "falconer",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_aim",
+      "chapter": "compare",
+      "teaches": [
+        "K24",
+        "S2"
+      ],
+      "builds_on": [
+        "S2_K24"
+      ],
+      "requires": [
+        "m_aim",
+        "m_reaction"
+      ],
+      "tasks": [
+        {
+          "at": "herbalist",
+          "goal": "win"
+        },
+        {
+          "at": "archivist",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_ink",
+      "chapter": "compare",
+      "teaches": [
+        "K32",
+        "S2"
+      ],
+      "builds_on": [
+        "S2_K32"
+      ],
+      "requires": [
+        "m_deep",
+        "m_distance"
+      ],
+      "tasks": [
+        {
+          "at": "boatwright",
+          "goal": "win"
+        },
+        {
+          "at": "potter",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_lookahead",
+      "chapter": "compare",
+      "teaches": [
+        "K27"
+      ],
+      "requires": [
+        "m_late"
+      ],
+      "tasks": [
+        {
+          "at": "reader",
+          "goal": "win"
+        },
+        {
+          "at": "cartographer",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "c_commit",
+      "chapter": "compare",
+      "teaches": [
+        "K20"
+      ],
+      "requires": [
+        "m_commit",
+        "c_swing_plant"
+      ],
+      "tasks": [
+        {
+          "at": "carpenter",
+          "goal": "win"
+        },
+        {
+          "at": "vaulter",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_throw",
+      "chapter": "arm",
+      "teaches": [
+        "K34"
+      ],
+      "builds_on": [
+        "K16_K34",
+        "K13_K34"
+      ],
+      "requires": [
+        "m_cut",
+        "m_swing"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "goal": "throw_cut",
+          "drill": "throw"
+        }
+      ]
+    },
+    {
+      "id": "m_ledge",
+      "chapter": "air",
+      "teaches": [
+        "K33"
+      ],
+      "builds_on": [
+        "K05_K33"
+      ],
+      "requires": [
+        "m_jump"
+      ],
+      "tasks": [
+        {
+          "at": "yard",
+          "map": "ledges",
+          "goal": "on_ledge"
+        }
+      ]
+    },
+    {
+      "id": "m_flank",
+      "chapter": "reading",
+      "teaches": [
+        "K35"
+      ],
+      "builds_on": [
+        "K29_K35",
+        "I1_K35"
+      ],
+      "requires": [
+        "m_distance",
+        "m_round"
+      ],
+      "tasks": [
+        {
+          "at": "well_digger",
+          "goal": "win"
+        }
+      ]
+    },
+    {
+      "id": "m_match",
+      "chapter": "capstone",
+      "teaches": [
+        "I2"
+      ],
+      "builds_on": [
+        "I1_I2",
+        "K12_I2",
+        "K19_I2"
+      ],
+      "requires": [
+        "m_commit",
+        "m_above",
+        "m_light",
+        "c_aim",
+        "c_lookahead"
+      ],
+      "tasks": [
+        {
+          "at": "smith",
+          "goal": "win"
+        }
+      ]
+    }
   ]
 }

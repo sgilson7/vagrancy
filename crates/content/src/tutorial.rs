@@ -59,6 +59,10 @@ pub struct Task {
     /// without is an item the game had nowhere else.
     #[serde(default)]
     pub drill: Option<String>,
+    /// For a task in the yard, the ground it is on (data/maps.json); flat
+    /// if none.
+    #[serde(default)]
+    pub map: Option<String>,
 }
 
 impl Task {
@@ -112,6 +116,11 @@ pub enum Goal {
     /// leaves the ground.)
     Plant(i32),
 
+    /// Standing on a ledge (a yard with ledges; Sam, 2026-10-06).
+    OnLedge,
+    /// A cut on the post made by the sword in flight, after a throw.
+    ThrowCut,
+
     /// The match won.
     Win,
 }
@@ -138,6 +147,8 @@ impl Goal {
                 ("tutorial.goal.speed", vec![("speed", format!("{}.{}", tenths / 10, tenths % 10))])
             }
             Goal::Plant(cm) => ("tutorial.goal.plant", vec![("cm", cm.to_string())]),
+            Goal::OnLedge => ("tutorial.goal.on_ledge", vec![]),
+            Goal::ThrowCut => ("tutorial.goal.throw_cut", vec![]),
             Goal::Win => ("tutorial.goal.win", vec![]),
         }
     }
@@ -263,12 +274,14 @@ pub struct Tracker {
     /// turns counted, plus one way and minus the other.
     quadrant: Option<i32>,
     quarters: i32,
+    /// The player's sword was in flight after the last tick.
+    was_flying: bool,
     met: bool,
 }
 
 impl Tracker {
     pub fn new(goal: Goal) -> Tracker {
-        Tracker { goal, start: None, last_pelvis: None, dodges: 0, was_dodging: false, clashes: 0, jumped: false, planted: None, tip_down: false, quadrant: None, quarters: 0, met: false }
+        Tracker { goal, start: None, last_pelvis: None, dodges: 0, was_dodging: false, clashes: 0, jumped: false, planted: None, tip_down: false, quadrant: None, quarters: 0, was_flying: false, met: false }
     }
 
     pub fn met(&self) -> bool {
@@ -345,7 +358,12 @@ impl Tracker {
             Goal::Clashes(n) => self.clashes >= *n,
             Goal::Speed(cm) => speed >= *cm,
             Goal::Plant(cm) => lifted(*cm),
+            Goal::OnLedge => pilot::on_ledge(w, 0),
+            // In flight now, or until the tick it came down: a cut lands
+            // before the sword's touch of the ground is read.
+            Goal::ThrowCut => cut(false) && (self.was_flying || w.swords.iter().any(|s| s.fighter == 0 && s.flying)),
             Goal::Win => matches!(w.phase, Phase::MatchOver { .. }) && w.wins[0] > w.wins[1],
         };
+        self.was_flying = w.swords.iter().any(|s| s.fighter == 0 && s.flying);
     }
 }

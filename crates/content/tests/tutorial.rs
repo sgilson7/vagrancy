@@ -140,7 +140,12 @@ fn the_tutorial_practices_every_edge_the_game_leaves_unpracticed() {
 /// Play the yard with a plan of held keys, `(ticks, keys)`, and say whether
 /// the goal was met.
 fn yard(goal: Goal, plan: &[(u32, u16)]) -> bool {
-    let mut w = World::new(content::setup::practice(1, sim::balance::DEFAULT_TUNING));
+    yard_on(goal, plan, content::maps::FLAT)
+}
+
+/// The same in a yard on the ground `map` (data/maps.json).
+fn yard_on(goal: Goal, plan: &[(u32, u16)], map: &str) -> bool {
+    let mut w = World::new(content::maps::on(content::setup::practice(1, sim::balance::DEFAULT_TUNING), map));
     let mut t = Tracker::new(goal);
     for &(n, keys) in plan {
         for _ in 0..n {
@@ -170,14 +175,19 @@ fn every_goal_in_the_yard_can_be_met_with_the_keys() {
         ("m_wait", vec![(1, I::DODGE), (80, 0), (1, I::DODGE), (5, 0)]),
         ("m_swing", vec![(300, I::SHOULDER_UP | I::ELBOW_OUT)]),
         ("m_plant", plant.to_vec()),
-        // Swinging first lifts a plant from about 283 cm to about 502.
-        ("c_swing_plant", vec![(120, I::SHOULDER_UP | I::ELBOW_OUT), (20, I::SHOULDER_DOWN | I::ELBOW_IN), (60, I::SHOULDER_DOWN | I::ELBOW_OUT)]),
+        // Swinging first, then lowering and straightening together.
+        ("c_swing_plant", vec![(120, I::SHOULDER_UP | I::ELBOW_OUT), (60, I::SHOULDER_DOWN | I::ELBOW_OUT)]),
+        // Swinging up from where the yard starts, letting go on the upswing.
+        ("m_throw", vec![(40, I::SHOULDER_UP | I::ELBOW_OUT), (1, I::SHOULDER_UP | I::ELBOW_OUT | I::THROW), (120, 0)]),
+        // Under the ledge where the yard starts: jump, then stand.
+        ("m_ledge", vec![(30, 0), (1, I::JUMP), (15, 0), (1, I::STAND), (60, 0)]),
         // Walking into the post with the blade in front.
         ("m_cut", vec![(60, I::STEP_RIGHT), (20, I::STEP_RIGHT | I::SHOULDER_DOWN | I::ELBOW_IN)]),
     ];
+    let map = |id: &str| ms.iter().find(|m| m.id == id).unwrap().tasks[0].map.clone().unwrap_or(content::maps::FLAT.to_string());
     let mut failed = Vec::new();
     for (id, plan) in &cases {
-        if !yard(goal(id), plan) {
+        if !yard_on(goal(id), plan, &map(id)) {
             failed.push(*id);
         }
     }
@@ -187,6 +197,8 @@ fn every_goal_in_the_yard_can_be_met_with_the_keys() {
         assert!(!yard(goal(id), &[(300, 0)]), "standing still met {id}'s goal");
     }
     assert!(!yard(goal("m_plant"), &[(1, I::JUMP), (60, I::SHOULDER_DOWN | I::ELBOW_OUT)]), "a jump counted as a plant");
+    // A cut with the sword in hand is not a throw's cut.
+    assert!(!yard(goal("m_throw"), &[(60, I::STEP_RIGHT), (20, I::STEP_RIGHT | I::SHOULDER_DOWN | I::ELBOW_IN)]), "a held sword's cut counted as a thrown one");
     // Every goal in the yard has a case here.
     for m in &ms {
         if m.tasks.iter().any(|t| t.at == "yard") {
@@ -219,5 +231,42 @@ fn the_goals_on_the_road_short_of_a_win_are_met_by_the_yardstick() {
             }
         }
         assert!(tr.met(), "{}: the yardstick did not meet {:?} at {} in a minute", m.id, t.goal, t.at);
+    }
+}
+
+#[test]
+fn every_yard_goal_is_met_with_loose_timing() {
+    // Sam, 2026-10-06: "some tutorial missions ... feel impossible, like
+    // swing then plant, getting up to 400cm". A goal met only by exact
+    // timing is one a person rarely meets. Each yard goal with a number,
+    // played with every part of its plan 70 to 130 percent as long, forty
+    // times: most of those must meet it. (At 400 cm, swing then plant met
+    // none of forty; the plant at 150 met about a quarter; the reach at 145
+    // about half.)
+    use Input as I;
+    let ms = missions();
+    let goal = |id: &str| ms.iter().find(|m| m.id == id).unwrap().tasks[0].goal.clone();
+    let cases: Vec<(&str, Vec<(u32, u16)>, u32)> = vec![
+        ("m_elbow", vec![(20, I::ELBOW_OUT | I::SHOULDER_UP), (100, I::ELBOW_OUT)], 30),
+        ("m_swing", vec![(300, I::SHOULDER_UP | I::ELBOW_OUT)], 30),
+        ("m_plant", vec![(30, I::ELBOW_IN), (30, I::SHOULDER_DOWN | I::ELBOW_IN), (60, I::SHOULDER_DOWN | I::ELBOW_OUT)], 20),
+        ("c_swing_plant", vec![(120, I::SHOULDER_UP | I::ELBOW_OUT), (60, I::SHOULDER_DOWN | I::ELBOW_OUT)], 30),
+        ("m_move", vec![(120, I::STEP_RIGHT)], 30),
+    ];
+    let mut seed = 12345u64;
+    for (id, plan, need) in &cases {
+        let mut met = 0;
+        for _ in 0..40 {
+            let p: Vec<(u32, u16)> = plan
+                .iter()
+                .map(|&(n, k)| {
+                    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    let f = 70 + (seed >> 33) % 61;
+                    ((n as u64 * f / 100).max(1) as u32, k)
+                })
+                .collect();
+            met += yard(goal(id), &p) as u32;
+        }
+        assert!(met >= *need, "{id}: loose timing met its goal {met} times of 40, fewer than {need}");
     }
 }

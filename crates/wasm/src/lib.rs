@@ -546,7 +546,7 @@ impl Mission {
         let mission = content::tutorial::mission(id).expect("a mission in data/tutorial.json");
         let task = mission.tasks[part].clone();
         let (setup, pilots) = if task.at == "yard" {
-            (content::setup::practice(seed as u64, tuning), Vec::new())
+            (content::maps::on(content::setup::practice(seed as u64, tuning), task.map.as_deref().unwrap_or(content::maps::FLAT)), Vec::new())
         } else {
             (content::setup::road(seed as u64, tuning, &task.at), content::road::crew(&task.at).iter().map(pilot::build).collect())
         };

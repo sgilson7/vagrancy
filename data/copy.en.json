@@ -93,7 +93,8 @@
     "road.view.sunburst": "new",
     "results.draw_disarmed, results.popup.disarmed": "new",
     "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)",
-    "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)"
+    "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)",
+    "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)"
   },
   "_glossary": {
     "ink": {
@@ -1217,6 +1218,21 @@
       "name": "Compare two opponents",
       "when": "Two opponents differ in one thing.",
       "then": "Find that difference, and change the part of your plan it touches."
+    },
+    "K33": {
+      "name": "Standing on a ledge",
+      "when": "A ledge is above you.",
+      "then": "Jump, and press stand while you are above it; the stand key sets you on whatever is below you."
+    },
+    "K34": {
+      "name": "Throwing the sword",
+      "when": "You want to reach farther than your arm, or an opponent keeps away.",
+      "then": "Swing, then let go with the throw key; the sword flies as fast as it was moving and cuts until it first touches the ground, and you fight without it until the next round."
+    },
+    "K35": {
+      "name": "Two opponents at once",
+      "when": "An opponent stands on each side of you.",
+      "then": "Fight the nearer one, keep your back away from the other, and finish one before the second reaches you; the round ends when both are out."
     }
   },
   "kc_edge": {
@@ -1262,7 +1278,12 @@
     "S1_K19": "Watching first shows which moves they commit to.",
     "S1_K26": "Watching your own round is how you see what comes back.",
     "S2_K24": "Comparing two opponents shows what changed, and so where to aim.",
-    "S2_K32": "Comparing a fight with and without its condition shows what the condition changes."
+    "S2_K32": "Comparing a fight with and without its condition shows what the condition changes.",
+    "K05_K33": "In the air, the stand key sets you on a ledge you are above, so getting onto one starts with a jump.",
+    "K16_K34": "A thrown sword flies as fast as it was moving, so the swing before the throw sets how far it goes.",
+    "K13_K34": "A thrown sword cuts the same way a held one does, until it first touches the ground.",
+    "K29_K35": "With two opponents, distance is two numbers at once: how close the one in front is, and how close the one behind.",
+    "I1_K35": "A round against two ends when both are out, so winning it means beating each in turn."
   },
   "kc_compare": {
     "c_swing_plant": "The same push from the shoulder and the arm, sent into the air or into the ground.",
@@ -1317,7 +1338,9 @@
       "clashes": "Meet the opponent's blade with yours {count} times.",
       "speed": "Swing until you are moving at {speed} metres a second.",
       "plant": "Plant the sword and lift yourself {cm} cm, without the jump key.",
-      "win": "Win the match."
+      "win": "Win the match.",
+      "on_ledge": "Stand on a ledge.",
+      "throw_cut": "Cut the post with a thrown sword. Walk in close, swing up, and let go as the blade comes over toward the post."
     },
     "locked": "Finish these first:",
     "done": "Done.",

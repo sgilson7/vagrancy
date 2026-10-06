@@ -1,151 +1,1065 @@
 {
-  "_about": "The knowledge-component graph of the game, after Gilson, 'Building and Analysing a Knowledge-Component Graph for a Course Unit' (2026): nodes are knowledge components in condition-response form typed on KLI's dimensions, edges are typed and labelled, instances are the drills of the practice yard and the fights of the road, each tagged with the components it requires. The words (name, when, then, edge labels, what a comparison surfaces) live in copy.en.json under kc, kc_edge and kc_compare. analysis/kc/vagrancy_graph.py hands this to the kit's build_graph.py and run_algorithms.py unchanged; the tutorial's missions are ordered by it (crates/content/tests/tutorial.rs).",
+  "_about": "The knowledge-component graph of the game, after Gilson, 'Building and Analysing a Knowledge-Component Graph for a Course Unit' (2026): nodes are knowledge components in condition-response form typed on KLI's dimensions, edges are typed and labelled, instances are the drills of the practice yard and the fights of the road, each tagged with the components it requires. The words (name, when, then, edge labels, what a comparison surfaces) live in copy.en.json under kc, kc_edge and kc_compare. analysis/kc/vagrancy_graph.py hands this to the kit's build_graph.py and run_algorithms.py unchanged; the tutorial's missions are ordered by it (crates/content/tests/tutorial.rs). K33 to K35 (ledges, throwing, two opponents at once) were added on 2026-10-06 for the content that came after the analysis; they are not in analysis/kc/RESULTS.md.",
   "nodes": [
-    {"id": "K01", "group": "Arm", "app": "V", "resp": "V", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K02", "group": "Arm", "app": "V", "resp": "V", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K03", "group": "Arm", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K04", "group": "Move", "app": "V", "resp": "V", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K05", "group": "Move", "app": "C", "resp": "C", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K06", "group": "Move", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K07", "group": "Move", "app": "C", "resp": "C", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K08", "group": "Defend", "app": "V", "resp": "C", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K09", "group": "Defend", "app": "V", "resp": "V", "verbal": false, "rationale": false, "strategy": false},
-    {"id": "K10", "group": "Defend", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K11", "group": "Defend", "app": "C", "resp": "C", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K12", "group": "Defend", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K13", "group": "Cut", "app": "V", "resp": "C", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K14", "group": "Cut", "app": "V", "resp": "C", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K15", "group": "Cut", "app": "V", "resp": "C", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K16", "group": "Physics", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K17", "group": "Physics", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K18", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K19", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K20", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K21", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K22", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K23", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K24", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K25", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K26", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K27", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K28", "group": "Read", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "K29", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K30", "group": "Read", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K31", "group": "Condition", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "K32", "group": "Condition", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "I1", "group": "Integr", "app": "V", "resp": "V", "verbal": false, "rationale": true, "strategy": false},
-    {"id": "I2", "group": "Integr", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": false},
-    {"id": "S1", "group": "strategy", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": true},
-    {"id": "S2", "group": "strategy", "app": "V", "resp": "V", "verbal": true, "rationale": true, "strategy": true}
+    {
+      "id": "K01",
+      "group": "Arm",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K02",
+      "group": "Arm",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K03",
+      "group": "Arm",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K04",
+      "group": "Move",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K05",
+      "group": "Move",
+      "app": "C",
+      "resp": "C",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K06",
+      "group": "Move",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K07",
+      "group": "Move",
+      "app": "C",
+      "resp": "C",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K08",
+      "group": "Defend",
+      "app": "V",
+      "resp": "C",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K09",
+      "group": "Defend",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K10",
+      "group": "Defend",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K11",
+      "group": "Defend",
+      "app": "C",
+      "resp": "C",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K12",
+      "group": "Defend",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K13",
+      "group": "Cut",
+      "app": "V",
+      "resp": "C",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K14",
+      "group": "Cut",
+      "app": "V",
+      "resp": "C",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K15",
+      "group": "Cut",
+      "app": "V",
+      "resp": "C",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K16",
+      "group": "Physics",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K17",
+      "group": "Physics",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K18",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K19",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K20",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K21",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K22",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K23",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K24",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K25",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K26",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K27",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K28",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K29",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K30",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K31",
+      "group": "Condition",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K32",
+      "group": "Condition",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "I1",
+      "group": "Integr",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "I2",
+      "group": "Integr",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "S1",
+      "group": "strategy",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": true
+    },
+    {
+      "id": "S2",
+      "group": "strategy",
+      "app": "V",
+      "resp": "V",
+      "verbal": true,
+      "rationale": true,
+      "strategy": true
+    },
+    {
+      "id": "K33",
+      "group": "Move",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    },
+    {
+      "id": "K34",
+      "group": "Cut",
+      "app": "V",
+      "resp": "C",
+      "verbal": false,
+      "rationale": true,
+      "strategy": false
+    },
+    {
+      "id": "K35",
+      "group": "Read",
+      "app": "V",
+      "resp": "V",
+      "verbal": false,
+      "rationale": false,
+      "strategy": false
+    }
   ],
   "edges": [
-    {"src": "K01", "dst": "K03", "type": "relational", "process": "sense-making", "stated_in": "practice.step.shoulder"},
-    {"src": "K01", "dst": "K13", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.cut"},
-    {"src": "K02", "dst": "K13", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.elbow"},
-    {"src": "K13", "dst": "K14", "type": "relational", "process": "sense-making", "stated_in": "how.end.body"},
-    {"src": "K13", "dst": "K15", "type": "relational", "process": "sense-making", "stated_in": "practice.step.ink"},
-    {"src": "K01", "dst": "K12", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.block"},
-    {"src": "K12", "dst": "K22", "type": "prerequisite", "process": "refinement", "stated_in": "opponents.windmill.try"},
-    {"src": "K12", "dst": "K30", "type": "relational", "process": "sense-making", "stated_in": "opponents.ropewalker.try"},
-    {"src": "K12", "dst": "K21", "type": "relational", "process": "sense-making", "stated_in": "opponents.gatekeeper.does"},
-    {"src": "K05", "dst": "K06", "type": "relational", "process": "sense-making", "stated_in": "practice.step.air_jump"},
-    {"src": "K08", "dst": "K09", "type": "relational", "process": "sense-making", "stated_in": "practice.step.roll"},
-    {"src": "K08", "dst": "K10", "type": "relational", "process": "sense-making", "stated_in": "practice.step.air_dodge"},
-    {"src": "K06", "dst": "K10", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.air_dodge"},
-    {"src": "K08", "dst": "K11", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.cooldown"},
-    {"src": "K01", "dst": "K16", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.swing"},
-    {"src": "K02", "dst": "K17", "type": "prerequisite", "process": "memory", "stated_in": "practice.step.plant"},
-    {"src": "K16", "dst": "K17", "type": "relational", "process": "sense-making", "stated_in": "none"},
-    {"src": "K04", "dst": "K29", "type": "prerequisite", "process": "memory", "stated_in": "opponents.courier.try"},
-    {"src": "K02", "dst": "K18", "type": "relational", "process": "sense-making", "stated_in": "opponents.ferryman.does"},
-    {"src": "K13", "dst": "K19", "type": "prerequisite", "process": "memory", "stated_in": "opponents.thresher.try"},
-    {"src": "K19", "dst": "K20", "type": "relational", "process": "sense-making", "stated_in": "opponents.vaulter.try"},
-    {"src": "K17", "dst": "K20", "type": "relational", "process": "sense-making", "stated_in": "opponents.vaulter.does"},
-    {"src": "K19", "dst": "K25", "type": "relational", "process": "sense-making", "stated_in": "opponents.lamplighter.try"},
-    {"src": "K11", "dst": "K25", "type": "relational", "process": "sense-making", "stated_in": "opponents.salt_trader.try"},
-    {"src": "K05", "dst": "K23", "type": "prerequisite", "process": "memory", "stated_in": "opponents.drover.try"},
-    {"src": "K12", "dst": "K23", "type": "relational", "process": "sense-making", "stated_in": "opponents.drover.try"},
-    {"src": "K14", "dst": "K24", "type": "relational", "process": "sense-making", "stated_in": "opponents.archivist.try"},
-    {"src": "K08", "dst": "K24", "type": "relational", "process": "sense-making", "stated_in": "opponents.archivist.does"},
-    {"src": "K19", "dst": "K26", "type": "relational", "process": "sense-making", "stated_in": "opponents.sampler.try"},
-    {"src": "K19", "dst": "K28", "type": "prerequisite", "process": "memory", "stated_in": "opponents.archivist.does"},
-    {"src": "K28", "dst": "K27", "type": "relational", "process": "sense-making", "stated_in": "opponents.reader.try"},
-    {"src": "K06", "dst": "K31", "type": "relational", "process": "sense-making", "stated_in": "road.condition.light"},
-    {"src": "K15", "dst": "K32", "type": "relational", "process": "sense-making", "stated_in": "road.condition.deep_ink"},
-    {"src": "K14", "dst": "K32", "type": "relational", "process": "sense-making", "stated_in": "none"},
-    {"src": "K04", "dst": "I1", "type": "integrative", "process": "refinement", "stated_in": "practice.step.move"},
-    {"src": "K14", "dst": "I1", "type": "integrative", "process": "refinement", "stated_in": "how.end.body"},
-    {"src": "I1", "dst": "I2", "type": "integrative", "process": "refinement", "stated_in": "how.match.body"},
-    {"src": "K12", "dst": "I2", "type": "integrative", "process": "refinement", "stated_in": "practice.step.block"},
-    {"src": "K19", "dst": "I2", "type": "integrative", "process": "refinement", "stated_in": "opponents.thresher.try"},
-    {"src": "S1", "dst": "K19", "type": "strategy", "process": "sense-making", "stated_in": "opponents.thresher.try"},
-    {"src": "S1", "dst": "K26", "type": "strategy", "process": "sense-making", "stated_in": "opponents.sampler.try"},
-    {"src": "S2", "dst": "K24", "type": "strategy", "process": "sense-making", "stated_in": "none"},
-    {"src": "S2", "dst": "K32", "type": "strategy", "process": "sense-making", "stated_in": "none"}
+    {
+      "src": "K01",
+      "dst": "K03",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "practice.step.shoulder"
+    },
+    {
+      "src": "K01",
+      "dst": "K13",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.cut"
+    },
+    {
+      "src": "K02",
+      "dst": "K13",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.elbow"
+    },
+    {
+      "src": "K13",
+      "dst": "K14",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "how.end.body"
+    },
+    {
+      "src": "K13",
+      "dst": "K15",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "practice.step.ink"
+    },
+    {
+      "src": "K01",
+      "dst": "K12",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.block"
+    },
+    {
+      "src": "K12",
+      "dst": "K22",
+      "type": "prerequisite",
+      "process": "refinement",
+      "stated_in": "opponents.windmill.try"
+    },
+    {
+      "src": "K12",
+      "dst": "K30",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.ropewalker.try"
+    },
+    {
+      "src": "K12",
+      "dst": "K21",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.gatekeeper.does"
+    },
+    {
+      "src": "K05",
+      "dst": "K06",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "practice.step.air_jump"
+    },
+    {
+      "src": "K08",
+      "dst": "K09",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "practice.step.roll"
+    },
+    {
+      "src": "K08",
+      "dst": "K10",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "practice.step.air_dodge"
+    },
+    {
+      "src": "K06",
+      "dst": "K10",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.air_dodge"
+    },
+    {
+      "src": "K08",
+      "dst": "K11",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.cooldown"
+    },
+    {
+      "src": "K01",
+      "dst": "K16",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.swing"
+    },
+    {
+      "src": "K02",
+      "dst": "K17",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.plant"
+    },
+    {
+      "src": "K16",
+      "dst": "K17",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "none"
+    },
+    {
+      "src": "K04",
+      "dst": "K29",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "opponents.courier.try"
+    },
+    {
+      "src": "K02",
+      "dst": "K18",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.ferryman.does"
+    },
+    {
+      "src": "K13",
+      "dst": "K19",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "opponents.thresher.try"
+    },
+    {
+      "src": "K19",
+      "dst": "K20",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.vaulter.try"
+    },
+    {
+      "src": "K17",
+      "dst": "K20",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.vaulter.does"
+    },
+    {
+      "src": "K19",
+      "dst": "K25",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.lamplighter.try"
+    },
+    {
+      "src": "K11",
+      "dst": "K25",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.salt_trader.try"
+    },
+    {
+      "src": "K05",
+      "dst": "K23",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "opponents.drover.try"
+    },
+    {
+      "src": "K12",
+      "dst": "K23",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.drover.try"
+    },
+    {
+      "src": "K14",
+      "dst": "K24",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.archivist.try"
+    },
+    {
+      "src": "K08",
+      "dst": "K24",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.archivist.does"
+    },
+    {
+      "src": "K19",
+      "dst": "K26",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.sampler.try"
+    },
+    {
+      "src": "K19",
+      "dst": "K28",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "opponents.archivist.does"
+    },
+    {
+      "src": "K28",
+      "dst": "K27",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "opponents.reader.try"
+    },
+    {
+      "src": "K06",
+      "dst": "K31",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "road.condition.light"
+    },
+    {
+      "src": "K15",
+      "dst": "K32",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "road.condition.deep_ink"
+    },
+    {
+      "src": "K14",
+      "dst": "K32",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "none"
+    },
+    {
+      "src": "K04",
+      "dst": "I1",
+      "type": "integrative",
+      "process": "refinement",
+      "stated_in": "practice.step.move"
+    },
+    {
+      "src": "K14",
+      "dst": "I1",
+      "type": "integrative",
+      "process": "refinement",
+      "stated_in": "how.end.body"
+    },
+    {
+      "src": "I1",
+      "dst": "I2",
+      "type": "integrative",
+      "process": "refinement",
+      "stated_in": "how.match.body"
+    },
+    {
+      "src": "K12",
+      "dst": "I2",
+      "type": "integrative",
+      "process": "refinement",
+      "stated_in": "practice.step.block"
+    },
+    {
+      "src": "K19",
+      "dst": "I2",
+      "type": "integrative",
+      "process": "refinement",
+      "stated_in": "opponents.thresher.try"
+    },
+    {
+      "src": "S1",
+      "dst": "K19",
+      "type": "strategy",
+      "process": "sense-making",
+      "stated_in": "opponents.thresher.try"
+    },
+    {
+      "src": "S1",
+      "dst": "K26",
+      "type": "strategy",
+      "process": "sense-making",
+      "stated_in": "opponents.sampler.try"
+    },
+    {
+      "src": "S2",
+      "dst": "K24",
+      "type": "strategy",
+      "process": "sense-making",
+      "stated_in": "none"
+    },
+    {
+      "src": "S2",
+      "dst": "K32",
+      "type": "strategy",
+      "process": "sense-making",
+      "stated_in": "none"
+    },
+    {
+      "src": "K05",
+      "dst": "K33",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "maps.ledges.desc"
+    },
+    {
+      "src": "K16",
+      "dst": "K34",
+      "type": "prerequisite",
+      "process": "sense-making",
+      "stated_in": "practice.step.throw"
+    },
+    {
+      "src": "K13",
+      "dst": "K34",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "practice.step.throw"
+    },
+    {
+      "src": "K29",
+      "dst": "K35",
+      "type": "relational",
+      "process": "sense-making",
+      "stated_in": "road.companion"
+    },
+    {
+      "src": "I1",
+      "dst": "K35",
+      "type": "prerequisite",
+      "process": "memory",
+      "stated_in": "road.companion"
+    }
   ],
   "instances": {
-    "drill/shoulder": ["K01", "K03"],
-    "drill/elbow": ["K02"],
-    "drill/move": ["K04"],
-    "drill/jump": ["K05"],
-    "drill/air_jump": ["K05", "K06"],
-    "drill/stand": ["K07"],
-    "drill/dodge": ["K08"],
-    "drill/roll": ["K08", "K09"],
-    "drill/air_dodge": ["K06", "K08", "K10"],
-    "drill/cooldown": ["K08", "K11"],
-    "drill/cut": ["K01", "K02", "K13"],
-    "drill/block": ["K01", "K12"],
-    "drill/plant": ["K02", "K17"],
-    "drill/swing": ["K01", "K16"],
-    "drill/ink": ["K13", "K15"],
-    "fight/scarecrow": ["K01", "K02", "K04", "K13", "K14", "I1"],
-    "fight/thresher": ["K04", "K13", "K19", "S1", "I1", "I2"],
-    "fight/courier": ["K04", "K29", "K08", "K09", "K19", "I2"],
-    "fight/drover": ["K05", "K23", "K12", "K13", "I2"],
-    "fight/sampler": ["K19", "K26", "S1", "I2"],
-    "fight/salt_trader": ["K08", "K11", "K25", "K19", "I2"],
-    "fight/lamplighter": ["K23", "K25", "K19", "K12", "I2"],
-    "fight/ferryman": ["K02", "K18", "K19", "I2"],
-    "fight/cooper": ["K20", "K19", "K07", "K09", "I2"],
-    "fight/windmill": ["K12", "K22", "K16", "I2"],
-    "fight/ropewalker": ["K12", "K30", "K20", "K06", "I2"],
-    "fight/smith": ["K20", "K17", "K06", "K19", "K07", "I2"],
-    "fight/bellringer": ["K22", "K12", "K08", "K19", "I2"],
-    "fight/gatekeeper": ["K12", "K21", "K02", "I2"],
-    "fight/reader": ["K27", "K28", "K19", "I2"],
-    "fight/dyer": ["K23", "K05", "K24", "K08", "I2"],
-    "fight/potter": ["K19", "K15", "K32", "K14", "I2"],
-    "fight/carpenter": ["K17", "K20", "I2"],
-    "fight/mason": ["K15", "K29", "I2"],
-    "fight/weaver": ["K25", "K08", "K22", "I2"],
-    "fight/falconer": ["K30", "K20", "K06", "I2"],
-    "fight/boatwright": ["K19", "K29", "I2"],
-    "fight/brewer": ["K23", "K05", "I2"],
-    "fight/herbalist": ["K24", "K14", "K15", "I2"],
-    "fight/cartographer": ["K27", "K28", "I2"],
-    "fight/magistrate": ["K24", "K29", "K08", "I2"],
-    "fight/abbot": ["K23", "K24", "I2"],
-    "fight/warden": ["K20", "K17", "K24", "I2"],
-    "fight/hermit": ["K29", "K31", "K06", "K24", "I2"],
-    "fight/tanner": ["K28", "K12", "I2"],
-    "fight/watchman": ["K23", "K24", "K28", "I2"],
-    "fight/archivist": ["K24", "K14", "K28", "I2"],
-    "fight/vaulter": ["K20", "K17", "K30", "I2"]
+    "drill/shoulder": [
+      "K01",
+      "K03"
+    ],
+    "drill/elbow": [
+      "K02"
+    ],
+    "drill/move": [
+      "K04"
+    ],
+    "drill/jump": [
+      "K05"
+    ],
+    "drill/air_jump": [
+      "K05",
+      "K06"
+    ],
+    "drill/stand": [
+      "K07"
+    ],
+    "drill/dodge": [
+      "K08"
+    ],
+    "drill/roll": [
+      "K08",
+      "K09"
+    ],
+    "drill/air_dodge": [
+      "K06",
+      "K08",
+      "K10"
+    ],
+    "drill/cooldown": [
+      "K08",
+      "K11"
+    ],
+    "drill/cut": [
+      "K01",
+      "K02",
+      "K13"
+    ],
+    "drill/block": [
+      "K01",
+      "K12"
+    ],
+    "drill/plant": [
+      "K02",
+      "K17"
+    ],
+    "drill/swing": [
+      "K01",
+      "K16"
+    ],
+    "drill/ink": [
+      "K13",
+      "K15"
+    ],
+    "fight/scarecrow": [
+      "K01",
+      "K02",
+      "K04",
+      "K13",
+      "K14",
+      "I1"
+    ],
+    "fight/thresher": [
+      "K04",
+      "K13",
+      "K19",
+      "S1",
+      "I1",
+      "I2"
+    ],
+    "fight/courier": [
+      "K04",
+      "K29",
+      "K08",
+      "K09",
+      "K19",
+      "I2"
+    ],
+    "fight/drover": [
+      "K05",
+      "K23",
+      "K12",
+      "K13",
+      "I2"
+    ],
+    "fight/sampler": [
+      "K19",
+      "K26",
+      "S1",
+      "I2"
+    ],
+    "fight/salt_trader": [
+      "K08",
+      "K11",
+      "K25",
+      "K19",
+      "I2"
+    ],
+    "fight/lamplighter": [
+      "K23",
+      "K25",
+      "K19",
+      "K12",
+      "I2"
+    ],
+    "fight/ferryman": [
+      "K02",
+      "K18",
+      "K19",
+      "I2"
+    ],
+    "fight/cooper": [
+      "K20",
+      "K19",
+      "K07",
+      "K09",
+      "I2"
+    ],
+    "fight/windmill": [
+      "K12",
+      "K22",
+      "K16",
+      "I2"
+    ],
+    "fight/ropewalker": [
+      "K12",
+      "K30",
+      "K20",
+      "K06",
+      "I2"
+    ],
+    "fight/smith": [
+      "K20",
+      "K17",
+      "K06",
+      "K19",
+      "K07",
+      "I2"
+    ],
+    "fight/bellringer": [
+      "K22",
+      "K12",
+      "K08",
+      "K19",
+      "I2"
+    ],
+    "fight/gatekeeper": [
+      "K12",
+      "K21",
+      "K02",
+      "I2"
+    ],
+    "fight/reader": [
+      "K27",
+      "K28",
+      "K19",
+      "I2"
+    ],
+    "fight/dyer": [
+      "K23",
+      "K05",
+      "K24",
+      "K08",
+      "I2"
+    ],
+    "fight/potter": [
+      "K19",
+      "K15",
+      "K32",
+      "K14",
+      "I2"
+    ],
+    "fight/carpenter": [
+      "K17",
+      "K20",
+      "I2"
+    ],
+    "fight/mason": [
+      "K15",
+      "K29",
+      "I2"
+    ],
+    "fight/weaver": [
+      "K25",
+      "K08",
+      "K22",
+      "I2"
+    ],
+    "fight/falconer": [
+      "K30",
+      "K20",
+      "K06",
+      "I2"
+    ],
+    "fight/boatwright": [
+      "K19",
+      "K29",
+      "I2"
+    ],
+    "fight/brewer": [
+      "K23",
+      "K05",
+      "I2"
+    ],
+    "fight/herbalist": [
+      "K24",
+      "K14",
+      "K15",
+      "I2"
+    ],
+    "fight/cartographer": [
+      "K27",
+      "K28",
+      "I2"
+    ],
+    "fight/magistrate": [
+      "K24",
+      "K29",
+      "K08",
+      "I2"
+    ],
+    "fight/abbot": [
+      "K23",
+      "K24",
+      "I2"
+    ],
+    "fight/warden": [
+      "K20",
+      "K17",
+      "K24",
+      "I2"
+    ],
+    "fight/hermit": [
+      "K29",
+      "K31",
+      "K06",
+      "K24",
+      "I2"
+    ],
+    "fight/tanner": [
+      "K28",
+      "K12",
+      "I2"
+    ],
+    "fight/watchman": [
+      "K23",
+      "K24",
+      "K28",
+      "I2"
+    ],
+    "fight/archivist": [
+      "K24",
+      "K14",
+      "K28",
+      "I2"
+    ],
+    "fight/vaulter": [
+      "K20",
+      "K17",
+      "K30",
+      "I2"
+    ],
+    "drill/throw": [
+      "K13",
+      "K16",
+      "K34"
+    ],
+    "fight/well_digger": [
+      "K13",
+      "K29",
+      "K35",
+      "I1"
+    ]
   },
   "comparisons": [
-    {"id": "c_swing_plant", "a": "drill/swing", "b": "drill/plant", "kc": "K17", "status": "MISSING (separate practice steps, three apart)"},
-    {"id": "p_jump_air_jump", "a": "drill/jump", "b": "drill/air_jump", "kc": "K06", "status": "EXISTING (adjacent practice steps)"},
-    {"id": "p_dodge_roll", "a": "drill/dodge", "b": "drill/roll", "kc": "K09", "status": "EXISTING (adjacent practice steps)"},
-    {"id": "c_sweep", "a": "fight/drover", "b": "fight/dyer", "kc": "K23", "status": "MISSING (rows 1 and 4, no requirement between them)"},
-    {"id": "c_overhead", "a": "fight/brewer", "b": "fight/abbot", "kc": "K23", "status": "MISSING (no requirement between them)"},
-    {"id": "c_opening", "a": "fight/thresher", "b": "fight/potter", "kc": "K19", "status": "MISSING"},
-    {"id": "c_lookahead", "a": "fight/reader", "b": "fight/cartographer", "kc": "K27", "status": "MISSING (the cartographer requires the reader, but nothing says to compare)"},
-    {"id": "c_aim", "a": "fight/herbalist", "b": "fight/archivist", "kc": "K24", "status": "MISSING"},
-    {"id": "c_above", "a": "fight/ropewalker", "b": "fight/falconer", "kc": "K30", "status": "MISSING"},
-    {"id": "c_commit", "a": "fight/carpenter", "b": "fight/vaulter", "kc": "K20", "status": "MISSING"},
-    {"id": "c_turning", "a": "fight/windmill", "b": "fight/bellringer", "kc": "K22", "status": "MISSING"},
-    {"id": "c_draw", "a": "fight/lamplighter", "b": "fight/salt_trader", "kc": "K25", "status": "MISSING"},
-    {"id": "c_ink", "a": "fight/boatwright", "b": "fight/potter", "kc": "K32", "status": "MISSING (no requirement or row joins them)"}
+    {
+      "id": "c_swing_plant",
+      "a": "drill/swing",
+      "b": "drill/plant",
+      "kc": "K17",
+      "status": "MISSING (separate practice steps, three apart)"
+    },
+    {
+      "id": "p_jump_air_jump",
+      "a": "drill/jump",
+      "b": "drill/air_jump",
+      "kc": "K06",
+      "status": "EXISTING (adjacent practice steps)"
+    },
+    {
+      "id": "p_dodge_roll",
+      "a": "drill/dodge",
+      "b": "drill/roll",
+      "kc": "K09",
+      "status": "EXISTING (adjacent practice steps)"
+    },
+    {
+      "id": "c_sweep",
+      "a": "fight/drover",
+      "b": "fight/dyer",
+      "kc": "K23",
+      "status": "MISSING (rows 1 and 4, no requirement between them)"
+    },
+    {
+      "id": "c_overhead",
+      "a": "fight/brewer",
+      "b": "fight/abbot",
+      "kc": "K23",
+      "status": "MISSING (no requirement between them)"
+    },
+    {
+      "id": "c_opening",
+      "a": "fight/thresher",
+      "b": "fight/potter",
+      "kc": "K19",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_lookahead",
+      "a": "fight/reader",
+      "b": "fight/cartographer",
+      "kc": "K27",
+      "status": "MISSING (the cartographer requires the reader, but nothing says to compare)"
+    },
+    {
+      "id": "c_aim",
+      "a": "fight/herbalist",
+      "b": "fight/archivist",
+      "kc": "K24",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_above",
+      "a": "fight/ropewalker",
+      "b": "fight/falconer",
+      "kc": "K30",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_commit",
+      "a": "fight/carpenter",
+      "b": "fight/vaulter",
+      "kc": "K20",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_turning",
+      "a": "fight/windmill",
+      "b": "fight/bellringer",
+      "kc": "K22",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_draw",
+      "a": "fight/lamplighter",
+      "b": "fight/salt_trader",
+      "kc": "K25",
+      "status": "MISSING"
+    },
+    {
+      "id": "c_ink",
+      "a": "fight/boatwright",
+      "b": "fight/potter",
+      "kc": "K32",
+      "status": "MISSING (no requirement or row joins them)"
+    }
   ]
 }
