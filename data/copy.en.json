@@ -28,7 +28,8 @@
     "region": "road.region.<row>, the name of a row of the arcade mode tree",
     "won": "how many fights in a chapter of arcade mode the player has won",
     "count": "how many requirements a level of the road's tree has, from data/road.json",
-    "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json"
+    "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json",
+    "target_mid": "opponents.<id>.name_mid of the locked fight a next goal opens, chosen by core (content::road::next_goal)"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -80,7 +81,8 @@
     "kc, kc_edge, kc_compare": "new: the knowledge-component graph's words (analysis/kc), every string",
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)",
     "opponents (flanked), road.req.headshot, road.req.untouched, road.companion, road.map_heading, maps, local.map, online.weapon, online.map, online.map_join": "new: roofer, well_digger, charcoal_burner, tea_picker, bridge_keeper, kite_maker, net_mender, stone_cutter, shrine_keeper, toll_collector (all five strings each), and every other string named here",
-    "rewrite (Sam, 2026-10-05: Astra voice)": "new: every string rewritten for voice; road renamed arcade mode, missions renamed tutorial"
+    "rewrite (Sam, 2026-10-05: Astra voice)": "new: every string rewritten for voice; road renamed arcade mode, missions renamed tutorial",
+    "results.popup.match_won, road.next": "new"
   },
   "_glossary": {
     "ink": {
@@ -302,7 +304,8 @@
       "neck": "Cut across the neck",
       "heart": "Cut across the heart",
       "ink": "Out of ink",
-      "draw": "Both down at once"
+      "draw": "Both down at once",
+      "match_won": "You won the match"
     },
     "next_round": {
       "label": "Play the next round"
@@ -382,7 +385,8 @@
     "locked": "To fight here, first:",
     "cleared": "You have won this fight. You can fight {opponent_mid} again.",
     "companion": "{companion} stands behind you, carrying a {weapon}. The round ends when you can no longer fight, or when neither of them can.",
-    "map_heading": "The ground"
+    "map_heading": "The ground",
+    "next": "To open {target_mid}, do this next:"
   },
   "opponents": {
     "scarecrow": {

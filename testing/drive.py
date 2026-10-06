@@ -852,6 +852,15 @@ def enter_goes_on_without_the_mouse(page, name):
             fails.append(f"{name}: after a {phase}, the focus is on {focused!r}, not {want!r}")
             break
         if phase == "match_over":
+            # The match's own card follows the last round's, and names what
+            # the win opened (Sam: "it should pop up in a box like the other
+            # boxes").
+            try:
+                page.wait_for_selector('#death-popup [data-copy="results.popup.match_won"]', timeout=6000)
+                if not page.locator('#death-popup [data-copy="road.opened"]').count():
+                    fails.append(f"{name}: the match's card does not say what the win opened")
+            except Exception:
+                fails.append(f"{name}: no card came up for the won match")
             onward = page.inner_text('#result [data-copy="road.fight.label"]')
             page.keyboard.press("Enter")
             try:
@@ -879,6 +888,53 @@ def enter_goes_on_without_the_mouse(page, name):
     fails += every_visible_line_is_a_copy_string(page, name + " (after Enter)")
     click_copy(page, "results.to_road.label")
     click_copy(page, "menu.back.label")
+    return fails
+
+
+@check
+def a_win_that_opens_nothing_names_the_next_goal(page, name):
+    # Sam: "if you dont have any new fights available, prompt you to do the
+    # next fight that you need to do that has constraints you havent met
+    # yet". The first stop already won every way, so a second win there
+    # opens nothing; its card names the goal core picked, and the first
+    # button goes to that goal's fight.
+    fails = []
+    stops = [s["id"] for s in json.loads((ROOT / "data" / "road.json").read_text())["stops"]]
+    weapons = [w["id"] for w in json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"] if not w.get("enemy_only")]
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {stops[0]: {"losses": 0, "ticks": 1, "with": sorted(weapons), "headshot": True, "untouched": True}}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.click(f'[data-stop="{stops[0]}"]')
+    page.click('#stop-detail [data-copy="road.fight.label"]')
+    page.wait_for_selector('[data-copy="hud.round"]')
+    for _ in range(8):
+        page.keyboard.down("KeyD"); page.keyboard.down("KeyI")
+        try:
+            page.wait_for_function("['round_over','match_over'].includes(document.body.dataset.phase)", timeout=30000)
+        finally:
+            page.keyboard.up("KeyD"); page.keyboard.up("KeyI")
+        if page.evaluate("document.body.dataset.phase") == "match_over":
+            break
+        page.keyboard.press("Enter")
+        page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+    try:
+        page.wait_for_selector('#death-popup [data-copy="road.next"]', timeout=6000)
+    except Exception:
+        fails.append(f"{name}: a win that opened nothing did not name a next goal")
+    fails += every_visible_line_is_a_copy_string(page, name + " (the next goal)")
+    first = page.evaluate("(() => { const b = document.querySelector('#result button'); return b && b.dataset.copy; })()")
+    if first != "road.fight.label":
+        fails.append(f"{name}: the first button after the win is {first!r}, not the next goal's fight")
+    click_copy(page, "results.to_road.label")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: a won match pops its card, and a win that opens nothing names the next goal and offers its fight first")
     return fails
 
 

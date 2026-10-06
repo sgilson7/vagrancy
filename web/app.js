@@ -113,6 +113,21 @@ function popupShow(said) {
   if (said.popup.winner === 0 || said.popup.winner === 1) box.classList.add(`won-${said.popup.winner}`);
   box.hidden = false;
 }
+// The card for a won match on the road, in the same box: what the win
+// opened, or, when it opened nothing, the goal core picked for next.
+function popupMatchWon(opened, next) {
+  const box = $('death-popup');
+  const kids = [el('p', { class: 'popup-head', 'data-copy': 'results.popup.match_won' }, t('results.popup.match_won'))];
+  for (const o of opened) kids.push(say('road.opened', { opponent: t(`opponents.${o}.name`) }, { class: 'popup-line' }));
+  if (!opened.length && next) {
+    kids.push(say('road.next', { target_mid: t(`opponents.${next.open}.name_mid`) }, { class: 'popup-line' }));
+    kids.push(reqLine(next, { class: 'popup-line' }));
+  }
+  box.replaceChildren(...kids);
+  box.classList.remove('headshot', 'won-1');
+  box.classList.add('won-0');
+  box.hidden = false;
+}
 function popupHide() {
   const box = $('death-popup');
   if (box) { box.hidden = true; box.replaceChildren(); }
@@ -825,13 +840,15 @@ function fight(id) {
   ROAD_PICK = id;
   let won = false;
   let opened = [];
+  let next = null;
+  let cardShown = false;
   const watch = matchWatcher(id, () => {
     // After a win that opened fights, the first button is the first of
-    // them; otherwise this opponent again. Enter presses the first.
+    // them; after one that opened nothing, the fight of the next goal;
+    // otherwise this opponent again. Enter presses the first.
     const again = button('results.again.label', () => fight(id));
-    const onward = opened.length
-      ? button('road.fight.label', () => fight(opened[0]), { opponent_mid: t(`opponents.${opened[0]}.name_mid`) })
-      : null;
+    const to = opened.length ? opened[0] : next ? next.stop : null;
+    const onward = to ? button('road.fight.label', () => fight(to), { opponent_mid: t(`opponents.${to}.name_mid`) }) : null;
     return [
       ...opened.map((o) => say('road.opened', { opponent: t(`opponents.${o}.name`) }, { class: 'desc' })),
       el('div', { class: 'actions' },
@@ -848,9 +865,18 @@ function fight(id) {
       const r = JSON.parse(game.record(JSON.stringify(SAVE)));
       SAVE = JSON.parse(r.save);
       opened = r.opened;
+      next = r.next;
       persist();
     }
     watch.tick(f);
+    // Once the last round's card has been read (and a headshot's hold is
+    // over), the match's own card takes its place (Sam: "when you win a
+    // fight, it should pop up in a box like the other boxes").
+    if (won && f.phase === 'match_over' && !cardShown) {
+      cardShown = true;
+      const mine = game;
+      setTimeout(() => { if (game === mine) popupMatchWon(opened, next); }, FREEZE ? HOLD_MS + 700 : 1600);
+    }
   });
 }
 

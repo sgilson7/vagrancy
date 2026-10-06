@@ -247,6 +247,41 @@ pub fn open(stop: &Stop, best: &BTreeMap<String, Best>) -> bool {
     stop.requires.iter().all(|r| r.met(best))
 }
 
+/// What to do next when a win opened nothing (Sam, 2026-10-05: "if you dont
+/// have any new fights available, prompt you to do the next fight that you
+/// need to do that has constraints you havent met yet"): the locked fight
+/// nearest to opening, by the fewest requirements still unmet, then the
+/// higher row, then the road's order; and the first of its unmet
+/// requirements whose own fight is open, and whose weapon, for a challenge,
+/// the player has unlocked, so it can be met now. A first pick asked the
+/// player to carry a scimitar not yet won (2026-10-05). `None` when
+/// every fight is open, or no unmet requirement can be met yet.
+pub fn next_goal(best: &BTreeMap<String, Best>) -> Option<(String, Req)> {
+    let road = road();
+    let mut locked: Vec<(usize, usize, usize, &Stop)> = road
+        .iter()
+        .enumerate()
+        .filter(|(_, st)| !open(st, best))
+        .map(|(i, st)| (st.requires.iter().filter(|r| !r.met(best)).count(), st.level(), i, st))
+        .collect();
+    locked.sort_by_key(|&(unmet, level, i, _)| (unmet, level, i));
+    locked.into_iter().find_map(|(_, _, _, st)| {
+        st.requires
+            .iter()
+            .find(|r| !r.met(best) && road.iter().any(|s| s.id == r.stop() && open(s, best)) && can_carry(r, best))
+            .map(|r| (st.id.clone(), r.clone()))
+    })
+}
+
+/// A weapon challenge's weapon is one the player has unlocked; any other
+/// requirement asks for no weapon.
+fn can_carry(r: &Req, best: &BTreeMap<String, Best>) -> bool {
+    match r {
+        Req::With { weapon, .. } => crate::weapons::usable(weapon, best) == *weapon,
+        _ => true,
+    }
+}
+
 /// Every pilot, the yardstick included, by id.
 pub fn pilots() -> BTreeMap<String, Spec> {
     let v: BTreeMap<String, Value> = serde_json::from_str(PILOTS_JSON).expect("data/pilots.json is valid");

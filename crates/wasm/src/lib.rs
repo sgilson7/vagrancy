@@ -301,16 +301,26 @@ impl Road {
     pub fn won(&self) -> bool {
         matches!(self.rec.world.phase, sim::fight::Phase::MatchOver { .. }) && self.rec.world.wins[0] > self.rec.world.wins[1]
     }
-    /// After a win: the save with this result kept, and the fights it
-    /// opened, as `{ "save": text, "opened": [id] }`.
+    /// After a win: the save with this result kept, the fights it opened,
+    /// and, when it opened none, the next goal, as `{ "save": text,
+    /// "opened": [id], "next": { open, stop, key, vars } | null }`.
     pub fn record(&self, save_text: &str) -> Result<String, String> {
         let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
         if !self.won() {
-            return Ok(json!({ "save": content::save::encode(&s), "opened": [] }).to_string());
+            return Ok(json!({ "save": content::save::encode(&s), "opened": [], "next": null }).to_string());
         }
         let w = &self.rec.world;
         let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best::won(w.wins[1], w.tick, &self.weapon).with_feats(self.feats));
-        Ok(json!({ "save": content::save::encode(&s), "opened": opened }).to_string())
+        // When the win opened nothing, the goal core picks for next.
+        let next = if opened.is_empty() {
+            content::road::next_goal(&s.road.best).map(|(target, r)| {
+                let (key, vars) = r.sentence();
+                json!({ "open": target, "stop": r.stop(), "key": key, "vars": vars })
+            })
+        } else {
+            None
+        };
+        Ok(json!({ "save": content::save::encode(&s), "opened": opened, "next": next }).to_string())
     }
 }
 

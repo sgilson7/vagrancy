@@ -457,3 +457,39 @@ fn each_opponent_that_climbs_gets_up_onto_a_ledge() {
         assert!(ledge, "the {id} never stood on a ledge");
     }
 }
+
+#[test]
+fn after_a_win_that_opens_nothing_the_next_goal_is_the_nearest_locked_fight() {
+    // Sam: "if you dont have any new fights available, prompt you to do the
+    // next fight that you need to do that has constraints you havent met
+    // yet".
+    use content::road::next_goal;
+    let mut best = BTreeMap::new();
+    // A fresh road: the scarecrow's fights each ask for one thing. The
+    // thresher, first in the road's order, asks for a win at the scarecrow.
+    assert_eq!(next_goal(&best), Some(("thresher".to_string(), Req::Beat("scarecrow".into()))));
+    // After a win with a round lost, the goal is unmet, for a fight still
+    // locked, and at a fight that is open now.
+    record(&mut best, "scarecrow", Best::won(1, 2000, "sword"));
+    let (open_next, req) = next_goal(&best).unwrap();
+    assert!(!req.met(&best), "the next goal, {req:?}, is already met");
+    let st = content::road::stop(&open_next).unwrap();
+    assert!(!content::road::open(&st, &best), "{open_next} is already open");
+    let from = content::road::stop(req.stop()).unwrap();
+    assert!(content::road::open(&from, &best), "the next goal asks for a fight at {}, which is not open", req.stop());
+    // A weapon challenge is suggested only with a weapon already won: with
+    // the first fight won every way and nothing else, the ox herd's
+    // challenge asks for the scimitar, which the pilgrim has not yet given.
+    let mut first = BTreeMap::new();
+    let all: Vec<String> = content::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
+    first.insert("scarecrow".to_string(), Best { losses: 0, ticks: 1, with: all.clone(), headshot: true, untouched: true });
+    let (_, req) = next_goal(&first).expect("a next goal");
+    if let Req::With { weapon, .. } = &req {
+        assert_eq!(&content::weapons::usable(weapon, &first), weapon, "the next goal asks for the {weapon}, which is locked");
+    }
+    // Nothing is suggested once every fight is open.
+    for s in road() {
+        best.insert(s.id, Best { losses: 0, ticks: 1, with: content::weapons::weapons().into_iter().map(|w| w.id).collect(), headshot: true, untouched: true });
+    }
+    assert_eq!(next_goal(&best), None);
+}
