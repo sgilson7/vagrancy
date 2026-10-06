@@ -83,7 +83,10 @@
     "opponents (flanked), road.req.headshot, road.req.untouched, road.companion, road.map_heading, maps, local.map, online.weapon, online.map, online.map_join": "new: roofer, well_digger, charcoal_burner, tea_picker, bridge_keeper, kite_maker, net_mender, stone_cutter, shrine_keeper, toll_collector (all five strings each), and every other string named here",
     "rewrite (Sam, 2026-10-05: Astra voice)": "new: every string rewritten for voice; road renamed arcade mode, missions renamed tutorial",
     "results.popup.match_won, road.next": "new",
-    "settings.keys.actions.throw, hud.keys, practice.step.throw": "new (the throw, 2026-10-05)"
+    "settings.keys.actions.throw, hud.keys, practice.step.throw": "new (the throw, 2026-10-05)",
+    "opponents (throwers)": "new: juggler, woodcutter, harpooner (all five strings each)",
+    "road.view.sunburst": "new",
+    "results.draw_disarmed, results.popup.disarmed": "new"
   },
   "_glossary": {
     "ink": {
@@ -307,7 +310,8 @@
       "heart": "Cut across the heart",
       "ink": "Out of ink",
       "draw": "Both down at once",
-      "match_won": "You won the match"
+      "match_won": "You won the match",
+      "disarmed": "No blades left"
     },
     "next_round": {
       "label": "Play the next round"
@@ -324,7 +328,8 @@
     "replay": {
       "label": "Download replay"
     },
-    "key_hint": "Press {key} to choose the first button."
+    "key_hint": "Press {key} to choose the first button.",
+    "draw_disarmed": "Neither fighter won the round. Both swords were thrown and down, and nobody was cut down within {seconds} seconds, so the round is played again."
   },
   "road": {
     "does_heading": "What this opponent does",
@@ -379,6 +384,9 @@
       },
       "chapters": {
         "label": "Show the chapters"
+      },
+      "sunburst": {
+        "label": "Show the sunburst"
       }
     },
     "fight": {
@@ -803,6 +811,27 @@
       "place": "A toll gate on a mountain pass, with ledges cut into the rock.",
       "does": "The toll collector carries a kris. She dodges away from most attacks at her head, climbs a ledge when she is under one, and from above swings overhead at you. Otherwise she looks a short way ahead before she chooses.",
       "try": "Keep moving, so that she does not get to stand above you."
+    },
+    "juggler": {
+      "name": "The Juggler",
+      "name_mid": "the juggler",
+      "place": "A market square with a ring of chalk drawn on the stones.",
+      "does": "The juggler carries a short sword. When you are a few steps away, he sometimes throws it at you. Once it is gone, he keeps his distance and dodges your blade, so a cut from the throw has time to drain your ink. Up close, he sweeps low.",
+      "try": "Try closing in quickly while he still holds the sword. Once he has thrown it, he has nothing to stop you with."
+    },
+    "woodcutter": {
+      "name": "The Woodcutter",
+      "name_mid": "the woodcutter",
+      "place": "A stand of pines with cut logs stacked beside the path.",
+      "does": "The woodcutter carries a forked blade and swings it overhead when you are close. If you are knocked down, or jump near him, he often throws it at you. After a throw, he keeps away from you and dodges your blade.",
+      "try": "Try to stay on your feet and keep your jumps away from him, because those are the moments he throws."
+    },
+    "harpooner": {
+      "name": "The Harpooner",
+      "name_mid": "the harpooner",
+      "place": "A stony beach with boats pulled up above the tide line.",
+      "does": "The harpooner carries a trident and usually throws it when you are a few steps away. After a throw, he backs off, guards high and dodges attacks at his head. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try to cross the distance he throws from quickly, or stay farther back than it, because his throw lands most often from a few steps away."
     }
   },
   "local": {

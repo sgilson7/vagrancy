@@ -59,6 +59,9 @@
     {"id": "toll_collector", "requires": [{"beat": "bridge_keeper"}, {"headshot": "ropewalker"}, {"untouched": "windmill"}, {"beat": "well_digger"}, {"beat": "salt_trader"}, {"beat": "porter"}], "weapon": "kris", "companion": {"pilot": "salt_trader", "weapon": "short_sword"}, "map": "ledges"},
     {"id": "net_mender", "requires": [{"beat": "bridge_keeper"}, {"untouched": "cooper"}, {"headshot": "lamplighter"}, {"beat": "charcoal_burner"}, {"beat": "porter"}, {"beat": "courier"}], "weapon": "trident", "companion": {"pilot": "courier", "weapon": "forked_blade"}},
     {"id": "stone_cutter", "requires": [{"beat": "toll_collector"}, {"headshot": "smith"}, {"untouched": "ropewalker"}, {"beat": "kite_maker"}, {"beat": "lacquerer"}, {"beat": "gatekeeper"}, {"beat": "bridge_keeper"}], "weapon": "longsword", "companion": {"pilot": "gatekeeper", "weapon": "trident"}},
-    {"id": "shrine_keeper", "requires": [{"beat": "net_mender"}, {"headshot": "cooper"}, {"untouched": "smith"}, {"beat": "bridge_keeper"}, {"beat": "roofer"}, {"beat": "bellringer"}, {"beat": "potter"}], "companion": {"pilot": "bellringer", "weapon": "kris"}, "map": "tiers"}
+    {"id": "shrine_keeper", "requires": [{"beat": "net_mender"}, {"headshot": "cooper"}, {"untouched": "smith"}, {"beat": "bridge_keeper"}, {"beat": "roofer"}, {"beat": "bellringer"}, {"beat": "potter"}], "companion": {"pilot": "bellringer", "weapon": "kris"}, "map": "tiers"},
+    {"id": "juggler", "requires": [{"beat": "scarecrow"}], "weapon": "short_sword"},
+    {"id": "woodcutter", "requires": [{"beat": "juggler"}, {"untouched": "thresher"}], "weapon": "forked_blade"},
+    {"id": "harpooner", "requires": [{"beat": "juggler"}, {"headshot": "courier"}], "weapon": "trident"}
   ]
 }

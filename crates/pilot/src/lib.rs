@@ -127,6 +127,11 @@ pub fn on_ledge(w: &World, seat: usize) -> bool {
     })
 }
 
+/// A hand of `seat`'s holds its sword.
+pub fn armed(w: &World, seat: usize) -> bool {
+    w.swords.iter().position(|s| s.fighter as usize == seat).is_some_and(|si| w.held(si))
+}
+
 /// The fighter `seat` fights: the nearest one on the other side still in
 /// the round, or, when every one of them is out, the nearest at all. With
 /// two seats this is always the other seat.
@@ -632,6 +637,12 @@ pub enum Cond {
     LedgeOverhead,
     /// I stand on a ledge.
     OnLedge,
+    /// A hand of mine holds my sword: I have not thrown it this round.
+    Armed,
+    /// I have thrown my sword, or lost the hand that held it.
+    Unarmed,
+    /// The one I fight is knocked off its feet.
+    OppDown,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -680,6 +691,9 @@ impl Tree {
             Cond::MeGrounded => !airborne(me),
             Cond::OppAirborne => airborne(them),
             Cond::MeDown => w.knocked_down(me),
+            Cond::Armed => armed(w, me),
+            Cond::Unarmed => !armed(w, me),
+            Cond::OppDown => w.knocked_down(them),
             Cond::OppDodging => w.dodging(them),
             Cond::MyInkBelow(pct) => w.fighters[me].as_ref().is_some_and(|f| {
                 let max = w.setup.bodies[f.body as usize].ink.max(1);
@@ -747,6 +761,12 @@ impl Tree {
             ("pogo", 13..=21) => to,
             ("pogo", 22..=55) => I::SHOULDER_DOWN | I::ELBOW_OUT | to,
             ("stand", 0) => I::STAND,
+            // The throw (2026-10-05): two ticks of the shoulder rising, and
+            // the hand lets go on the third, the arm still rising, so the
+            // sword leaves on the upswing toward the opponent.
+            ("throw", 0..=1) => I::SHOULDER_UP | to,
+            ("throw", 2) => I::SHOULDER_UP | I::THROW,
+            ("throw", 3..=8) => 0,
             // Up onto the ledge overhead: a jump, and the stand key once the
             // pelvis has risen past the ledge's top (one jump lifts it about
             // 120 cm in 27 ticks; by tick 16 it has risen 100).

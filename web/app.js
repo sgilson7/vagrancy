@@ -487,6 +487,111 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
         tree.append(b);
       });
     });
+  } else if (layout === 'sunburst') {
+    // A sunburst laid out as separate paths (Sam, 2026-10-05: "4-8 distinct
+    // and separable paths, using the chart style of connecting lines
+    // between the highest impact pre-requisites"). Each fight hangs from
+    // one prerequisite: its most connected requirement in the row directly
+    // inside it (every fight has one there, as the chart checks). The
+    // fights of the first row each start a path, a wedge running outward;
+    // every later fight joins its prerequisite's wedge, and its ring is its
+    // row. The open-from-the-start fights sit at the center.
+    const degree = new Map(nodes.map((n) => [n.id, n.requires.length]));
+    for (const n of nodes) for (const r of n.requires) degree.set(r.from, (degree.get(r.from) || 0) + 1);
+    const parent = new Map();
+    for (const n of nodes) {
+      if (!n.requires.length) continue;
+      const inner = n.requires.filter((r) => byId.get(r.from).row === n.row - 1);
+      const pool = inner.length ? inner : n.requires;
+      parent.set(n.id, pool.reduce((best, r) => (degree.get(r.from) > degree.get(best.from) ? r : best)).from);
+    }
+    const kids = new Map(nodes.map((n) => [n.id, []]));
+    for (const [c, p] of parent) kids.get(p).push(c);
+    const size = (id) => 1 + kids.get(id).reduce((t, c) => t + size(c), 0);
+    // The paths: start from the first-row fights that lead somewhere, and
+    // split the largest at its fight while it holds more than a quarter of
+    // the tree, until there are no more than eight. A fight split this way
+    // sits where its paths meet; a first-row fight that leads nowhere sits
+    // in the inner ring with the center.
+    let heads = nodes.filter((n) => n.row === 1 && kids.get(n.id).length).map((n) => n.id);
+    const joints = [];
+    const spread = nodes.filter((n) => n.row >= 1).length;
+    for (;;) {
+      const big = heads.reduce((m, h) => (size(h) > size(m) ? h : m), heads[0]);
+      const grown = kids.get(big).filter((c) => kids.get(c).length);
+      if (size(big) <= spread / 4 || !grown.length || heads.length - 1 + grown.length > 8) break;
+      const i = heads.indexOf(big);
+      heads.splice(i, 1, ...grown);
+      joints.push(big);
+    }
+    // Each fight's path: the head its chain of prerequisites reaches first;
+    // a leaf hanging from a joint joins its largest sibling's path.
+    const below = (h, j) => { let x = h; while (x && x !== j) x = parent.get(x); return x === j; };
+    const pathOf = (id) => {
+      let x = id;
+      while (x && !heads.includes(x)) {
+        const p = parent.get(x);
+        if (p && joints.includes(p)) {
+          // A leaf under a joint joins the largest path below that joint.
+          const under = heads.filter((h) => below(h, p));
+          if (under.length) return under.reduce((m, c) => (size(c) > size(m) ? c : m));
+        }
+        x = p;
+      }
+      return x || heads[0];
+    };
+    const inner = new Set(nodes.filter((n) => n.row === 0 || (n.row === 1 && !heads.includes(n.id) && !joints.includes(n.id))).map((n) => n.id));
+    const members = new Map(heads.map((h) => [h, []]));
+    for (const n of nodes) {
+      if (inner.has(n.id) || joints.includes(n.id)) continue;
+      const h = pathOf(n.id);
+      if (h) members.get(h).push(n);
+    }
+    // Each path's share of the circle follows its widest row, so no row of
+    // it is crowded more than another path's.
+    const widest = (h) => Math.max(...Object.values(members.get(h).reduce((c, n) => ({ ...c, [n.row]: (c[n.row] || 0) + 1 }), {})));
+    const total = heads.reduce((t, h) => t + widest(h), 0);
+    const wedges = [];
+    let at = -Math.PI / 2;
+    for (const h of heads) {
+      const span = (2 * Math.PI * widest(h)) / total;
+      wedges.push({ head: h, from: at, to: at + span });
+      at += span;
+    }
+    const radius = (row) => (row === 0 ? 0 : 9 + 5.4 * row); // percent of the width
+    const angle = new Map();
+    const placeAt = (n, a, r, path) => {
+      angle.set(n.id, a);
+      const btn = nodeButton(n);
+      btn.style.left = `${50 + Math.cos(a) * r}%`;
+      btn.style.top = `${50 + Math.sin(a) * r}%`;
+      btn.dataset.path = String(path);
+      tree.append(btn);
+    };
+    // The center: the first fight in the middle, the other fights of the
+    // first two rows that start no path in a ring close around it.
+    const centre = nodes.filter((n) => inner.has(n.id));
+    centre.forEach((n, i) => placeAt(n, i === 0 ? 0 : -Math.PI / 2 + ((i - 1) * 2 * Math.PI) / (centre.length - 1), i === 0 ? 0 : 8, -1));
+    wedges.forEach((w, wi) => {
+      const mine = members.get(w.head);
+      const deepest = Math.max(...mine.map((n) => n.row));
+      for (let row = 1; row <= deepest; row += 1) {
+        const ring = mine.filter((n) => n.row === row);
+        ring.sort((p, q) => (angle.get(parent.get(p.id)) ?? 0) - (angle.get(parent.get(q.id)) ?? 0));
+        const pad = (w.to - w.from) * 0.08;
+        ring.forEach((n, i) => {
+          const a = ring.length === 1 ? (w.from + w.to) / 2 : w.from + pad + ((w.to - w.from - 2 * pad) * (i + 0.5)) / ring.length;
+          placeAt(n, a, radius(row), wi);
+        });
+      }
+    });
+    // A joint sits on its row's ring, centred over the paths it split into.
+    for (const j of joints.slice().reverse()) {
+      const under = wedges.filter((w) => below(w.head, j));
+      const a = under.length ? (under[0].from + under[under.length - 1].to) / 2 : 0;
+      placeAt(byId.get(j), a, radius(byId.get(j).row), -1);
+    }
+    tree.sunburst = { wedges, parent, rings: Math.max(...nodes.map((n) => n.row)) + 1, radius };
   } else {
     rows.forEach((row, l) => {
       if (!row) return;
@@ -500,6 +605,33 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
     paths.length = 0;
     const box = tree.getBoundingClientRect();
     wires.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    if (layout === 'sunburst') {
+      // Each path a wedge, shaded in turn, with a line between neighbors,
+      // so the paths read as separate; and the rows as faint rings.
+      const { wedges, rings, radius } = tree.sunburst;
+      const cx = box.width / 2, cy = box.height / 2;
+      const R = (pct) => (box.width * pct) / 100;
+      const r0 = R(radius(1) - 2.7), r1 = R(radius(rings - 1) + 3);
+      wedges.forEach((w, i) => {
+        const pt = (r, a) => `${cx + Math.cos(a) * r} ${cy + Math.sin(a) * r}`;
+        const big = w.to - w.from > Math.PI ? 1 : 0;
+        const sector = document.createElementNS(SVG, 'path');
+        sector.setAttribute('d', `M ${pt(r0, w.from)} L ${pt(r1, w.from)} A ${r1} ${r1} 0 ${big} 1 ${pt(r1, w.to)} L ${pt(r0, w.to)} A ${r0} ${r0} 0 ${big} 0 ${pt(r0, w.from)} Z`);
+        sector.setAttribute('class', `wedge wedge-${i % 2}`);
+        const edge = document.createElementNS(SVG, 'path');
+        edge.setAttribute('d', `M ${pt(r0, w.from)} L ${pt(r1, w.from)}`);
+        edge.setAttribute('class', 'spoke');
+        wires.append(sector, edge);
+      });
+      for (let i = 1; i < rings; i += 1) {
+        const c = document.createElementNS(SVG, 'circle');
+        c.setAttribute('cx', cx);
+        c.setAttribute('cy', cy);
+        c.setAttribute('r', R(radius(i)));
+        c.setAttribute('class', 'ring');
+        wires.append(c);
+      }
+    }
     for (const n of nodes) {
       // The chart draws one route into each fight (Sam: "just one line per
       // layer between nodes"): from the requirement in the row directly
@@ -507,6 +639,7 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
       // there (the_chart_has_a_route_into_every_fight_from_the_row_above).
       // Hovering still lists all it asks for. The tree draws every line.
       let shown = n.requires;
+      if (layout === 'sunburst') shown = n.requires.filter((r) => r.from === tree.sunburst.parent.get(n.id));
       if (layout === 'chart' && n.requires.length > 1) {
         const cx = (id) => { const r = buttons.get(id).getBoundingClientRect(); return r.left + r.width / 2; };
         const above = n.requires.filter((r) => byId.get(r.from).row === n.row - 1);
@@ -517,10 +650,18 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
       for (const r of shown) {
         const a = buttons.get(r.from).getBoundingClientRect();
         const c = buttons.get(n.id).getBoundingClientRect();
-        const x1 = a.left - box.left + a.width / 2, y1 = a.bottom - box.top;
-        const x2 = c.left - box.left + c.width / 2, y2 = c.top - box.top;
-        const k = (y2 - y1) / 2;
-        const d = `M ${x1} ${y1} C ${x1} ${y1 + k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+        let d;
+        if (layout === 'sunburst') {
+          // Dot to dot, as on the chart.
+          const x1 = a.left - box.left + a.width / 2, y1 = a.top - box.top + 12;
+          const x2 = c.left - box.left + c.width / 2, y2 = c.top - box.top + 12;
+          d = `M ${x1} ${y1} L ${x2} ${y2}`;
+        } else {
+          const x1 = a.left - box.left + a.width / 2, y1 = a.bottom - box.top;
+          const x2 = c.left - box.left + c.width / 2, y2 = c.top - box.top;
+          const k = (y2 - y1) / 2;
+          d = `M ${x1} ${y1} C ${x1} ${y1 + k}, ${x2} ${y2 - k}, ${x2} ${y2}`;
+        }
         const line = document.createElementNS(SVG, 'path');
         line.setAttribute('d', d);
         line.setAttribute('class', r.met ? 'met' : 'unmet');
@@ -600,7 +741,7 @@ function weaponPanel(redraw) {
 }
 
 // Which design the road is drawn in, remembered in this browser only.
-const ROAD_VIEWS = ['tree', 'chart', 'chapters'];
+const ROAD_VIEWS = ['tree', 'chart', 'chapters', 'sunburst'];
 function roadView() {
   try { const v = localStorage.getItem('vagrancy.roadView'); if (ROAD_VIEWS.includes(v)) return v; } catch { /* storage off */ }
   return 'tree';
@@ -673,7 +814,7 @@ function road() {
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
   const before = [weaponPanel(road), viewSwitch()];
   if (view === 'chapters') chaptersScreen({ stops, detail, first: first.id, before });
-  else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' ? 'chart' : 'rows' });
+  else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' || view === 'sunburst' ? view : 'rows' });
 }
 
 // Weapon Master's chapter select: a chapter for each row of the tree, and

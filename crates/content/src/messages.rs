@@ -37,7 +37,14 @@ fn part_word(copy: &Value, w: &World, seat: u8, part: u8) -> String {
 /// test reaches it, and not in the page.
 pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
     let copy = crate::copy::copy();
-    let Some(loser) = r.loser else { return json!({ "key": "results.draw", "vars": {} }) };
+    let Some(loser) = r.loser else {
+        // A round nobody could finish: every sword thrown and down.
+        if r.cause == Cause::Disarmed {
+            let seconds = sim::balance::DISARMED_DRAW_TICKS / sim::balance::TICKS_PER_SECOND;
+            return json!({ "key": "results.draw_disarmed", "vars": { "seconds": seconds } });
+        }
+        return json!({ "key": "results.draw", "vars": {} });
+    };
     let winner = 1 - loser;
     // With a second opponent a side is two fighters: the one who fell last
     // is `r.seat`, and a cut by its own blade is a cut by that one.
@@ -51,6 +58,8 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
                 (false, Cause::Neck) => "results.versus.neck",
                 (false, Cause::Heart) => "results.versus.heart",
                 (false, Cause::Ink) => "results.versus.ink",
+                // A disarmed round is always a draw, which returned above.
+                (false, Cause::Disarmed) => "results.draw_disarmed",
             };
             json!({ "key": key, "vars": names })
         }
@@ -72,6 +81,7 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
                 (false, false, Cause::Neck) => "results.road.lose_neck",
                 (false, false, Cause::Heart) => "results.road.lose_heart",
                 (false, false, Cause::Ink) => "results.road.lose_ink",
+                (_, false, Cause::Disarmed) => "results.draw_disarmed",
             };
             json!({ "key": key, "vars": { "opponent": name, "opponent_mid": mid, "part": part } })
         }
@@ -124,6 +134,7 @@ pub fn headshot(w: &World, r: &RoundResult) -> bool {
 /// went down (Sam: "pop a popup on the screen about how someone died").
 pub fn popup(w: &World, r: &RoundResult) -> Value {
     let key = match (r.loser, r.cause) {
+        (_, Cause::Disarmed) => "results.popup.disarmed",
         (None, _) => "results.popup.draw",
         (Some(_), Cause::Ink) => "results.popup.ink",
         (Some(_), Cause::Heart) => "results.popup.heart",

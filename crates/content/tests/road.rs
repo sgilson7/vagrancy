@@ -279,7 +279,7 @@ fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     // A win with a round lost opens what a win opens; the drover asks for a
     // flawless one.
     let opened = record(&mut best, "scarecrow", Best::won(1, 2000, "sword"));
-    assert_eq!(opened, ["thresher", "courier"]);
+    assert_eq!(opened, ["thresher", "courier", "juggler"]);
     // A flawless win carrying the short sword opens the drover (flawless)
     // and the knife grinder (the short sword's challenge).
     let opened = record(&mut best, "scarecrow", Best::won(0, 3000, "short_sword"));
@@ -436,6 +436,10 @@ fn each_new_opponent_uses_the_moves_its_introduction_names() {
     assert!(uses("falconer", Input::JUMP), "the falconer never jumped");
     // The lamplighter thrusts: the elbow bends and straightens.
     assert!(uses("lamplighter", Input::ELBOW_OUT), "the lamplighter never thrust");
+    // "he sometimes throws it", "he often throws it", "usually throws it".
+    for id in ["juggler", "woodcutter", "harpooner"] {
+        assert!(uses(id, Input::THROW), "the {id} never threw");
+    }
     // The flanked fights. The well digger sweeps low; the charcoal burner
     // thrusts; the stone cutter swings overhead; the tea picker, the net
     // mender, the shrine keeper and the toll collector dodge.

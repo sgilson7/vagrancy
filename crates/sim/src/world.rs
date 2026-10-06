@@ -177,6 +177,9 @@ pub struct World {
     pub touching: Vec<(u8, u16)>,
     /// Pairs of swords, by index, in contact at the end of last tick.
     pub clashing: Vec<(u8, u8)>,
+    /// The tick since which no fighter in the round has had a blade, held
+    /// or in the air; `None` while one has.
+    pub disarmed_since: Option<u32>,
     /// What happened this tick, for the page to draw and later to sound.
     pub events: Vec<crate::fight::Event>,
     pub next_piece: u16,
@@ -198,6 +201,7 @@ impl World {
             wins: [0, 0],
             touching: Vec::new(),
             clashing: Vec::new(),
+            disarmed_since: None,
             events: Vec::new(),
             next_piece: 0,
         };
@@ -210,6 +214,7 @@ impl World {
     pub(crate) fn spawn_round(&mut self) {
         self.touching.clear();
         self.clashing.clear();
+        self.disarmed_since = None;
         self.next_piece = 0;
         self.particles.clear();
         self.parts.clear();

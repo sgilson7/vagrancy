@@ -17,6 +17,10 @@ pub enum Cause {
     Heart,
     /// The fighter ran out of ink.
     Ink,
+    /// Nobody had a blade: every fighter in the round had thrown its sword
+    /// (or lost it), none was in the air, and nobody went out for
+    /// `balance::DISARMED_DRAW_TICKS`. Only ever a draw.
+    Disarmed,
 }
 
 /// A stretch of a part's spine, as fractions from its near end, where a cut

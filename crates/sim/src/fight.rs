@@ -461,7 +461,26 @@ impl World {
             seats.iter().map(|&s| fell[s].unwrap()).max_by_key(|(at, r)| (*at, std::cmp::Reverse(r.seat))).map(|(_, r)| r)
         };
         let result = match (side_result(0), side_result(1)) {
-            (None, None) => return,
+            (None, None) => {
+                // With every sword thrown and down, nobody can cut anybody,
+                // so the round could not end (Sam, 2026-10-05): after
+                // DISARMED_DRAW_TICKS of it, it is a draw. Ink still runs
+                // out meanwhile, and a fighter who empties loses as ever.
+                let bladed = (0..SEATS).any(|s| {
+                    self.fighters[s].as_ref().is_some_and(|f| self.setup.bodies[f.body as usize].ink > 0)
+                        && !self.out(s)
+                        && self.swords.iter().position(|w| w.fighter as usize == s).is_some_and(|si| self.held(si) || self.swords[si].flying)
+                });
+                if bladed {
+                    self.disarmed_since = None;
+                    return;
+                }
+                let since = *self.disarmed_since.get_or_insert(tick);
+                if tick - since < balance::DISARMED_DRAW_TICKS {
+                    return;
+                }
+                RoundResult { loser: None, seat: 0, cause: Cause::Disarmed, part: 0, by: 0 }
+            }
             (Some(a), Some(_)) => RoundResult { loser: None, ..a },
             (Some(r), None) | (None, Some(r)) => r,
         };

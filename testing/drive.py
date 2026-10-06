@@ -684,7 +684,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     if page.evaluate("window.vagrancy.save().state.weapon") != "scimitar":
         fails.append(f"{name}: carrying the scimitar did not reach the save")
     # The three designs.
-    for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("chapters", "#chapters li", len({len(s['requires']) for s in road}))):
+    for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("sunburst", "#road-tree.sunburst .node", len(road)), ("chapters", "#chapters li", len({len(s['requires']) for s in road}))):
         page.click(f'#road-views [data-view="{view}"]')
         page.wait_for_selector(sel)
         if page.locator(sel).count() != want:
@@ -713,7 +713,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: a weapon won on the road is carried into the yard; the enemies' longsword is not offered; the road draws as a tree, a chart and chapters")
+        print(f"ok: {name}: a weapon won on the road is carried into the yard; the enemies' longsword is not offered; the road draws as a tree, a chart, chapters and a sunburst")
     return fails
 
 
@@ -800,8 +800,11 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     page.click(f'#road-tree [data-stop="{first}"]')
     if page.locator(f'[data-stop="{first}"].won').count() != 1 or page.locator('#stop-detail [data-copy="road.cleared"]').count() != 1:
         fails.append(f"{name}: after loading a save with the first stop won, the road does not say so")
-    # The two that ask only for a win, besides the rest of the first row.
-    want_open = 2 + sum(1 for s in json.loads((ROOT / "data" / "road.json").read_text())["stops"] if not s["requires"]) - 1
+    # The fights that ask only for a win there, besides the rest of the
+    # first row, counted from the data.
+    road_stops = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    first_id = road_stops[0]["id"]
+    want_open = sum(1 for s in road_stops if not s["requires"]) - 1 + sum(1 for s in road_stops if s["requires"] == [{"beat": first_id}])
     if page.locator("#road-tree .node.open").count() != want_open:
         fails.append(f"{name}: a win at the first stop with a round lost leaves {page.locator('#road-tree .node.open').count()} fights open, not {want_open}")
     click_copy(page, "menu.back.label")

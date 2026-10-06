@@ -96,3 +96,8 @@ pub const DODGE_COOLDOWN: u8 = 45;
 pub const ROLL_SPEED: Fx = Fx::int(7);
 /// An air dodge sets the fighter's sideways speed to this.
 pub const AIR_DODGE_SPEED: Fx = Fx::int(9);
+
+/// How long a round may go on with no blade in it, every sword thrown and
+/// down, before it is a draw (Sam, 2026-10-05: "it should end in a draw if
+/// no one dies after 4 seconds of throwing their weapons").
+pub const DISARMED_DRAW_TICKS: u32 = 4 * TICKS_PER_SECOND;

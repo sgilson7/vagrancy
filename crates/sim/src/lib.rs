@@ -37,4 +37,6 @@ pub use world::World;
 /// ground plays exactly as in 7.
 /// 9: a sword can be thrown (bit 10, `Input::THROW`); it cuts in flight and
 /// nothing once it has touched the ground. Ledges hold feet only.
-pub const SIM_VERSION: u32 = 9;
+/// 10: a round with every sword thrown and down for DISARMED_DRAW_TICKS is a
+/// draw (`Cause::Disarmed`).
+pub const SIM_VERSION: u32 = 10;

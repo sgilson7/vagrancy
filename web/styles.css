@@ -143,3 +143,18 @@ button.bind.listening { outline: 3px solid var(--focus); }
 #death-popup.won-1 { border-color: var(--fighters-right-body); border-top: 10px solid var(--fighters-right-body); }
 #death-popup.won-1 .popup-head { color: var(--fighters-right-stripe); }
 #death-popup.headshot.won-0, #death-popup.headshot.won-1 { border-width: 3px; border-top-width: 12px; }
+/* The sunburst: paths as wedges from the center, rows as rings. */
+#road-tree.sunburst { display: block; position: relative; width: min(100%, 1000px); aspect-ratio: 1; margin: 0 auto; }
+#road-tree.sunburst .node { position: absolute; z-index: 1; transform: translate(-50%, -12px); width: auto; max-width: 92px;
+  border: none; background: transparent; padding: 28px 2px 0; font-size: 0.72em; line-height: 1.15; }
+#road-tree.sunburst .node::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--paper); }
+#road-tree.sunburst .node.locked::before { border-style: dashed; border-color: var(--ground-line); }
+#road-tree.sunburst .node.won::before, #road-tree.sunburst .node.flawless::before { background: var(--fighters-right-body); border-color: var(--fighters-right-stripe); }
+#road-tree.sunburst .node.open::before { border-color: var(--focus); border-width: 3px; }
+#road-tree.sunburst .node.picked { outline: none; text-decoration: underline; }
+#road-tree.sunburst .wires .wedge-0 { fill: var(--paper); }
+#road-tree.sunburst .wires .wedge-1 { fill: var(--meter-back); opacity: 0.55; }
+#road-tree.sunburst .wires path.spoke { stroke: var(--line); stroke-width: 1.5; opacity: 0.5; }
+#road-tree.sunburst .wires circle.ring { fill: none; stroke: var(--ground-line); stroke-width: 1; opacity: 0.3; }
+#road-tree.sunburst .wires path.met, #road-tree.sunburst .wires path.unmet { stroke-dasharray: 5 4; }
