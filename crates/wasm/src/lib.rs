@@ -18,6 +18,13 @@ pub fn palette_json() -> String {
     include_str!("../../../data/palette.json").to_string()
 }
 
+/// An opponent's behavior tree (`pilot::view::describe`): node ids, kinds,
+/// icons, and labels as copy keys with values, for the page to draw.
+#[wasm_bindgen]
+pub fn tree_json(opponent: &str) -> String {
+    serde_json::to_string(&pilot::view::describe(&content::road::pilot(opponent))).unwrap()
+}
+
 /// The grounds a match can be on (data/maps.json): the pickers list them.
 #[wasm_bindgen]
 pub fn maps_json() -> String {
@@ -275,6 +282,20 @@ impl Road {
     }
     pub fn frame(&self) -> String {
         serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    /// What each opponent's tree ran on the last tick, by seat from seat 1:
+    /// `[{ seat, active, held, failed }]`.
+    pub fn traces(&self) -> String {
+        let all: Vec<serde_json::Value> = self
+            .pilots
+            .iter()
+            .enumerate()
+            .map(|(k, p)| {
+                let t = p.trace();
+                json!({ "seat": k + 1, "active": t.active, "held": t.held, "failed": t.failed })
+            })
+            .collect();
+        serde_json::to_string(&all).unwrap()
     }
     pub fn phase_text(&self, _opponent: &str) -> String {
         content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &self.opponent }).to_string()

@@ -629,6 +629,12 @@ fn ladder(args: &[String]) {
     let _ = std::fs::remove_file(concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/ladder.pending"));
 }
 
+/// Every pilot as a behavior tree (`pilot::view::describe`), as JSON for
+/// analysis/trees/render.py, which draws the figures and the icons.
+fn trees() {
+    print!("{}", content::trees::json());
+}
+
 /// Mark the ladder as pending for the current data and simulation, so the
 /// checks that read it wait for it (`make ladder-pending`).
 fn ladder_pending() {
@@ -812,6 +818,7 @@ fn main() {
         Some("recon-m5") => recon_m5(),
         Some("ladder") => ladder(&args[1..]),
         Some("ladder-pending") => ladder_pending(),
+        Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),

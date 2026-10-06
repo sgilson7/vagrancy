@@ -29,7 +29,10 @@
     "won": "how many fights in a chapter of arcade mode the player has won",
     "count": "how many requirements a level of the road's tree has, from data/road.json",
     "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json",
-    "target_mid": "opponents.<id>.name_mid of the locked fight a next goal opens, chosen by core (content::road::next_goal)"
+    "target_mid": "opponents.<id>.name_mid of the locked fight a next goal opens, chosen by core (content::road::next_goal)",
+    "branches": "how many key combinations a search tries, from data/pilots.json",
+    "pct": "a percentage from a pilot's rule in data/pilots.json",
+    "node": "tree.*: the label of the node a pilot is running, filled by the page from core's trace"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -86,7 +89,8 @@
     "settings.keys.actions.throw, hud.keys, practice.step.throw": "new (the throw, 2026-10-05)",
     "opponents (throwers)": "new: juggler, woodcutter, harpooner (all five strings each)",
     "road.view.sunburst": "new",
-    "results.draw_disarmed, results.popup.disarmed": "new"
+    "results.draw_disarmed, results.popup.disarmed": "new",
+    "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)"
   },
   "_glossary": {
     "ink": {
@@ -196,6 +200,14 @@
     },
     "back": {
       "label": "Go back to the menu"
+    },
+    "encyclopedia": {
+      "label": "Open the encyclopedia",
+      "desc": "Read about each opponent, with a picture of how it decides."
+    },
+    "train": {
+      "label": "Train against a defeated enemy",
+      "desc": "Fight any opponent you have beaten again, and watch its behavior tree work as you fight."
     }
   },
   "how": {
@@ -1351,5 +1363,97 @@
       "name": "Terraces",
       "desc": "A low terrace at each side and a high one in the middle. Jump, and press {key.stand} while you are above a terrace, to stand on it."
     }
+  },
+  "tree": {
+    "kind": {
+      "selector": "Selector",
+      "sequence": "Sequence",
+      "parallel": "Parallel",
+      "repeat": "Repeat"
+    },
+    "cond": {
+      "gap_above": "Farther than {cm} cm from you",
+      "gap_below": "Closer than {cm} cm to you",
+      "tip_near_head": "Your point within {cm} cm of its head",
+      "tip_near_body": "Your point within {cm} cm of its body",
+      "me_airborne": "It is in the air",
+      "me_grounded": "It is on the ground",
+      "opp_airborne": "You are in the air",
+      "me_down": "It is knocked down",
+      "opp_dodging": "You are dodging",
+      "my_ink_below": "Its ink is below {pct} percent",
+      "chance": "A {pct} percent chance",
+      "ally_engaged": "Its partner is within {cm} cm of you",
+      "opp_above": "You stand more than {cm} cm higher",
+      "opp_below": "You stand more than {cm} cm lower",
+      "ledge_overhead": "A ledge is above it",
+      "on_ledge": "It stands on a ledge",
+      "armed": "It holds its sword",
+      "unarmed": "It has thrown its sword",
+      "opp_down": "You are knocked down",
+      "first_round": "It is the first round"
+    },
+    "act": {
+      "approach": "Approach",
+      "retreat": "Back away",
+      "guard": "Guard",
+      "high_guard": "Guard high",
+      "low_guard": "Guard low",
+      "overhead": "Overhead swing",
+      "low_sweep": "Sweep low",
+      "thrust": "Thrust",
+      "spin": "Spin the sword",
+      "jump_strike": "Jump and strike",
+      "bounce_strike": "Bounce and strike",
+      "dodge_away": "Dodge away",
+      "dodge_in": "Dodge in",
+      "pogo": "Plant and vault",
+      "stand": "Stand up",
+      "wait": "Wait",
+      "climb": "Climb onto the ledge",
+      "throw": "Throw the sword",
+      "still": "Stand still",
+      "hold_pose": "Hold the sword out",
+      "raise": "Raise the sword",
+      "cut_down": "Cut down",
+      "pause": "Pause {pause_s} s",
+      "drift": "Walk toward you",
+      "wait_in_guard": "Guard high until you are within {cm} cm",
+      "heavy_stroke": "One heavy stroke down",
+      "recover": "Recover, backing away",
+      "close_to": "Walk in to {cm} cm",
+      "watch": "Watch you",
+      "mirror": "Replay your last round, mirrored"
+    },
+    "search": "Search: look {horizon_ms} ms ahead, trying {branches} key combinations",
+    "now": "Now: {node}",
+    "kind_desc": {
+      "selector": "A selector runs the first of its branches that can run, trying them from left to right.",
+      "sequence": "A sequence runs its steps in order and stops at the first that fails.",
+      "parallel": "A parallel runs its branches at the same time.",
+      "repeat": "A repeat runs its branch over and over.",
+      "condition": "A condition tests what the opponent sees.",
+      "action": "A move is a few ticks of keys, the same keys a player has.",
+      "search": "A search tries several key combinations a short way ahead and presses the best."
+    }
+  },
+  "encyclopedia": {
+    "heading": "Encyclopedia",
+    "intro": "The opponents of arcade mode, how each decides what to do, and how to open its fight. An opponent you have not reached yet shows its name and what opens it.",
+    "how_heading": "How the opponents decide",
+    "how_tree": "Most opponents run a behavior tree. Each tick, the tree reads the fight as the opponent saw it a moment ago and picks what to do. The picture of each tree reads from the top: the selector at the root tries its branches from left to right and runs the first one whose conditions hold. A branch drawn with a dashed border is checked on each tick, so it can cut short a move that is already running.",
+    "how_search": "A search is how an opponent fights when no simpler rule applies. It copies the fight as it last saw it, tries each of a handful of key combinations by playing the copy forward a fraction of a second, scores where each one leaves both fighters, and presses the best. It scores a cut it would land well, a cut it would take badly, and it prefers a striking distance to charging in. Searching farther ahead, or reacting sooner, makes an opponent stronger.",
+    "how_loop": "A few early opponents run a fixed loop instead: the same moves in the same order, whatever you do. Those are the easiest to read, because you can count them.",
+    "legend_heading": "The shapes in a tree",
+    "locked": "You have not opened this fight yet.",
+    "tree_alt": "The behavior tree of {opponent_mid}"
+  },
+  "train": {
+    "intro": "Fight an opponent you have beaten again, with its behavior tree above its head. A match here changes nothing in arcade mode.",
+    "none": "You have not beaten anyone yet. Win a fight in arcade mode, and it appears here.",
+    "fight": {
+      "label": "Train against {opponent_mid}"
+    },
+    "watch": "The tree above {opponent_mid} lights the branch it is running and the conditions it checked: a filled condition held, a faded one did not."
   }
 }

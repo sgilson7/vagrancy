@@ -4,7 +4,7 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission,
-  road_json, tutorial_json, weapons_json, maps_json, save_choose_weapon, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -143,6 +143,7 @@ function popupHide() {
 
 function stop() {
   popupHide();
+  if (draw && draw.trees) draw.trees([]);
   game = null;
   $('stage').hidden = true;
   $('hud').hidden = true;
@@ -260,6 +261,8 @@ function menu() {
   show(
     item('menu.tutorial', tutorial),
     item('menu.road', road),
+    item('menu.train', train),
+    item('menu.encyclopedia', encyclopedia),
     item('menu.local', local),
     item('menu.online', online),
     item('menu.practice', practice),
@@ -1029,6 +1032,118 @@ function fight(id) {
   });
 }
 
+// --- behavior trees: the encyclopedia and training (Sam, 2026-10-06) -----------
+
+// An opponent's tree as core describes it, each node's words filled from
+// the copy; the same tree the figure in web/trees/ was drawn from.
+const TREES = new Map();
+function treeOf(id) {
+  if (!TREES.has(id)) {
+    const fill = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fill); return n; };
+    TREES.set(id, fill(JSON.parse(tree_json(id))));
+  }
+  return TREES.get(id);
+}
+
+// The drawn tree of an opponent, for a card or a tile.
+function treeImage(id) {
+  return el('img', { class: 'tree-img', src: `trees/${id}.png`, alt: t('encyclopedia.tree_alt', { opponent_mid: t(`opponents.${id}.name_mid`) }) });
+}
+
+// What a stop's card says, in arcade mode's words: place, what it does,
+// one thing to try, and what it carries, its companion and its ground.
+function stopFacts(s) {
+  const o = (k) => `opponents.${s.id}.${k}`;
+  const kids = [say(o('place'), {}, { class: 'desc' })];
+  if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
+  if (s.companion) kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
+  if (s.map) kids.push(say(`maps.${s.map}.desc`, keyVars(BINDINGS.solo)));
+  kids.push(
+    el('h4', { 'data-copy': 'road.does_heading' }, t('road.does_heading')), say(o('does'), s.numbers),
+    el('h4', { 'data-copy': 'road.try_heading' }, t('road.try_heading')), say(o('try'), s.numbers));
+  return kids;
+}
+
+function encyclopedia() {
+  stop();
+  const stops = roadData();
+  const kinds = ['selector', 'sequence', 'parallel', 'repeat', 'condition', 'action', 'search'];
+  const icons = { selector: 'selector', sequence: 'sequence', parallel: 'parallel', repeat: 'repeat', condition: 'far', action: 'approach', search: 'search' };
+  const legend = el('ul', { class: 'legend' }, ...kinds.map((k) => el('li', {},
+    el('img', { src: `icons/${icons[k]}.png`, alt: '' }), say(`tree.kind_desc.${k}`, {}, { class: 'desc' }))));
+  const entries = stops.map((s) => {
+    const o = (k) => `opponents.${s.id}.${k}`;
+    const kids = [el('h3', { 'data-copy': o('name') }, t(o('name')))];
+    if (s.open || s.won) {
+      kids.push(...stopFacts(s), el('div', { class: 'tree-scroll' }, treeImage(s.id)));
+      if (s.companion) kids.push(el('div', { class: 'tree-scroll' }, treeImage(s.companion.pilot)));
+    } else {
+      kids.push(say('encyclopedia.locked', {}, { class: 'desc' }),
+        el('ul', { class: 'reqs' }, ...s.requires.map((q) => el('li', { class: q.met ? 'met' : 'unmet' }, reqLine(q)))));
+    }
+    return el('article', { class: `entry ${s.open || s.won ? 'open' : 'locked'}`, 'data-stop': s.id }, ...kids);
+  });
+  show(
+    el('h2', { 'data-copy': 'encyclopedia.heading' }, t('encyclopedia.heading')),
+    say('encyclopedia.intro', {}, { class: 'desc' }),
+    el('section', { id: 'how-they-decide' },
+      el('h3', { 'data-copy': 'encyclopedia.how_heading' }, t('encyclopedia.how_heading')),
+      say('encyclopedia.how_tree'), say('encyclopedia.how_search'), say('encyclopedia.how_loop'),
+      el('h4', { 'data-copy': 'encyclopedia.legend_heading' }, t('encyclopedia.legend_heading')), legend),
+    el('div', { class: 'actions' }, button('menu.back.label', menu)),
+    el('section', { id: 'entries' }, ...entries),
+    el('div', { class: 'actions' }, button('menu.back.label', menu)),
+  );
+}
+
+function train() {
+  stop();
+  const won = roadData().filter((s) => s.won);
+  if (!won.length) {
+    show(say('train.none'), el('div', { class: 'actions' }, button('menu.back.label', menu)));
+    return;
+  }
+  const card = el('section', { id: 'train-detail' });
+  const pick = (s) => {
+    const mid = { opponent_mid: t(`opponents.${s.id}.name_mid`) };
+    card.replaceChildren(
+      el('h3', { 'data-copy': `opponents.${s.id}.name` }, t(`opponents.${s.id}.name`)),
+      ...stopFacts(s),
+      el('div', { class: 'tree-scroll' }, treeImage(s.id)),
+      el('div', { class: 'actions' }, button('train.fight.label', () => trainFight(s), mid)));
+    card.scrollIntoView({ block: 'nearest' });
+  };
+  const tiles = el('div', { id: 'train-tiles' }, ...won.map((s) => el('button', {
+    type: 'button', class: 'tile', 'data-stop': s.id, on: { click: () => pick(s) } },
+    el('span', { class: 'tile-name', 'data-copy': `opponents.${s.id}.name` }, t(`opponents.${s.id}.name`)),
+    treeImage(s.id),
+    say(`opponents.${s.id}.does`, s.numbers, { class: 'desc' }))));
+  show(say('train.intro', {}, { class: 'desc' }), tiles, card, el('div', { class: 'actions' }, button('menu.back.label', menu)));
+  pick(won[0]);
+}
+
+// A match against a beaten opponent, with its tree over its head. Nothing
+// is recorded: the save is not touched.
+function trainFight(s) {
+  READY = false;
+  const mid = { opponent_mid: t(`opponents.${s.id}.name_mid`) };
+  const watch = matchWatcher(s.id, () => [el('div', { class: 'actions' },
+    button('train.fight.label', () => trainFight(s), mid),
+    button('menu.train.label', train),
+    button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))]);
+  show(watch.panel, say('train.watch', mid, { class: 'desc' }), keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.train.label', train)));
+  const ids = [s.id, s.companion ? s.companion.pilot : null];
+  const caption = (n) => t('tree.now', { node: n.text });
+  const g = new Road(seed(), tuning(), s.id, SAVE.state.weapon);
+  start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+    watch.tick(f);
+    const traces = JSON.parse(game.traces());
+    LAST_TRACES = traces;
+    draw.trees(traces.filter((tr) => ids[tr.seat - 1]).map((tr) => ({ seat: tr.seat, tree: treeOf(ids[tr.seat - 1]), trace: tr, caption })));
+  });
+}
+let LAST_TRACES = [];
+
 // --- the save file (D15) ----------------------------------------------------------------
 
 const AUTOSAVE = 'vagrancy.autosave';
@@ -1489,6 +1604,7 @@ async function main() {
     phase: () => curFrame && curFrame.phase,
     edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
     fighters: () => curFrame && curFrame.fighters.filter(Boolean).length,
+    traces: () => LAST_TRACES,
     platforms: () => curFrame && (curFrame.platforms || []).length,
     save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },

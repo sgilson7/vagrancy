@@ -775,6 +775,67 @@ def a_flanked_fight_puts_an_opponent_on_each_side_and_ledges_are_drawn(page, nam
 
 
 @check
+def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fight(page, name):
+    # Sam: "add an encyclopedia and a mode where you can fight each enemy
+    # individually after you unlock them ... see each behavior tree state
+    # they enter as you fight them".
+    fails = []
+    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.encyclopedia.label")
+    page.wait_for_selector("#entries .entry")
+    if page.locator("#entries .entry").count() != len(road):
+        fails.append(f"{name}: the encyclopedia has {page.locator('#entries .entry').count()} entries, not {len(road)}")
+    first_row = sum(1 for s in road if not s["requires"])
+    if page.locator("#entries .entry.open").count() != first_row:
+        fails.append(f"{name}: a fresh save shows {page.locator('#entries .entry.open').count()} opponents in full, not the {first_row} open from the start")
+    page.wait_for_function("[...document.querySelectorAll('#entries .tree-img')].every(i => i.complete)", timeout=15000)
+    broken = page.evaluate("[...document.querySelectorAll('#entries .tree-img')].filter(i => !i.naturalWidth).length")
+    if broken:
+        fails.append(f"{name}: {broken} drawn trees in the encyclopedia did not load")
+    fails += every_visible_line_is_a_copy_string(page, name + " (encyclopedia)")
+    click_copy(page, "menu.back.label")
+    # Training with nothing beaten says so.
+    click_copy(page, "menu.train.label")
+    page.wait_for_selector('[data-copy="train.none"]')
+    click_copy(page, "menu.back.label")
+    # A save that has beaten three, one of them a flanked stop.
+    won = ["thresher", "archivist", "tea_picker"]
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {k: {"losses": 1, "ticks": 9999, "with": ["sword"]} for k in won}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.train.label")
+    page.wait_for_selector("#train-tiles .tile")
+    if page.locator("#train-tiles .tile").count() != len(won):
+        fails.append(f"{name}: training offers {page.locator('#train-tiles .tile').count()} opponents, not the {len(won)} beaten")
+    fails += every_visible_line_is_a_copy_string(page, name + " (training)")
+    page.click('#train-tiles [data-stop="tea_picker"]')
+    page.click('#train-detail [data-copy="train.fight.label"]')
+    page.wait_for_selector('[data-copy="hud.round"]')
+    seen = set()
+    for _ in range(20):
+        page.wait_for_timeout(100)
+        for tr in page.evaluate("window.vagrancy.traces()"):
+            if tr["active"]:
+                seen.add(tr["seat"])
+    if seen != {1, 2}:
+        fails.append(f"{name}: in a flanked training fight the trees lit for seats {sorted(seen)}, not both opponents")
+    fails += every_visible_line_is_a_copy_string(page, name + " (a training fight)")
+    click_copy(page, "menu.train.label")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the encyclopedia shows {len(road)} opponents with their drawn trees; training offers the beaten ones, and both trees in a flanked fight light as the opponents run them")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

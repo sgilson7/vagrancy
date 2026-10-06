@@ -1,0 +1,63 @@
+\documentclass[tikz,border=2pt]{standalone}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\definecolor{paper}{HTML}{EFE8D8}
+\definecolor{ink}{HTML}{2B2A28}
+\definecolor{ground}{HTML}{D9CDB2}
+\definecolor{muted}{HTML}{6B6457}
+\definecolor{cond}{HTML}{3E4A89}
+\definecolor{act}{HTML}{7A5618}
+\input{/Users/samgilson/Documents/vagrancy/analysis/trees/icons.tex}
+\begin{document}
+\begin{tikzpicture}[font=\sffamily,
+  box/.style={draw, line width=1.1pt, rounded corners=3pt, minimum width=3.9cm, minimum height=1.75cm},
+  comp/.style={draw=ink, fill=ground}, cond/.style={draw=cond, fill=paper}, act/.style={draw=act, fill=paper},
+  srch/.style={draw=cond, fill=paper, line width=2pt},
+  label/.style={anchor=west, text=ink, text width=2.30cm, align=left, font=\sffamily\footnotesize, inner sep=0pt},
+  edge/.style={draw=muted, line width=1pt}]
+% --- Nodes ---
+\node[box, comp] (n0) at (9.600,-0.875) {};
+\begin{scope}[shift={(7.900,-1.350)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSelector\end{scope}
+\node[label] at (9.000,-0.875) {Selector};
+\node[box, comp, dashed] (n1) at (1.950,-3.175) {};
+\begin{scope}[shift={(0.250,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (1.350,-3.175) {Sequence};
+\node[box, cond] (n2) at (2.700,-5.475) {};
+\begin{scope}[shift={(1.000,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconDown\end{scope}
+\node[label] at (2.100,-5.475) {It is knocked down};
+\node[box, act] (n3) at (2.700,-7.775) {};
+\begin{scope}[shift={(1.000,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconStand\end{scope}
+\node[label] at (2.100,-7.775) {Stand up};
+\node[box, comp] (n4) at (7.050,-3.175) {};
+\begin{scope}[shift={(5.350,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (6.450,-3.175) {Sequence};
+\node[box, cond] (n5) at (7.800,-5.475) {};
+\begin{scope}[shift={(6.100,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconFar\end{scope}
+\node[label] at (7.200,-5.475) {Farther than 280 cm from you};
+\node[box, act] (n6) at (7.800,-7.775) {};
+\begin{scope}[shift={(6.100,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconApproach\end{scope}
+\node[label] at (7.200,-7.775) {Approach};
+\node[box, comp] (n7) at (12.150,-3.175) {};
+\begin{scope}[shift={(10.450,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (11.550,-3.175) {Sequence};
+\node[box, cond] (n8) at (12.900,-5.475) {};
+\begin{scope}[shift={(11.200,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
+\node[label] at (12.300,-5.475) {Closer than 230 cm to you};
+\node[box, act] (n9) at (12.900,-7.775) {};
+\begin{scope}[shift={(11.200,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconThrust\end{scope}
+\node[label] at (12.300,-7.775) {Thrust};
+\node[box, act] (n10) at (17.250,-3.175) {};
+\begin{scope}[shift={(15.550,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconHighGuard\end{scope}
+\node[label] at (16.650,-3.175) {Guard high};
+% --- Edges (after the nodes they join; they end at the borders) ---
+\draw[edge] (0.350,-4.050) |- (n2.west);
+\draw[edge] (0.350,-4.050) |- (n3.west);
+\draw[edge] (n0.south) -- (n1.north);
+\draw[edge] (5.450,-4.050) |- (n5.west);
+\draw[edge] (5.450,-4.050) |- (n6.west);
+\draw[edge] (n0.south) -- (n4.north);
+\draw[edge] (10.550,-4.050) |- (n8.west);
+\draw[edge] (10.550,-4.050) |- (n9.west);
+\draw[edge] (n0.south) -- (n7.north);
+\draw[edge] (n0.south) -- (n10.north);
+\end{tikzpicture}
+\end{document}

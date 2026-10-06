@@ -1,0 +1,39 @@
+\documentclass[tikz,border=2pt]{standalone}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\definecolor{paper}{HTML}{EFE8D8}
+\definecolor{ink}{HTML}{2B2A28}
+\definecolor{ground}{HTML}{D9CDB2}
+\definecolor{muted}{HTML}{6B6457}
+\definecolor{cond}{HTML}{3E4A89}
+\definecolor{act}{HTML}{7A5618}
+\input{/Users/samgilson/Documents/vagrancy/analysis/trees/icons.tex}
+\begin{document}
+\begin{tikzpicture}[font=\sffamily,
+  box/.style={draw, line width=1.1pt, rounded corners=3pt, minimum width=3.9cm, minimum height=1.75cm},
+  comp/.style={draw=ink, fill=ground}, cond/.style={draw=cond, fill=paper}, act/.style={draw=act, fill=paper},
+  srch/.style={draw=cond, fill=paper, line width=2pt},
+  label/.style={anchor=west, text=ink, text width=2.30cm, align=left, font=\sffamily\footnotesize, inner sep=0pt},
+  edge/.style={draw=muted, line width=1pt}]
+% --- Nodes ---
+\node[box, comp] (n0) at (2.325,-0.875) {};
+\begin{scope}[shift={(0.625,-1.350)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconRepeat\end{scope}
+\node[label] at (1.725,-0.875) {Repeat};
+\node[box, comp] (n1) at (1.950,-3.175) {};
+\begin{scope}[shift={(0.250,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (1.350,-3.175) {Sequence};
+\node[box, act] (n2) at (2.700,-5.475) {};
+\begin{scope}[shift={(1.000,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconGuard\end{scope}
+\node[label] at (2.100,-5.475) {Guard high until you are within 230 cm};
+\node[box, act] (n3) at (2.700,-7.775) {};
+\begin{scope}[shift={(1.000,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconOverhead\end{scope}
+\node[label] at (2.100,-7.775) {One heavy stroke down};
+\node[box, act] (n4) at (2.700,-10.075) {};
+\begin{scope}[shift={(1.000,-10.550)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconRetreat\end{scope}
+\node[label] at (2.100,-10.075) {Recover, backing away};
+% --- Edges (after the nodes they join; they end at the borders) ---
+\draw[edge] (0.350,-4.050) |- (n2.west);
+\draw[edge] (0.350,-4.050) |- (n3.west);
+\draw[edge] (0.350,-4.050) |- (n4.west);
+\draw[edge] (n0.south) -- (n1.north);
+\end{tikzpicture}
+\end{document}

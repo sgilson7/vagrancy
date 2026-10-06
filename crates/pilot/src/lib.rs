@@ -15,6 +15,8 @@ use sim::body::{side, SEATS};
 use sim::{Input, World};
 use std::collections::VecDeque;
 
+pub mod view;
+
 /// One opponent's entry in `data/pilots.json`.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -41,6 +43,11 @@ pub trait Pilot {
     fn input(&mut self, w: &World, seat: usize) -> Input;
     /// Every seat's input last tick, its own included.
     fn observe(&mut self, _last: [Input; SEATS]) {}
+    /// What ran on the last tick, by the ids of `view::describe` of this
+    /// pilot's spec. Reading it changes nothing.
+    fn trace(&self) -> view::Trace {
+        view::Trace::default()
+    }
 }
 
 pub fn build(spec: &Spec) -> Box<dyn Pilot> {
@@ -236,6 +243,9 @@ impl Pilot for Still {
     fn input(&mut self, w: &World, _: usize) -> Input {
         between(w).unwrap_or(Input::NONE)
     }
+    fn trace(&self) -> view::Trace {
+        view::Trace { active: vec![0], ..Default::default() }
+    }
 }
 
 struct Pose {
@@ -249,6 +259,9 @@ impl Pilot for Pose {
         }
         Input(pose_keys(w, seat, self.shoulder, self.elbow))
     }
+    fn trace(&self) -> view::Trace {
+        view::Trace { active: vec![0], ..Default::default() }
+    }
 }
 
 /// A repeating sequence of keys, closing the distance when out of reach.
@@ -257,6 +270,8 @@ struct Looper {
     drift: bool,
     at: usize,
     left: u32,
+    /// For the trace: the step played and whether it walked, last tick.
+    played: Option<(usize, bool)>,
 }
 
 impl Looper {
@@ -268,7 +283,7 @@ impl Looper {
             "spin" => vec![(Input::SHOULDER_UP, 600)],
             _ => vec![(0, 60)],
         };
-        Looper { left: steps[0].1, steps, drift, at: 0 }
+        Looper { left: steps[0].1, steps, drift, at: 0, played: None }
     }
 }
 
@@ -277,17 +292,37 @@ impl Pilot for Looper {
         if let Some(i) = between(w) {
             self.at = 0;
             self.left = self.steps[0].1;
+            self.played = None;
             return i;
         }
         let (keys, _) = self.steps[self.at];
+        let step = self.at;
         self.left = self.left.saturating_sub(1);
         if self.left == 0 {
             self.at = (self.at + 1) % self.steps.len();
             self.left = self.steps[self.at].1;
         }
         // Close in to striking distance; the windmill drifts in regardless.
-        let walk = if self.drift || gap(w, seat) > 200 { step_toward(w, seat, true) } else { 0 };
+        let walking = self.drift || gap(w, seat) > 200;
+        self.played = Some((step, walking));
+        let walk = if walking { step_toward(w, seat, true) } else { 0 };
         Input(keys | walk)
+    }
+    fn trace(&self) -> view::Trace {
+        // Ids as `view::describe` numbers them: the parallel 0, the repeat
+        // 1, its sequence 2, the steps from 3, then the walk.
+        let Some((step, walking)) = self.played else { return view::Trace::default() };
+        let n = self.steps.len() as u16;
+        let mut t = view::Trace { active: vec![0, 1, 2, 3 + step as u16], ..Default::default() };
+        if self.drift {
+            t.active.push(3 + n);
+        } else if walking {
+            t.active.extend([3 + n, 4 + n, 5 + n]);
+            t.held.push(4 + n);
+        } else {
+            t.failed.push(4 + n);
+        }
+        t
     }
 }
 
@@ -296,11 +331,13 @@ struct Machine {
     script: String,
     t: u32,
     state: u8,
+    /// For the trace: the state that played last tick.
+    played: Option<u8>,
 }
 
 impl Machine {
     fn new(script: &str) -> Machine {
-        Machine { script: script.into(), t: 0, state: 0 }
+        Machine { script: script.into(), t: 0, state: 0, played: None }
     }
 }
 
@@ -309,9 +346,11 @@ impl Pilot for Machine {
         if let Some(i) = between(w) {
             self.t = 0;
             self.state = 0;
+            self.played = None;
             return i;
         }
         self.t += 1;
+        self.played = Some(self.state);
         let d = gap(w, seat);
         let b = match self.script.as_str() {
             // The ferryman: guard high, wait for the other fighter to come
@@ -372,6 +411,13 @@ impl Pilot for Machine {
         };
         Input(b)
     }
+    fn trace(&self) -> view::Trace {
+        // The repeat 0, its sequence 1, the states from 2.
+        match self.played {
+            Some(st) => view::Trace { active: vec![0, 1, 2 + st as u16], ..Default::default() },
+            None => view::Trace::default(),
+        }
+    }
 }
 
 /// The sampler: still in the first round; after that, the previous round's
@@ -410,6 +456,15 @@ impl Pilot for Replayer {
         let i = self.last.get(self.t).copied().unwrap_or(Input::NONE);
         self.t += 1;
         if self.mirror { i.mirror() } else { i }
+    }
+    fn trace(&self) -> view::Trace {
+        // The selector 0; its first branch 1 (the condition 2, watching 3);
+        // replaying, 4.
+        if self.round <= 1 {
+            view::Trace { active: vec![0, 1, 2, 3], held: vec![2], failed: vec![] }
+        } else {
+            view::Trace { active: vec![0, 4], held: vec![], failed: vec![2] }
+        }
     }
 }
 
@@ -497,6 +552,9 @@ impl Search {
 }
 
 impl Pilot for Search {
+    fn trace(&self) -> view::Trace {
+        view::Trace { active: vec![0], ..Default::default() }
+    }
     fn observe(&mut self, last: [Input; SEATS]) {
         self.others = last.map(|i| Input(i.0 & !Input::READY));
     }
@@ -662,6 +720,11 @@ pub struct Tree {
     rng: sim::rng::Rng,
     current: Option<(String, u32)>,
     search: Option<Search>,
+    /// For the trace: each rule's node ids, the rule running, and the
+    /// conditions checked on the last decision with what each found.
+    ids: Vec<view::RuleIds>,
+    running: Option<usize>,
+    checked: Vec<(u16, bool)>,
 }
 
 impl Tree {
@@ -672,7 +735,8 @@ impl Tree {
     }
 
     pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
-        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None }
+        let ids = view::tree_nodes(&rules, reaction).1;
+        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new() }
     }
 
     fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
@@ -715,14 +779,26 @@ impl Tree {
         }
     }
 
-    fn pick(&mut self, w: &World, me: usize, interrupts_only: bool) -> Option<String> {
+    fn pick(&mut self, w: &World, me: usize, interrupts_only: bool) -> Option<(usize, String)> {
+        // Each condition is checked exactly as before, in order, stopping at
+        // the first that fails; the trace only writes down what was found.
+        self.checked.clear();
         for i in 0..self.rules.len() {
             let r = self.rules[i].clone();
             if interrupts_only && !r.interrupt {
                 continue;
             }
-            if r.when.iter().all(|c| self.holds(c, w, me)) {
-                return Some(r.act);
+            let mut all = true;
+            for (j, c) in r.when.iter().enumerate() {
+                let ok = self.holds(c, w, me);
+                self.checked.push((self.ids[i].conds[j], ok));
+                if !ok {
+                    all = false;
+                    break;
+                }
+            }
+            if all {
+                return Some((i, r.act));
             }
         }
         None
@@ -788,6 +864,22 @@ impl Tree {
 }
 
 impl Pilot for Tree {
+    fn trace(&self) -> view::Trace {
+        let mut t = view::Trace::default();
+        for &(id, ok) in &self.checked {
+            if ok { t.held.push(id) } else { t.failed.push(id) }
+        }
+        if let Some(r) = self.running {
+            let ids = &self.ids[r];
+            t.active.push(0);
+            if let Some(sq) = ids.seq {
+                t.active.push(sq);
+                t.active.extend(ids.conds.iter().copied());
+            }
+            t.active.push(ids.act);
+        }
+        t
+    }
     fn observe(&mut self, last: [Input; SEATS]) {
         if let Some(s) = self.search.as_mut() {
             s.observe(last);
@@ -801,18 +893,29 @@ impl Pilot for Tree {
         }
         if let Some(i) = between(w) {
             self.current = None;
+            self.running = None;
             return i;
         }
         // Decide on what was seen; act on the world as it is.
         let seen = self.seen.front().unwrap().clone();
         let interrupt = if self.current.is_some() { self.pick(&seen, seat, true) } else { None };
-        if let Some(name) = interrupt {
+        if let Some((rule, name)) = interrupt {
             if self.current.as_ref().map(|(n, _)| n != &name).unwrap_or(true) {
                 self.current = Some((name, 0));
+                self.running = Some(rule);
             }
         }
         if self.current.is_none() {
-            self.current = self.pick(&seen, seat, false).map(|n| (n, 0));
+            match self.pick(&seen, seat, false) {
+                Some((rule, n)) => {
+                    self.current = Some((n, 0));
+                    self.running = Some(rule);
+                }
+                None => {
+                    self.current = None;
+                    self.running = None;
+                }
+            }
         }
         let Some((name, t)) = self.current.clone() else { return Input::NONE };
         match self.play(&name, t, w, seat) {
@@ -822,6 +925,7 @@ impl Pilot for Tree {
             }
             None => {
                 self.current = None;
+                self.running = None;
                 Input::NONE
             }
         }

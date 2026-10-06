@@ -68,6 +68,12 @@ and anything decided since. Newest entries go at the bottom of their section.
   - **Two new requirements**: a headshot (a won match there in which a cut of yours across an opponent's head ended a round) and untouched (a won match there in which you won a round without being cut). Each flanked fight asks for one or both. The save keeps them (format 6); a format 5 file reads with neither.
   - **Online, each player picks a weapon and the host picks the ground**, which the welcome carries inside the setup. At one keyboard, the ground is picked before the match.
 
+- **2026-10-06: behavior trees for players to read.** Sam asked for an encyclopedia, a mode to "Train against a defeated enemy", and a floating tree over the opponent "where the state lights up as they enter it", with icons from his TikZ prompt.
+  - **One description, three drawings.** `pilot::view::describe` turns a pilot's data into a tree (selector, sequence, parallel, repeat, condition, move, search); each pilot reports a `Trace` of the nodes that ran. The encyclopedia's figures, the training tiles and the floating tree are all drawn from that one description.
+  - **The page decides nothing.** It lays out and lights what core sends; every word on a node is a `tree.*` copy string with numbers from the pilot's data.
+  - **Figures are committed.** `make trees` draws them with TikZ; a test fails when the pilots, the labels, the icons or the renderer change and the figures were not redrawn.
+  - **Training records nothing.** A match against a beaten opponent leaves the save as it was.
+
 ## The build
 
 - **The red band is hue 330°–20° at saturation 0.20 or more.** It lives in `crates/content/tests/palette.rs`, beside its check, and not in `data/palette.json`, where editing the band would be a way to pass. Ochre `#B8862B` sits at hue 39°, 19° clear.

@@ -166,6 +166,16 @@ export function renderer(canvas, palette, numbers) {
       ctx.globalAlpha = 1;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // The trees, over everything in the arena but the meters.
+    if (trees.length && cur.phase === 'fight') {
+      const now = performance.now();
+      const lit = new Set();
+      for (const e of trees) {
+        drawTree(e, pts, cur, now);
+        for (const id of e.trace.active) lit.add(`${e.seat}:${id}`);
+      }
+      litBefore = lit;
+    }
     // Seat 0's meter at the top left, seat 1's at the top right, and on a
     // flanked stop seat 2's (the opponent on the left) under seat 0's.
     cur.fighters.forEach((f, seat) => {
@@ -176,8 +186,126 @@ export function renderer(canvas, palette, numbers) {
     });
   }
 
+  // --- Behavior trees over the opponents (training) -------------------------
+  // Each entry is { seat, tree, trace }: the tree as core describes it, with
+  // each node's text filled from the copy by the page, and what core says
+  // ran on the last tick. Nothing here decides; it lays out and lights what
+  // it is given (after the live views of behavior tree tools: light the path
+  // that ran this tick, and keep the tree small enough to read at a glance).
+  let trees = [];
+  draw.trees = (list) => { trees = list || []; };
+  const iconCache = new Map();
+  const icon = (name, lit) => {
+    const k = lit ? `${name}-lit` : name;
+    if (!iconCache.has(k)) { const im = new Image(); im.src = `icons/${k}.png`; iconCache.set(k, im); }
+    return iconCache.get(k);
+  };
+  const NODE_R = 14, COL_W = 36, ROW_H = 34;
+  const across = (n) => n.kind === 'selector' || n.kind === 'parallel' || n.kind === 'repeat';
+  // Columns and rows: a selector, parallel or repeat spreads its children
+  // across; a sequence stacks its steps under itself.
+  function lay(n, col, row, out) {
+    if (!n.children.length) { out.set(n.id, { col, row, n }); return 1; }
+    if (across(n)) {
+      let c = col;
+      for (const k of n.children) c += lay(k, c, row + 1, out);
+      out.set(n.id, { col: col + (c - col - 1) / 2, row, n });
+      return c - col;
+    }
+    out.set(n.id, { col, row, n });
+    let r = row + 1, w = 1;
+    for (const k of n.children) {
+      const sub = new Map();
+      w = Math.max(w, lay(k, col, r, sub));
+      for (const [id, v] of sub) out.set(id, v);
+      r = Math.max(...[...sub.values()].map((v) => v.row)) + 1;
+    }
+    return w;
+  }
+  const since = new Map(); // `${seat}:${id}` -> when that node lit
+  let litBefore = new Set();
+  function drawTree(entry, pts, cur, now) {
+    const { seat, tree, trace } = entry;
+    // Over the fighter: its highest attached point, centred on its points.
+    let top = -Infinity, sum = 0, cnt = 0;
+    for (const p of cur.parts) {
+      if (p.fighter !== seat || !p.attached) continue;
+      for (const i of [p.a, p.b]) { top = Math.max(top, pts[i][1]); sum += pts[i][0]; cnt += 1; }
+    }
+    if (!cnt) return;
+    const pos = new Map();
+    const cols = lay(tree, 0, 0, pos);
+    const rows = Math.max(...[...pos.values()].map((v) => v.row)) + 1;
+    const w = cols * COL_W, h = rows * ROW_H;
+    const cx = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, sx(sum / cnt)));
+    const y0 = Math.max(26, sy(top) - 30 - h);
+    const at = (id) => { const v = pos.get(id); return [cx + (v.col - (cols - 1) / 2) * COL_W, y0 + v.row * ROW_H + NODE_R]; };
+    const active = new Set(trace.active), held = new Set(trace.held), failed = new Set(trace.failed);
+    for (const id of active) {
+      const k = `${seat}:${id}`;
+      if (!litBefore.has(k)) since.set(k, now);
+    }
+    // A pale card behind, so the tree reads over the arena.
+    ctx.globalAlpha = 0.82;
+    ctx.fillStyle = palette.paper;
+    ctx.fillRect(cx - w / 2 - 4, y0 - 4, w + 8, h + 4);
+    ctx.globalAlpha = 1;
+    // Edges: a selector's or parallel's straight down to each child; a
+    // sequence's along a spine. The lit path flows.
+    const edge = (a, b, lit, spine) => {
+      ctx.strokeStyle = lit ? palette.focus : palette.ground_line;
+      ctx.lineWidth = lit ? 2.5 : 1;
+      ctx.setLineDash(lit ? [5, 4] : []);
+      ctx.lineDashOffset = lit ? -now / 40 : 0;
+      ctx.beginPath();
+      if (spine) { ctx.moveTo(a[0] - NODE_R + 3, a[1] + NODE_R); ctx.lineTo(a[0] - NODE_R + 3, b[1]); ctx.lineTo(b[0] - NODE_R, b[1]); }
+      else { ctx.moveTo(a[0], a[1] + NODE_R); ctx.lineTo(b[0], b[1] - NODE_R); }
+      ctx.stroke();
+    };
+    for (const v of pos.values()) {
+      for (const k of v.n.children) edge(at(v.n.id), at(k.id), active.has(v.n.id) && active.has(k.id), !across(v.n));
+    }
+    ctx.setLineDash([]);
+    // Nodes.
+    for (const v of pos.values()) {
+      const n = v.n, [x, y] = at(n.id), lit = active.has(n.id);
+      const t0 = since.get(`${seat}:${n.id}`);
+      if (lit && t0 !== undefined && now - t0 < 350) {
+        // A ring that opens out as the node lights.
+        const f = (now - t0) / 350;
+        ctx.globalAlpha = 1 - f;
+        ctx.strokeStyle = palette.focus;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, NODE_R + 2 + f * 12, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.globalAlpha = failed.has(n.id) && !lit ? 0.35 : 1;
+      ctx.fillStyle = lit ? palette.focus : palette.paper;
+      ctx.beginPath(); ctx.arc(x, y, NODE_R, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = held.has(n.id) ? palette.fighters.right.body : palette.line;
+      ctx.lineWidth = held.has(n.id) ? 3 : 1;
+      ctx.setLineDash(n.interrupt ? [3, 2] : []);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const im = icon(n.icon, lit);
+      if (im.complete && im.naturalWidth) ctx.drawImage(im, x - NODE_R + 2, y - NODE_R + 2, 2 * NODE_R - 4, 2 * NODE_R - 4);
+      ctx.globalAlpha = 1;
+    }
+    // What it is doing now, in words, above the tree.
+    const leaf = trace.active.length ? pos.get(trace.active[trace.active.length - 1]) : null;
+    if (leaf && entry.caption) {
+      ctx.font = '13px Georgia, serif';
+      const text = entry.caption(leaf.n);
+      const tw = ctx.measureText(text).width;
+      const bx = Math.max(4, Math.min(W - tw - 12, cx - tw / 2 - 4));
+      ctx.fillStyle = palette.focus;
+      ctx.fillRect(bx, y0 - 24, tw + 8, 19);
+      ctx.fillStyle = palette.paper;
+      ctx.fillText(text, bx + 4, y0 - 10);
+    }
+  }
+
   let lastPhase = 'fight';
-  draw.reset = () => { marks = []; lastPhase = 'fight'; };
+  draw.reset = () => { marks = []; lastPhase = 'fight'; trees = []; since.clear(); litBefore = new Set(); };
   draw.events = (frame) => {
     // A new round stands both fighters back up; its marks start clean.
     if (lastPhase !== 'fight' && frame.phase === 'fight') marks = [];
