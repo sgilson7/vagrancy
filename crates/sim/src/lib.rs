@@ -39,4 +39,6 @@ pub use world::World;
 /// nothing once it has touched the ground. Ledges hold feet only.
 /// 10: a round with every sword thrown and down for DISARMED_DRAW_TICKS is a
 /// draw (`Cause::Disarmed`).
-pub const SIM_VERSION: u32 = 10;
+/// 11: the third seat is balanced like the others, and a fighter's height
+/// for "knocked over" is measured from what its feet stand on.
+pub const SIM_VERSION: u32 = 11;

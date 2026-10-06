@@ -145,3 +145,19 @@ fn feats_are_read_from_the_rounds_a_match_had() {
     }
     assert!(heads > 0, "no match had a headshot, so the feat was never read");
 }
+
+#[test]
+fn every_fighter_on_a_flanked_stop_stands_on_its_own() {
+    // Sam: "the lhs enemy always falls over ... and goes limp". With nobody
+    // pressing anything, all three fighters are on their feet five seconds
+    // in, at every flanked stop.
+    for id in flanked() {
+        let mut w = World::new(content::setup::road(1, sim::balance::DEFAULT_TUNING, &id));
+        for _ in 0..300 {
+            w.step_all([Input::NONE; sim::body::SEATS]);
+        }
+        for seat in 0..sim::body::SEATS {
+            assert!(!w.knocked_down(seat), "{id}: seat {seat} fell over with nobody touching it");
+        }
+    }
+}

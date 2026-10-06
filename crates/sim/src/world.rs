@@ -572,6 +572,20 @@ impl World {
         self.supported(i)
     }
 
+    /// What a fighter's feet stand on: the highest ledge top at or below its
+    /// lowest attached foot, under its pelvis, or the ground. Measured from
+    /// the pelvis instead, a fighter standing on the ground under a ledge
+    /// lower than its pelvis counted as knocked over (row 58).
+    pub fn floor_of(&self, seat: usize) -> Fx {
+        let feet = self.feet(seat);
+        let Some(pe) = self.role(seat, |r| r.pelvis) else { return Fx(0) };
+        let low = feet.iter().map(|&i| self.particles[i as usize].p.y - self.particles[i as usize].rad).min();
+        match low {
+            Some(y) => self.surface_below(self.particles[pe as usize].p.x, y + ONE),
+            None => Fx(0),
+        }
+    }
+
     /// The height of the surface under `x` at or below `y`: the highest
     /// platform top there, or the ground.
     pub fn surface_below(&self, x: Fx, y: Fx) -> Fx {
@@ -824,7 +838,7 @@ impl World {
         let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at.y;
         let upright = (sp.y - pp.y).scale(10, 7) >= f.torso;
         // Measured from what it stands on: the ground, or a platform.
-        let tall = (pp.y - self.surface_below(pp.x, pp.y)).scale(10, 6) >= rest_pelvis;
+        let tall = (pp.y - self.floor_of(seat)).scale(10, 6) >= rest_pelvis;
         !(upright && tall)
     }
 
@@ -837,9 +851,12 @@ impl World {
         let rest_pelvis = def.points[def.roles.pelvis.unwrap() as usize].at;
         let lim = balance::ARENA_HALF - Fx::int(60);
         let x = (self.particles[pe].p.x - rest_pelvis.x * f.facing).clamp(-lim, lim);
-        // On the surface immediately below the pelvis: a platform, or the
-        // ground.
-        let base = self.surface_below(self.particles[pe].p.x, self.particles[pe].p.y);
+        // In the air, on the surface immediately below the pelvis (a jump
+        // and the stand key set a fighter on a ledge); with a foot down, on
+        // what that foot stands on, so a fighter knocked over under a ledge
+        // gets up under it, not on top of it (SECOND-ORDER-M5 row 58).
+        let aloft = !self.feet(seat).iter().any(|&i| self.grounded(i));
+        let base = if aloft { self.surface_below(self.particles[pe].p.x, self.particles[pe].p.y) } else { self.floor_of(seat) };
         let place = |at: V2| V2::new(x + at.x * f.facing, at.y + base);
         let mine = |w: &World, i: usize| w.particles[i].owner == Owner::Body(seat as u8);
         for (k, pt) in def.points.iter().enumerate() {
@@ -943,7 +960,10 @@ impl World {
                 }
             }
         }
-        for seat in 0..2 {
+        // Every seat: with 0..2 here, the third fighter on a flanked stop was
+        // never balanced and fell over at the start of each round
+        // (SECOND-ORDER-M5 row 58).
+        for seat in 0..SEATS {
             self.balance(seat);
         }
         self.bounds();

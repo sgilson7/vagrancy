@@ -795,8 +795,8 @@
       "name": "The Stone cutter",
       "name_mid": "the stone cutter",
       "place": "A quarry with a wooden crane for lifting blocks.",
-      "does": "The stone cutter carries a longsword, about {reach_pct} percent longer than your sword, and swings it overhead when you come within reach. Otherwise she looks a short way ahead before she chooses. The gatekeeper stands at your back with a trident held out.",
-      "try": "The gatekeeper waits for you. Fight the stone cutter first, and keep your back clear of the trident."
+      "does": "The stone cutter carries a longsword, about {reach_pct} percent longer than your sword, and sometimes swings it overhead when you come within reach. Otherwise she looks a short way ahead before she chooses. The thresher stands at your back with a trident, swinging it overhead in a steady rhythm.",
+      "try": "Try fighting the stone cutter between the thresher's swings, and keep your back out of the trident's reach."
     },
     "shrine_keeper": {
       "name": "The Shrine keeper",
