@@ -174,6 +174,11 @@ function loop(now) {
       n += 1;
       if (onTick) onTick(curFrame);
       if (!game) break;
+      // A hold that began on this tick stops the batch here. Without this,
+      // a slow frame's catch-up played on past the headshot into the next
+      // round before the card was ever drawn (CI's Firefox, 2026-10-06:
+      // the page reached the replay's end with the hold never seen).
+      if (FREEZE) { acc = 0; break; }
     }
     if (game) draw(prevFrame, curFrame, Math.min(1, acc / tickMs));
   }
