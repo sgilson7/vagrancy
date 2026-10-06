@@ -194,3 +194,32 @@ pub fn bodies() -> Vec<BodyDef> {
     let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
     vec![build(f.fighter), build(f.post)]
 }
+
+/// A body grown by `num / den` (story mode's giants, Sam 2026-10-06): every
+/// length scales, mass and ink with it, and a fatal band, being a fraction
+/// of its part, stays where it was.
+pub fn scaled(def: &BodyDef, num: i64, den: i64) -> BodyDef {
+    let mut b = def.clone();
+    for p in &mut b.points {
+        p.at = p.at.scale(num, den);
+        p.rad = p.rad.scale(num, den);
+    }
+    for p in &mut b.parts {
+        p.radius = p.radius.scale(num, den);
+        p.mass = (p.mass as i64 * num / den) as i32;
+    }
+    for h in &mut b.hinges {
+        h.min_dist = h.min_dist.scale(num, den);
+    }
+    b.ink = (b.ink as i64 * num / den) as i32;
+    if let Some(s) = b.sword.as_mut() {
+        s.butt = s.butt.scale(num, den);
+        s.tip = s.tip.scale(num, den);
+        s.hilt = s.hilt.scale(num, den);
+        s.mass = (s.mass as i64 * num / den) as i32;
+        for e in &mut s.extra {
+            *e = e.scale(num, den);
+        }
+    }
+    b
+}

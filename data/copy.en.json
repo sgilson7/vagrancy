@@ -1502,11 +1502,11 @@
       "0": "The walk starts at the edge of the rice fields. Two farmers wait there, one who does not fight back and one who swings in a steady rhythm.",
       "1": "On the village road the drovers come one after another, and the courier keeps her distance.",
       "2": "At the river the ferryman carries a longsword, and on the far bank the tea picker fights from the ledges with the knife grinder at your back.",
-      "3": "In the market towns you face two at once, and then the cooper, whom you need to outlast rather than beat.",
+      "3": "In the market towns you face two at once, and then the cooper, grown to a giant.",
       "4": "In the hill country the reader looks ahead before each move. Stay alive against him, then face the smith.",
       "5": "The mountain pass is ledges and terraces. The roofer and the kite maker both fight from above.",
       "6": "On the high plateau the juggler, the woodcutter and the harpooner throw their weapons, one after another, and then the general waits with his longsword.",
-      "7": "At the far gate the gatekeeper, the bellringer and the monk come one after another. The archivist stands last, and she takes two rounds to beat."
+      "7": "At the far gate the gatekeeper, the bellringer and the monk come one after another. The archivist stands last, grown to a giant, and she takes two rounds to beat."
     },
     "scene": {
       "c1_scarecrow": "The scarecrow: cut it anywhere, then across the neck.",
@@ -1516,7 +1516,7 @@
       "c3_ferryman": "The ferryman and his longsword.",
       "c3_tea_picker": "The tea picker on the ledges, with the knife grinder at your back.",
       "c4_well_digger": "The well digger, with the tinker at your back.",
-      "c4_cooper": "The cooper: stay in the round until the time is up.",
+      "c4_cooper": "The cooper, grown to a giant half again your size.",
       "c5_reader": "The reader: stay in the round until the time is up.",
       "c5_smith": "The smith, who vaults in on his sword.",
       "c6_roofer": "The roofer, on the ledges, with the thresher at your back.",
@@ -1524,7 +1524,7 @@
       "c7_throwers": "The juggler, the woodcutter and the harpooner, one after another. Each throws.",
       "c7_general": "The general and his longsword.",
       "c8_gauntlet": "The gatekeeper, the bellringer and the monk, one after another.",
-      "c8_archivist": "The archivist, over two rounds."
+      "c8_archivist": "The archivist, grown to a giant, over two rounds."
     }
   }
 }

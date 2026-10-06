@@ -95,3 +95,27 @@ fn a_fight_still_undecided_when_its_clock_runs_out_is_lost() {
     assert_eq!(outcome(&w, s.fight_seconds), Outcome::OutOfTime);
     assert_eq!(w.tick, s.fight_seconds * sim::balance::TICKS_PER_SECOND);
 }
+
+#[test]
+fn a_giant_stands_half_again_as_tall_and_can_be_beaten() {
+    // A scene's giant, left alone for five seconds, is still on its feet,
+    // and its head stands about half again as high as the player's.
+    let mut sc = story().chapters[0].scenes[1].clone();
+    sc.giant = true;
+    sc.fights = vec!["cooper".into()];
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    for _ in 0..300 {
+        w.step([Input::NONE, Input::NONE]);
+    }
+    assert!(!w.knocked_down(1), "the giant fell over standing still");
+    let h = |s| pilot::head(&w, s).unwrap().y.trunc();
+    let (me, it) = (h(0), h(1));
+    assert!(it * 10 >= me * 14 && it * 10 <= me * 16, "the giant's head is at {it} cm and the player's at {me}");
+    // The yardstick beats it in at least one of eight matches.
+    let won = (0..8u64).any(|seed| {
+        let mut ps = content::road::lineup(&content::road::pilot("yardstick"), "cooper");
+        let o = pilot::duel(setup(seed, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"), &mut ps, 60 * 120);
+        o.finished && o.wins[0] > o.wins[1]
+    });
+    assert!(won, "the yardstick never beat the giant cooper");
+}

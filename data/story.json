@@ -1,5 +1,5 @@
 {
-  "_about": "Story mode (Sam, 2026-10-06: build the story mode proposed in analysis/story/PROPOSAL.md, after Super Smash Bros. Melee's Adventure Mode). Eight chapters, one per region of the road (road.region.<region>), each a short run of scenes. A scene names fights from data/road.json by stop id, so each opponent brings its pilot, weapon, companion and ground from there. kind: duel (one fight), waves (its fights one after another), hold (stay in the round for hold_s seconds). Each fight is one round unless rounds says otherwise, on a clock of fight_seconds; a lost fight, or one that runs out of time, costs a life and plays the scene again from its first fight; with no lives left the chapter starts over with lives restored. The giant, the stage to cross and the team fight in the proposal come in a later build.",
+  "_about": "Story mode (Sam, 2026-10-06: build the story mode proposed in analysis/story/PROPOSAL.md, after Super Smash Bros. Melee's Adventure Mode). Eight chapters, one per region of the road (road.region.<region>), each a short run of scenes. A scene names fights from data/road.json by stop id, so each opponent brings its pilot, weapon, companion and ground from there. kind: duel (one fight), waves (its fights one after another), hold (stay in the round for hold_s seconds). Each fight is one round unless rounds says otherwise, on a clock of fight_seconds; a lost fight, or one that runs out of time, costs a life and plays the scene again from its first fight; with no lives left the chapter starts over with lives restored. giant: the opponent is half again its size (content::story::GIANT). The stage to cross and the team fight in the proposal come in a later build.",
   "lives": 3,
   "fight_seconds": 240,
   "chapters": [
@@ -17,7 +17,7 @@
     ]},
     {"region": 3, "scenes": [
       {"id": "c4_well_digger", "kind": "duel", "fights": ["well_digger"]},
-      {"id": "c4_cooper", "kind": "hold", "fights": ["cooper"], "hold_s": 30}
+      {"id": "c4_cooper", "kind": "duel", "fights": ["cooper"], "giant": true}
     ]},
     {"region": 4, "scenes": [
       {"id": "c5_reader", "kind": "hold", "fights": ["reader"], "hold_s": 30},
@@ -33,7 +33,7 @@
     ]},
     {"region": 7, "scenes": [
       {"id": "c8_gauntlet", "kind": "waves", "fights": ["gatekeeper", "bellringer", "monk"]},
-      {"id": "c8_archivist", "kind": "duel", "fights": ["archivist"], "rounds": 2}
+      {"id": "c8_archivist", "kind": "duel", "fights": ["archivist"], "rounds": 2, "giant": true}
     ]}
   ]
 }

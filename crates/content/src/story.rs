@@ -48,11 +48,18 @@ pub struct Scene {
     pub hold_s: Option<u32>,
     #[serde(default = "one")]
     pub rounds: u32,
+    /// The opponent is a giant, half again its size (after Melee's giant
+    /// opponents).
+    #[serde(default)]
+    pub giant: bool,
 }
 
 fn one() -> u32 {
     1
 }
+
+/// How much bigger a giant is: half again.
+pub const GIANT: (i64, i64) = (3, 2);
 
 pub fn story() -> Story {
     serde_json::from_str(STORY_JSON).expect("data/story.json is valid")
@@ -63,6 +70,13 @@ pub fn story() -> Story {
 pub fn setup(seed: u64, tuning: u8, scene: &Scene, fight: usize, weapon: &str) -> Setup {
     let mut s = crate::setup::road_with(seed, tuning, &scene.fights[fight], weapon);
     s.rounds_to_win = scene.rounds;
+    if scene.giant {
+        if let Some(seat) = s.seats[1].as_mut() {
+            let big = crate::body::scaled(&s.bodies[seat.body as usize], GIANT.0, GIANT.1);
+            s.bodies.push(big);
+            seat.body = (s.bodies.len() - 1) as u8;
+        }
+    }
     if let (Kind::Hold, Some(secs)) = (scene.kind, scene.hold_s) {
         s.objective = Objective::HoldOut { ticks: secs * sim::balance::TICKS_PER_SECOND };
     }
