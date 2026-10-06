@@ -139,6 +139,9 @@ pub struct Sword {
     /// The cutting edges, as particle indices and where along `a`→`b` each
     /// begins to cut.
     pub edges: Vec<(u16, u16, Fx)>,
+    /// Thrown and not yet down: it cuts though no hand holds it, until any
+    /// point of it first touches the ground.
+    pub flying: bool,
 }
 
 /// A held joint key this tick: the servo's target and who it turns.
@@ -293,7 +296,7 @@ impl World {
             } else {
                 sd.edges.iter().map(|e| (butt + e.a as u16, butt + e.b as u16, e.from)).collect()
             };
-            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges });
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false });
             let extra = sd.extra.len() as u8;
             for g in &sd.grips {
                 let hand = base + g.hand as u16;
@@ -352,6 +355,7 @@ impl World {
                 inputs[seat] = Input::NONE;
             }
             if self.fighters[seat].is_some() {
+                self.throw_sword(seat, inputs[seat]);
                 inputs[seat] = self.jump_and_dodge(seat, inputs[seat]);
             }
         }
@@ -369,6 +373,7 @@ impl World {
         }
         self.clash(&drives);
         self.cuts();
+        self.land_thrown();
         self.hold_to_cap();
         self.drain();
         self.judge();
@@ -620,6 +625,45 @@ impl World {
         }
     }
 
+    // --- the throw (Sam's friend, 2026-10-05) ---------------------------------------
+
+    /// On the tick the throw key goes down, a fighter holding its sword lets
+    /// go: the grips go, and the sword flies on with the velocity the swing
+    /// gave it. Read before `jump_and_dodge`, which records the held keys.
+    fn throw_sword(&mut self, seat: usize, input: Input) {
+        let Some(f) = &self.fighters[seat] else { return };
+        let pressed = input.has(Input::THROW) && f.held & Input::THROW == 0;
+        if !pressed || !matches!(self.phase, crate::fight::Phase::Fight) {
+            return;
+        }
+        let gripped = |c: &Constraint| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat);
+        if !self.cons.iter().any(gripped) {
+            return;
+        }
+        self.cons.retain(|c| !gripped(c));
+        if let Some(s) = self.swords.iter_mut().find(|s| s.fighter as usize == seat) {
+            s.flying = true;
+        }
+    }
+
+    /// A thrown sword that has touched the ground is down: from then on it
+    /// cuts nothing (the friend's rule: "once its hit the ground, then its
+    /// no longer dangerous"). Read after `cuts`, so a blade that lands in a
+    /// body on the tick it lands still cuts it.
+    fn land_thrown(&mut self) {
+        if !self.setup.physics.ground {
+            return;
+        }
+        for k in 0..self.swords.len() {
+            if self.swords[k].flying && self.swords[k].points.iter().any(|&i| {
+                let p = &self.particles[i as usize];
+                p.p.y <= p.rad + ONE
+            }) {
+                self.swords[k].flying = false;
+            }
+        }
+    }
+
     // --- the jump, the dodge and getting up (Sam, 2026-10-03) ------------------------
 
     /// The fighter's own points and its sword's while a hand holds it.
@@ -674,7 +718,7 @@ impl World {
         let over_ledge = pelvis.is_some_and(|p| self.surface_below(p.x, p.y) > Fx(0));
         let aloft = over_ledge && !self.feet(seat).iter().any(|&i| self.grounded(i)) && self.feet(seat).len() == 2 && matches!(self.phase, crate::fight::Phase::Fight);
         let f = self.fighters[seat].as_mut().unwrap();
-        let buttons = Input::JUMP | Input::DODGE | Input::STAND;
+        let buttons = Input::JUMP | Input::DODGE | Input::STAND | Input::THROW;
         let pressed = input.0 & !f.held & buttons;
         f.held = input.0 & buttons;
         if grounded {

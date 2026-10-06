@@ -86,7 +86,8 @@ impl World {
         self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter == f))
     }
 
-    /// Whether sword `si` can cut part `pi` at all: the sword is held (Q15),
+    /// Whether sword `si` can cut part `pi` at all: the sword is held (Q15)
+    /// or thrown and not yet down,
     /// the part is not its own fighter's, and neither side is dodging. An
     /// opponent's blade cuts a hand (Q14). `cuts` reads this; so do the tests.
     pub fn may_cut(&self, si: usize, pi: usize) -> bool {
@@ -103,7 +104,7 @@ impl World {
         // slivers every tick until the particle count overflowed
         // (SECOND-ORDER-M5 row 49).
         crate::body::side(part.fighter as usize) != crate::body::side(owner as usize)
-            && self.held(si)
+            && (self.held(si) || self.swords[si].flying)
             && !self.dodging(owner as usize)
             && !dodged
             && !self.out(owner as usize)
@@ -127,7 +128,8 @@ impl World {
         let s_max = self.s_max();
         let mut now: Vec<(u8, u16)> = Vec::new();
         for si in 0..self.swords.len() {
-            if !self.held(si) {
+            // A held sword cuts, and so does a thrown one until it is down.
+            if !self.held(si) && !self.swords[si].flying {
                 continue;
             }
             let owner = self.swords[si].fighter;

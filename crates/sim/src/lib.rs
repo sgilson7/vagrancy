@@ -35,4 +35,6 @@ pub use world::World;
 /// 8: a third seat on the opponents' side, and ledges a fighter stands on
 /// (Sam, 2026-10-05). A replay carries three inputs a tick. A duel on open
 /// ground plays exactly as in 7.
-pub const SIM_VERSION: u32 = 8;
+/// 9: a sword can be thrown (bit 10, `Input::THROW`); it cuts in flight and
+/// nothing once it has touched the ground. Ledges hold feet only.
+pub const SIM_VERSION: u32 = 9;

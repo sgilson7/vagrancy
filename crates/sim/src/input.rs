@@ -28,14 +28,17 @@ impl Input {
     /// Stand back up when knocked off one's feet with both legs (Sam,
     /// 2026-10-03).
     pub const STAND: u16 = 1 << 9;
+    /// Let go of the sword, which flies on with the arm's swing and cuts
+    /// until it first touches the ground (Sam's friend, 2026-10-05).
+    pub const THROW: u16 = 1 << 10;
     /// Every other bit is spare and must be zero; a replay that sets one is
     /// refused.
-    pub const SPARE: u16 = !0x03FF;
+    pub const SPARE: u16 = !0x07FF;
 
     /// The actions a key can be bound to, in the order Settings lists them.
     /// The page reads these names and bits from here rather than keeping a
     /// copy (CLAUDE.md: the page keeps no constant of its own).
-    pub const ACTIONS: [(&'static str, u16); 9] = [
+    pub const ACTIONS: [(&'static str, u16); 10] = [
         ("shoulder_up", Self::SHOULDER_UP),
         ("shoulder_down", Self::SHOULDER_DOWN),
         ("elbow_in", Self::ELBOW_IN),
@@ -45,6 +48,7 @@ impl Input {
         ("jump", Self::JUMP),
         ("dodge", Self::DODGE),
         ("stand", Self::STAND),
+        ("throw", Self::THROW),
     ];
 
     pub const fn has(self, bit: u16) -> bool {

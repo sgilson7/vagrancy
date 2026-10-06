@@ -3,7 +3,7 @@
   "_placeholders": {
     "game": "game.name in this file",
     "hash": "the build hash stamped by packaging/package-web.sh",
-    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right, key.jump, key.dodge, key.stand": "the current binding for that action, from data/controls.json or the player's saved bindings",
+    "key.shoulder_up, key.shoulder_down, key.elbow_in, key.elbow_out, key.step_left, key.step_right, key.jump, key.dodge, key.stand, key.throw": "the current binding for that action, from data/controls.json or the player's saved bindings",
     "left_keys, right_keys": "the bound keys for that seat, joined in binding order",
     "left_name, right_name, winner, loser": "fighters.left.name or fighters.right.name",
     "opponent": "opponents.<id>.name, for the start of a sentence or a heading",
@@ -82,7 +82,8 @@
     "opponents (the tree)": "new: dyer, potter, carpenter, mason, weaver, falconer, boatwright, brewer, herbalist, cartographer, magistrate, abbot, warden, hermit, tanner (all five strings each)",
     "opponents (flanked), road.req.headshot, road.req.untouched, road.companion, road.map_heading, maps, local.map, online.weapon, online.map, online.map_join": "new: roofer, well_digger, charcoal_burner, tea_picker, bridge_keeper, kite_maker, net_mender, stone_cutter, shrine_keeper, toll_collector (all five strings each), and every other string named here",
     "rewrite (Sam, 2026-10-05: Astra voice)": "new: every string rewritten for voice; road renamed arcade mode, missions renamed tutorial",
-    "results.popup.match_won, road.next": "new"
+    "results.popup.match_won, road.next": "new",
+    "settings.keys.actions.throw, hud.keys, practice.step.throw": "new (the throw, 2026-10-05)"
   },
   "_glossary": {
     "ink": {
@@ -245,7 +246,8 @@
       "air_dodge": "Dodge in the air. Press {key.dodge} while you are off the ground, and your fighter is carried sideways in the direction you hold. This uses up your second jump, so save it for when you need to get out of the way.",
       "cooldown": "After a dodge, there is a short wait before you can dodge again, so choose when to use it.",
       "block": "Block. Swords are solid, so a blade that meets yours stops. Hold your sword in front of you to stop a swing before it reaches you.",
-      "ink": "Watch the ink. A cut that does not end the round leaves a stump that spills ink until the round ends. The meters at the top show how much ink each fighter has left."
+      "ink": "Watch the ink. A cut that does not end the round leaves a stump that spills ink until the round ends. The meters at the top show how much ink each fighter has left.",
+      "throw": "Throw the sword. Swing, then press {key.throw} to let go. The sword flies on as fast as the swing was moving, and cuts what it reaches until it first touches the ground. After that it cuts nothing. In a match you get it back at the next round; in the yard, the button that stands the post back up gives it back too."
     },
     "review": "new: practice.step.move, jump, air_jump, stand, dodge, roll, air_dodge, cooldown, block, ink, and hud.keys",
     "reset": {
@@ -257,7 +259,7 @@
     "round": "Round {round}",
     "score": "{left_name} {left_wins}, {right_name} {right_wins}",
     "delay": "Input delay: {delay_ms} ms",
-    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps, {key.dodge} dodges and {key.stand} stands you up."
+    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps, {key.dodge} dodges, {key.stand} stands you up and {key.throw} throws your sword."
   },
   "fighters": {
     "left": {
@@ -931,7 +933,8 @@
         "step_right": "Step right",
         "jump": "Jump",
         "dodge": "Dodge",
-        "stand": "Stand up"
+        "stand": "Stand up",
+        "throw": "Throw the sword"
       }
     },
     "motion": {

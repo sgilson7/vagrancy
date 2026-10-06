@@ -1,5 +1,5 @@
 {
-  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file. One player: the left hand moves (A and D step, W jumps, S stands up, Left Shift dodges) and the right hand drives the arm (I and K the shoulder, J and L the elbow), at Sam's request (2026-10-03). _solo_before is the earlier layout: a save still holding it exactly is moved to the new one.",
+  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file. One player: the left hand moves (A and D step, W jumps, S stands up, Left Shift dodges) and the right hand drives the arm (I and K the shoulder, J and L the elbow), at Sam's request (2026-10-03). _solo_before is the earlier layout: a save still holding it exactly is moved to the new one. The throw (2026-10-05) is O for one player, beside the arm keys, T for the left player and M for the right.",
   "solo": {
     "shoulder_up": "KeyI",
     "shoulder_down": "KeyK",
@@ -9,7 +9,8 @@
     "step_right": "KeyD",
     "jump": "KeyW",
     "dodge": "ShiftLeft",
-    "stand": "KeyS"
+    "stand": "KeyS",
+    "throw": "KeyO"
   },
   "left": {
     "shoulder_up": "KeyQ",
@@ -20,7 +21,8 @@
     "step_right": "KeyD",
     "jump": "KeyS",
     "dodge": "KeyF",
-    "stand": "KeyG"
+    "stand": "KeyG",
+    "throw": "KeyT"
   },
   "right": {
     "shoulder_up": "KeyU",
@@ -31,7 +33,8 @@
     "step_right": "KeyL",
     "jump": "KeyK",
     "dodge": "KeyH",
-    "stand": "KeyY"
+    "stand": "KeyY",
+    "throw": "KeyM"
   },
   "_solo_before": {
     "shoulder_up": "KeyQ",

@@ -344,7 +344,7 @@ function practice() {
   // Every control, in the order it is easiest to learn: the arm, moving,
   // the jump and the dodge, then what a blade does, then the tricks.
   const steps = ['shoulder', 'elbow', 'move', 'jump', 'air_jump', 'stand', 'dodge', 'roll', 'air_dodge', 'cooldown',
-    'cut', 'block', 'plant', 'swing', 'ink'];
+    'cut', 'block', 'plant', 'swing', 'throw', 'ink'];
   show(
     keysLine(binding),
     el('ol', { id: 'steps' }, ...steps.map((k) => el('li', {}, say(`practice.step.${k}`, vars)))),

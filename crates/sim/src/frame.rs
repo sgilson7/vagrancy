@@ -44,6 +44,8 @@ pub struct SwordView {
     pub hilt: i32,
     pub fighter: u8,
     pub held: bool,
+    /// Thrown and still cutting.
+    pub flying: bool,
     /// Every cutting edge, as two particle indices: one for a plain sword.
     pub edges: Vec<[u16; 2]>,
 }
@@ -86,6 +88,7 @@ pub fn frame(w: &World) -> Frame {
                 fighter: s.fighter,
                 held: w.cons.iter().any(|c| matches!(c.tag, crate::world::Tag::Grip { fighter, .. } if fighter == s.fighter)),
                 edges: s.edges.iter().map(|e| [e.0, e.1]).collect(),
+                flying: s.flying,
             })
             .collect(),
         fighters: w
