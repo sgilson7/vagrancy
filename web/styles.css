@@ -172,3 +172,8 @@ button.bind.listening { outline: 3px solid var(--focus); }
 #how-they-decide .legend li { display: flex; align-items: center; gap: 10px; }
 #how-they-decide .legend img { width: 32px; height: 32px; }
 #how-they-decide .legend .desc { margin: 0; }
+/* Story mode: chapters and the fight's line of lives and time. */
+#story-chapters .chapter { border-top: 1px solid var(--ground-line); padding-top: 8px; margin-top: 8px; }
+#story-chapters .chapter.locked h3 { color: var(--muted); }
+#story-chapters .scenes { margin: 4px 0 8px; }
+#story-hud { font-weight: bold; margin: 4px 0; }

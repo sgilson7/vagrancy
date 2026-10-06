@@ -461,6 +461,11 @@ impl World {
             seats.iter().map(|&s| fell[s].unwrap()).max_by_key(|(at, r)| (*at, std::cmp::Reverse(r.seat))).map(|(_, r)| r)
         };
         let result = match (side_result(0), side_result(1)) {
+            (None, None) if matches!(self.setup.objective, crate::body::Objective::HoldOut { ticks } if self.round_ticks + 1 >= ticks) => {
+                // Story mode's hold-out: seat 0 is still in the round when
+                // the time is up, so its side has won it.
+                RoundResult { loser: Some(1), seat: 1, cause: Cause::HeldOut, part: 0, by: 0 }
+            }
             (None, None) => {
                 // With every sword thrown and down, nobody can cut anybody,
                 // so the round could not end (Sam, 2026-10-05): after

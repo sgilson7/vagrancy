@@ -10,6 +10,7 @@ pub mod maps;
 pub mod messages;
 pub mod road;
 pub mod save;
+pub mod story;
 pub mod trees;
 pub mod tutorial;
 pub mod weapons;

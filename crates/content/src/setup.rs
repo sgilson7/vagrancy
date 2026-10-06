@@ -17,6 +17,7 @@ fn setup(seed: u64, mode: Mode, tuning: u8, seats: [Option<Seat>; 2]) -> Setup {
         bodies: crate::body::bodies(),
         seats: [seats[0], seats[1], None],
         platforms: Vec::new(),
+        objective: sim::body::Objective::Rounds,
     }
 }
 
@@ -150,6 +151,6 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
         seats[1] = seats[1].map(|s| Seat { x: balance::START_X * 2, ..s });
         seats[2] = Some(Seat { body, x: balance::START_X * 2 });
     }
-    let s = Setup { seed, mode: Mode::Match, rounds_to_win, physics, bodies, seats, platforms: Vec::new() };
+    let s = Setup { seed, mode: Mode::Match, rounds_to_win, physics, bodies, seats, platforms: Vec::new(), objective: sim::body::Objective::Rounds };
     crate::maps::on(s, stop.and_then(|s| s.map).as_deref().unwrap_or(crate::maps::FLAT))
 }

@@ -74,6 +74,8 @@ and anything decided since. Newest entries go at the bottom of their section.
   - **Figures are committed.** `make trees` draws them with TikZ; a test fails when the pilots, the labels, the icons or the renderer change and the figures were not redrawn.
   - **Training records nothing.** A match against a beaten opponent leaves the save as it was.
 
+- **2026-10-06: story mode, first build.** After Melee's Adventure Mode (analysis/story/PROPOSAL.md). Eight chapters along the road's regions; a run has three lives; each fight is one round on a four-minute clock; a lost fight costs a life and replays the scene from its first fight; with no lives left the chapter starts over with lives restored. The rules live in `content::story` and the page asks core what comes next. Scenes reuse arcade mode's stops for their opponents. Kinds so far: duel, waves (fights one after another), hold out (`Objective::HoldOut`, judged in `sim`). Defaults taken while Sam's answers are pending: the name "Story mode", nothing unlocked in arcade mode, ending on the archivist over two rounds.
+
 ## The build
 
 - **The red band is hue 330°–20° at saturation 0.20 or more.** It lives in `crates/content/tests/palette.rs`, beside its check, and not in `data/palette.json`, where editing the band would be a way to pass. Ochre `#B8862B` sits at hue 39°, 19° clear.

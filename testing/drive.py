@@ -836,6 +836,52 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
 
 
 @check
+def story_mode_plays_a_scene_and_moves_on(page, name):
+    # Sam, 2026-10-06: "start building the story mode". The first chapter's
+    # first scene, the scarecrow, won by keyboard; the run moves on to the
+    # next scene.
+    fails = []
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.story.label")
+    page.wait_for_selector("#story-chapters .chapter")
+    story = json.loads((ROOT / "data" / "story.json").read_text())
+    if page.locator("#story-chapters .chapter").count() != len(story["chapters"]):
+        fails.append(f"{name}: the story shows {page.locator('#story-chapters .chapter').count()} chapters, not {len(story['chapters'])}")
+    if page.locator("#story-chapters .chapter.open").count() != 1:
+        fails.append(f"{name}: a fresh save opens {page.locator('#story-chapters .chapter.open').count()} chapters, not the first")
+    fails += every_visible_line_is_a_copy_string(page, name + " (story)")
+    page.click('[data-chapter="0"] [data-copy="story.start.label"]')
+    page.wait_for_selector('[data-copy="story.begin.label"]')
+    fails += every_visible_line_is_a_copy_string(page, name + " (a scene's card)")
+    page.click('[data-copy="story.begin.label"]')
+    page.wait_for_selector('[data-copy="hud.round"]')
+    for _ in range(6):
+        page.keyboard.down("KeyD"); page.keyboard.down("KeyI")
+        try:
+            page.wait_for_function("document.body.dataset.storyOutcome || ['round_over','match_over'].includes(document.body.dataset.phase)", timeout=30000)
+        finally:
+            page.keyboard.up("KeyD"); page.keyboard.up("KeyI")
+        if page.evaluate("document.body.dataset.storyOutcome"):
+            break
+    try:
+        page.wait_for_function("document.body.dataset.storyNext", timeout=10000)
+    except Exception:
+        fails.append(f"{name}: the fight never moved the run on")
+    got = (page.evaluate("document.body.dataset.storyOutcome"), page.evaluate("document.body.dataset.storyNext"))
+    if got != ("won", "scene"):
+        fails.append(f"{name}: the scarecrow's scene ended {got}, not won and on to the next scene")
+    fails += every_visible_line_is_a_copy_string(page, name + " (after a fight)")
+    page.evaluate("delete document.body.dataset.storyOutcome; delete document.body.dataset.storyNext")
+    click_copy(page, "menu.back.label")
+    click_copy(page, "menu.back.label")
+    if not fails:
+        print(f"ok: {name}: story mode shows its chapters, plays the first scene and moves the run on")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

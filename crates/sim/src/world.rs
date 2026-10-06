@@ -171,6 +171,8 @@ pub struct World {
     pub phase: crate::fight::Phase,
     /// 1-based. A drawn round is played again under the same number.
     pub round: u32,
+    /// Ticks fought in the round under way.
+    pub round_ticks: u32,
     pub wins: [u32; 2],
     /// Blade and part pairs in contact at the end of last tick: one cut per
     /// blade, per part, per contact (D11).
@@ -198,6 +200,7 @@ impl World {
             swords: Vec::new(),
             phase: crate::fight::Phase::Fight,
             round: 1,
+            round_ticks: 0,
             wins: [0, 0],
             touching: Vec::new(),
             clashing: Vec::new(),
@@ -215,6 +218,7 @@ impl World {
         self.touching.clear();
         self.clashing.clear();
         self.disarmed_since = None;
+        self.round_ticks = 0;
         self.next_piece = 0;
         self.particles.clear();
         self.parts.clear();
@@ -382,6 +386,9 @@ impl World {
         self.hold_to_cap();
         self.drain();
         self.judge();
+        if matches!(self.phase, crate::fight::Phase::Fight) {
+            self.round_ticks += 1;
+        }
         self.tick += 1;
     }
 

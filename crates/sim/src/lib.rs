@@ -41,4 +41,7 @@ pub use world::World;
 /// draw (`Cause::Disarmed`).
 /// 11: the third seat is balanced like the others, and a fighter's height
 /// for "knocked over" is measured from what its feet stand on.
-pub const SIM_VERSION: u32 = 11;
+/// 12: a setup carries an objective (story mode's hold-out), and the world
+/// counts the ticks of the round under way. A match with no objective plays
+/// exactly as in 11.
+pub const SIM_VERSION: u32 = 12;

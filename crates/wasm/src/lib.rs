@@ -345,6 +345,141 @@ impl Road {
     }
 }
 
+/// A story mode run (content::story): the scene's fight being played, the
+/// run's lives, and what comes after each fight, all decided in core.
+#[wasm_bindgen]
+pub struct StoryRun {
+    story: content::story::Story,
+    run: content::story::Run,
+    rec: Recording,
+    pilots: Vec<Box<dyn pilot::Pilot>>,
+    last: [Input; sim::body::SEATS],
+    seed: u32,
+    tuning: u8,
+    weapon: String,
+}
+
+#[wasm_bindgen]
+impl StoryRun {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32, tuning: u8, chapter: usize, weapon: &str) -> StoryRun {
+        let story = content::story::story();
+        let run = content::story::Run::new(&story, chapter);
+        let mut s = StoryRun {
+            rec: Recording::new(content::setup::versus(0, tuning)),
+            pilots: Vec::new(),
+            last: [Input::NONE; sim::body::SEATS],
+            story,
+            run,
+            seed,
+            tuning,
+            weapon: weapon.into(),
+        };
+        s.begin();
+        s
+    }
+    fn begin(&mut self) {
+        let scene = self.run.scene(&self.story).clone();
+        let stop = scene.fights[self.run.fight].clone();
+        self.seed = self.seed.wrapping_mul(1103515245).wrapping_add(12345);
+        self.rec = Recording::new(content::story::setup(self.seed as u64, self.tuning, &scene, self.run.fight, &self.weapon));
+        self.pilots = content::road::crew(&stop).iter().map(pilot::build).collect();
+        self.last = [Input::NONE; sim::body::SEATS];
+    }
+    fn outcome(&self) -> content::story::Outcome {
+        content::story::outcome(&self.rec.world, self.story.fight_seconds)
+    }
+    /// One tick, while the fight is being played; a fight that is decided
+    /// stands still until `after`.
+    pub fn step(&mut self, mine: u16, _other: u16) {
+        if self.outcome() != content::story::Outcome::Playing {
+            return;
+        }
+        let mut i = [Input(mine), Input::NONE, Input::NONE];
+        for (k, p) in self.pilots.iter_mut().enumerate() {
+            p.observe(self.last);
+            i[k + 1] = p.input(&self.rec.world, k + 1);
+        }
+        self.rec.step_all(i);
+        self.last = i;
+    }
+    /// `{ chapter, region, scene, scene_id, kind, fight, fights, stop,
+    /// lives, seconds_left, outcome }`.
+    pub fn status(&self) -> String {
+        let scene = self.run.scene(&self.story);
+        let left = (self.story.fight_seconds * balance::TICKS_PER_SECOND).saturating_sub(self.rec.world.tick).div_ceil(balance::TICKS_PER_SECOND);
+        let outcome = match self.outcome() {
+            content::story::Outcome::Playing => "playing",
+            content::story::Outcome::Won => "won",
+            content::story::Outcome::Lost => "lost",
+            content::story::Outcome::OutOfTime => "out_of_time",
+        };
+        json!({
+            "chapter": self.run.chapter, "region": self.story.chapters[self.run.chapter].region,
+            "scene": self.run.scene, "scene_id": scene.id, "kind": format!("{:?}", scene.kind).to_lowercase(),
+            "fight": self.run.fight, "fights": scene.fights.len(), "stop": scene.fights[self.run.fight],
+            "lives": self.run.lives, "seconds_left": left, "outcome": outcome,
+        })
+        .to_string()
+    }
+    /// After a decided fight: move the run on, start what comes next, and
+    /// say what that was (`fight`, `scene`, `chapter`, `end`, `retry`,
+    /// `continue`).
+    pub fn after(&mut self) -> String {
+        let o = self.outcome();
+        if o == content::story::Outcome::Playing {
+            return String::new();
+        }
+        let next = self.run.after(&self.story, o);
+        if next != content::story::Next::End {
+            self.begin();
+        }
+        format!("{next:?}").to_lowercase()
+    }
+    /// The save with the chapters finished so far: `chapter` (0-based) done.
+    pub fn record_chapter(save_text: &str, chapter: u32) -> Result<String, String> {
+        let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+        s.story = s.story.max(chapter + 1);
+        Ok(content::save::encode(&s))
+    }
+    pub fn frame(&self) -> String {
+        serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    pub fn phase_text(&self, _opponent: &str) -> String {
+        let stop = self.run.scene(&self.story).fights[self.run.fight].clone();
+        content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &stop }).to_string()
+    }
+    pub fn checksum(&self) -> String {
+        format!("{:016x}", self.rec.world.checksum())
+    }
+    pub fn tick(&self) -> u32 {
+        self.rec.world.tick
+    }
+    pub fn is_replay(&self) -> bool {
+        false
+    }
+    pub fn done(&self) -> bool {
+        false
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.rec.bytes()
+    }
+    pub fn recorded_checksum(&self) -> String {
+        String::new()
+    }
+}
+
+/// Story mode's chapters and scenes, for its screen.
+#[wasm_bindgen]
+pub fn story_json() -> String {
+    let s = content::story::story();
+    json!({
+        "lives": s.lives, "fight_seconds": s.fight_seconds,
+        "chapters": s.chapters.iter().map(|c| json!({ "region": c.region, "scenes": c.scenes.iter().map(|sc| json!({ "id": sc.id, "kind": format!("{:?}", sc.kind).to_lowercase(), "fights": sc.fights, "hold_s": sc.hold_s, "rounds": sc.rounds })).collect::<Vec<_>>() })).collect::<Vec<_>>(),
+    })
+    .to_string()
+}
+
 /// The tree of fights for a save: each stop with its level, whether it is
 /// open, how it has been won, its condition, the values its introduction's
 /// placeholders take, and each requirement with whether it is met.

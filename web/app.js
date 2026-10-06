@@ -3,7 +3,7 @@
 // data/copy.en.json, which reaches it through the wasm module; which sentence
 // to show for an outcome is chosen by core (content::messages).
 import init, {
-  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission,
+  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, story_json,
   road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
@@ -257,8 +257,9 @@ function menu() {
   stop();
   hangUpOnline();
   delete document.body.dataset.phase;
-  const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, {}, { class: 'desc' }));
+  const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, key === 'menu.story' ? { lives: JSON.parse(story_json()).lives } : {}, { class: 'desc' }));
   show(
+    item('menu.story', storyMode),
     item('menu.tutorial', tutorial),
     item('menu.road', road),
     item('menu.train', train),
@@ -1030,6 +1031,96 @@ function fight(id) {
       setTimeout(() => { if (game === mine) popupMatchWon(opened, next); }, FREEZE ? HOLD_MS + 700 : 1600);
     }
   });
+}
+
+// --- story mode (Sam, 2026-10-06; analysis/story/PROPOSAL.md) ---------------------
+
+function storyMode() {
+  stop();
+  const st = JSON.parse(story_json());
+  const done = SAVE.state.story || 0;
+  const chapters = st.chapters.map((c, i) => {
+    const n = { n: i + 1, region: t(`road.region.${c.region}`) };
+    const kids = [
+      el('h3', { 'data-copy': 'road.chapter' }, t('road.chapter', n)),
+      say(`story.chapter_intro.${c.region}`, {}, { class: 'desc' }),
+      el('ul', { class: 'scenes' }, ...c.scenes.map((sc) => el('li', {}, say(`story.scene.${sc.id}`, { fights: sc.fights.length })))),
+    ];
+    if (i < done) kids.push(say('story.done', {}, { class: 'desc' }));
+    if (i <= done) kids.push(el('div', { class: 'actions' }, button('story.start.label', () => storyPlay(i), { n: i + 1 })));
+    else kids.push(say('story.locked', {}, { class: 'desc' }));
+    return el('article', { class: `chapter ${i < done ? 'done' : i <= done ? 'open' : 'locked'}`, 'data-chapter': String(i) }, ...kids);
+  });
+  show(say('story.intro', { seconds: st.fight_seconds }, { class: 'desc' }),
+    el('section', { id: 'story-chapters' }, ...chapters),
+    el('div', { class: 'actions' }, button('menu.back.label', menu)));
+}
+
+function storyPlay(chapter) {
+  storyCard(new StoryRun(seed(), tuning(), chapter, SAVE.state.weapon));
+}
+
+// Before each fight: the chapter, and what this scene asks.
+function storyCard(run) {
+  stop();
+  const s = JSON.parse(run.status());
+  const scene = JSON.parse(story_json()).chapters[s.chapter].scenes[s.scene];
+  show(el('h3', { 'data-copy': 'road.chapter' }, t('road.chapter', { n: s.chapter + 1, region: t(`road.region.${s.region}`) })),
+    s.scene === 0 && s.fight === 0 ? say(`story.chapter_intro.${s.region}`, {}, { class: 'desc' }) : '',
+    say(`story.scene.${s.scene_id}`, { fights: scene.fights.length }),
+    el('h4', { 'data-copy': `opponents.${s.stop}.name` }, t(`opponents.${s.stop}.name`)),
+    say(`opponents.${s.stop}.place`, {}, { class: 'desc' }),
+    storyHud(s),
+    el('div', { class: 'actions' }, button('story.begin.label', () => storyFight(run)), button('menu.back.label', storyMode)));
+  const first = $('screen').querySelector('button');
+  if (first) first.focus({ preventScroll: true });
+}
+
+function storyHud(s) {
+  return s.kind === 'hold'
+    ? say('story.hud_hold', { lives: s.lives, seconds: s.seconds_left }, { id: 'story-hud' })
+    : say('story.hud', { lives: s.lives, fight: s.fight + 1, fights: s.fights, seconds: s.seconds_left }, { id: 'story-hud' });
+}
+
+function storyFight(run) {
+  READY = false;
+  const s0 = JSON.parse(run.status());
+  const watch = matchWatcher(s0.stop, () => []);
+  const hud = el('div', { id: 'story-hud-box' }, storyHud(s0));
+  show(hud, watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.back.label', storyMode)));
+  let shown = JSON.stringify([s0.lives, s0.seconds_left]);
+  let decided = false;
+  start(run, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+    watch.tick(f);
+    const s = JSON.parse(run.status());
+    const now = JSON.stringify([s.lives, s.seconds_left]);
+    if (now !== shown) { shown = now; hud.replaceChildren(storyHud(s)); }
+    if (!decided && s.outcome !== 'playing') {
+      decided = true;
+      document.body.dataset.storyOutcome = s.outcome;
+      // Let the last round's card be read, then say how the fight went.
+      setTimeout(() => storyAfter(run, s), FREEZE ? HOLD_MS + 900 : 1400);
+    }
+  });
+}
+
+function storyAfter(run, s) {
+  if (game !== run) return;
+  const next = run.after();
+  if (next === 'chapter' || next === 'end') {
+    SAVE = JSON.parse(save_read(StoryRun.record_chapter(JSON.stringify(SAVE), s.chapter)));
+    persist();
+  }
+  const after = JSON.parse(run.status());
+  stop();
+  show(say(`story.${s.outcome}`),
+    say(`story.next.${next}`, { lives: after.lives, region: t(`road.region.${after.region}`) }),
+    el('div', { class: 'actions' },
+      button('story.go_on.label', next === 'end' ? storyMode : () => storyCard(run)),
+      button('menu.back.label', storyMode)));
+  document.body.dataset.storyNext = next;
+  const first = $('screen').querySelector('button');
+  if (first) first.focus({ preventScroll: true });
 }
 
 // --- behavior trees: the encyclopedia and training (Sam, 2026-10-06) -----------

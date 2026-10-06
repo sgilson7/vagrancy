@@ -25,14 +25,16 @@
     "n": "which task of a comparison mission this is",
     "mission": "the name of a tutorial mission: the first component it teaches, or its two opponents",
     "weapon": "weapons.<id>.name, from data/weapons.json",
-    "region": "road.region.<row>, the name of a row of the arcade mode tree",
+    "region": "road.region.<row>, the name of a row of the arcade mode tree; in story mode, the region the road goes on to",
     "won": "how many fights in a chapter of arcade mode the player has won",
     "count": "how many requirements a level of the road's tree has, from data/road.json",
     "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json",
     "target_mid": "opponents.<id>.name_mid of the locked fight a next goal opens, chosen by core (content::road::next_goal)",
     "branches": "how many key combinations a search tries, from data/pilots.json",
     "pct": "a percentage from a pilot's rule in data/pilots.json",
-    "node": "tree.*: the label of the node a pilot is running, filled by the page from core's trace"
+    "node": "tree.*: the label of the node a pilot is running, filled by the page from core's trace",
+    "lives": "story mode: the lives left in a run, from content::story",
+    "fight, fights": "story mode: which fight of a scene, and how many it has"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -90,7 +92,8 @@
     "opponents (throwers)": "new: juggler, woodcutter, harpooner (all five strings each)",
     "road.view.sunburst": "new",
     "results.draw_disarmed, results.popup.disarmed": "new",
-    "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)"
+    "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)",
+    "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)"
   },
   "_glossary": {
     "ink": {
@@ -99,7 +102,6 @@
         "health",
         "HP",
         "hit points",
-        "life",
         "energy"
       ],
       "note": "The word blood appears nowhere."
@@ -152,8 +154,14 @@
       "not": [
         "the road",
         "campaign",
-        "story mode",
         "ladder"
+      ]
+    },
+    "lives": {
+      "means": "story mode's chances in a run: a lost fight costs one",
+      "not": [
+        "stocks",
+        "continues"
       ]
     }
   },
@@ -208,6 +216,10 @@
     "train": {
       "label": "Train against a defeated enemy",
       "desc": "Fight any opponent you have beaten again, and watch its behavior tree work as you fight."
+    },
+    "story": {
+      "label": "Story mode",
+      "desc": "Walk from the rice fields to the far gate a chapter at a time, with {lives} lives for a run."
     }
   },
   "how": {
@@ -306,14 +318,17 @@
       "lose_ink": "You lost the round. You ran out of ink, and the cut to your {part} spilled the most.",
       "lose_self": "You lost the round. Your own blade cut across your {part}.",
       "match_win": "You won the match, {wins} rounds to {losses}.",
-      "match_lose": "You lost the match, {losses} rounds to {wins}."
+      "match_lose": "You lost the match, {losses} rounds to {wins}.",
+      "win_held_out": "You won the round. You held out until the time ran out.",
+      "lose_held_out": "You lost the round. {opponent} held out until the time ran out."
     },
     "versus": {
       "neck": "{winner} won the round. {winner}'s blade cut across {loser}'s {part}.",
       "heart": "{winner} won the round. {winner}'s blade cut across {loser}'s heart.",
       "ink": "{winner} won the round. {loser} ran out of ink.",
       "self": "{winner} won the round. {loser}'s own blade made the cut that ended it.",
-      "match": "{winner} won the match, {wins} rounds to {losses}."
+      "match": "{winner} won the match, {wins} rounds to {losses}.",
+      "held_out": "{winner} won the round by holding out until the time ran out."
     },
     "draw": "Neither fighter won the round. Both stopped at the same moment, so the round is played again.",
     "popup": {
@@ -323,7 +338,8 @@
       "ink": "Out of ink",
       "draw": "Both down at once",
       "match_won": "You won the match",
-      "disarmed": "No blades left"
+      "disarmed": "No blades left",
+      "held_out": "Held out"
     },
     "next_round": {
       "label": "Play the next round"
@@ -1455,5 +1471,60 @@
       "label": "Train against {opponent_mid}"
     },
     "watch": "The tree above {opponent_mid} lights the branch it is running and the conditions it checked: a filled condition held, a faded one did not."
+  },
+  "story": {
+    "intro": "Walk from the rice fields to the far gate one chapter at a time. Each fight is one round on a clock of {seconds} seconds. A lost fight costs a life and plays the scene again from its start; with no lives left, the chapter starts over.",
+    "locked": "Finish the chapter before this one to open it.",
+    "done": "You have finished this chapter.",
+    "start": {
+      "label": "Start chapter {n}"
+    },
+    "begin": {
+      "label": "Start the fight"
+    },
+    "go_on": {
+      "label": "Go on"
+    },
+    "hud": "Lives: {lives}. Fight {fight} of {fights}. {seconds} seconds left.",
+    "hud_hold": "Lives: {lives}. Hold out: {seconds} seconds left.",
+    "won": "You won the fight.",
+    "lost": "You lost the fight, and a life with it.",
+    "out_of_time": "The clock ran out before the fight was decided, and that costs a life.",
+    "next": {
+      "fight": "The next opponent steps up.",
+      "scene": "On to the next part of the chapter.",
+      "chapter": "You have finished the chapter. The walk goes on to {region}.",
+      "end": "You have walked from the rice fields to the far gate.",
+      "retry": "You have {lives} lives left, and the scene starts again.",
+      "continue": "You have no lives left, so the chapter starts again with {lives} lives."
+    },
+    "chapter_intro": {
+      "0": "The walk starts at the edge of the rice fields. Two farmers wait there, one who does not fight back and one who swings in a steady rhythm.",
+      "1": "On the village road the drovers come one after another, and the courier keeps her distance.",
+      "2": "At the river the ferryman carries a longsword, and on the far bank the tea picker fights from the ledges with the knife grinder at your back.",
+      "3": "In the market towns you face two at once, and then the cooper, whom you need to outlast rather than beat.",
+      "4": "In the hill country the reader looks ahead before each move. Stay alive against him, then face the smith.",
+      "5": "The mountain pass is ledges and terraces. The roofer and the kite maker both fight from above.",
+      "6": "On the high plateau the juggler, the woodcutter and the harpooner throw their weapons, one after another, and then the general waits with his longsword.",
+      "7": "At the far gate the gatekeeper, the bellringer and the monk come one after another. The archivist stands last, and she takes two rounds to beat."
+    },
+    "scene": {
+      "c1_scarecrow": "The scarecrow: cut it anywhere, then across the neck.",
+      "c1_thresher": "The thresher: count its pause, then move in after a swing.",
+      "c2_drovers": "Drovers, one after another: {fights} of them.",
+      "c2_courier": "The courier, who backs away and dodges in.",
+      "c3_ferryman": "The ferryman and his longsword.",
+      "c3_tea_picker": "The tea picker on the ledges, with the knife grinder at your back.",
+      "c4_well_digger": "The well digger, with the tinker at your back.",
+      "c4_cooper": "The cooper: stay in the round until the time is up.",
+      "c5_reader": "The reader: stay in the round until the time is up.",
+      "c5_smith": "The smith, who vaults in on his sword.",
+      "c6_roofer": "The roofer, on the ledges, with the thresher at your back.",
+      "c6_kite_maker": "The kite maker, on the terraces, with the windmill at your back.",
+      "c7_throwers": "The juggler, the woodcutter and the harpooner, one after another. Each throws.",
+      "c7_general": "The general and his longsword.",
+      "c8_gauntlet": "The gatekeeper, the bellringer and the monk, one after another.",
+      "c8_archivist": "The archivist, over two rounds."
+    }
   }
 }

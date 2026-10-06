@@ -17,6 +17,8 @@ pub enum Cause {
     Heart,
     /// The fighter ran out of ink.
     Ink,
+    /// The other side held out for the whole of a hold-out round.
+    HeldOut,
     /// Nobody had a blade: every fighter in the round had thrown its sword
     /// (or lost it), none was in the air, and nobody went out for
     /// `balance::DISARMED_DRAW_TICKS`. Only ever a draw.
@@ -198,6 +200,19 @@ pub struct Setup {
     pub seats: [Option<Seat>; SEATS],
     /// Ledges a fighter can stand on, besides the ground.
     pub platforms: Vec<Platform>,
+    /// How a round is won, besides putting the other side out (story mode).
+    pub objective: Objective,
+}
+
+/// What else ends a round in the player's favor (Sam, 2026-10-06: story
+/// mode, after Melee's Adventure Mode).
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
+pub enum Objective {
+    /// Only putting the other side out, as in every match before story mode.
+    #[default]
+    Rounds,
+    /// Seat 0 wins the round by still being in it after this many ticks.
+    HoldOut { ticks: u32 },
 }
 
 /// How many fighters a world can hold.

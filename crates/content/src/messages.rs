@@ -60,6 +60,7 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
                 (false, Cause::Ink) => "results.versus.ink",
                 // A disarmed round is always a draw, which returned above.
                 (false, Cause::Disarmed) => "results.draw_disarmed",
+                (false, Cause::HeldOut) => "results.versus.held_out",
             };
             json!({ "key": key, "vars": names })
         }
@@ -82,6 +83,8 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
                 (false, false, Cause::Heart) => "results.road.lose_heart",
                 (false, false, Cause::Ink) => "results.road.lose_ink",
                 (_, false, Cause::Disarmed) => "results.draw_disarmed",
+                (true, false, Cause::HeldOut) => "results.road.win_held_out",
+                (false, false, Cause::HeldOut) => "results.road.lose_held_out",
             };
             json!({ "key": key, "vars": { "opponent": name, "opponent_mid": mid, "part": part } })
         }
@@ -135,6 +138,7 @@ pub fn headshot(w: &World, r: &RoundResult) -> bool {
 pub fn popup(w: &World, r: &RoundResult) -> Value {
     let key = match (r.loser, r.cause) {
         (_, Cause::Disarmed) => "results.popup.disarmed",
+        (_, Cause::HeldOut) => "results.popup.held_out",
         (None, _) => "results.popup.draw",
         (Some(_), Cause::Ink) => "results.popup.ink",
         (Some(_), Cause::Heart) => "results.popup.heart",
