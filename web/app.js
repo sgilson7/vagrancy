@@ -86,6 +86,12 @@ let draw = null;
 // Until when the clock is held for a headshot, and where to look.
 let FREEZE = null;
 const HOLD_MS = 1600;
+// And for at least this many drawn frames: where frames come slowly (CI's
+// headless Firefox, a loaded laptop), a hold measured in time alone could
+// end between two frames, so the card showed for one frame and was gone
+// (SECOND-ORDER-M5 row 53). At 60 frames a second this is well inside
+// HOLD_MS, so it changes nothing there.
+const HOLD_FRAMES = 24;
 const stillMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let onTick = null;
 
@@ -153,8 +159,10 @@ function loop(now) {
     // A headshot holds the clock while the view closes in on it. Read on
     // performance.now(), the clock the hold was set on: the frame's own time
     // need not agree with it (CI's headless Firefox ran past every hold).
-    if (FREEZE && performance.now() < FREEZE.until) acc = 0;
-    else FREEZE = null;
+    if (FREEZE && (performance.now() < FREEZE.until || FREEZE.frames < HOLD_FRAMES)) {
+      FREEZE.frames += 1;
+      acc = 0;
+    } else FREEZE = null;
     while (acc >= tickMs && n < 8) {
       const [a, b] = seats();
       game.step(a, b);
@@ -208,7 +216,7 @@ function matchWatcher(opponent, endButtons) {
       popupShow(said);
       if (said.focus) {
         const start = performance.now();
-        FREEZE = { until: start + HOLD_MS };
+        FREEZE = { until: start + HOLD_MS, frames: 0 };
         draw.focus({ at: said.focus, start, dur: HOLD_MS, still: stillMotion() });
       }
       const kids = [sayChosen(said.round, { class: 'result' })];

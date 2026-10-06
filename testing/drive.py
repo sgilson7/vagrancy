@@ -420,7 +420,16 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
         click_copy(page, "menu.replay.label")
     fc.value.set_files(str(fixture))
     page.wait_for_selector('[data-copy="replay.playing"]')
-    page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
+    try:
+        page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
+    except Exception:
+        # Say where the page was, so a failure on CI names its cause; it
+        # timed out there once without reproducing here (SECOND-ORDER-M5
+        # row 53).
+        state = page.evaluate("({ tick: window.vagrancy.tick(), phase: document.body.dataset.phase, done: document.body.dataset.replayDone || null, card: (document.getElementById('death-popup') || {}).className || null })")
+        fails.append(f"{name}: no headshot card within 30 s; the page was at {state}")
+        click_copy(page, "replay.stop.label")
+        return fails
     fails += every_visible_line_is_a_copy_string(page, name + " (a headshot's card)")
     # Sam: "colored based on who won the round".
     if page.locator("#death-popup.won-0, #death-popup.won-1").count() != 1:
