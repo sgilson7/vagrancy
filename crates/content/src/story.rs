@@ -90,8 +90,8 @@ pub fn story() -> Story {
 
 /// The world for fight `fight` of a scene: the stop as arcade mode sets it,
 /// played for the scene's rounds, with a hold-out objective if it has one.
-pub fn setup(seed: u64, tuning: u8, scene: &Scene, fight: usize, weapon: &str) -> Setup {
-    let mut s = crate::setup::road_with(seed, tuning, &scene.fights[fight], weapon);
+pub fn setup(seed: u64, tuning: u8, scene: &Scene, fight: usize, weapon: &str, four: bool) -> Setup {
+    let mut s = crate::setup::road_with(seed, tuning, &scene.fights[fight], weapon, four);
     s.rounds_to_win = scene.rounds;
     if scene.giant {
         if let Some(seat) = s.seats[1].as_mut() {

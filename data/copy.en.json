@@ -34,7 +34,8 @@
     "pct": "a percentage from a pilot's rule in data/pilots.json",
     "node": "tree.*: the label of the node a pilot is running, filled by the page from core's trace",
     "lives": "story mode: the lives left in a run, from content::story",
-    "fight, fights": "story mode: which fight of a scene, and how many it has"
+    "fight, fights": "story mode: which fight of a scene, and how many it has",
+    "arms": "How many arms the player fights with in that mode, counted by core from the body's hands (wasm arms_json)."
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -96,7 +97,8 @@
     "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)",
     "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)",
     "road.next_carry": "new",
-    "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown"
+    "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
+    "local_deity": "new: opponents.local_deity (all five strings), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8"
   },
   "_glossary": {
     "ink": {
@@ -408,7 +410,8 @@
       "4": "The hill country",
       "5": "The mountain pass",
       "6": "The high plateau",
-      "7": "The far gate"
+      "7": "The far gate",
+      "8": "The hilltop shrine"
     },
     "chapter": "Chapter {n}: {region}",
     "chapter_progress": "{won} of {count} won.",
@@ -434,7 +437,18 @@
     "companion": "{companion} stands behind you, carrying a {weapon}. The round ends when you can no longer fight, or when neither of them can.",
     "map_heading": "The ground",
     "next": "To open {target_mid}, do this next:",
-    "next_carry": "Going on switches you to the {weapon}."
+    "next_carry": "Going on switches you to the {weapon}.",
+    "arms": {
+      "name": "{arms} arms",
+      "desc": "A second pair of arms holds a second weapon like the first. The shoulder keys swing the first pair. The elbow keys swing the second pair at the shoulder, and no key bends an elbow.",
+      "on": "You fight with {arms} arms.",
+      "four": {
+        "label": "Fight with {arms} arms"
+      },
+      "two": {
+        "label": "Fight with two arms"
+      }
+    }
   },
   "opponents": {
     "scarecrow": {
@@ -919,6 +933,13 @@
       "place": "A bare ridge with a line of prayer flags snapping in the wind.",
       "does": "The wind reader carries a boomerang and throws it from a few steps away, when you fall and when you jump. She dodges most attacks at her head. Up close, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
       "try": "Try making her throw early, from too far away. Close in while the boomerang is out, and keep your blade between you and its way back."
+    },
+    "local_deity": {
+      "name": "The Local Deity",
+      "name_mid": "the local deity",
+      "place": "A hilltop shrine with a cracked bell and offerings of rice on the steps.",
+      "does": "The local deity has a second pair of arms, and a sword in each pair of hands. Each pair of arms decides on its own: the lower pair looks a short way ahead before it chooses, and the upper pair guards high, thrusts when you jump, and cuts overhead up close. Its legs decide on their own too: they close in, back off when you are very near, and dodge many attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
+      "try": "Try staying on the ground, where its upper arms have no thrust for you. Two blades guard it at once, so wait for both to swing before you go in."
     }
   },
   "local": {
@@ -1423,8 +1444,8 @@
       "desc": "Short and light. It turns quickly and reaches little."
     },
     "longsword": {
-      "name": "longsword",
-      "desc": "A long, heavy blade."
+      "name": "cursed blade",
+      "desc": "A long, heavy blade, won from the local deity. It reaches farther than any other weapon."
     },
     "scimitar": {
       "name": "scimitar",
@@ -1536,6 +1557,11 @@
       "condition": "A condition tests what the opponent sees.",
       "action": "A move is a few ticks of keys, the same keys a player has.",
       "search": "A search tries several key combinations a short way ahead and presses the best."
+    },
+    "many": {
+      "arms": "Lower arms",
+      "upper": "Upper arms",
+      "legs": "Legs"
     }
   },
   "encyclopedia": {

@@ -204,6 +204,36 @@ pub fn describe(spec: &Spec) -> Node {
         }
         Spec::Search { horizon_ticks, reaction_ticks, branches, .. } => search_node(&mut ids, *horizon_ticks, *reaction_ticks, *branches),
         Spec::Tree { reaction_ticks, rules, .. } => tree_nodes(rules, *reaction_ticks).0,
+        Spec::Many { arms, upper, legs } => {
+            // One parallel root over the three trees, each relabelled with
+            // what it runs and renumbered after the one before.
+            let offsets = many_offsets(arms, upper);
+            let kids = [(arms, "tree.many.arms"), (upper, "tree.many.upper"), (legs, "tree.many.legs")]
+                .into_iter()
+                .zip(offsets)
+                .map(|((spec, key), off)| {
+                    let mut n = describe(spec);
+                    n.label = Label::of(key);
+                    shift(&mut n, off);
+                    n
+                })
+                .collect();
+            branch(ids.next(), Kind::Parallel, Label::of("tree.kind.parallel"), "parallel", kids)
+        }
+    }
+}
+
+/// Where each of a `Spec::Many`'s three trees starts numbering, after the
+/// root.
+pub fn many_offsets(arms: &Spec, upper: &Spec) -> [u16; 3] {
+    let n = |s: &Spec| walk(&describe(s)).len() as u16;
+    [1, 1 + n(arms), 1 + n(arms) + n(upper)]
+}
+
+fn shift(n: &mut Node, by: u16) {
+    n.id += by;
+    for c in &mut n.children {
+        shift(c, by);
     }
 }
 

@@ -27,7 +27,9 @@ pub const FORMAT: &str = "vagrancy.save";
 /// 8: each best result says whether a won match there had a round ended by
 /// a thrown blade, and every won round ended so (the boomerang's fights). A
 /// version 7 file reads as it is, with neither.
-pub const VERSION: u32 = 8;
+/// 9: whether the player fights with four arms. A version 8 file reads as it
+/// is, with two.
+pub const VERSION: u32 = 9;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -42,6 +44,10 @@ pub struct SaveState {
     /// Story mode chapters finished; the next one is open.
     #[serde(default)]
     pub story: u32,
+    /// The player fights with four arms (won at the final fight). Written
+    /// only when on.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub four_arms: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -101,16 +107,17 @@ pub fn fresh() -> SaveState {
         tutorial: Vec::new(),
         weapon: crate::weapons::DEFAULT.to_string(),
         story: 0,
+        four_arms: false,
     }
 }
 
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
-    let SaveState { road, bindings, options, tutorial, weapon, story } = s;
+    let SaveState { road, bindings, options, tutorial, weapon, story, four_arms } = s;
     let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
-    let body = json!({
+    let mut body = json!({
         "format": FORMAT,
         "version": VERSION,
         "state": {
@@ -122,6 +129,10 @@ pub fn encode(s: &SaveState) -> String {
             "story": story,
         }
     });
+    // Written only when on, like the field's default.
+    if *four_arms {
+        body["state"]["four_arms"] = json!(true);
+    }
     serde_json::to_string_pretty(&body).expect("a save always encodes")
 }
 
@@ -220,17 +231,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV1 { road, bindings, options } = v1.state;
         let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
-        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0 }
+        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
     } else if version < 3 {
         // No tutorial yet.
         let v2: FileV2 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV2 { road, bindings, options } = v2.state;
-        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0 }
+        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
     } else if version < 4 {
         // No weapon chosen yet: the sword.
         let v3: FileV3 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV3 { road, bindings, options, tutorial } = v3.state;
-        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0 }
+        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
     } else {
         let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         file.state
@@ -259,6 +270,8 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
     // A weapon the player has not unlocked, or an enemy's, or one this
     // build does not know, becomes the sword rather than refusing the file.
     s.weapon = crate::weapons::usable(&s.weapon, &s.road.best);
+    // Four arms not yet won are two.
+    s.four_arms &= crate::road::four_arms_open(&s.road.best);
     validate(&s).then_some(s).ok_or(SaveError::Damaged)
 }
 
@@ -304,8 +317,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 8", "\"version\": 9");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 9, ours: 8 }));
+        let text = encode(&fresh()).replace(&format!("\"version\": {VERSION}"), &format!("\"version\": {}", VERSION + 1));
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: VERSION + 1, ours: VERSION }));
     }
 
     #[test]
@@ -386,12 +399,14 @@ mod tests {
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a locked weapon was carried");
         s.road.best.insert("pilgrim".into(), crate::road::Best::won(1, 2000, "sword"));
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "scimitar");
-        // The longsword is the enemies' alone, whatever the player has won.
-        for id in crate::road::stops() {
+        // The cursed blade (the longsword) waits for the final fight.
+        for id in crate::road::stops().into_iter().filter(|id| Some(id) != crate::road::last().map(|l| l.id).as_ref()) {
             s.road.best.insert(id, crate::road::Best::won(0, 1, "sword"));
         }
         s.weapon = "longsword".into();
-        assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a player carried an enemy's weapon");
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "the cursed blade was carried before the local deity was beaten");
+        s.road.best.insert("local_deity".into(), crate::road::Best::won(0, 1, "sword"));
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "longsword");
         s.weapon = "no such weapon".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
         // A version 3 save carries the sword.

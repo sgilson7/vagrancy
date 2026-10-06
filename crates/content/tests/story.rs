@@ -16,7 +16,7 @@ fn every_scene_builds_its_fights_and_has_its_words() {
         for sc in &c.scenes {
             assert!(copy["story"]["scene"][&sc.id].is_string(), "scene {} has no words", sc.id);
             for f in 0..sc.fights.len() {
-                let w = World::new(setup(1, sim::balance::DEFAULT_TUNING, sc, f, "sword"));
+                let w = World::new(setup(1, sim::balance::DEFAULT_TUNING, sc, f, "sword", false));
                 assert_eq!(w.setup.rounds_to_win, sc.rounds, "{}: fight {f} is not played for its rounds", sc.id);
             }
         }
@@ -68,7 +68,7 @@ fn a_hold_out_round_is_won_on_the_tick_its_time_is_up() {
     let hold = s.chapters.iter().flat_map(|c| &c.scenes).find(|sc| sc.hold_s.is_some()).unwrap().clone();
     let mut sc = hold.clone();
     sc.fights = vec!["scarecrow".into()];
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
     let want = hold.hold_s.unwrap() * sim::balance::TICKS_PER_SECOND;
     let mut ended = None;
     while w.tick < want + 10 && ended.is_none() {
@@ -88,7 +88,7 @@ fn a_hold_out_round_is_won_on_the_tick_its_time_is_up() {
 fn a_fight_still_undecided_when_its_clock_runs_out_is_lost() {
     let s = story();
     let sc = &s.chapters[0].scenes[0];
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, sc, 0, "sword"));
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, sc, 0, "sword", false));
     while outcome(&w, s.fight_seconds) == Outcome::Playing {
         w.step([Input::NONE, Input::NONE]);
     }
@@ -103,7 +103,7 @@ fn a_giant_stands_half_again_as_tall_and_can_be_beaten() {
     let mut sc = story().chapters[0].scenes[1].clone();
     sc.giant = true;
     sc.fights = vec!["cooper".into()];
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
     for _ in 0..300 {
         w.step([Input::NONE, Input::NONE]);
     }
@@ -114,7 +114,7 @@ fn a_giant_stands_half_again_as_tall_and_can_be_beaten() {
     // The yardstick beats it in at least one of eight matches.
     let won = (0..8u64).any(|seed| {
         let mut ps = content::road::lineup(&content::road::pilot("yardstick"), "cooper");
-        let o = pilot::duel(setup(seed, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"), &mut ps, 60 * 120);
+        let o = pilot::duel(setup(seed, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false), &mut ps, 60 * 120);
         o.finished && o.wins[0] > o.wins[1]
     });
     assert!(won, "the yardstick never beat the giant cooper");
@@ -131,7 +131,7 @@ fn a_stage_to_cross_is_won_by_walking_to_its_end() {
     // walking past opponents who press nothing.
     let sc = scene("c1_cross");
     let st = sc.stage.as_ref().unwrap();
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
     let start = pilot::pelvis(&w, 0).unwrap().x.trunc();
     assert!(start < -st.half + 400, "the player starts at {start} cm, not near the left wall");
     let ahead = pilot::pelvis(&w, 2).unwrap().x.trunc();
@@ -151,7 +151,7 @@ fn a_stage_to_cross_is_won_by_walking_to_its_end() {
 #[test]
 fn in_a_team_fight_the_ally_fights_the_opponent_and_never_the_player() {
     let sc = scene("c3_team");
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword"));
+    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
     assert_eq!((w.side_of(0), w.side_of(1), w.side_of(2)), (0, 1, 0));
     assert_eq!(pilot::foe(&w, 2), 1, "the ally does not fight the opponent");
     let mut ps: Vec<Box<dyn pilot::Pilot>> = content::story::crew(&sc, 0).iter().map(pilot::build).collect();

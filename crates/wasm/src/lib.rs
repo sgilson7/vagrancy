@@ -72,8 +72,8 @@ impl Game {
     pub fn alone(seed: u32, tuning: u8) -> Game {
         Game { rec: Some(Recording::new(content::setup::alone(seed as u64, tuning))), play: None }
     }
-    pub fn practice(seed: u32, tuning: u8, weapon: &str) -> Game {
-        Game { rec: Some(Recording::new(content::setup::practice_with(seed as u64, tuning, weapon))), play: None }
+    pub fn practice(seed: u32, tuning: u8, weapon: &str, four: bool) -> Game {
+        Game { rec: Some(Recording::new(content::setup::practice_with(seed as u64, tuning, weapon, four))), play: None }
     }
     pub fn versus(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Game {
         Game { rec: Some(Recording::new(content::setup::versus_with(seed as u64, tuning, [left, right], map))), play: None }
@@ -258,9 +258,9 @@ pub struct Road {
 #[wasm_bindgen]
 impl Road {
     #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32, tuning: u8, opponent: &str, weapon: &str) -> Road {
+    pub fn new(seed: u32, tuning: u8, opponent: &str, weapon: &str, four: bool) -> Road {
         Road {
-            rec: Recording::new(content::setup::road_with(seed as u64, tuning, opponent, weapon)),
+            rec: Recording::new(content::setup::road_with(seed as u64, tuning, opponent, weapon, four)),
             pilots: content::road::crew(opponent).iter().map(pilot::build).collect(),
             last: [Input::NONE; sim::body::SEATS],
             feats: content::road::Feats::default(),
@@ -357,12 +357,13 @@ pub struct StoryRun {
     seed: u32,
     tuning: u8,
     weapon: String,
+    four: bool,
 }
 
 #[wasm_bindgen]
 impl StoryRun {
     #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32, tuning: u8, chapter: usize, weapon: &str) -> StoryRun {
+    pub fn new(seed: u32, tuning: u8, chapter: usize, weapon: &str, four: bool) -> StoryRun {
         let story = content::story::story();
         let run = content::story::Run::new(&story, chapter);
         let mut s = StoryRun {
@@ -374,6 +375,7 @@ impl StoryRun {
             seed,
             tuning,
             weapon: weapon.into(),
+            four,
         };
         s.begin();
         s
@@ -381,7 +383,7 @@ impl StoryRun {
     fn begin(&mut self) {
         let scene = self.run.scene(&self.story).clone();
         self.seed = self.seed.wrapping_mul(1103515245).wrapping_add(12345);
-        self.rec = Recording::new(content::story::setup(self.seed as u64, self.tuning, &scene, self.run.fight, &self.weapon));
+        self.rec = Recording::new(content::story::setup(self.seed as u64, self.tuning, &scene, self.run.fight, &self.weapon, self.four));
         self.pilots = content::story::crew(&scene, self.run.fight).iter().map(pilot::build).collect();
         self.last = [Input::NONE; sim::body::SEATS];
     }
@@ -635,6 +637,25 @@ pub fn weapons_json(save_text: &str) -> Result<String, String> {
         })
         .collect();
     Ok(serde_json::Value::Array(list).to_string())
+}
+
+/// Whether the player has won four arms and fights with them, and what
+/// wins them.
+#[wasm_bindgen]
+pub fn arms_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let last = content::road::last().map(|st| st.id);
+    // How many arms, counted from the body as hands, for the copy to say.
+    let arms = content::body::four_armed(true).parts.iter().filter(|p| p.hand).count();
+    Ok(json!({ "open": content::road::four_arms_open(&s.road.best), "on": s.four_arms, "stop": last, "arms": arms }).to_string())
+}
+
+/// The save with four arms on or off; on only once they are won.
+#[wasm_bindgen]
+pub fn save_choose_arms(save_text: &str, four: bool) -> Result<String, String> {
+    let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    s.four_arms = four && content::road::four_arms_open(&s.road.best);
+    Ok(content::save::encode(&s))
 }
 
 /// The save with `weapon` carried, if the player may carry it.

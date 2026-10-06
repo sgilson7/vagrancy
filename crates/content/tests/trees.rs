@@ -82,7 +82,7 @@ fn a_tree_pilots_lit_move_is_the_move_it_runs() {
     // The archivist and the harpooner against the yardstick: on every tick a
     // move is running, the lit leaf is that move's node.
     for id in ["archivist", "harpooner", "drover"] {
-        let pilot::Spec::Tree { rules, reaction_ticks, salt } = pilot(id) else { panic!("{id} is a tree") };
+        let pilot::Spec::Tree { rules, reaction_ticks, salt, .. } = pilot(id) else { panic!("{id} is a tree") };
         let mut me = pilot::Tree::new(rules, reaction_ticks, salt);
         let mut them = pilot::build(&pilot("yardstick"));
         let tree = describe(&pilot(id));

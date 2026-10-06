@@ -47,6 +47,30 @@
       "grips": [{ "hand": "hand_lead", "stiff": "wrist_lead" }, { "hand": "hand_rear" }]
     }
   },
+  "_upper_arms": "A second pair of arms on the same shoulder, raised, with a second weapon: the local deity's, and the player's four-armed mode (Sam, 2026-10-06). The deity's motors are as written; the player's body drops the elbows' motors and turns the second pair with the elbow keys (content::body::four_armed).",
+  "upper_arms": {
+    "points": {
+      "elbow_lead2": [20, 168, 4], "wrist_lead2": [40, 178, 3], "hand_lead2": [48, 180, 3],
+      "elbow_rear2": [14, 166, 4], "wrist_rear2": [35, 173, 3], "hand_rear2": [43, 175, 3]
+    },
+    "parts": [
+      { "id": "upper_arm_lead2", "copy": "arm", "near": "shoulder", "far": "elbow_lead2", "radius": 5, "mass": 3, "drain": 20, "motor": "shoulder2" },
+      { "id": "forearm_lead2", "copy": "arm", "near": "elbow_lead2", "far": "wrist_lead2", "radius": 4, "mass": 2, "drain": 10, "motor": "elbow2" },
+      { "id": "hand_lead2", "copy": "hand", "near": "wrist_lead2", "far": "hand_lead2", "radius": 4, "mass": 1, "drain": 5, "hand": true },
+      { "id": "upper_arm_rear2", "copy": "arm", "near": "shoulder", "far": "elbow_rear2", "radius": 5, "mass": 3, "drain": 20 },
+      { "id": "forearm_rear2", "copy": "arm", "near": "elbow_rear2", "far": "wrist_rear2", "radius": 4, "mass": 2, "drain": 10 },
+      { "id": "hand_rear2", "copy": "hand", "near": "wrist_rear2", "far": "hand_rear2", "radius": 4, "mass": 1, "drain": 5, "hand": true }
+    ],
+    "sticks": [["elbow_lead2", "hand_lead2"], ["elbow_rear2", "hand_rear2"]],
+    "hinges": [
+      { "a": "shoulder", "j": "elbow_lead2", "c": "wrist_lead2", "sign": 1, "max_bend": 150 },
+      { "a": "shoulder", "j": "elbow_rear2", "c": "wrist_rear2", "sign": 1, "max_bend": 150 }
+    ],
+    "sword": {
+      "butt": [44, 171], "tip": [70, 272], "hilt": 20, "mass": 2,
+      "grips": [{ "hand": "hand_lead2", "stiff": "wrist_lead2" }, { "hand": "hand_rear2" }]
+    }
+  },
   "post": {
     "ink": 0,
     "points": { "base": [0, 0, 0], "mid": [0, 70, 9], "top": [0, 140, 9] },

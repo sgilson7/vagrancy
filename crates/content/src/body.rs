@@ -15,9 +15,20 @@ pub const BODY_JSON: &str = include_str!("../../../data/body.json");
 struct File {
     fighter: BodyJson,
     post: BodyJson,
+    upper_arms: UpperArmsJson,
 }
 
-#[derive(Deserialize)]
+/// A second pair of arms and its weapon, added to the fighter's body.
+#[derive(Clone, Deserialize)]
+struct UpperArmsJson {
+    points: BTreeMap<String, [i32; 3]>,
+    parts: Vec<PartJson>,
+    sticks: Vec<[String; 2]>,
+    hinges: Vec<HingeJson>,
+    sword: SwordJson,
+}
+
+#[derive(Clone, Deserialize)]
 struct BodyJson {
     ink: i32,
     points: BTreeMap<String, [i32; 3]>,
@@ -29,9 +40,13 @@ struct BodyJson {
     anchored: Vec<String>,
     balance: bool,
     sword: Option<SwordJson>,
+    #[serde(default)]
+    second: Option<SwordJson>,
+    #[serde(default)]
+    elbow_keys_turn_upper: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct PartJson {
     #[allow(dead_code)]
     id: String,
@@ -48,14 +63,14 @@ struct PartJson {
     hand: bool,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct FatalJson {
     from: f64,
     to: f64,
     cause: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct HingeJson {
     a: String,
     j: String,
@@ -64,7 +79,7 @@ struct HingeJson {
     max_bend: i32,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct RolesJson {
     shoulder: Option<String>,
     pelvis: Option<String>,
@@ -72,7 +87,7 @@ struct RolesJson {
     feet: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct SwordJson {
     butt: [i32; 2],
     tip: [i32; 2],
@@ -81,7 +96,7 @@ struct SwordJson {
     grips: Vec<GripJson>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 struct GripJson {
     hand: String,
     stiff: Option<String>,
@@ -129,6 +144,8 @@ fn build(b: BodyJson) -> BodyDef {
             motor: p.motor.as_deref().map(|m| match m {
                 "shoulder" => Motor::Shoulder,
                 "elbow" => Motor::Elbow,
+                "shoulder2" => Motor::Shoulder2,
+                "elbow2" => Motor::Elbow2,
                 m => panic!("unknown motor {m}"),
             }),
             hand: p.hand,
@@ -147,7 +164,7 @@ fn build(b: BodyJson) -> BodyDef {
             Hinge { a: ix(&h.a), j: ix(&h.j), c: ix(&h.c), sign: h.sign, min_dist: Fx(isqrt(d2.max(0) as u64) as i32) }
         })
         .collect();
-    let sword = b.sword.as_ref().map(|s| {
+    let weapon = |s: &SwordJson| {
         let butt = V2::cm(s.butt[0], s.butt[1]);
         let tip = V2::cm(s.tip[0], s.tip[1]);
         let axis = tip - butt;
@@ -171,7 +188,9 @@ fn build(b: BodyJson) -> BodyDef {
             returns: false,
             edges: Vec::new(),
         }
-    });
+    };
+    let sword = b.sword.as_ref().map(weapon);
+    let second = b.second.as_ref().map(weapon);
     BodyDef {
         points,
         parts,
@@ -187,6 +206,8 @@ fn build(b: BodyJson) -> BodyDef {
         balance: b.balance,
         ink: b.ink,
         sword,
+        second,
+        elbow_keys_turn_upper: b.elbow_keys_turn_upper,
     }
 }
 
@@ -194,6 +215,31 @@ fn build(b: BodyJson) -> BodyDef {
 pub fn bodies() -> Vec<BodyDef> {
     let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
     vec![build(f.fighter), build(f.post)]
+}
+
+/// The fighter with a second pair of arms holding a second sword
+/// (data/body.json `upper_arms`). The local deity's (`player` false) bends
+/// all four elbows by its own keys; the player's has no elbow motor at all,
+/// and its elbow keys turn the second pair at the shoulder (Sam, 2026-10-06:
+/// "the elbows are free moving with no explicit control").
+pub fn four_armed(player: bool) -> BodyDef {
+    let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
+    let mut b = f.fighter.clone();
+    let up = f.upper_arms;
+    b.points.extend(up.points);
+    b.parts.extend(up.parts);
+    b.sticks.extend(up.sticks);
+    b.hinges.extend(up.hinges);
+    b.second = Some(up.sword);
+    if player {
+        for p in &mut b.parts {
+            if matches!(p.motor.as_deref(), Some("elbow" | "elbow2")) {
+                p.motor = None;
+            }
+        }
+        b.elbow_keys_turn_upper = true;
+    }
+    build(b)
 }
 
 /// A body grown by `num / den` (story mode's giants, Sam 2026-10-06): every
@@ -213,7 +259,7 @@ pub fn scaled(def: &BodyDef, num: i64, den: i64) -> BodyDef {
         h.min_dist = h.min_dist.scale(num, den);
     }
     b.ink = (b.ink as i64 * num / den) as i32;
-    if let Some(s) = b.sword.as_mut() {
+    for s in b.sword.iter_mut().chain(b.second.iter_mut()) {
         s.butt = s.butt.scale(num, den);
         s.tip = s.tip.scale(num, den);
         s.hilt = s.hilt.scale(num, den);

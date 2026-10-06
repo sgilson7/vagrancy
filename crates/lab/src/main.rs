@@ -391,7 +391,7 @@ fn w_names() -> Vec<String> {
 /// before its move finished (cut short by an interrupt).
 fn roles(args: &[String]) {
     let id = &args[0];
-    let pilot::Spec::Tree { reaction_ticks, rules, salt } = content::road::pilot(id) else { panic!("{id} is not a tree pilot") };
+    let pilot::Spec::Tree { reaction_ticks, rules, salt, .. } = content::road::pilot(id) else { panic!("{id} is not a tree pilot") };
     let seed: u64 = args.get(2).and_then(|a| a.parse().ok()).unwrap_or(0);
     let limit: u32 = args.get(3).and_then(|a| a.parse().ok()).unwrap_or(1200);
     let mut tree = pilot::Tree::new(rules, reaction_ticks, salt);
@@ -695,7 +695,7 @@ fn weapons(args: &[String]) {
                     let mut won = 0u32;
                     for seed in 0..matches {
                         let mut pilots = content::road::lineup(&content::road::pilot("yardstick"), o);
-                        let r = pilot::duel(content::setup::road_with(seed, sim::balance::DEFAULT_TUNING, o, &w), &mut pilots, max_ticks);
+                        let r = pilot::duel(content::setup::road_with(seed, sim::balance::DEFAULT_TUNING, o, &w, false), &mut pilots, max_ticks);
                         if r.finished && r.wins[0] > r.wins[1] {
                             won += 1;
                         }

@@ -150,7 +150,8 @@ fn the_boomerang_is_smaller_than_the_short_sword_and_comes_back() {
 fn each_row_below_the_first_has_one_boomerang_fight_a_thrown_win_in_the_row_above_opens() {
     let road = content::road::road();
     let level = |id: &str| road.iter().find(|s| s.id == id).unwrap().level();
-    let rows = road.iter().map(|s| s.level()).max().unwrap();
+    // Every row but the final fight's, which holds the local deity alone.
+    let rows = road.iter().filter(|s| s.row.is_none()).map(|s| s.level()).max().unwrap();
     for row in 1..=rows {
         let here: Vec<_> = road.iter().filter(|s| s.level() == row && s.weapon.as_deref() == Some("boomerang")).collect();
         assert_eq!(here.len(), 1, "row {row} has {} boomerang fights", here.len());

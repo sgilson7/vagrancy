@@ -47,6 +47,10 @@ pub struct Weapon {
     /// Thrown, it comes back to the hand (the boomerang).
     #[serde(default)]
     pub returns: bool,
+    /// The final fight's prize (the cursed blade): stronger than the sword,
+    /// and won only after every other fight.
+    #[serde(default)]
+    pub prize: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]

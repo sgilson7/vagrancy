@@ -51,4 +51,7 @@ pub use world::World;
 /// blade that meets it in flight turns it on its thrower; a result says
 /// whether a thrown blade made the deciding cut. A match with no boomerang
 /// in it plays exactly as in 13.
-pub const SIM_VERSION: u32 = 14;
+/// 15: a body may hold a second weapon in a second pair of arms, with their
+/// own motor keys, and a player's four arms turn the second pair with the
+/// elbow keys; a throw lets go of every weapon in hand.
+pub const SIM_VERSION: u32 = 15;

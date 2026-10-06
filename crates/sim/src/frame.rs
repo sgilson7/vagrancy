@@ -87,12 +87,13 @@ pub fn frame(w: &World) -> Frame {
         swords: w
             .swords
             .iter()
-            .map(|s| SwordView {
+            .enumerate()
+            .map(|(k, s)| SwordView {
                 butt: s.butt,
                 tip: s.tip,
                 hilt: (crate::fx::Fx::ratio(s.hilt.0 as i64, s.len.0.max(1) as i64)).0,
                 fighter: s.fighter,
-                held: w.cons.iter().any(|c| matches!(c.tag, crate::world::Tag::Grip { fighter, .. } if fighter == s.fighter)),
+                held: w.held(k),
                 edges: s.edges.iter().map(|e| [e.0, e.1]).collect(),
                 flying: s.flying,
                 turned: s.turned && s.flying,

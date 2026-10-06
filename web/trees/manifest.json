@@ -1,5 +1,5 @@
 {
-  "fingerprint": "dfee7bdc2aafa3b3",
+  "fingerprint": "7f91ec2e2c6ea4b0",
   "trees": [
     "abbot",
     "archivist",
@@ -35,6 +35,7 @@
     "knife_grinder",
     "lacquerer",
     "lamplighter",
+    "local_deity",
     "magistrate",
     "mason",
     "monk",

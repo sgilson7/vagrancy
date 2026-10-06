@@ -33,13 +33,35 @@ pub fn armed(bodies: &mut Vec<sim::body::BodyDef>, weapon: &str) -> u8 {
     match crate::weapons::weapon(weapon) {
         Some(w) if w.id != crate::weapons::DEFAULT => {
             let mut b = bodies[FIGHTER as usize].clone();
-            if let Some(sd) = b.sword.as_ref() {
-                b.sword = Some(crate::weapons::reshape(sd, &w));
-            }
+            reshape_all(&mut b, &w);
             bodies.push(b);
             (bodies.len() - 1) as u8
         }
         _ => FIGHTER,
+    }
+}
+
+/// The player's body carrying `weapon`, with four arms and two of it once
+/// they are won and chosen (Sam, 2026-10-06: "4 armed mode").
+pub fn loadout(bodies: &mut Vec<sim::body::BodyDef>, weapon: &str, four: bool) -> u8 {
+    if !four {
+        return armed(bodies, weapon);
+    }
+    let mut b = crate::body::four_armed(true);
+    if let Some(w) = crate::weapons::weapon(weapon).filter(|w| w.id != crate::weapons::DEFAULT) {
+        reshape_all(&mut b, &w);
+    }
+    bodies.push(b);
+    (bodies.len() - 1) as u8
+}
+
+/// Every weapon a body holds (both, with four arms), reshaped as `w`.
+pub fn reshape_all(b: &mut sim::body::BodyDef, w: &crate::weapons::Weapon) {
+    if let Some(sd) = b.sword.as_ref() {
+        b.sword = Some(crate::weapons::reshape(sd, w));
+    }
+    if let Some(sd) = b.second.as_ref() {
+        b.second = Some(crate::weapons::reshape(sd, w));
     }
 }
 
@@ -73,17 +95,17 @@ pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
 }
 
 /// The practice yard with the player carrying `weapon`.
-pub fn practice_with(seed: u64, tuning: u8, weapon: &str) -> Setup {
+pub fn practice_with(seed: u64, tuning: u8, weapon: &str, four: bool) -> Setup {
     let mut s = practice(seed, tuning);
-    let body = armed(&mut s.bodies, weapon);
+    let body = loadout(&mut s.bodies, weapon, four);
     s.seats[0] = Some(Seat::at(body, balance::START_X));
     s
 }
 
 /// A stop on the road with the player carrying `weapon`.
-pub fn road_with(seed: u64, tuning: u8, opponent: &str, weapon: &str) -> Setup {
+pub fn road_with(seed: u64, tuning: u8, opponent: &str, weapon: &str, four: bool) -> Setup {
     let mut s = road(seed, tuning, opponent);
-    let body = armed(&mut s.bodies, weapon);
+    let body = loadout(&mut s.bodies, weapon, four);
     let x = s.seats[0].map(|seat| seat.x).unwrap_or(balance::START_X);
     s.seats[0] = Some(Seat::at(body, x));
     s
@@ -127,6 +149,15 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
     // The weapon the opponent carries, if the road names one.
     if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon) {
         seat1 = armed(&mut bodies, &w);
+    }
+    // Four arms, and two of its weapon (the local deity).
+    if crate::road::stop(opponent).is_some_and(|s| s.four_arms) {
+        let mut b = crate::body::four_armed(false);
+        if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon).and_then(|w| crate::weapons::weapon(&w)) {
+            reshape_all(&mut b, &w);
+        }
+        bodies.push(b);
+        seat1 = (bodies.len() - 1) as u8;
     }
     // The fight's condition, if it has one (data/road.json).
     let rounds_to_win = ROUNDS_TO_WIN;

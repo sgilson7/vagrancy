@@ -31,9 +31,19 @@ impl Input {
     /// Let go of the sword, which flies on with the arm's swing and cuts
     /// until it first touches the ground (Sam's friend, 2026-10-05).
     pub const THROW: u16 = 1 << 10;
+    /// The second pair of arms, on a four-armed body (the local deity, Sam
+    /// 2026-10-06): its shoulder and elbow, as the first pair's. No key is
+    /// bound to them; a pilot presses them.
+    pub const SHOULDER2_UP: u16 = 1 << 11;
+    pub const SHOULDER2_DOWN: u16 = 1 << 12;
+    pub const ELBOW2_IN: u16 = 1 << 13;
+    pub const ELBOW2_OUT: u16 = 1 << 14;
     /// Every other bit is spare and must be zero; a replay that sets one is
     /// refused.
-    pub const SPARE: u16 = !0x07FF;
+    pub const SPARE: u16 = !0x7FFF;
+    /// The first pair of arms' bits, and the second's in the same order.
+    pub const ARMS: [u16; 4] = [Self::SHOULDER_UP, Self::SHOULDER_DOWN, Self::ELBOW_IN, Self::ELBOW_OUT];
+    pub const ARMS2: [u16; 4] = [Self::SHOULDER2_UP, Self::SHOULDER2_DOWN, Self::ELBOW2_IN, Self::ELBOW2_OUT];
 
     /// The actions a key can be bound to, in the order Settings lists them.
     /// The page reads these names and bits from here rather than keeping a
@@ -58,6 +68,24 @@ impl Input {
     /// +1, -1 or 0 for a pair of opposed bits; both held cancel.
     pub const fn axis(self, plus: u16, minus: u16) -> i32 {
         (self.has(plus) as i32) - (self.has(minus) as i32)
+    }
+
+    /// The two pairs of arms' bits traded: what the first pair was asked
+    /// to do, the second does, and the other way round.
+    pub const fn arms_swapped(self) -> Input {
+        let mut b = self.0;
+        let mut k = 0;
+        while k < 4 {
+            b &= !(Self::ARMS[k] | Self::ARMS2[k]);
+            if self.0 & Self::ARMS[k] != 0 {
+                b |= Self::ARMS2[k];
+            }
+            if self.0 & Self::ARMS2[k] != 0 {
+                b |= Self::ARMS[k];
+            }
+            k += 1;
+        }
+        Input(b)
     }
 
     /// The same intent for a fighter facing the other way. Arm bits are

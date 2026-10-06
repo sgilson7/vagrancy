@@ -41,6 +41,9 @@ pub struct FatalBand {
 pub enum Motor {
     Shoulder,
     Elbow,
+    /// The second pair of arms' (a four-armed body).
+    Shoulder2,
+    Elbow2,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -152,6 +155,21 @@ pub struct BodyDef {
     pub balance: bool,
     pub ink: i32,
     pub sword: Option<SwordDef>,
+    /// The weapon in the second pair of hands, on a four-armed body.
+    #[serde(default)]
+    pub second: Option<SwordDef>,
+    /// The elbow keys turn the second pair of arms at the shoulder, and no
+    /// key bends an elbow: the player's four arms (Sam, 2026-10-06: "your
+    /// elbow controls are instead shoulder controls for your other arms").
+    #[serde(default)]
+    pub elbow_keys_turn_upper: bool,
+}
+
+impl BodyDef {
+    /// Its weapons, the first pair of hands' first.
+    pub fn weapons(&self) -> Vec<&SwordDef> {
+        self.sword.iter().chain(self.second.iter()).collect()
+    }
 }
 
 /// Everything about the physics that a test may need to change. A real

@@ -36,6 +36,15 @@ pub struct Stop {
     /// The ground the fight is on, from data/maps.json; flat if none.
     #[serde(default)]
     pub map: Option<String>,
+    /// The opponent has four arms and two of its weapon (the local deity).
+    #[serde(default)]
+    pub four_arms: bool,
+    /// Set for the final fight alone: it asks for every fight in the row
+    /// above it, so its count of requirements is not its row (Sam,
+    /// 2026-10-06: "a final boss that requires you to have beaten all the
+    /// fights in the last layer").
+    #[serde(default)]
+    pub row: Option<usize>,
 }
 
 /// The opponent at the player's back on a flanked stop: another stop's
@@ -51,7 +60,7 @@ pub struct Companion {
 impl Stop {
     /// The row of the tree it sits in: how many requirements it has.
     pub fn level(&self) -> usize {
-        self.requires.len()
+        self.row.unwrap_or(self.requires.len())
     }
 }
 
@@ -242,6 +251,16 @@ impl Feats {
             }
         }
     }
+}
+
+/// The final fight, if the road has one: the stop that sets its row.
+pub fn last() -> Option<Stop> {
+    road().into_iter().find(|s| s.row.is_some())
+}
+
+/// Four arms for the player are won by beating the final fight.
+pub fn four_arms_open(best: &BTreeMap<String, Best>) -> bool {
+    last().is_some_and(|s| best.contains_key(&s.id))
 }
 
 /// Every stop, in the order data/road.json lists them.

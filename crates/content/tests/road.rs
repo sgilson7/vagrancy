@@ -246,7 +246,9 @@ fn each_chapter_has_two_weapon_carriers_and_each_challenge_can_be_met() {
     // trident".
     let road = road();
     let deepest = road.iter().map(|s| s.level()).max().unwrap();
-    for l in 0..=deepest {
+    // The final fight's row holds it alone (crates/content/tests/deity.rs).
+    let last = content::road::last().map(|s| s.level());
+    for l in (0..=deepest).filter(|&l| Some(l) != last) {
         let carriers = road.iter().filter(|s| s.level() == l && s.weapon.is_some()).count();
         assert!(carriers >= 2, "row {l} has {carriers} opponents carrying a weapon");
         if l > 0 {

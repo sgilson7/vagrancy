@@ -543,11 +543,13 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#road-tree .node")
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
-    # One row per number of requirements, and every fight in its row.
+    # One row per number of requirements, and every fight in its row; the
+    # final fight names its own row (content::road::Stop::row).
     for s in road:
-        lvl = page.locator(f'#road-tree .level[data-level="{len(s["requires"])}"] [data-stop="{s["id"]}"]').count()
+        row = s.get("row", len(s["requires"]))
+        lvl = page.locator(f'#road-tree .level[data-level="{row}"] [data-stop="{s["id"]}"]').count()
         if lvl != 1:
-            fails.append(f"{name}: {s['id']} is not in the row for {len(s['requires'])} requirements")
+            fails.append(f"{name}: {s['id']} is not in row {row}")
     # A line for every requirement.
     want = sum(len(s["requires"]) for s in road)
     got = page.locator("#road-tree .wires path.unmet, #road-tree .wires path.met").count()
@@ -665,10 +667,13 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#weapons")
-    if page.locator("#weapons .weapon").count() != len(carryable):
-        fails.append(f"{name}: the road shows {page.locator('#weapons .weapon').count()} weapons, not the {len(carryable)} a player can carry")
-    if page.locator('#weapons [data-weapon="longsword"]').count():
-        fails.append(f"{name}: the enemies' longsword is offered to the player")
+    shown = page.locator('#weapons .weapon:not([data-weapon="four_arms"])').count()
+    if shown != len(carryable):
+        fails.append(f"{name}: the road shows {shown} weapons, not the {len(carryable)} a player can carry")
+    # The final fight's prizes, the cursed blade and four arms, wait for it.
+    for prize in ("longsword", "four_arms"):
+        if page.locator(f'#weapons [data-weapon="{prize}"].locked').count() != 1:
+            fails.append(f"{name}: a fresh save does not show the {prize} locked")
     click_copy(page, "menu.back.label")
     # A save that has beaten the pilgrim, who carries the scimitar.
     save = page.evaluate("window.vagrancy.save()")
@@ -919,7 +924,7 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
         fails.append(f"{name}: a win at the first stop with a round lost leaves {page.locator('#road-tree .node.open').count()} fights open, not {want_open}")
     click_copy(page, "menu.back.label")
     # A save from a newer version, and a file that is not a save.
-    for content, key in ((json.dumps({**data, "version": 9}), "settings.save.error.newer"), ("not a save", "settings.save.error.format")):
+    for content, key in ((json.dumps({**data, "version": data["version"] + 1}), "settings.save.error.newer"), ("not a save", "settings.save.error.format")):
         bad = tmp / f"vagrancy-gate-{name}.bad.json"
         bad.write_text(content)
         click_copy(page, "menu.settings.label")

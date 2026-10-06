@@ -86,8 +86,20 @@ impl World {
 
     /// A sword cuts only while a hand holds it (PLAN.md §8 Q15).
     pub fn held(&self, si: usize) -> bool {
-        let f = self.swords[si].fighter;
-        self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter == f))
+        self.cons.iter().any(|c| self.grips(c, si))
+    }
+
+    /// Whether `c` is one of the grips on sword `si`: a hand pinned to its
+    /// butt-to-tip line, or the wrist's stick to its tip. A four-armed body
+    /// holds two weapons, so a grip names its weapon by these.
+    pub(crate) fn grips(&self, c: &crate::world::Constraint, si: usize) -> bool {
+        let s = &self.swords[si];
+        matches!(c.tag, Tag::Grip { fighter, .. } if fighter == s.fighter)
+            && match c.con {
+                Con::Pin { b, .. } => b == s.butt,
+                Con::Stick { b, .. } => b == s.tip,
+                _ => false,
+            }
     }
 
     /// Whether sword `si` can cut part `pi` at all: the sword is held (Q15)
@@ -327,7 +339,9 @@ impl World {
         let ghost = |w: &World, si: usize| w.swords[si].back_at.is_some() && (!w.swords[si].flying || w.swords[si].turned);
         for ia in 0..n {
             for ib in ia + 1..n {
-                if ghost(self, ia) || ghost(self, ib) {
+                // A four-armed fighter's two weapons pass through each
+                // other, as its own body passes through them.
+                if ghost(self, ia) || ghost(self, ib) || self.swords[ia].fighter == self.swords[ib].fighter {
                     self.set_clashing(ia, ib, false);
                     continue;
                 }
@@ -520,7 +534,7 @@ impl World {
                 let bladed = (0..SEATS).any(|s| {
                     self.fighters[s].as_ref().is_some_and(|f| self.setup.bodies[f.body as usize].ink > 0)
                         && !self.out(s)
-                        && self.swords.iter().position(|w| w.fighter as usize == s).is_some_and(|si| self.held(si) || self.swords[si].flying)
+                        && (0..self.swords.len()).any(|si| self.swords[si].fighter as usize == s && (self.held(si) || self.swords[si].flying))
                 });
                 if bladed {
                     self.disarmed_since = None;

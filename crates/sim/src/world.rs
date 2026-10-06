@@ -291,7 +291,7 @@ impl World {
             self.cons.push(Constraint { con: Con::Min { a, b: c, len: h.min_dist }, tag: Tag::Body(seat) });
         }
         let mut sword = None;
-        if let Some(sd) = &def.sword {
+        for sd in def.weapons() {
             let si = self.swords.len() as u8;
             let butt = self.particles.len() as u16;
             for end in [sd.butt, sd.tip] {
@@ -327,7 +327,7 @@ impl World {
                     self.cons.push(Constraint { con: Con::Stick { a: base + s as u16, b: tip, len }, tag: Tag::Grip { fighter: seat, hand } });
                 }
             }
-            sword = Some(si);
+            sword = sword.or(Some(si));
         }
         let r = &def.roles;
         let dist = |a: Option<u8>, b: Option<u8>| match (a, b) {
@@ -421,6 +421,20 @@ impl World {
     pub fn motor_plan(&self, seat: usize, input: Input) -> Vec<(Motor, i32, u16, Vec<u16>)> {
         let Some(f) = &self.fighters[seat] else { return Vec::new() };
         let def = &self.setup.bodies[f.body as usize];
+        // A four-armed player's elbow keys turn the second pair of arms at
+        // the shoulder; its elbows have no motor (data/body.json).
+        let input = if def.elbow_keys_turn_upper {
+            let mut b = input.0 & !(Input::ELBOW_IN | Input::ELBOW_OUT) & !Input::ARMS2.iter().fold(0, |a, x| a | x);
+            if input.has(Input::ELBOW_IN) {
+                b |= Input::SHOULDER2_UP;
+            }
+            if input.has(Input::ELBOW_OUT) {
+                b |= Input::SHOULDER2_DOWN;
+            }
+            Input(b)
+        } else {
+            input
+        };
         let mut out = Vec::new();
         for (pi, part) in self.parts.iter().enumerate() {
             if part.fighter as usize != seat || !part.attached {
@@ -430,6 +444,8 @@ impl World {
             let axis = match motor {
                 Motor::Shoulder => input.axis(Input::SHOULDER_UP, Input::SHOULDER_DOWN),
                 Motor::Elbow => input.axis(Input::ELBOW_IN, Input::ELBOW_OUT),
+                Motor::Shoulder2 => input.axis(Input::SHOULDER2_UP, Input::SHOULDER2_DOWN),
+                Motor::Elbow2 => input.axis(Input::ELBOW2_IN, Input::ELBOW2_OUT),
             };
             if axis == 0 {
                 continue;
@@ -492,7 +508,7 @@ impl World {
                 continue;
             }
             // An elbow that is already straight does not push past straight.
-            if motor == Motor::Elbow && dir * facing < 0 && self.elbow_is_straight(pivot, set[0], facing) {
+            if matches!(motor, Motor::Elbow | Motor::Elbow2) && dir * facing < 0 && self.elbow_is_straight(pivot, set[0], facing) {
                 continue;
             }
             let a = room.min(t.motor_accel) * dir;
@@ -677,20 +693,27 @@ impl World {
         if !pressed || !matches!(self.phase, crate::fight::Phase::Fight) {
             return;
         }
-        let gripped = |c: &Constraint| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat);
-        if !self.cons.iter().any(gripped) {
-            return;
-        }
-        let grips: Vec<Constraint> = self.cons.iter().filter(|c| gripped(c)).copied().collect();
-        self.cons.retain(|c| !gripped(c));
+        // Every weapon in its hands goes: a four-armed fighter throws both.
         let back = self.tick + balance::RETURN_TICKS;
-        if let Some(s) = self.swords.iter_mut().find(|s| s.fighter as usize == seat) {
+        for k in 0..self.swords.len() {
+            if self.swords[k].fighter as usize != seat || !self.held(k) {
+                continue;
+            }
+            let (grips, rest): (Vec<Constraint>, Vec<Constraint>) = std::mem::take(&mut self.cons).into_iter().partition(|c| self.grips(c, k));
+            self.cons = rest;
+            let s = &mut self.swords[k];
             s.flying = true;
             if s.returns {
                 s.back_at = Some(back);
                 s.grips = grips;
             }
         }
+    }
+
+    /// Fighter `seat`'s weapons, by index into `swords`, in the order its
+    /// body lists them (`BodyDef::weapons`).
+    pub fn swords_of(&self, seat: usize) -> Vec<usize> {
+        (0..self.swords.len()).filter(|&k| self.swords[k].fighter as usize == seat).collect()
     }
 
     /// A returning weapon out of the hand: in its last HOMING_TICKS it flies
@@ -764,7 +787,8 @@ impl World {
             return None;
         }
         let def = self.setup.bodies[f.body as usize].clone();
-        let sd = def.sword.as_ref()?;
+        let nth = self.swords_of(seat).iter().position(|&j| j == k)?;
+        let sd = *def.weapons().get(nth)?;
         let g = sd.grips.first()?;
         let stiff = g.stiff?;
         let (hi, wi) = (f.base + g.hand as u16, f.base + stiff as u16);
@@ -1014,9 +1038,9 @@ impl World {
             self.particles[part.b as usize].p = p;
             self.particles[part.b as usize].q = p;
         }
-        if let (Some(sd), Some(si)) = (def.sword.as_ref(), f.sword) {
-            let s = self.swords[si as usize].clone();
-            if self.cons.iter().any(|c| matches!(c.tag, Tag::Grip { fighter, .. } if fighter as usize == seat)) {
+        for (sd, si) in def.weapons().into_iter().zip(self.swords_of(seat)) {
+            let s = self.swords[si].clone();
+            if self.held(si) {
                 let ats = [sd.butt, sd.tip].into_iter().chain(sd.extra.iter().copied());
                 for (i, at) in s.points.iter().copied().zip(ats) {
                     let p = place(at);

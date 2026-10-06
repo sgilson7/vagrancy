@@ -24,7 +24,7 @@ fn every_weapon_holds_its_shape_and_cuts() {
     // wanders from where it belongs by more than a few cm, and every weapon
     // cuts the post.
     for w in weapons() {
-        let mut world = World::new(content::setup::practice_with(1, sim::balance::DEFAULT_TUNING, &w.id));
+        let mut world = World::new(content::setup::practice_with(1, sim::balance::DEFAULT_TUNING, &w.id, false));
         let s = world.swords.iter().find(|s| s.fighter == 0).unwrap().clone();
         let d = |w: &World, a: u16, b: u16| (w.particles[a as usize].p - w.particles[b as usize].p).len().trunc();
         let rest: Vec<i32> = s.points.iter().map(|&p| d(&world, s.butt, p)).collect();
@@ -117,7 +117,9 @@ fn the_sword_is_the_strongest_weapon() {
         row.split('|').nth(2).unwrap().split_whitespace().next().unwrap().parse().unwrap()
     };
     let sword = wins(DEFAULT);
-    for w in weapons().iter().filter(|w| !w.enemy_only && w.id != DEFAULT) {
+    // The cursed blade, won at the final fight, is the prize past the
+    // balance (Sam, 2026-10-06), and it is stronger.
+    for w in weapons().iter().filter(|w| !w.enemy_only && !w.prize && w.id != DEFAULT) {
         assert!(wins(&w.id) < sword, "the {} won {} where the sword won {sword}", w.id, wins(&w.id));
     }
 }

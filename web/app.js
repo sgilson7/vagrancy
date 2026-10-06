@@ -5,6 +5,7 @@
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, story_json,
   road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
+  arms_json, save_choose_arms,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -364,7 +365,7 @@ function practice() {
       button('replay.load.label', loadReplay),
       button('menu.back.label', menu)),
   );
-  start(Game.practice(seed(), tuning(), SAVE.state.weapon), () => [bits(binding, ACTION_BITS), 0]);
+  start(Game.practice(seed(), tuning(), SAVE.state.weapon, !!SAVE.state.four_arms), () => [bits(binding, ACTION_BITS), 0]);
 }
 
 // `?tuning=0|1|2` picks one of the candidate tunings in sim::balance, so Sam
@@ -747,6 +748,21 @@ function weaponPanel(redraw) {
     }
     return el('div', { class: `weapon ${w.carried ? 'carried' : w.unlocked ? 'open' : 'locked'}`, 'data-weapon': w.id }, ...kids);
   });
+  // Four arms, won at the final fight: two of the carried weapon.
+  const arms = JSON.parse(arms_json(JSON.stringify(SAVE)));
+  if (arms.stop) {
+    const n = { arms: arms.arms };
+    const kids = [el('h4', { 'data-copy': 'road.arms.name' }, t('road.arms.name', n)), say('road.arms.desc', {}, { class: 'desc' })];
+    const choose = (four) => () => {
+      SAVE = JSON.parse(save_choose_arms(JSON.stringify(SAVE), four));
+      persist();
+      redraw();
+    };
+    if (arms.on) kids.push(say('road.arms.on', n), button('road.arms.two.label', choose(false)));
+    else if (arms.open) kids.push(button('road.arms.four.label', choose(true), n));
+    else kids.push(say('road.weapon_locked'), reqLine({ stop: arms.stop, key: 'road.req.beat', vars: {} }, { class: 'unmet' }));
+    cards.push(el('div', { class: `weapon ${arms.on ? 'carried' : arms.open ? 'open' : 'locked'}`, 'data-weapon': 'four_arms' }, ...kids));
+  }
   return el('section', { id: 'weapons' }, el('h3', { 'data-copy': 'road.weapon_heading' }, t('road.weapon_heading')), el('div', { class: 'weapon-list' }, ...cards));
 }
 
@@ -1039,7 +1055,7 @@ function fight(id, goal = null) {
         button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
   });
   show(goal ? goalCallout(goal) : '', watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
-  const g = new Road(seed(), tuning(), id, SAVE.state.weapon);
+  const g = new Road(seed(), tuning(), id, SAVE.state.weapon, !!SAVE.state.four_arms);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     // Kept before the result is drawn, so the result can name what opened.
     if (!won && game && game.won && game.won()) {
@@ -1086,7 +1102,7 @@ function storyMode() {
 }
 
 function storyPlay(chapter) {
-  storyCard(new StoryRun(seed(), tuning(), chapter, SAVE.state.weapon));
+  storyCard(new StoryRun(seed(), tuning(), chapter, SAVE.state.weapon, !!SAVE.state.four_arms));
 }
 
 // Before each fight: the chapter, and what this scene asks.
@@ -1254,7 +1270,7 @@ function trainFight(s) {
   show(watch.panel, say('train.watch', mid, { class: 'desc' }), keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.train.label', train)));
   const ids = [s.id, s.companion ? s.companion.pilot : null];
   const caption = (n) => t('tree.now', { node: n.text });
-  const g = new Road(seed(), tuning(), s.id, SAVE.state.weapon);
+  const g = new Road(seed(), tuning(), s.id, SAVE.state.weapon, !!SAVE.state.four_arms);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     watch.tick(f);
     const traces = JSON.parse(game.traces());

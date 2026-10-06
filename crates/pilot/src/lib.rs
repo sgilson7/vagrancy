@@ -31,7 +31,15 @@ pub enum Spec {
     Machine { script: String },
     Replayer { first_round: String, mirror: bool },
     Search { horizon_ticks: u32, reaction_ticks: u32, branches: u32, #[serde(default = "default_period")] period: u32 },
-    Tree { reaction_ticks: u32, rules: Vec<Rule>, #[serde(default)] salt: u64 },
+    /// `search_period`: how many ticks the search act keeps a plan before
+    /// it plans again (3 if unset). The local deity sets it higher, so its
+    /// look-ahead costs a browser frame what one opponent's does.
+    Tree { reaction_ticks: u32, rules: Vec<Rule>, #[serde(default)] salt: u64, #[serde(default)] search_period: Option<u32> },
+    /// A four-armed body run by three pilots at once (the local deity, Sam
+    /// 2026-10-06: "1 behavior tree per set of arms, and one behavior tree
+    /// governing the legs"): `arms` turns the first pair, `upper` the
+    /// second, `legs` the steps, the jump, the dodge and getting up.
+    Many { arms: Box<Spec>, upper: Box<Spec>, legs: Box<Spec> },
 }
 
 fn default_period() -> u32 {
@@ -60,7 +68,93 @@ pub fn build(spec: &Spec) -> Box<dyn Pilot> {
         Spec::Search { horizon_ticks, reaction_ticks, branches, period } => {
             Box::new(Search::new(horizon_ticks, reaction_ticks, branches, period))
         }
-        Spec::Tree { reaction_ticks, rules, salt } => Box::new(Tree::new(rules, reaction_ticks, salt)),
+        Spec::Tree { reaction_ticks, rules, salt, search_period } => {
+            let mut t = Tree::new(rules, reaction_ticks, salt);
+            t.period = search_period.unwrap_or(view::TREE_SEARCH.2);
+            Box::new(t)
+        }
+        Spec::Many { arms, upper, legs } => {
+            Box::new(Many { arms: build(&arms), upper: build(&upper), legs: build(&legs), offsets: view::many_offsets(&arms, &upper) })
+        }
+    }
+}
+
+// --- three pilots in one body ---------------------------------------------------
+
+pub struct Many {
+    arms: Box<dyn Pilot>,
+    upper: Box<dyn Pilot>,
+    legs: Box<dyn Pilot>,
+    /// Where each tree's nodes start in `view::describe`'s numbering.
+    offsets: [u16; 3],
+}
+
+const ARM_BITS: u16 = Input::SHOULDER_UP | Input::SHOULDER_DOWN | Input::ELBOW_IN | Input::ELBOW_OUT;
+const ARM2_BITS: u16 = Input::SHOULDER2_UP | Input::SHOULDER2_DOWN | Input::ELBOW2_IN | Input::ELBOW2_OUT;
+const LEG_BITS: u16 = Input::STEP_LEFT | Input::STEP_RIGHT | Input::JUMP | Input::DODGE | Input::STAND;
+
+/// The world as `seat`'s second pair of arms sees it: its two weapons and
+/// its two pairs of arms traded, so a pilot written for one pair of arms
+/// and one weapon runs the second pair unchanged, its look-ahead included.
+/// Its first-pair keys are then the second pair's (`Input::arms_swapped`).
+pub fn upper_view(w: &World, seat: usize) -> World {
+    use sim::body::Motor;
+    let mut v = w.clone();
+    let mine = v.swords_of(seat);
+    if let (Some(&a), Some(&b)) = (mine.first(), mine.get(1)) {
+        v.swords.swap(a, b);
+        let (a8, b8) = (a as u8, b as u8);
+        let swap = |k: u8| if k == a8 { b8 } else if k == b8 { a8 } else { k };
+        for pair in &mut v.clashing {
+            let (x, y) = (swap(pair.0), swap(pair.1));
+            *pair = (x.min(y), x.max(y));
+        }
+        v.clashing.sort();
+        for t in &mut v.touching {
+            t.0 = swap(t.0);
+        }
+    }
+    if let Some(f) = v.fighters[seat].as_ref() {
+        let def = &mut v.setup.bodies[f.body as usize];
+        std::mem::swap(&mut def.sword, &mut def.second);
+        for p in &mut def.parts {
+            p.motor = p.motor.map(|m| match m {
+                Motor::Shoulder => Motor::Shoulder2,
+                Motor::Shoulder2 => Motor::Shoulder,
+                Motor::Elbow => Motor::Elbow2,
+                Motor::Elbow2 => Motor::Elbow,
+            });
+        }
+    }
+    v
+}
+
+impl Pilot for Many {
+    fn input(&mut self, w: &World, seat: usize) -> Input {
+        if let Some(i) = between(w) {
+            return i;
+        }
+        let a = self.arms.input(w, seat).0 & ARM_BITS;
+        let u = self.upper.input(&upper_view(w, seat), seat).arms_swapped().0 & ARM2_BITS;
+        let l = self.legs.input(w, seat).0 & LEG_BITS;
+        Input(a | u | l)
+    }
+
+    fn observe(&mut self, last: [Input; SEATS]) {
+        self.arms.observe(last);
+        self.upper.observe(last.map(Input::arms_swapped));
+        self.legs.observe(last);
+    }
+
+    fn trace(&self) -> view::Trace {
+        // The three trees hang from one root, numbered in this order.
+        let mut t = view::Trace { active: vec![0], held: Vec::new(), failed: Vec::new() };
+        for (sub, off) in [self.arms.trace(), self.upper.trace(), self.legs.trace()].into_iter().zip(self.offsets) {
+            t.active.extend(sub.active.iter().map(|i| i + off));
+            t.held.extend(sub.held.iter().map(|i| i + off));
+            t.failed.extend(sub.failed.iter().map(|i| i + off));
+        }
+        t
     }
 }
 
@@ -650,6 +744,7 @@ pub fn numbers(spec: &Spec) -> Vec<(&'static str, String)> {
             vec![("horizon_ms", ms(*horizon_ticks).to_string()), ("reaction_ms", ms(*reaction_ticks).to_string())]
         }
         Spec::Tree { reaction_ticks, .. } => vec![("reaction_ms", ms(*reaction_ticks).to_string())],
+        Spec::Many { arms, .. } => numbers(arms),
         _ => vec![],
     }
 }
@@ -725,6 +820,8 @@ pub struct Tree {
     ids: Vec<view::RuleIds>,
     running: Option<usize>,
     checked: Vec<(u16, bool)>,
+    /// How many ticks a search plan is kept (`Spec::Tree::search_period`).
+    pub period: u32,
 }
 
 impl Tree {
@@ -736,7 +833,7 @@ impl Tree {
 
     pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
         let ids = view::tree_nodes(&rules, reaction).1;
-        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new() }
+        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new(), period: view::TREE_SEARCH.2 }
     }
 
     fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
@@ -855,7 +952,7 @@ impl Tree {
                 // with a reaction of zero it read the present, and the
                 // archivist won every match in about a second.
                 let reaction = self.reaction;
-                let s = self.search.get_or_insert_with(|| Search::new(18, reaction, 11, 3));
+                let s = self.search.get_or_insert_with(|| Search::new(view::TREE_SEARCH.0, reaction, view::TREE_SEARCH.1, self.period));
                 s.input(w, me).0
             }
             _ => return None,
