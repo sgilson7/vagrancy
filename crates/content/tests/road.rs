@@ -246,9 +246,11 @@ fn each_chapter_has_two_weapon_carriers_and_each_challenge_can_be_met() {
     // trident".
     let road = road();
     let deepest = road.iter().map(|s| s.level()).max().unwrap();
-    // The final fight's row holds it alone (crates/content/tests/deity.rs).
+    // The final fight's row holds it alone (crates/content/tests/deity.rs),
+    // and the secret fight's row the guardian deity (guardian.rs).
     let last = content::road::last().map(|s| s.level());
-    for l in (0..=deepest).filter(|&l| Some(l) != last) {
+    let secret: Vec<usize> = road.iter().filter(|s| s.secret).map(|s| s.level()).collect();
+    for l in (0..=deepest).filter(|&l| Some(l) != last && !secret.contains(&l)) {
         let carriers = road.iter().filter(|s| s.level() == l && s.weapon.is_some()).count();
         assert!(carriers >= 2, "row {l} has {carriers} opponents carrying a weapon");
         if l > 0 {
@@ -355,8 +357,13 @@ fn every_opponent_can_be_beaten() {
         Spec::Search { horizon_ticks: horizon_ticks + 10, reaction_ticks: reaction_ticks / 2, branches, period: period.max(2) - 1 },
     ];
     let beaten: Vec<(String, Option<(usize, u64)>)> = std::thread::scope(|scope| {
-        let handles: Vec<_> = stops()
+        // The secret fight is the exception: Sam asked for it to be
+        // "essentially impossibly difficult" (crates/content/tests/
+        // guardian.rs).
+        let handles: Vec<_> = road()
             .into_iter()
+            .filter(|s| !s.secret)
+            .map(|s| s.id)
             .map(|id| {
                 let configs = configs.clone();
                 scope.spawn(move || {

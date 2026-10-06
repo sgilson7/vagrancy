@@ -539,7 +539,7 @@ def the_online_lobby_says_only_its_own_words(page, name):
 @check
 def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_starts(page, name):
     fails = []
-    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    road = shown_road()
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#road-tree .node")
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
@@ -664,7 +664,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     fails = []
     weapons = json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"]
     carryable = [w for w in weapons if not w.get("enemy_only")]
-    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    road = shown_road()
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#weapons")
     shown = page.locator('#weapons .weapon:not([data-weapon="four_arms"])').count()
@@ -689,7 +689,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     if page.evaluate("window.vagrancy.save().state.weapon") != "scimitar":
         fails.append(f"{name}: carrying the scimitar did not reach the save")
     # The three designs.
-    for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("sunburst", "#road-tree.sunburst .node", len(road)), ("chapters", "#chapters li", len({len(s['requires']) for s in road}))):
+    for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("sunburst", "#road-tree.sunburst .node", len(road)), ("chapters", "#chapters li", len({s.get("row", len(s['requires'])) for s in road}))):
         page.click(f'#road-views [data-view="{view}"]')
         page.wait_for_selector(sel)
         if page.locator(sel).count() != want:
@@ -728,7 +728,7 @@ def a_flanked_fight_puts_an_opponent_on_each_side_and_ledges_are_drawn(page, nam
     # and "select different weapons when fighting online, and different
     # maps with platforms".
     fails = []
-    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    road = shown_road()
     maps = {m["id"]: m for m in json.loads((ROOT / "data" / "maps.json").read_text())["maps"]}
     stop = next(s for s in road if s.get("companion") and s.get("map"))
     # A save that has met every requirement on the road.
@@ -785,7 +785,7 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     # individually after you unlock them ... see each behavior tree state
     # they enter as you fight them".
     fails = []
-    road = json.loads((ROOT / "data" / "road.json").read_text())["stops"]
+    road = shown_road()
     page.evaluate("localStorage.removeItem('vagrancy.autosave')")
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
@@ -837,6 +837,49 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
         print(f"ok: {name}: the encyclopedia shows {len(road)} opponents with their drawn trees; training offers the beaten ones, and both trees in a flanked fight light as the opponents run them")
+    return fails
+
+
+def shown_road():
+    """The road a player sees before the final fight: the secret fight (the
+    guardian deity) is left out until the village deity is beaten."""
+    return [st for st in json.loads((ROOT / "data" / "road.json").read_text())["stops"] if not st.get("secret")]
+
+
+@check
+def the_guardian_deity_appears_once_the_village_deity_is_beaten(page, name):
+    # Sam: "a secret final boss that only appears on the chart /
+    # visualizations after ... the bubble only appears on the chart after
+    # you've defeated the local deity". His two test saves, loaded as he
+    # would load them.
+    fails = []
+    for save, shown in (("all-but-the-village-deity.save.json", False), ("all-but-the-guardian-deity.save.json", True)):
+        text = (ROOT / "testing" / "saves" / save).read_text()
+        page.evaluate("t => localStorage.setItem('vagrancy.autosave', t)", text)
+        page.reload(wait_until="load")
+        page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+        click_copy(page, "menu.road.label")
+        page.wait_for_selector("#road-tree .node")
+        page.wait_for_selector('[data-copy="road.quest"]')
+        for view in ("tree", "chart", "sunburst"):
+            click_copy(page, f"road.view.{view}.label")
+            page.wait_for_selector("#road-tree .node")
+            n = page.locator('#road-tree [data-stop="guardian_deity"]').count()
+            if n != (1 if shown else 0):
+                fails.append(f"{name}: with {save} the {view} shows the guardian deity {n} times")
+        if shown and page.locator('#road-tree [data-stop="guardian_deity"].open').count() != 1:
+            fails.append(f"{name}: with {save} the guardian deity is not open")
+        click_copy(page, "menu.back.label")
+        click_copy(page, "menu.encyclopedia.label")
+        page.wait_for_selector("#entries .entry")
+        if page.locator('#entries [data-copy="opponents.guardian_deity.name"]').count() != (1 if shown else 0):
+            fails.append(f"{name}: with {save} the encyclopedia's guardian deity is wrong")
+        click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the guardian deity is hidden until the village deity is beaten, then on each view and open")
     return fails
 
 

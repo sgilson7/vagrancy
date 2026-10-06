@@ -99,8 +99,9 @@
     "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)",
     "road.next_carry": "new",
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
-    "local_deity": "new: opponents.local_deity (all five strings), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
-    "watch": "new: menu.watch, watch (all its strings)"
+    "local_deity": "new: opponents.local_deity (all five strings; renamed the village deity, at Sam's request), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
+    "watch": "new: menu.watch, watch (all its strings)",
+    "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)"
   },
   "_glossary": {
     "ink": {
@@ -185,7 +186,7 @@
   "menu": {
     "road": {
       "label": "Arcade mode",
-      "desc": "Fight down a tree of opponents. A fight opens when you meet its requirements, such as beating the opponents above it."
+      "desc": "Fight your way through the village, one opponent at a time, looking for the cursed blade. A fight opens when you meet its requirements, such as beating the opponents above it."
     },
     "local": {
       "label": "Play at one keyboard",
@@ -391,7 +392,8 @@
       "headshot": "Beat {opponent_mid}, ending a round with a cut across the head.",
       "untouched": "Beat {opponent_mid}, winning a round without being cut.",
       "thrown": "Beat {opponent_mid}, ending a round with a thrown blade.",
-      "all_thrown": "Beat {opponent_mid}, with a thrown blade ending each round you win."
+      "all_thrown": "Beat {opponent_mid}, with a thrown blade ending each round you win.",
+      "all_flawless": "Win each fight in arcade mode without losing a round, {opponent_mid} included."
     },
     "tier": {
       "none": "Open from the start",
@@ -417,7 +419,8 @@
       "5": "The mountain pass",
       "6": "The high plateau",
       "7": "The far gate",
-      "8": "The hilltop shrine"
+      "8": "The hilltop shrine",
+      "9": "Beneath the shrine"
     },
     "chapter": "Chapter {n}: {region}",
     "chapter_progress": "{won} of {count} won.",
@@ -454,7 +457,9 @@
       "two": {
         "label": "Fight with two arms"
       }
-    }
+    },
+    "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you. The village deity holds it, below the last row of fights.",
+    "revealed": "A new fight has appeared below the village deity: {opponent}."
   },
   "opponents": {
     "scarecrow": {
@@ -941,11 +946,18 @@
       "try": "Try making her throw early, from too far away. Close in while the boomerang is out, and keep your blade between you and its way back."
     },
     "local_deity": {
-      "name": "The Local Deity",
-      "name_mid": "the local deity",
-      "place": "A hilltop shrine with a cracked bell and offerings of rice on the steps.",
-      "does": "The local deity has a second pair of arms, and a sword in each pair of hands. Each pair of arms decides on its own: the lower pair looks a short way ahead before it chooses, and the upper pair guards high, thrusts when you jump, and cuts overhead up close. Its legs decide on their own too: they close in, back off when you are very near, and dodge many attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
+      "name": "The Village Deity",
+      "name_mid": "the village deity",
+      "place": "A hilltop shrine above the village, where the cursed blade rests on the altar.",
+      "does": "The village deity keeps the cursed blade. It has a second pair of arms, and a sword in each pair of hands. Each pair of arms decides on its own: the lower pair looks a short way ahead before it chooses, and the upper pair guards high, thrusts when you jump, and cuts overhead up close. Its legs decide on their own too: they close in, back off when you are very near, and dodge many attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
       "try": "Try staying on the ground, where its upper arms have no thrust for you. Two blades guard it at once, so wait for both to swing before you go in."
+    },
+    "guardian_deity": {
+      "name": "The Guardian Deity",
+      "name_mid": "the guardian deity",
+      "place": "A cave beneath the shrine, where the cursed blade was first forged.",
+      "does": "The guardian deity has arms at its waist, at its shoulders and at its neck, and a cursed blade in each pair of hands. Its arms move in two groups: the waist pair with the shoulder pair below, and the neck pair with the shoulder pair above. The lower group looks a short way ahead before it chooses, the upper group guards high, thrusts when you jump and cuts overhead up close, and its legs close in and dodge most attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
+      "try": "Try staying farther back than its blades reach and going in after a swing has passed, because each of its blades reaches farther than yours."
     }
   },
   "local": {
@@ -1451,7 +1463,7 @@
     },
     "longsword": {
       "name": "cursed blade",
-      "desc": "A long, heavy blade, won from the local deity. It reaches farther than any other weapon."
+      "desc": "The blade you came to this village for. It is cursed and has chosen you to hold it next, so the village deity keeps it from you until you beat it. It reaches farther than any other weapon."
     },
     "scimitar": {
       "name": "scimitar",

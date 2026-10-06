@@ -39,6 +39,14 @@ pub struct Stop {
     /// The opponent has four arms and two of its weapon (the local deity).
     #[serde(default)]
     pub four_arms: bool,
+    /// The opponent has eight arms and four of its weapon (the guardian
+    /// deity).
+    #[serde(default)]
+    pub eight_arms: bool,
+    /// Not on the chart, nor anywhere a player sees the road, until the
+    /// final fight is won (the guardian deity).
+    #[serde(default)]
+    pub secret: bool,
     /// Set for the final fight alone: it asks for every fight in the row
     /// above it, so its count of requirements is not its row (Sam,
     /// 2026-10-06: "a final boss that requires you to have beaten all the
@@ -88,16 +96,24 @@ pub enum Req {
     /// Won it, with a thrown blade ending every round the player won ("or
     /// winning every round in a fight by throwing a weapon at them").
     AllThrown(String),
+    /// Won each fight on the road but the secret one without losing a
+    /// round, this one included (Sam, 2026-10-06: the guardian deity, after
+    /// "you've beaten every single fight"). The stop it names is where the
+    /// chart draws its line from.
+    AllFlawless(String),
 }
 
 impl Req {
     pub fn stop(&self) -> &str {
         match self {
-            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) | Req::Thrown(s) | Req::AllThrown(s) => s,
+            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) | Req::Thrown(s) | Req::AllThrown(s) | Req::AllFlawless(s) => s,
         }
     }
 
     pub fn met(&self, best: &BTreeMap<String, Best>) -> bool {
+        if let Req::AllFlawless(_) = self {
+            return road().iter().filter(|s| !s.secret).all(|s| best.get(&s.id).is_some_and(|b| b.losses == 0));
+        }
         let Some(b) = best.get(self.stop()) else { return false };
         match self {
             Req::Beat(_) => true,
@@ -108,6 +124,7 @@ impl Req {
             Req::Untouched(_) => b.untouched,
             Req::Thrown(_) => b.thrown,
             Req::AllThrown(_) => b.all_thrown,
+            Req::AllFlawless(_) => unreachable!("answered above"),
         }
     }
 
@@ -124,6 +141,7 @@ impl Req {
             Req::Untouched(_) => ("road.req.untouched", BTreeMap::new()),
             Req::Thrown(_) => ("road.req.thrown", BTreeMap::new()),
             Req::AllThrown(_) => ("road.req.all_thrown", BTreeMap::new()),
+            Req::AllFlawless(_) => ("road.req.all_flawless", BTreeMap::new()),
         }
     }
 }
@@ -255,7 +273,14 @@ impl Feats {
 
 /// The final fight, if the road has one: the stop that sets its row.
 pub fn last() -> Option<Stop> {
-    road().into_iter().find(|s| s.row.is_some())
+    road().into_iter().find(|s| s.row.is_some() && !s.secret)
+}
+
+/// Whether a player is shown this fight: a secret one once the final fight
+/// is won (Sam: "the bubble only appears on the chart after you've defeated
+/// the local deity").
+pub fn visible(stop: &Stop, best: &BTreeMap<String, Best>) -> bool {
+    !stop.secret || last().is_some_and(|l| best.contains_key(&l.id))
 }
 
 /// Four arms for the player are won by beating the final fight.
@@ -308,7 +333,7 @@ pub fn next_goal(best: &BTreeMap<String, Best>) -> Option<(String, Req)> {
     let mut locked: Vec<(usize, usize, usize, &Stop)> = road
         .iter()
         .enumerate()
-        .filter(|(_, st)| !open(st, best))
+        .filter(|(_, st)| !open(st, best) && visible(st, best))
         .map(|(i, st)| (st.requires.iter().filter(|r| !r.met(best)).count(), st.level(), i, st))
         .collect();
     locked.sort_by_key(|&(unmet, level, i, _)| (unmet, level, i));

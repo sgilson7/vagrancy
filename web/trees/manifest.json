@@ -1,5 +1,5 @@
 {
-  "fingerprint": "7f91ec2e2c6ea4b0",
+  "fingerprint": "f961f5aced21f09d",
   "trees": [
     "abbot",
     "archivist",
@@ -26,6 +26,7 @@
     "gambler",
     "gatekeeper",
     "general",
+    "guardian_deity",
     "hare_hunter",
     "harpooner",
     "herbalist",

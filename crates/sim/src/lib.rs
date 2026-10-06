@@ -54,4 +54,6 @@ pub use world::World;
 /// 15: a body may hold a second weapon in a second pair of arms, with their
 /// own motor keys, and a player's four arms turn the second pair with the
 /// elbow keys; a throw lets go of every weapon in hand.
-pub const SIM_VERSION: u32 = 15;
+/// 16: a body's weapons past the first are a list (the guardian deity's
+/// eight arms hold four). A match plays exactly as in 15.
+pub const SIM_VERSION: u32 = 16;

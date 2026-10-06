@@ -22,7 +22,7 @@ pub(crate) fn lone_point() -> BodyDef {
         balance: false,
         ink: 0,
         sword: None,
-        second: None,
+        more: Vec::new(),
         elbow_keys_turn_upper: false,
     }
 }
@@ -89,7 +89,7 @@ fn figure(ink: i32) -> BodyDef {
         balance: false,
         ink,
         sword: None,
-        second: None,
+        more: Vec::new(),
         elbow_keys_turn_upper: false,
     }
 }

@@ -60,8 +60,8 @@ pub fn reshape_all(b: &mut sim::body::BodyDef, w: &crate::weapons::Weapon) {
     if let Some(sd) = b.sword.as_ref() {
         b.sword = Some(crate::weapons::reshape(sd, w));
     }
-    if let Some(sd) = b.second.as_ref() {
-        b.second = Some(crate::weapons::reshape(sd, w));
+    for sd in &mut b.more {
+        *sd = crate::weapons::reshape(sd, w);
     }
 }
 
@@ -149,6 +149,15 @@ pub fn opponent_body(bodies: &mut Vec<sim::body::BodyDef>, opponent: &str) -> u8
     // The weapon the opponent carries, if the road names one.
     if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon) {
         seat1 = armed(bodies, &w);
+    }
+    // Eight arms, and four of its weapon (the guardian deity).
+    if crate::road::stop(opponent).is_some_and(|s| s.eight_arms) {
+        let mut b = crate::body::eight_armed();
+        if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon).and_then(|w| crate::weapons::weapon(&w)) {
+            reshape_all(&mut b, &w);
+        }
+        bodies.push(b);
+        seat1 = (bodies.len() - 1) as u8;
     }
     // Four arms, and two of its weapon (the local deity).
     if crate::road::stop(opponent).is_some_and(|s| s.four_arms) {

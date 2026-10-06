@@ -1,0 +1,1315 @@
+{
+  "format": "vagrancy.save",
+  "state": {
+    "bindings": {
+      "left": {
+        "dodge": "KeyF",
+        "elbow_in": "KeyE",
+        "elbow_out": "KeyR",
+        "jump": "KeyS",
+        "shoulder_down": "KeyW",
+        "shoulder_up": "KeyQ",
+        "stand": "KeyG",
+        "step_left": "KeyA",
+        "step_right": "KeyD",
+        "throw": "KeyT"
+      },
+      "right": {
+        "dodge": "KeyH",
+        "elbow_in": "KeyO",
+        "elbow_out": "KeyP",
+        "jump": "KeyK",
+        "shoulder_down": "KeyI",
+        "shoulder_up": "KeyU",
+        "stand": "KeyY",
+        "step_left": "KeyJ",
+        "step_right": "KeyL",
+        "throw": "KeyM"
+      },
+      "solo": {
+        "dodge": "ShiftLeft",
+        "elbow_in": "KeyJ",
+        "elbow_out": "KeyL",
+        "jump": "KeyW",
+        "shoulder_down": "KeyK",
+        "shoulder_up": "KeyI",
+        "stand": "KeyS",
+        "step_left": "KeyA",
+        "step_right": "KeyD",
+        "throw": "KeyO"
+      }
+    },
+    "options": {
+      "music_volume": 70,
+      "remember_track": false
+    },
+    "road": {
+      "best": {
+        "abbot": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "archivist": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "bargeman": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "bell_founder": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "bellringer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "bird_scarer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "boatwright": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "brewer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "bridge_keeper": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "carpenter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "cartographer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "charcoal_burner": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "cooper": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "courier": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "crow_watcher": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "drover": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "drum_maker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "duelist": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "dyer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "eel_fisher": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "falconer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "ferryman": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "gambler": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "gatekeeper": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "general": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "hare_hunter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "harpooner": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "herbalist": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "hermit": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "juggler": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "kite_maker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "knife_grinder": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "lacquerer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "lamplighter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "local_deity": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "magistrate": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "mason": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "monk": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "net_mender": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "ox_herd": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "paper_maker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "pilgrim": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "porter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "post_rider": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "potter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "reader": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "reed_cutter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "rice_broker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "roofer": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "ropewalker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "salt_trader": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "sampler": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "scarecrow": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "shepherd": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "shrine_keeper": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "smith": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "stone_cutter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "tanner": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "tea_picker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "thresher": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "tinker": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "toll_collector": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "vaulter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "warden": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "watchman": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "weaver": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "well_digger": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "wind_reader": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "windmill": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        },
+        "woodcutter": {
+          "all_thrown": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "longsword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang"
+          ]
+        }
+      }
+    },
+    "story": 0,
+    "tutorial": [],
+    "weapon": "sword"
+  },
+  "version": 9
+}

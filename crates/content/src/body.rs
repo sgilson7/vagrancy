@@ -16,6 +16,8 @@ struct File {
     fighter: BodyJson,
     post: BodyJson,
     upper_arms: UpperArmsJson,
+    lower_arms: UpperArmsJson,
+    crown_arms: UpperArmsJson,
 }
 
 /// A second pair of arms and its weapon, added to the fighter's body.
@@ -41,7 +43,7 @@ struct BodyJson {
     balance: bool,
     sword: Option<SwordJson>,
     #[serde(default)]
-    second: Option<SwordJson>,
+    more: Vec<SwordJson>,
     #[serde(default)]
     elbow_keys_turn_upper: bool,
 }
@@ -190,7 +192,7 @@ fn build(b: BodyJson) -> BodyDef {
         }
     };
     let sword = b.sword.as_ref().map(weapon);
-    let second = b.second.as_ref().map(weapon);
+    let more = b.more.iter().map(weapon).collect();
     BodyDef {
         points,
         parts,
@@ -206,7 +208,7 @@ fn build(b: BodyJson) -> BodyDef {
         balance: b.balance,
         ink: b.ink,
         sword,
-        second,
+        more,
         elbow_keys_turn_upper: b.elbow_keys_turn_upper,
     }
 }
@@ -224,13 +226,27 @@ pub fn bodies() -> Vec<BodyDef> {
 /// "the elbows are free moving with no explicit control").
 pub fn four_armed(player: bool) -> BodyDef {
     let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
-    let mut b = f.fighter.clone();
-    let up = f.upper_arms;
-    b.points.extend(up.points);
-    b.parts.extend(up.parts);
-    b.sticks.extend(up.sticks);
-    b.hinges.extend(up.hinges);
-    b.second = Some(up.sword);
+    with_arms(f.fighter.clone(), &[f.upper_arms], player)
+}
+
+/// The guardian deity's body (Sam, 2026-10-06: "8 arms and each pair is
+/// holding a cursed blade"): the four-armed body with a pair at the waist
+/// and a pair at the neck. Its pairs share the two pairs' keys, the waist
+/// pair the first's and the neck pair the second's: the input has room for
+/// two pairs of arms.
+pub fn eight_armed() -> BodyDef {
+    let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
+    with_arms(f.fighter.clone(), &[f.upper_arms, f.lower_arms, f.crown_arms], false)
+}
+
+fn with_arms(mut b: BodyJson, sets: &[UpperArmsJson], player: bool) -> BodyDef {
+    for up in sets {
+        b.points.extend(up.points.clone());
+        b.parts.extend(up.parts.clone());
+        b.sticks.extend(up.sticks.clone());
+        b.hinges.extend(up.hinges.clone());
+        b.more.push(up.sword.clone());
+    }
     if player {
         for p in &mut b.parts {
             if matches!(p.motor.as_deref(), Some("elbow" | "elbow2")) {
@@ -259,7 +275,7 @@ pub fn scaled(def: &BodyDef, num: i64, den: i64) -> BodyDef {
         h.min_dist = h.min_dist.scale(num, den);
     }
     b.ink = (b.ink as i64 * num / den) as i32;
-    for s in b.sword.iter_mut().chain(b.second.iter_mut()) {
+    for s in b.sword.iter_mut().chain(b.more.iter_mut()) {
         s.butt = s.butt.scale(num, den);
         s.tip = s.tip.scale(num, den);
         s.hilt = s.hilt.scale(num, den);

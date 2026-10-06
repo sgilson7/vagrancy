@@ -111,6 +111,20 @@ pub fn fresh() -> SaveState {
     }
 }
 
+/// A save with each fight on the road won 3 rounds to none, with each feat
+/// a requirement can ask for, except the fights named in `unwon`: for Sam
+/// to try the end of arcade mode without playing to it (`lab test-saves`,
+/// testing/saves/).
+pub fn finished(unwon: &[&str]) -> SaveState {
+    let mut s = fresh();
+    let with: Vec<String> = crate::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
+    for st in crate::road::road().into_iter().filter(|st| !unwon.contains(&st.id.as_str())) {
+        let best = crate::road::Best { losses: 0, ticks: 3600, with: with.clone(), headshot: true, untouched: true, thrown: true, all_thrown: true };
+        s.road.best.insert(st.id, best);
+    }
+    s
+}
+
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
     let SaveState { road, bindings, options, tutorial, weapon, story, four_arms } = s;

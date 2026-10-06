@@ -155,9 +155,10 @@ pub struct BodyDef {
     pub balance: bool,
     pub ink: i32,
     pub sword: Option<SwordDef>,
-    /// The weapon in the second pair of hands, on a four-armed body.
+    /// The weapons in the other pairs of hands: one on a four-armed body,
+    /// three on the eight-armed guardian deity's.
     #[serde(default)]
-    pub second: Option<SwordDef>,
+    pub more: Vec<SwordDef>,
     /// The elbow keys turn the second pair of arms at the shoulder, and no
     /// key bends an elbow: the player's four arms (Sam, 2026-10-06: "your
     /// elbow controls are instead shoulder controls for your other arms").
@@ -168,7 +169,7 @@ pub struct BodyDef {
 impl BodyDef {
     /// Its weapons, the first pair of hands' first.
     pub fn weapons(&self) -> Vec<&SwordDef> {
-        self.sword.iter().chain(self.second.iter()).collect()
+        self.sword.iter().chain(self.more.iter()).collect()
     }
 }
 

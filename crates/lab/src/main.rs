@@ -134,6 +134,24 @@ fn golden() {
     println!("wrote {path}: {} ticks, checksum {:016x}", rec.world.tick, rec.world.checksum());
 }
 
+/// The save files Sam asked for (2026-10-06), in testing/saves/: each fight
+/// won 3-0 but the village deity, to beat it and see the guardian deity
+/// appear; and each fight won 3-0 but the guardian deity, to fight it.
+pub const TEST_SAVES: [(&str, &[&str]); 2] = [
+    ("all-but-the-village-deity.save.json", &["local_deity", "guardian_deity"]),
+    ("all-but-the-guardian-deity.save.json", &["guardian_deity"]),
+];
+
+fn test_saves() {
+    let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testing/saves");
+    std::fs::create_dir_all(dir).unwrap();
+    for (name, unwon) in TEST_SAVES {
+        let path = format!("{dir}/{name}");
+        std::fs::write(&path, content::save::encode(&content::save::finished(unwon))).unwrap();
+        println!("wrote {path}");
+    }
+}
+
 /// The checksum the gate compares the browser against.
 fn script_checksum(args: &[String]) {
     let ticks: u32 = args.first().and_then(|a| a.parse().ok()).unwrap_or(600);
@@ -827,6 +845,7 @@ fn main() {
         Some("roles") => roles(&args[1..]),
         Some("duel") => duel_trace(&args[1..]),
         Some("golden") => golden(),
+        Some("test-saves") => test_saves(),
         Some("script-checksum") => script_checksum(&args[1..]),
         _ => eprintln!("usage: lab stand [ticks]"),
     }

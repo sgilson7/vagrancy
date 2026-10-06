@@ -331,7 +331,10 @@ impl Road {
             return Ok(json!({ "save": content::save::encode(&s), "opened": [], "next": null }).to_string());
         }
         let w = &self.rec.world;
+        let hidden: Vec<String> = content::road::road().into_iter().filter(|st| !content::road::visible(st, &s.road.best)).map(|st| st.id).collect();
         let opened = content::road::record(&mut s.road.best, &self.opponent, content::road::Best::won(w.wins[1], w.tick, &self.weapon).with_feats(self.feats));
+        // The secret fights this win brought onto the chart.
+        let revealed: Vec<String> = content::road::road().into_iter().filter(|st| hidden.contains(&st.id) && content::road::visible(st, &s.road.best)).map(|st| st.id).collect();
         // When the win opened nothing, the goal core picks for next.
         let next = if opened.is_empty() {
             content::road::next_goal(&s.road.best).map(|(target, r)| {
@@ -341,7 +344,7 @@ impl Road {
         } else {
             None
         };
-        Ok(json!({ "save": content::save::encode(&s), "opened": opened, "next": next }).to_string())
+        Ok(json!({ "save": content::save::encode(&s), "opened": opened, "next": next, "revealed": revealed }).to_string())
     }
 }
 
@@ -561,8 +564,10 @@ pub fn story_json() -> String {
 pub fn road_json(save_text: &str) -> Result<String, String> {
     let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
     let best = &s.road.best;
+    // A secret fight is left out until the final fight is won.
     let stops: Vec<serde_json::Value> = content::road::road()
         .iter()
+        .filter(|st| content::road::visible(st, best))
         .map(|st| {
             let won = best.get(&st.id);
             let requires: Vec<serde_json::Value> = st
@@ -586,6 +591,7 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
             json!({
                 "id": st.id,
                 "level": st.level(),
+                "named_row": st.row.is_some(),
                 "rewards": rewards,
                 "weapon": st.weapon,
                 "open": content::road::open(st, best),

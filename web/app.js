@@ -122,9 +122,10 @@ function popupShow(said) {
 }
 // The card for a won match on the road, in the same box: what the win
 // opened, or, when it opened nothing, the goal core picked for next.
-function popupMatchWon(opened, next) {
+function popupMatchWon(opened, next, revealed = []) {
   const box = $('death-popup');
   const kids = [el('p', { class: 'popup-head', 'data-copy': 'results.popup.match_won' }, t('results.popup.match_won'))];
+  for (const o of revealed) kids.push(say('road.revealed', { opponent: t(`opponents.${o}.name`) }, { class: 'popup-line' }));
   for (const o of opened) kids.push(say('road.opened', { opponent: t(`opponents.${o}.name`) }, { class: 'popup-line' }));
   if (!opened.length && next) {
     kids.push(say('road.next', { target_mid: t(`opponents.${next.open}.name_mid`) }, { class: 'popup-line' }));
@@ -804,9 +805,13 @@ function road() {
     requires: s.requires.map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
   }));
   const view = roadView();
+  // A row a fight sets for itself (the deities') is not a count of its
+  // requirements, so it goes by its region in every view.
+  const named = new Set(stops.filter((s) => s.named_row).map((s) => s.level));
   const rowLabel = view === 'chart'
     ? (l) => say(`road.region.${l}`, {}, { class: 'tier-label' })
-    : (l) => l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
+    : (l) => named.has(l) ? say(`road.region.${l}`, {}, { class: 'tier-label' })
+      : l === 0 ? say('road.tier.none', {}, { class: 'tier-label' })
       : l === 1 ? say('road.tier.one', {}, { class: 'tier-label' })
       : say('road.tier.many', { count: l }, { class: 'tier-label' });
   const detail = (id, card) => {
@@ -842,7 +847,7 @@ function road() {
   };
   // The fight picked last, or the first open one not yet won.
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
-  const before = [weaponPanel(road), viewSwitch()];
+  const before = [say('road.quest', {}, { class: 'desc', id: 'road-quest' }), weaponPanel(road), viewSwitch()];
   if (view === 'chapters') chaptersScreen({ stops, detail, first: first.id, before });
   else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' || view === 'sunburst' ? view : 'rows' });
 }
@@ -1042,6 +1047,7 @@ function fight(id, goal = null) {
   let won = false;
   let opened = [];
   let next = null;
+  let revealed = [];
   let cardShown = false;
   const watch = matchWatcher(id, () => {
     // After a win that opened fights, the first button is the first of
@@ -1068,6 +1074,7 @@ function fight(id, goal = null) {
       SAVE = JSON.parse(r.save);
       opened = r.opened;
       next = r.next;
+      revealed = r.revealed || [];
       persist();
     }
     watch.tick(f);
@@ -1077,7 +1084,7 @@ function fight(id, goal = null) {
     if (won && f.phase === 'match_over' && !cardShown) {
       cardShown = true;
       const mine = game;
-      setTimeout(() => { if (game === mine) popupMatchWon(opened, next); }, FREEZE ? HOLD_MS + 700 : 1600);
+      setTimeout(() => { if (game === mine) popupMatchWon(opened, next, revealed); }, FREEZE ? HOLD_MS + 700 : 1600);
     }
   });
 }

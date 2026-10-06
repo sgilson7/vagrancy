@@ -36,7 +36,8 @@ fn the_local_deity_asks_for_every_fight_in_the_row_above_and_sits_alone_below_it
         assert!(asked.contains(id), "the local deity does not ask for the {id}");
     }
     assert_eq!(asked.len(), above.len(), "the local deity asks for a fight outside the row above");
-    assert!(road.iter().all(|s| s.level() < last.level() || s.id == last.id), "a fight sits in the final row or below it");
+    // Below it, the secret fight alone (crates/content/tests/guardian.rs).
+    assert!(road.iter().all(|s| s.level() < last.level() || s.id == last.id || s.secret), "a fight sits in the final row or below it");
 }
 
 #[test]

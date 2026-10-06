@@ -116,7 +116,9 @@ pub fn upper_view(w: &World, seat: usize) -> World {
     }
     if let Some(f) = v.fighters[seat].as_ref() {
         let def = &mut v.setup.bodies[f.body as usize];
-        std::mem::swap(&mut def.sword, &mut def.second);
+        if let (Some(a), Some(b)) = (def.sword.as_mut(), def.more.first_mut()) {
+            std::mem::swap(a, b);
+        }
         for p in &mut def.parts {
             p.motor = p.motor.map(|m| match m {
                 Motor::Shoulder => Motor::Shoulder2,
