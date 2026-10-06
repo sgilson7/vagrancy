@@ -345,6 +345,79 @@ impl Road {
     }
 }
 
+/// Watch mode (Sam, 2026-10-06: "an enemy vs enemy ai watching mode"): two
+/// road opponents, each run by its own pilot, in
+/// the bodies they fight in on the road. The page's keys are ignored.
+#[wasm_bindgen]
+pub struct Exhibition {
+    rec: Recording,
+    pilots: Vec<Box<dyn pilot::Pilot>>,
+    last: [Input; sim::body::SEATS],
+    ids: [String; 2],
+}
+
+#[wasm_bindgen]
+impl Exhibition {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Exhibition {
+        Exhibition {
+            rec: Recording::new(content::setup::exhibition(seed as u64, tuning, [left, right], map)),
+            pilots: [left, right].iter().map(|id| pilot::build(&content::road::pilot(id))).collect(),
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [left.into(), right.into()],
+        }
+    }
+    /// One tick: both pilots see the world and every seat's last input.
+    pub fn step(&mut self, _a: u16, _b: u16) {
+        let mut i = [Input::NONE; sim::body::SEATS];
+        for (k, p) in self.pilots.iter_mut().enumerate() {
+            p.observe(self.last);
+            i[k] = p.input(&self.rec.world, k);
+        }
+        self.rec.step_all(i);
+        self.last = i;
+    }
+    pub fn frame(&self) -> String {
+        serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    /// What each side's tree ran on the last tick: `[{ seat, active, held,
+    /// failed }]`, seats 0 and 1.
+    pub fn traces(&self) -> String {
+        let all: Vec<serde_json::Value> = self
+            .pilots
+            .iter()
+            .enumerate()
+            .map(|(k, p)| {
+                let t = p.trace();
+                json!({ "seat": k, "active": t.active, "held": t.held, "failed": t.failed })
+            })
+            .collect();
+        serde_json::to_string(&all).unwrap()
+    }
+    pub fn phase_text(&self, _opponent: &str) -> String {
+        let ids = [self.ids[0].as_str(), self.ids[1].as_str()];
+        content::messages::phase_text(&self.rec.world, content::messages::Audience::Exhibition { ids }).to_string()
+    }
+    pub fn checksum(&self) -> String {
+        format!("{:016x}", self.rec.world.checksum())
+    }
+    pub fn tick(&self) -> u32 {
+        self.rec.world.tick
+    }
+    pub fn is_replay(&self) -> bool {
+        false
+    }
+    pub fn done(&self) -> bool {
+        false
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.rec.bytes()
+    }
+    pub fn recorded_checksum(&self) -> String {
+        String::new()
+    }
+}
+
 /// A story mode run (content::story): the scene's fight being played, the
 /// run's lives, and what comes after each fight, all decided in core.
 #[wasm_bindgen]

@@ -35,7 +35,8 @@
     "node": "tree.*: the label of the node a pilot is running, filled by the page from core's trace",
     "lives": "story mode: the lives left in a run, from content::story",
     "fight, fights": "story mode: which fight of a scene, and how many it has",
-    "arms": "How many arms the player fights with in that mode, counted by core from the body's hands (wasm arms_json)."
+    "arms": "How many arms the player fights with in that mode, counted by core from the body's hands (wasm arms_json).",
+    "left_opponent, right_opponent": "opponents.<id>.name of the opponent on that side, in watch mode"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -98,7 +99,8 @@
     "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)",
     "road.next_carry": "new",
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
-    "local_deity": "new: opponents.local_deity (all five strings), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8"
+    "local_deity": "new: opponents.local_deity (all five strings), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
+    "watch": "new: menu.watch, watch (all its strings)"
   },
   "_glossary": {
     "ink": {
@@ -225,6 +227,10 @@
     "story": {
       "label": "Story mode",
       "desc": "Walk from the rice fields to the far gate a chapter at a time, with {lives} lives for a run."
+    },
+    "watch": {
+      "label": "Watch",
+      "desc": "Pick two opponents you have beaten and watch them fight, each with its behavior tree over its head."
     }
   },
   "how": {
@@ -1638,5 +1644,21 @@
       "c8_gauntlet": "The gatekeeper, the bellringer and the monk, one after another.",
       "c8_archivist": "The archivist, grown to a giant, over two rounds."
     }
+  },
+  "watch": {
+    "none": "Beat an opponent in arcade mode, and you can watch it fight here.",
+    "intro": "Pick an opponent for each side and the ground they fight on. The same opponent can fight itself.",
+    "left": "On the left",
+    "right": "On the right",
+    "start": {
+      "label": "Watch them fight"
+    },
+    "random": {
+      "label": "Pick two at random"
+    },
+    "again": {
+      "label": "Watch them again"
+    },
+    "watching": "{left_opponent} against {right_opponent}. The step of each tree that is running lights up."
   }
 }

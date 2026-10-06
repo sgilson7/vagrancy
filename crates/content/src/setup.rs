@@ -81,14 +81,13 @@ pub fn versus_with(seed: u64, tuning: u8, weapons: [&str; 2], map: &str) -> Setu
     s
 }
 
-/// Two road opponents against each other, each carrying what it carries on
-/// the road, the enemies' own weapons included: for `lab film`, which
-/// records opponents' fights for showing, never for a player.
+/// Two road opponents against each other, each in the body it fights in on
+/// the road, the enemies' own weapons and the local deity's arms included:
+/// for watch mode (Sam, 2026-10-06) and `lab film`. Neither is a player.
 pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
     let mut s = crate::maps::on(versus(seed, tuning), map);
     for (seat, id) in ids.iter().enumerate() {
-        let w = crate::road::stop(id).and_then(|s| s.weapon).unwrap_or(crate::weapons::DEFAULT.to_string());
-        let body = armed(&mut s.bodies, &w);
+        let body = opponent_body(&mut s.bodies, id);
         s.seats[seat] = Some(Seat::at(body, balance::START_X));
     }
     s
@@ -134,8 +133,9 @@ pub fn versus(seed: u64, tuning: u8) -> Setup {
 /// companion in seat 2 on the left, each as far from the player as two
 /// fighters start a duel apart. At half that, a companion who dodged in at
 /// the start cut the player on the 25th tick (SECOND-ORDER-M5 row 50).
-pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
-    let mut bodies = crate::body::bodies();
+/// The body an opponent fights in on the road, added to `bodies` if it is
+/// not the fighter's own: bare-handed, carrying its weapon, or four-armed.
+pub fn opponent_body(bodies: &mut Vec<sim::body::BodyDef>, opponent: &str) -> u8 {
     let mut seat1 = FIGHTER;
     // An unarmed opponent (the scarecrow) stands without a sword: with the
     // longer swords a runner's arm met its still blade fast enough to be cut,
@@ -148,7 +148,7 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
     }
     // The weapon the opponent carries, if the road names one.
     if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon) {
-        seat1 = armed(&mut bodies, &w);
+        seat1 = armed(bodies, &w);
     }
     // Four arms, and two of its weapon (the local deity).
     if crate::road::stop(opponent).is_some_and(|s| s.four_arms) {
@@ -159,6 +159,12 @@ pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
         bodies.push(b);
         seat1 = (bodies.len() - 1) as u8;
     }
+    seat1
+}
+
+pub fn road(seed: u64, tuning: u8, opponent: &str) -> Setup {
+    let mut bodies = crate::body::bodies();
+    let mut seat1 = opponent_body(&mut bodies, opponent);
     // The fight's condition, if it has one (data/road.json).
     let rounds_to_win = ROUNDS_TO_WIN;
     let mut physics = Physics::tuned(tuning);

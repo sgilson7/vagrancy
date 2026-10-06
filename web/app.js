@@ -3,7 +3,7 @@
 // data/copy.en.json, which reaches it through the wasm module; which sentence
 // to show for an outcome is chosen by core (content::messages).
 import init, {
-  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, story_json,
+  copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
   road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
   arms_json, save_choose_arms,
 } from './pkg/vagrancy_wasm.js';
@@ -193,7 +193,10 @@ function loop(now) {
 // Watches the frames of a match and shows what core says about its phase.
 // `opponent` is a road opponent's id, or '' for versus. `onEnd` builds the
 // buttons for the end of the match.
-function matchWatcher(opponent, endButtons) {
+function matchWatcher(opponent, endButtons, names = null) {
+  // Each side's name on the score line: the fighters' colors unless the
+  // caller names them (watch mode names the opponents).
+  const [leftName, rightName] = names || [t('fighters.left.name'), t('fighters.right.name')];
   let phase = 'fight';
   document.body.dataset.phase = phase;
   const hud = $('hud');
@@ -205,8 +208,8 @@ function matchWatcher(opponent, endButtons) {
       hud.replaceChildren(
         el('span', { 'data-copy': 'hud.round' }, t('hud.round', { round: frame.round })),
         el('span', { 'data-copy': 'hud.score' }, t('hud.score', {
-          left_name: t('fighters.left.name'), left_wins: frame.wins[0],
-          right_name: t('fighters.right.name'), right_wins: frame.wins[1],
+          left_name: leftName, left_wins: frame.wins[0],
+          right_name: rightName, right_wins: frame.wins[1],
         })),
       );
       if (frame.phase === phase) return;
@@ -271,6 +274,7 @@ function menu() {
     item('menu.road', road),
     item('menu.train', train),
     item('menu.encyclopedia', encyclopedia),
+    item('menu.watch', watchMode),
     item('menu.local', local),
     item('menu.online', online),
     item('menu.practice', practice),
@@ -283,7 +287,7 @@ function menu() {
 // has unlocked.
 const LOCAL_WEAPONS = ['sword', 'sword'];
 // The ground for a match at one keyboard, and for one this page hosts.
-const MAP_CHOICE = { local: 'flat', online: 'flat' };
+const MAP_CHOICE = { local: 'flat', online: 'flat', watch: 'flat' };
 // What this player carries online, from what the save has unlocked.
 let ONLINE_WEAPON = null;
 
@@ -1279,6 +1283,70 @@ function trainFight(s) {
   });
 }
 let LAST_TRACES = [];
+
+// --- watch mode (Sam, 2026-10-06: an enemy against enemy watching mode, like
+// the fighting game engines that pit computer fighters against each other) ------------
+
+// Who fights on each side, from the opponents this save has beaten.
+const WATCH = [null, null];
+
+function watchMode() {
+  stop();
+  const won = roadData().filter((s) => s.won);
+  if (!won.length) {
+    show(say('watch.none'), el('div', { class: 'actions' }, button('menu.back.label', menu)));
+    return;
+  }
+  const ids = won.map((s) => s.id);
+  for (let k = 0; k < 2; k += 1) if (!ids.includes(WATCH[k])) WATCH[k] = ids[Math.min(k, ids.length - 1)];
+  const picker = (k, labelKey) => {
+    const id = `watch-${k}`;
+    const pick = el('select', { id, on: { change: () => { WATCH[k] = pick.value; } } },
+      ...ids.map((o) => el('option', { value: o, 'data-copy': `opponents.${o}.name` }, t(`opponents.${o}.name`))));
+    pick.value = WATCH[k];
+    return el('p', {}, el('label', { for: id, 'data-copy': labelKey }, t(labelKey)), ' ', pick);
+  };
+  show(
+    say('watch.intro', {}, { class: 'desc' }),
+    picker(0, 'watch.left'),
+    picker(1, 'watch.right'),
+    mapPicker('watch', 'local.map'),
+    el('div', { class: 'actions' },
+      button('watch.start.label', watchFight),
+      button('watch.random.label', () => { watchRandom(ids); watchFight(); }),
+      button('menu.back.label', menu)),
+  );
+}
+
+// Two of the beaten opponents, picked by the page: which pair to show is a
+// choice of the menu, not of the match, which core plays.
+function watchRandom(ids) {
+  WATCH[0] = ids[Math.floor(Math.random() * ids.length)];
+  WATCH[1] = ids[Math.floor(Math.random() * ids.length)];
+}
+
+function watchFight() {
+  READY = false;
+  const [left, right] = WATCH;
+  const ids = roadData().filter((s) => s.won).map((s) => s.id);
+  // The same opponent on both sides goes by the fighters' colors.
+  const names = left === right ? null : [t(`opponents.${left}.name`), t(`opponents.${right}.name`)];
+  const watch = matchWatcher('', () => [el('div', { class: 'actions' },
+    button('watch.again.label', watchFight),
+    button('watch.random.label', () => { watchRandom(ids); watchFight(); }),
+    button('menu.watch.label', watchMode))], names);
+  show(watch.panel,
+    say('watch.watching', { left_opponent: t(`opponents.${left}.name`), right_opponent: t(`opponents.${right}.name`) }, { class: 'desc' }),
+    el('div', { class: 'actions' }, button('watch.random.label', () => { watchRandom(ids); watchFight(); }), button('menu.watch.label', watchMode)));
+  const caption = (n) => t('tree.now', { node: n.text });
+  const g = new Exhibition(seed(), tuning(), left, right, MAP_CHOICE.watch);
+  start(g, () => [0, 0], (f) => {
+    watch.tick(f);
+    const traces = JSON.parse(game.traces());
+    LAST_TRACES = traces;
+    draw.trees(traces.map((tr) => ({ seat: tr.seat, tree: treeOf(WATCH[tr.seat]), trace: tr, caption })));
+  });
+}
 
 // --- the save file (D15) ----------------------------------------------------------------
 

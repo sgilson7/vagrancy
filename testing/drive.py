@@ -841,6 +841,57 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
 
 
 @check
+def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
+    # Sam: "an enemy vs enemy ai watching mode ... each characters behavior
+    # tree is being shown above their head as they battle".
+    fails = []
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.watch.label")
+    page.wait_for_selector('[data-copy="watch.none"]')
+    click_copy(page, "menu.back.label")
+    won = ["thresher", "juggler", "local_deity"]
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {k: {"losses": 1, "ticks": 9999, "with": ["sword"]} for k in won}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.watch.label")
+    page.wait_for_selector("#watch-0")
+    offered = page.evaluate("[...document.querySelectorAll('#watch-0 option')].map(o => o.value)")
+    if sorted(offered) != sorted(won):
+        fails.append(f"{name}: watch mode offers {offered}, not the beaten {won}")
+    fails += every_visible_line_is_a_copy_string(page, name + " (watch)")
+    page.select_option("#watch-0", "local_deity")
+    page.select_option("#watch-1", "juggler")
+    click_copy(page, "watch.start.label")
+    page.wait_for_selector('[data-copy="hud.round"]')
+    seen = set()
+    for _ in range(20):
+        page.wait_for_timeout(100)
+        for tr in page.evaluate("window.vagrancy.traces()"):
+            if tr["active"]:
+                seen.add(tr["seat"])
+    if seen != {0, 1}:
+        fails.append(f"{name}: in watch mode the trees lit for seats {sorted(seen)}, not both sides")
+    score = page.locator('[data-copy="hud.score"]').inner_text()
+    copy = json.loads((ROOT / "data" / "copy.en.json").read_text())
+    for o in ("local_deity", "juggler"):
+        if copy["opponents"][o]["name"] not in score:
+            fails.append(f"{name}: the score line does not name {o}: {score!r}")
+    fails += every_visible_line_is_a_copy_string(page, name + " (watching)")
+    click_copy(page, "menu.watch.label")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: watch mode offers the beaten opponents, names both on the score line, and lights both trees")
+    return fails
+
+
+@check
 def story_mode_plays_a_scene_and_moves_on(page, name):
     # Sam, 2026-10-06: "start building the story mode". The first chapter's
     # first scene, played by keyboard; the run moves on as its outcome says.

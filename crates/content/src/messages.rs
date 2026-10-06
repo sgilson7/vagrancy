@@ -16,6 +16,18 @@ pub enum Audience<'a> {
     Versus,
     /// The road: seat 0 is "you", seat 1 is the opponent with this id.
     Road { opponent: &'a str },
+    /// Watch mode: two opponents, by these ids, and no player. Said as at
+    /// one keyboard, each side named by its opponent's name.
+    Exhibition { ids: [&'a str; 2] },
+}
+
+/// What a side is called: the opponent's name in watch mode, unless both
+/// sides are the same opponent; the fighter's color otherwise.
+fn side_name(copy: &Value, who: &Audience, seat: u8) -> String {
+    match who {
+        Audience::Exhibition { ids } if ids[0] != ids[1] => copy_at(copy, &format!("opponents.{}.name", ids[seat as usize])).to_string(),
+        _ => fighter_name(copy, seat),
+    }
 }
 
 fn copy_at<'a>(copy: &'a Value, key: &str) -> &'a str {
@@ -51,8 +63,8 @@ pub fn round_result(w: &World, r: &RoundResult, who: Audience) -> Value {
     let own = r.by == r.seat && r.cause != Cause::Ink;
     let part = part_word(&copy, w, r.seat, r.part);
     match who {
-        Audience::Versus => {
-            let names = json!({ "winner": fighter_name(&copy, winner), "loser": fighter_name(&copy, loser), "part": part });
+        Audience::Versus | Audience::Exhibition { .. } => {
+            let names = json!({ "winner": side_name(&copy, &who, winner), "loser": side_name(&copy, &who, loser), "part": part });
             let key = match (own, r.cause) {
                 (true, _) => "results.versus.self",
                 (false, Cause::Neck) => "results.versus.neck",
@@ -100,7 +112,9 @@ pub fn match_result(w: &World, who: Audience) -> Value {
     let winner = if w.wins[0] >= w.wins[1] { 0u8 } else { 1u8 };
     let (wins, losses) = (w.wins[winner as usize], w.wins[1 - winner as usize]);
     match who {
-        Audience::Versus => json!({ "key": "results.versus.match", "vars": { "winner": fighter_name(&copy, winner), "wins": wins, "losses": losses } }),
+        Audience::Versus | Audience::Exhibition { .. } => {
+            json!({ "key": "results.versus.match", "vars": { "winner": side_name(&copy, &who, winner), "wins": wins, "losses": losses } })
+        }
         Audience::Road { opponent } => {
             let name = copy_at(&copy, &format!("opponents.{opponent}.name")).to_string();
             if winner == 0 {
