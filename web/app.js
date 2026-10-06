@@ -128,6 +128,7 @@ function popupMatchWon(opened, next) {
   if (!opened.length && next) {
     kids.push(say('road.next', { target_mid: t(`opponents.${next.open}.name_mid`) }, { class: 'popup-line' }));
     kids.push(reqLine(next, { class: 'popup-line' }));
+    if (next.key === 'road.req.with') kids.push(say('road.next_carry', { weapon: t(`weapons.${next.vars.weapon}.name`) }, { class: 'popup-line' }));
   }
   box.replaceChildren(...kids);
   box.classList.remove('headshot', 'won-1');
@@ -993,7 +994,29 @@ function mission(id, part) {
   delete document.body.dataset.mission;
 }
 
-function fight(id) {
+// Going on to a goal's fight: a weapon challenge switches the player to its
+// weapon first (Sam, 2026-10-06: "the player should be immediately switched
+// to that weapon as they press enter"). Core chose the goal so that its
+// weapon is one the player has unlocked, and save_choose_weapon refuses any
+// other.
+function fightForGoal(goal) {
+  if (goal.vars && goal.vars.weapon && goal.key === 'road.req.with') {
+    SAVE = JSON.parse(save_choose_weapon(JSON.stringify(SAVE), goal.vars.weapon));
+    persist();
+  }
+  fight(goal.stop, goal);
+}
+
+// The goal a fight is played for, beside the arena in bold: what it opens
+// and what it asks (Sam: "extra bold side text telling the player to meet
+// the condition").
+function goalCallout(goal) {
+  const kids = [say('road.next', { target_mid: t(`opponents.${goal.open}.name_mid`) }), reqLine(goal)];
+  if (goal.key === 'road.req.with') kids.push(say('road.carried', { weapon: t(`weapons.${goal.vars.weapon}.name`) }));
+  return el('div', { id: 'goal-callout', role: 'note' }, ...kids);
+}
+
+function fight(id, goal = null) {
   READY = false;
   ROAD_PICK = id;
   let won = false;
@@ -1006,7 +1029,8 @@ function fight(id) {
     // otherwise this opponent again. Enter presses the first.
     const again = button('results.again.label', () => fight(id));
     const to = opened.length ? opened[0] : next ? next.stop : null;
-    const onward = to ? button('road.fight.label', () => fight(to), { opponent_mid: t(`opponents.${to}.name_mid`) }) : null;
+    const go = opened.length ? () => fight(to) : () => fightForGoal(next);
+    const onward = to ? button('road.fight.label', go, { opponent_mid: t(`opponents.${to}.name_mid`) }) : null;
     return [
       ...opened.map((o) => say('road.opened', { opponent: t(`opponents.${o}.name`) }, { class: 'desc' })),
       el('div', { class: 'actions' },
@@ -1014,7 +1038,7 @@ function fight(id) {
         button('results.to_road.label', road),
         button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
   });
-  show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
+  show(goal ? goalCallout(goal) : '', watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
   const g = new Road(seed(), tuning(), id, SAVE.state.weapon);
   start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
     // Kept before the result is drawn, so the result can name what opened.

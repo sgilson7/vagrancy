@@ -491,6 +491,13 @@ fn after_a_win_that_opens_nothing_the_next_goal_is_the_nearest_locked_fight() {
     if let Req::With { weapon, .. } = &req {
         assert_eq!(&content::weapons::usable(weapon, &first), weapon, "the next goal asks for the {weapon}, which is locked");
     }
+    // With the scimitar won at the pilgrim, the ox herd's challenge (beat
+    // the tinker carrying the scimitar) is the goal: a weapon challenge the
+    // player can take up, which the page switches the weapon for.
+    let mut armed = first.clone();
+    armed.insert("pilgrim".to_string(), Best::won(1, 9999, "sword"));
+    let (opens, req) = next_goal(&armed).expect("a next goal");
+    assert_eq!((opens.as_str(), req), ("ox_herd", Req::With { stop: "tinker".into(), weapon: "scimitar".into() }));
     // Nothing is suggested once every fight is open.
     for s in road() {
         best.insert(s.id, Best { losses: 0, ticks: 1, with: content::weapons::weapons().into_iter().map(|w| w.id).collect(), headshot: true, untouched: true });

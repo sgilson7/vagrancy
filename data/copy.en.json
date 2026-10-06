@@ -94,7 +94,8 @@
     "results.draw_disarmed, results.popup.disarmed": "new",
     "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)",
     "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)",
-    "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)"
+    "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)",
+    "road.next_carry": "new"
   },
   "_glossary": {
     "ink": {
@@ -429,7 +430,8 @@
     "cleared": "You have won this fight. You can fight {opponent_mid} again.",
     "companion": "{companion} stands behind you, carrying a {weapon}. The round ends when you can no longer fight, or when neither of them can.",
     "map_heading": "The ground",
-    "next": "To open {target_mid}, do this next:"
+    "next": "To open {target_mid}, do this next:",
+    "next_carry": "Going on switches you to the {weapon}."
   },
   "opponents": {
     "scarecrow": {

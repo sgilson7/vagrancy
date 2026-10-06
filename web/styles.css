@@ -177,3 +177,7 @@ button.bind.listening { outline: 3px solid var(--focus); }
 #story-chapters .chapter.locked h3 { color: var(--muted); }
 #story-chapters .scenes { margin: 4px 0 8px; }
 #story-hud { font-weight: bold; margin: 4px 0; }
+/* The goal a fight is played for, beside the arena: bold and boxed. */
+#goal-callout { border: 3px solid var(--focus); border-left-width: 10px; padding: 8px 14px; margin: 6px 0 10px; }
+#goal-callout p { font-weight: bold; font-size: 1.1em; margin: 2px 0; color: var(--focus); }
+@media (min-width: 1500px) { #goal-callout { position: fixed; right: 16px; top: 140px; width: 230px; background: var(--paper); z-index: 4; } }

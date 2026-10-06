@@ -1024,7 +1024,10 @@ def a_win_that_opens_nothing_names_the_next_goal(page, name):
     stops = [s["id"] for s in json.loads((ROOT / "data" / "road.json").read_text())["stops"]]
     weapons = [w["id"] for w in json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"] if not w.get("enemy_only")]
     save = page.evaluate("window.vagrancy.save()")
-    save["state"]["road"]["best"] = {stops[0]: {"losses": 0, "ticks": 1, "with": sorted(weapons), "headshot": True, "untouched": True}}
+    # The pilgrim beaten too, so the scimitar is won: the goal core picks is
+    # then the ox herd's challenge, the tinker beaten carrying the scimitar.
+    save["state"]["road"]["best"] = {stops[0]: {"losses": 0, "ticks": 1, "with": sorted(weapons), "headshot": True, "untouched": True},
+                                     "pilgrim": {"losses": 1, "ticks": 9999, "with": ["sword"]}}
     page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
@@ -1050,13 +1053,27 @@ def a_win_that_opens_nothing_names_the_next_goal(page, name):
     first = page.evaluate("(() => { const b = document.querySelector('#result button'); return b && b.dataset.copy; })()")
     if first != "road.fight.label":
         fails.append(f"{name}: the first button after the win is {first!r}, not the next goal's fight")
+    if not page.locator('#death-popup [data-copy="road.next_carry"]').count():
+        fails.append(f"{name}: the card for a weapon challenge does not say going on switches the weapon")
+    # Enter goes on: the weapon switches, and the fight carries the goal in
+    # bold beside it (Sam, 2026-10-06).
+    page.keyboard.press("Enter")
+    try:
+        page.wait_for_selector("#goal-callout", timeout=5000)
+    except Exception:
+        fails.append(f"{name}: the next goal's fight shows no goal beside it")
+    if page.evaluate("window.vagrancy.save().state.weapon") != "scimitar":
+        fails.append(f"{name}: going on to a scimitar challenge left the player with the {page.evaluate('window.vagrancy.save().state.weapon')}")
+    if page.locator('#goal-callout [data-copy="road.req.with"]').count() != 1:
+        fails.append(f"{name}: the goal beside the fight does not state the challenge")
+    fails += every_visible_line_is_a_copy_string(page, name + " (the goal's fight)")
     click_copy(page, "results.to_road.label")
     click_copy(page, "menu.back.label")
     page.evaluate("localStorage.removeItem('vagrancy.autosave')")
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: a won match pops its card, and a win that opens nothing names the next goal and offers its fight first")
+        print(f"ok: {name}: a won match pops its card; a win that opens nothing names the next goal, and Enter starts its fight with the goal beside it and the challenge's weapon in hand")
     return fails
 
 
