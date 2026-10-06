@@ -155,10 +155,35 @@ fn each_row_below_the_first_has_one_boomerang_fight_a_thrown_win_in_the_row_abov
     for row in 1..=rows {
         let here: Vec<_> = road.iter().filter(|s| s.level() == row && s.weapon.as_deref() == Some("boomerang")).collect();
         assert_eq!(here.len(), 1, "row {row} has {} boomerang fights", here.len());
-        let thrown = here[0].requires.iter().find(|r| matches!(r, Req::Thrown(_) | Req::AllThrown(_)));
+        let thrown = here[0].requires.iter().find(|r| matches!(r, Req::Thrown(_) | Req::AllThrown(_) | Req::Bladeless(_)));
         let r = thrown.unwrap_or_else(|| panic!("the {} asks for no thrown win", here[0].id));
         assert_eq!(level(r.stop()), row - 1, "the {}'s thrown win is not in the row above", here[0].id);
     }
     let first = road.iter().find(|s| s.level() == 1 && s.weapon.as_deref() == Some("boomerang")).unwrap();
     assert_eq!(content::weapons::weapon("boomerang").unwrap().unlock, Some(Req::Beat(first.id.clone())));
+}
+
+#[test]
+fn a_round_won_after_a_throw_counts_as_won_with_no_blade_in_hand_but_not_as_a_thrown_vital_cut() {
+    // Sam (2026-10-06): "end a round without a blade in your hand, and hit
+    // a vital with your thrown blade" are two requirements. The sword thrown
+    // from a few steps out (crates/content/tests/throw.rs) cuts the other
+    // fighter, who runs out of ink: no blade in hand, and no vital cut.
+    let mut w = World::new(content::setup::versus(1, sim::balance::DEFAULT_TUNING));
+    let mut feats = Feats::default();
+    let mut result = None;
+    for t in 0..400u32 {
+        w.step([Input(plan(t, 50, 2)), Input::NONE]);
+        feats.observe(&w);
+        if let Some(Event::RoundEnd { result: r }) = w.events.iter().find(|e| matches!(e, Event::RoundEnd { .. })) {
+            result = Some(*r);
+            break;
+        }
+    }
+    let r = result.expect("the throw did not end the round");
+    assert_eq!((r.loser, r.cause, r.thrown), (Some(1), sim::body::Cause::Ink, false), "{r:?}");
+    assert!(feats.bladeless && !feats.thrown, "{feats:?}");
+    let mut best = BTreeMap::new();
+    best.insert("scarecrow".to_string(), Best::won(0, w.tick, "sword").with_feats(feats));
+    assert!(Req::Bladeless("scarecrow".into()).met(&best) && !Req::Thrown("scarecrow".into()).met(&best));
 }

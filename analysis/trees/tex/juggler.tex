@@ -15,9 +15,9 @@
   label/.style={anchor=west, text=ink, text width=2.30cm, align=left, font=\sffamily\footnotesize, inner sep=0pt},
   edge/.style={draw=muted, line width=1pt}]
 % --- Nodes ---
-\node[box, comp] (n0) at (19.800,-0.875) {};
-\begin{scope}[shift={(18.100,-1.350)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSelector\end{scope}
-\node[label] at (19.200,-0.875) {Selector};
+\node[box, comp] (n0) at (20.175,-0.875) {};
+\begin{scope}[shift={(18.475,-1.350)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSelector\end{scope}
+\node[label] at (19.575,-0.875) {Selector};
 \node[box, comp, dashed] (n1) at (1.950,-3.175) {};
 \begin{scope}[shift={(0.250,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
 \node[label] at (1.350,-3.175) {Sequence};
@@ -47,58 +47,70 @@
 \node[label] at (12.300,-5.475) {It holds its sword};
 \node[box, cond] (n10) at (12.900,-7.775) {};
 \begin{scope}[shift={(11.200,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconFar\end{scope}
-\node[label] at (12.300,-7.775) {Farther than 220 cm from you};
+\node[label] at (12.300,-7.775) {Farther than 200 cm from you};
 \node[box, cond] (n11) at (12.900,-10.075) {};
 \begin{scope}[shift={(11.200,-10.550)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
-\node[label] at (12.300,-10.075) {Closer than 300 cm to you};
+\node[label] at (12.300,-10.075) {Closer than 320 cm to you};
 \node[box, cond] (n12) at (12.900,-12.375) {};
 \begin{scope}[shift={(11.200,-12.850)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconChance\end{scope}
-\node[label] at (12.300,-12.375) {A 25 percent chance};
-\node[box, act] (n13) at (12.900,-14.675) {};
+\node[label] at (12.300,-12.375) {A 50 percent chance};
+\node[box, comp] (n13) at (12.900,-14.675) {};
 \begin{scope}[shift={(11.200,-15.150)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconThrow\end{scope}
 \node[label] at (12.300,-14.675) {Throw the sword};
-\node[box, comp] (n14) at (17.250,-3.175) {};
-\begin{scope}[shift={(15.550,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
-\node[label] at (16.650,-3.175) {Sequence};
-\node[box, cond] (n15) at (18.000,-5.475) {};
-\begin{scope}[shift={(16.300,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconUnarmed\end{scope}
-\node[label] at (17.400,-5.475) {It has thrown its sword};
-\node[box, cond] (n16) at (18.000,-7.775) {};
-\begin{scope}[shift={(16.300,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
-\node[label] at (17.400,-7.775) {Closer than 320 cm to you};
-\node[box, act] (n17) at (18.000,-10.075) {};
-\begin{scope}[shift={(16.300,-10.550)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconRetreat\end{scope}
-\node[label] at (17.400,-10.075) {Back away};
-\node[box, comp] (n18) at (22.350,-3.175) {};
-\begin{scope}[shift={(20.650,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
-\node[label] at (21.750,-3.175) {Sequence};
-\node[box, cond] (n19) at (23.100,-5.475) {};
-\begin{scope}[shift={(21.400,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconUnarmed\end{scope}
-\node[label] at (22.500,-5.475) {It has thrown its sword};
-\node[box, act] (n20) at (23.100,-7.775) {};
-\begin{scope}[shift={(21.400,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconWait\end{scope}
-\node[label] at (22.500,-7.775) {Wait};
-\node[box, comp] (n21) at (27.450,-3.175) {};
-\begin{scope}[shift={(25.750,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
-\node[label] at (26.850,-3.175) {Sequence};
-\node[box, cond] (n22) at (28.200,-5.475) {};
-\begin{scope}[shift={(26.500,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconFar\end{scope}
-\node[label] at (27.600,-5.475) {Farther than 260 cm from you};
-\node[box, act] (n23) at (28.200,-7.775) {};
-\begin{scope}[shift={(26.500,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconApproach\end{scope}
-\node[label] at (27.600,-7.775) {Approach};
-\node[box, comp] (n24) at (32.550,-3.175) {};
-\begin{scope}[shift={(30.850,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
-\node[label] at (31.950,-3.175) {Sequence};
-\node[box, cond] (n25) at (33.300,-5.475) {};
-\begin{scope}[shift={(31.600,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
-\node[label] at (32.700,-5.475) {Closer than 220 cm to you};
-\node[box, act] (n26) at (33.300,-7.775) {};
-\begin{scope}[shift={(31.600,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconLowSweep\end{scope}
-\node[label] at (32.700,-7.775) {Sweep low};
-\node[box, act] (n27) at (37.650,-3.175) {};
-\begin{scope}[shift={(35.950,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconGuard\end{scope}
-\node[label] at (37.050,-3.175) {Guard};
+\node[box, act] (n14) at (13.650,-16.975) {};
+\begin{scope}[shift={(11.950,-17.450)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconWait\end{scope}
+\node[label] at (13.050,-16.975) {Stand still and square};
+\node[box, act] (n15) at (13.650,-19.275) {};
+\begin{scope}[shift={(11.950,-19.750)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconRaise\end{scope}
+\node[label] at (13.050,-19.275) {Bring the blade back over the head};
+\node[box, act] (n16) at (13.650,-21.575) {};
+\begin{scope}[shift={(11.950,-22.050)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconWatch\end{scope}
+\node[label] at (13.050,-21.575) {Swing forward with a step, watching the blade};
+\node[box, act] (n17) at (13.650,-23.875) {};
+\begin{scope}[shift={(11.950,-24.350)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconThrow\end{scope}
+\node[label] at (13.050,-23.875) {Let go when its flight meets you, then follow through};
+\node[box, comp] (n18) at (18.000,-3.175) {};
+\begin{scope}[shift={(16.300,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (17.400,-3.175) {Sequence};
+\node[box, cond] (n19) at (18.750,-5.475) {};
+\begin{scope}[shift={(17.050,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconUnarmed\end{scope}
+\node[label] at (18.150,-5.475) {It has thrown its sword};
+\node[box, cond] (n20) at (18.750,-7.775) {};
+\begin{scope}[shift={(17.050,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
+\node[label] at (18.150,-7.775) {Closer than 320 cm to you};
+\node[box, act] (n21) at (18.750,-10.075) {};
+\begin{scope}[shift={(17.050,-10.550)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconRetreat\end{scope}
+\node[label] at (18.150,-10.075) {Back away};
+\node[box, comp] (n22) at (23.100,-3.175) {};
+\begin{scope}[shift={(21.400,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (22.500,-3.175) {Sequence};
+\node[box, cond] (n23) at (23.850,-5.475) {};
+\begin{scope}[shift={(22.150,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconUnarmed\end{scope}
+\node[label] at (23.250,-5.475) {It has thrown its sword};
+\node[box, act] (n24) at (23.850,-7.775) {};
+\begin{scope}[shift={(22.150,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconWait\end{scope}
+\node[label] at (23.250,-7.775) {Wait};
+\node[box, comp] (n25) at (28.200,-3.175) {};
+\begin{scope}[shift={(26.500,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (27.600,-3.175) {Sequence};
+\node[box, cond] (n26) at (28.950,-5.475) {};
+\begin{scope}[shift={(27.250,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconFar\end{scope}
+\node[label] at (28.350,-5.475) {Farther than 260 cm from you};
+\node[box, act] (n27) at (28.950,-7.775) {};
+\begin{scope}[shift={(27.250,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconApproach\end{scope}
+\node[label] at (28.350,-7.775) {Approach};
+\node[box, comp] (n28) at (33.300,-3.175) {};
+\begin{scope}[shift={(31.600,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconSequence\end{scope}
+\node[label] at (32.700,-3.175) {Sequence};
+\node[box, cond] (n29) at (34.050,-5.475) {};
+\begin{scope}[shift={(32.350,-5.950)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconNear\end{scope}
+\node[label] at (33.450,-5.475) {Closer than 220 cm to you};
+\node[box, act] (n30) at (34.050,-7.775) {};
+\begin{scope}[shift={(32.350,-8.250)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconLowSweep\end{scope}
+\node[label] at (33.450,-7.775) {Sweep low};
+\node[box, act] (n31) at (38.400,-3.175) {};
+\begin{scope}[shift={(36.700,-3.650)}, x=0.0950cm, y=0.0950cm]\def\IC{ink}\def\IW{0.7pt}\IconGuard\end{scope}
+\node[label] at (37.800,-3.175) {Guard};
 % --- Edges (after the nodes they join; they end at the borders) ---
 \draw[edge] (0.350,-4.050) |- (n2.west);
 \draw[edge] (0.350,-4.050) |- (n3.west);
@@ -111,21 +123,25 @@
 \draw[edge] (10.550,-4.050) |- (n10.west);
 \draw[edge] (10.550,-4.050) |- (n11.west);
 \draw[edge] (10.550,-4.050) |- (n12.west);
+\draw[edge] (11.300,-15.550) |- (n14.west);
+\draw[edge] (11.300,-15.550) |- (n15.west);
+\draw[edge] (11.300,-15.550) |- (n16.west);
+\draw[edge] (11.300,-15.550) |- (n17.west);
 \draw[edge] (10.550,-4.050) |- (n13.west);
 \draw[edge] (n0.south) -- (n8.north);
-\draw[edge] (15.650,-4.050) |- (n15.west);
-\draw[edge] (15.650,-4.050) |- (n16.west);
-\draw[edge] (15.650,-4.050) |- (n17.west);
-\draw[edge] (n0.south) -- (n14.north);
-\draw[edge] (20.750,-4.050) |- (n19.west);
-\draw[edge] (20.750,-4.050) |- (n20.west);
+\draw[edge] (16.400,-4.050) |- (n19.west);
+\draw[edge] (16.400,-4.050) |- (n20.west);
+\draw[edge] (16.400,-4.050) |- (n21.west);
 \draw[edge] (n0.south) -- (n18.north);
-\draw[edge] (25.850,-4.050) |- (n22.west);
-\draw[edge] (25.850,-4.050) |- (n23.west);
-\draw[edge] (n0.south) -- (n21.north);
-\draw[edge] (30.950,-4.050) |- (n25.west);
-\draw[edge] (30.950,-4.050) |- (n26.west);
-\draw[edge] (n0.south) -- (n24.north);
-\draw[edge] (n0.south) -- (n27.north);
+\draw[edge] (21.500,-4.050) |- (n23.west);
+\draw[edge] (21.500,-4.050) |- (n24.west);
+\draw[edge] (n0.south) -- (n22.north);
+\draw[edge] (26.600,-4.050) |- (n26.west);
+\draw[edge] (26.600,-4.050) |- (n27.west);
+\draw[edge] (n0.south) -- (n25.north);
+\draw[edge] (31.700,-4.050) |- (n29.west);
+\draw[edge] (31.700,-4.050) |- (n30.west);
+\draw[edge] (n0.south) -- (n28.north);
+\draw[edge] (n0.south) -- (n31.north);
 \end{tikzpicture}
 \end{document}

@@ -130,3 +130,46 @@ fn while_one_fighter_still_holds_a_sword_the_round_goes_on() {
     }
     assert!(matches!(w.phase, Phase::Fight));
 }
+
+#[test]
+fn the_throwers_let_go_in_the_window_so_most_throws_reach_the_player() {
+    // Sam (2026-10-06): the throwers were "very ineffectual and often thrown
+    // directly into the floor". A throw now settles, winds the blade back
+    // over the head, and lets go when the blade's flight from there meets
+    // the player (pilot::throw_window). Against the yardstick, most throws
+    // cut the player before they are down; the throw before this one cut
+    // with 42 % of throws, and 39 % went into the ground.
+    let (mut throws, mut hits) = (0, 0);
+    for id in ["harpooner", "wind_reader"] {
+        for seed in 0..3u64 {
+            let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
+            let mut ps = content::road::lineup(&content::road::pilot("yardstick"), id);
+            let mut last = [Input::NONE; sim::body::SEATS];
+            let mut flying = false;
+            while w.tick < 3600 && !matches!(w.phase, Phase::MatchOver { .. }) {
+                let mut i = [Input::NONE; sim::body::SEATS];
+                for (k, p) in ps.iter_mut().enumerate() {
+                    p.observe(last);
+                    i[k] = p.input(&w, k);
+                }
+                let mine = w.swords_of(1);
+                let held = mine.iter().any(|&k| w.held(k));
+                w.step_all(i);
+                last = i;
+                if held && mine.iter().all(|&k| !w.held(k)) && mine.iter().any(|&k| w.swords[k].flying) {
+                    throws += 1;
+                    flying = true;
+                }
+                if flying && w.events.iter().any(|e| matches!(e, Event::Cut { seat: 0, by: 1, .. })) {
+                    hits += 1;
+                    flying = false;
+                }
+                if flying && (mine.iter().all(|&k| !w.swords[k].flying) || !matches!(w.phase, Phase::Fight)) {
+                    flying = false;
+                }
+            }
+        }
+    }
+    assert!(throws >= 6, "only {throws} throws in six matches");
+    assert!(hits * 100 >= throws * 60, "{hits} of {throws} throws cut the player");
+}

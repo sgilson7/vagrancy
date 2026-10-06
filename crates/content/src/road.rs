@@ -96,6 +96,10 @@ pub enum Req {
     /// Won it, with a thrown blade ending every round the player won ("or
     /// winning every round in a fight by throwing a weapon at them").
     AllThrown(String),
+    /// Won it, in a match where the player won a round with no blade in
+    /// hand: thrown, however the round then ended (Sam, 2026-10-06: "end a
+    /// round without a blade in your hand").
+    Bladeless(String),
     /// Won each fight on the road but the secret one without losing a
     /// round, this one included (Sam, 2026-10-06: the guardian deity, after
     /// "you've beaten every single fight"). The stop it names is where the
@@ -106,7 +110,7 @@ pub enum Req {
 impl Req {
     pub fn stop(&self) -> &str {
         match self {
-            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) | Req::Thrown(s) | Req::AllThrown(s) | Req::AllFlawless(s) => s,
+            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) | Req::Thrown(s) | Req::AllThrown(s) | Req::AllFlawless(s) | Req::Bladeless(s) => s,
         }
     }
 
@@ -124,6 +128,7 @@ impl Req {
             Req::Untouched(_) => b.untouched,
             Req::Thrown(_) => b.thrown,
             Req::AllThrown(_) => b.all_thrown,
+            Req::Bladeless(_) => b.bladeless,
             Req::AllFlawless(_) => unreachable!("answered above"),
         }
     }
@@ -141,6 +146,7 @@ impl Req {
             Req::Untouched(_) => ("road.req.untouched", BTreeMap::new()),
             Req::Thrown(_) => ("road.req.thrown", BTreeMap::new()),
             Req::AllThrown(_) => ("road.req.all_thrown", BTreeMap::new()),
+            Req::Bladeless(_) => ("road.req.bladeless", BTreeMap::new()),
             Req::AllFlawless(_) => ("road.req.all_flawless", BTreeMap::new()),
         }
     }
@@ -198,19 +204,23 @@ pub struct Best {
     /// A won match here had every round the player won ended that way.
     #[serde(default)]
     pub all_thrown: bool,
+    /// A won match here had a round the player won with no blade in hand.
+    /// A save from before version 10 has none.
+    #[serde(default)]
+    pub bladeless: bool,
 }
 
 impl Best {
-    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new(), headshot: false, untouched: false, thrown: false, all_thrown: false };
+    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new(), headshot: false, untouched: false, thrown: false, all_thrown: false, bladeless: false };
 
     /// One won match, carrying `weapon`, with no feats.
     pub fn won(losses: u32, ticks: u32, weapon: &str) -> Best {
-        Best { losses, ticks, with: vec![weapon.to_string()], headshot: false, untouched: false, thrown: false, all_thrown: false }
+        Best { losses, ticks, with: vec![weapon.to_string()], headshot: false, untouched: false, thrown: false, all_thrown: false, bladeless: false }
     }
 
     /// The same result with the feats a match showed.
     pub fn with_feats(self, f: Feats) -> Best {
-        Best { headshot: f.headshot, untouched: f.untouched, thrown: f.thrown, all_thrown: f.won > 0 && f.won_thrown == f.won, ..self }
+        Best { headshot: f.headshot, untouched: f.untouched, thrown: f.thrown, all_thrown: f.won > 0 && f.won_thrown == f.won, bladeless: f.bladeless, ..self }
     }
 
     /// The better of two results, each part on its own: the fewest losses
@@ -229,6 +239,7 @@ impl Best {
             untouched: self.untouched || other.untouched,
             thrown: self.thrown || other.thrown,
             all_thrown: self.all_thrown || other.all_thrown,
+            bladeless: self.bladeless || other.bladeless,
         }
     }
 }
@@ -244,6 +255,8 @@ pub struct Feats {
     /// Rounds the player won, and how many of those a throw ended.
     pub won: u32,
     pub won_thrown: u32,
+    /// A round the player won ended with no blade in the player's hands.
+    pub bladeless: bool,
     /// The player has been cut in the round under way.
     cut: bool,
 }
@@ -262,6 +275,7 @@ impl Feats {
                         self.thrown |= by_throw;
                         self.won += 1;
                         self.won_thrown += by_throw as u32;
+                        self.bladeless |= !(0..w.swords.len()).any(|k| w.swords[k].fighter == 0 && w.held(k));
                     }
                     self.cut = false;
                 }

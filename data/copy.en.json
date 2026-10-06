@@ -101,7 +101,9 @@
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
     "local_deity": "new: opponents.local_deity (all five strings; renamed the village deity, at Sam's request), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
     "watch": "new: menu.watch, watch (all its strings)",
-    "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)"
+    "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)",
+    "thrown_split": "new: road.req.thrown (rewritten to name the parts, at Sam's request), road.req.bladeless",
+    "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release"
   },
   "_glossary": {
     "ink": {
@@ -391,9 +393,10 @@
       "met": "Done.",
       "headshot": "Beat {opponent_mid}, ending a round with a cut across the head.",
       "untouched": "Beat {opponent_mid}, winning a round without being cut.",
-      "thrown": "Beat {opponent_mid}, ending a round with a thrown blade.",
+      "thrown": "Beat {opponent_mid}, ending a round with your thrown blade across the neck, head or heart.",
       "all_thrown": "Beat {opponent_mid}, with a thrown blade ending each round you win.",
-      "all_flawless": "Win each fight in arcade mode without losing a round, {opponent_mid} included."
+      "all_flawless": "Win each fight in arcade mode without losing a round, {opponent_mid} included.",
+      "bladeless": "Beat {opponent_mid}, winning a round with no blade in your hand."
     },
     "tier": {
       "none": "Open from the start",
@@ -1563,7 +1566,11 @@
       "recover": "Recover, backing away",
       "close_to": "Walk in to {cm} cm",
       "watch": "Watch you",
-      "mirror": "Replay your last round, mirrored"
+      "mirror": "Replay your last round, mirrored",
+      "throw_settle": "Stand still and square",
+      "throw_wind": "Bring the blade back over the head",
+      "throw_watch": "Swing forward with a step, watching the blade",
+      "throw_release": "Let go when its flight meets you, then follow through"
     },
     "search": "Search: look {horizon_ms} ms ahead, trying {branches} key combinations",
     "now": "Now: {node}",

@@ -47,6 +47,7 @@
       "best": {
         "abbot": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -65,6 +66,7 @@
         },
         "archivist": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -83,6 +85,7 @@
         },
         "bargeman": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -101,6 +104,7 @@
         },
         "bell_founder": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -119,6 +123,7 @@
         },
         "bellringer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -137,6 +142,7 @@
         },
         "bird_scarer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -155,6 +161,7 @@
         },
         "boatwright": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -173,6 +180,7 @@
         },
         "brewer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -191,6 +199,7 @@
         },
         "bridge_keeper": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -209,6 +218,7 @@
         },
         "carpenter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -227,6 +237,7 @@
         },
         "cartographer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -245,6 +256,7 @@
         },
         "charcoal_burner": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -263,6 +275,7 @@
         },
         "cooper": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -281,6 +294,7 @@
         },
         "courier": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -299,6 +313,7 @@
         },
         "crow_watcher": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -317,6 +332,7 @@
         },
         "drover": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -335,6 +351,7 @@
         },
         "drum_maker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -353,6 +370,7 @@
         },
         "duelist": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -371,6 +389,7 @@
         },
         "dyer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -389,6 +408,7 @@
         },
         "eel_fisher": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -407,6 +427,7 @@
         },
         "falconer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -425,6 +446,7 @@
         },
         "ferryman": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -443,6 +465,7 @@
         },
         "gambler": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -461,6 +484,7 @@
         },
         "gatekeeper": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -479,6 +503,7 @@
         },
         "general": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -497,6 +522,7 @@
         },
         "hare_hunter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -515,6 +541,7 @@
         },
         "harpooner": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -533,6 +560,7 @@
         },
         "herbalist": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -551,6 +579,7 @@
         },
         "hermit": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -569,6 +598,7 @@
         },
         "juggler": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -587,6 +617,7 @@
         },
         "kite_maker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -605,6 +636,7 @@
         },
         "knife_grinder": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -623,6 +655,7 @@
         },
         "lacquerer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -641,6 +674,7 @@
         },
         "lamplighter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -659,6 +693,7 @@
         },
         "magistrate": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -677,6 +712,7 @@
         },
         "mason": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -695,6 +731,7 @@
         },
         "monk": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -713,6 +750,7 @@
         },
         "net_mender": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -731,6 +769,7 @@
         },
         "ox_herd": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -749,6 +788,7 @@
         },
         "paper_maker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -767,6 +807,7 @@
         },
         "pilgrim": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -785,6 +826,7 @@
         },
         "porter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -803,6 +845,7 @@
         },
         "post_rider": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -821,6 +864,7 @@
         },
         "potter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -839,6 +883,7 @@
         },
         "reader": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -857,6 +902,7 @@
         },
         "reed_cutter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -875,6 +921,7 @@
         },
         "rice_broker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -893,6 +940,7 @@
         },
         "roofer": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -911,6 +959,7 @@
         },
         "ropewalker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -929,6 +978,7 @@
         },
         "salt_trader": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -947,6 +997,7 @@
         },
         "sampler": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -965,6 +1016,7 @@
         },
         "scarecrow": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -983,6 +1035,7 @@
         },
         "shepherd": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1001,6 +1054,7 @@
         },
         "shrine_keeper": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1019,6 +1073,7 @@
         },
         "smith": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1037,6 +1092,7 @@
         },
         "stone_cutter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1055,6 +1111,7 @@
         },
         "tanner": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1073,6 +1130,7 @@
         },
         "tea_picker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1091,6 +1149,7 @@
         },
         "thresher": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1109,6 +1168,7 @@
         },
         "tinker": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1127,6 +1187,7 @@
         },
         "toll_collector": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1145,6 +1206,7 @@
         },
         "vaulter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1163,6 +1225,7 @@
         },
         "warden": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1181,6 +1244,7 @@
         },
         "watchman": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1199,6 +1263,7 @@
         },
         "weaver": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1217,6 +1282,7 @@
         },
         "well_digger": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1235,6 +1301,7 @@
         },
         "wind_reader": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1253,6 +1320,7 @@
         },
         "windmill": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1271,6 +1339,7 @@
         },
         "woodcutter": {
           "all_thrown": true,
+          "bladeless": true,
           "headshot": true,
           "losses": 0,
           "thrown": true,
@@ -1293,5 +1362,5 @@
     "tutorial": [],
     "weapon": "sword"
   },
-  "version": 9
+  "version": 10
 }

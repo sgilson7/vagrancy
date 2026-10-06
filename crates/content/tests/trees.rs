@@ -97,7 +97,16 @@ fn a_tree_pilots_lit_move_is_the_move_it_runs() {
             let i = [them.input(&w, 0), me.input(&w, 1)];
             if let (Some((name, _)), Phase::Fight) = (me.current_move(), &w.phase) {
                 let leaf = nodes[*me.trace().active.last().expect("a move runs and nothing is lit") as usize];
-                let want = if name == "search" { "tree.search".to_string() } else { format!("tree.act.{name}") };
+                // A throw lights the step it is on, one of its sequence's
+                // leaves (pilot::ThrowStep).
+                let want = match name {
+                    "search" => "tree.search".to_string(),
+                    "throw" => {
+                        let step = ["throw_settle", "throw_wind", "throw_watch", "throw_release"][me.throw_step().expect("a throw has a step").index()];
+                        format!("tree.act.{step}")
+                    }
+                    _ => format!("tree.act.{name}"),
+                };
                 assert_eq!(leaf.label.key, want, "{id} at tick {}", w.tick);
                 checked += 1;
             }

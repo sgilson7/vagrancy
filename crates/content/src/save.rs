@@ -29,7 +29,9 @@ pub const FORMAT: &str = "vagrancy.save";
 /// version 7 file reads as it is, with neither.
 /// 9: whether the player fights with four arms. A version 8 file reads as it
 /// is, with two.
-pub const VERSION: u32 = 9;
+/// 10: each best result says whether a won match there had a round won with
+/// no blade in hand. A version 9 file reads as it is, with none.
+pub const VERSION: u32 = 10;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -119,7 +121,7 @@ pub fn finished(unwon: &[&str]) -> SaveState {
     let mut s = fresh();
     let with: Vec<String> = crate::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
     for st in crate::road::road().into_iter().filter(|st| !unwon.contains(&st.id.as_str())) {
-        let best = crate::road::Best { losses: 0, ticks: 3600, with: with.clone(), headshot: true, untouched: true, thrown: true, all_thrown: true };
+        let best = crate::road::Best { losses: 0, ticks: 3600, with: with.clone(), headshot: true, untouched: true, thrown: true, all_thrown: true, bladeless: true };
         s.road.best.insert(st.id, best);
     }
     s

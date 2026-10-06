@@ -141,6 +141,8 @@ pub struct RuleIds {
     pub seq: Option<u16>,
     pub conds: Vec<u16>,
     pub act: u16,
+    /// A throw's steps, in `ThrowStep` order; empty for any other move.
+    pub steps: Vec<u16>,
 }
 
 /// A pilot as a tree.
@@ -255,10 +257,18 @@ pub fn tree_nodes(rules: &[Rule], reaction: u32) -> (Node, Vec<RuleIds>) {
             .collect();
         let act = if r.act == "search" {
             search_node(&mut ids, TREE_SEARCH.0, reaction, TREE_SEARCH.1)
+        } else if r.act == "throw" {
+            // The throw is a sequence of its steps, so the tree shows the
+            // thrower settling and watching its arm (crate::ThrowStep).
+            let id = ids.next();
+            let steps = [("tree.act.throw_settle", "wait"), ("tree.act.throw_wind", "raise"), ("tree.act.throw_watch", "watch"), ("tree.act.throw_release", "throw")]
+                .map(|(k, icon)| leaf(&mut ids, Kind::Action, Label::of(k), icon));
+            branch(id, Kind::Sequence, Label::of("tree.act.throw"), "throw", steps.to_vec())
         } else {
             leaf(&mut ids, Kind::Action, Label::of(&format!("tree.act.{}", r.act)), &r.act)
         };
-        map.push(RuleIds { seq, conds: conds.iter().map(|n| n.id).collect(), act: act.id });
+        let steps = if r.act == "throw" { act.children.iter().map(|n| n.id).collect() } else { Vec::new() };
+        map.push(RuleIds { seq, conds: conds.iter().map(|n| n.id).collect(), act: act.id, steps });
         let mut node = match seq {
             Some(s) => {
                 let mut children = conds;

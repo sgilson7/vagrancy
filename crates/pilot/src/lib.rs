@@ -824,6 +824,152 @@ pub struct Tree {
     checked: Vec<(u16, bool)>,
     /// How many ticks a search plan is kept (`Spec::Tree::search_period`).
     pub period: u32,
+    /// The step of a throw under way, and the tick of the move it began on.
+    throw: Option<(ThrowStep, u32)>,
+}
+
+/// The steps of a throw, after the two-handed axe throw as coaches teach it
+/// (Sam, 2026-10-06: the throwers were "often thrown directly into the
+/// floor"; "there should be a settling behavior or an arm watching
+/// behavior"): stand square and still, bring the blade straight back over
+/// the head, swing it forward with a step while watching it, and open the
+/// hands in "the window", when the blade's flight from there meets the
+/// target; then follow through. A release that comes late, with the blade
+/// already moving down, is what sends it into the ground.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThrowStep {
+    Settle,
+    Wind,
+    Watch,
+    Follow,
+}
+
+impl ThrowStep {
+    /// Its place among the throw's nodes in `view::tree_nodes`.
+    pub fn index(self) -> usize {
+        match self {
+            ThrowStep::Settle => 0,
+            ThrowStep::Wind => 1,
+            ThrowStep::Watch => 2,
+            ThrowStep::Follow => 3,
+        }
+    }
+}
+
+/// Settling ends when the thrower is this still, cm per tick, or after
+/// `SETTLE_TICKS` however it stands.
+const SETTLE_SPEED: i32 = 2;
+const SETTLE_TICKS: u32 = 20;
+/// The wind-up and the swing each give up after this long.
+const WIND_TICKS: u32 = 30;
+const SWING_TICKS: u32 = 30;
+const FOLLOW_TICKS: u32 = 6;
+/// The window: the blade's middle, flying on from where it is with gravity
+/// and drag, passes this near the target's body before it is down, and
+/// arrives fast enough to cut.
+const WINDOW_CM: i32 = 30;
+const ARRIVE_SPEED: i32 = 8;
+const FLIGHT_TICKS: u32 = 120;
+
+/// Whether `seat`'s held blade, let go now, would fly into its opponent's
+/// body before it reaches the ground: the throw's "window". The thrower
+/// feels its own arm in `w`, the world as it is now, as in every other
+/// move; it aims at its opponent where it saw it, in `seen`, its reaction
+/// time ago, so a slow thrower misses a moving target more often.
+pub fn throw_window(w: &World, seen: &World, seat: usize) -> bool {
+    let Some(k) = w.swords_of(seat).into_iter().find(|&k| w.held(k)) else { return false };
+    let them = foe(seen, seat);
+    let (Some(a), Some(b)) = (head(seen, them), pelvis(seen, them)) else { return false };
+    let pts = &w.swords[k].points;
+    let n = pts.len() as i64;
+    let sum = |f: &dyn Fn(&sim::world::Particle) -> V2| pts.iter().fold(V2::ZERO, |acc, &i| acc + f(&w.particles[i as usize])).scale(1, n);
+    let mut c = sum(&|p| p.p);
+    let mut v = sum(&|p| p.p - p.q);
+    let ph = w.setup.physics;
+    let ab = b - a;
+    for _ in 0..FLIGHT_TICKS {
+        v -= v * ph.tuning.drag;
+        v.y -= ph.gravity;
+        c += v;
+        if c.y.trunc() < 10 {
+            return false;
+        }
+        let den = ab.len_sq_raw().max(1);
+        let near = a + ab.scale((c - a).dot_raw(ab).clamp(0, den), den);
+        if (c - near).len().trunc() < WINDOW_CM {
+            return v.len().trunc() >= ARRIVE_SPEED;
+        }
+    }
+    false
+}
+
+impl Tree {
+    /// The throw, step by step; `None` when it is over or given up.
+    fn throw_keys(&mut self, t: u32, w: &World, me: usize) -> Option<u16> {
+        use Input as I;
+        if t == 0 {
+            self.throw = Some((ThrowStep::Settle, 0));
+        }
+        let (step, since) = self.throw?;
+        let held = armed(w, me);
+        if !held && step != ThrowStep::Follow {
+            self.throw = None;
+            return None;
+        }
+        let to = step_toward(w, me, true);
+        let facing = facing(w, me);
+        let (s, tip) = (shoulder(w, me)?, tip(w, me)?);
+        let next = |this: &mut Tree, st: ThrowStep| this.throw = Some((st, t));
+        Some(match step {
+            ThrowStep::Settle => {
+                let speed = |i: Option<V2>, j: Option<V2>| i.zip(j).map(|(x, y)| (x - y).len().trunc()).unwrap_or(0);
+                let f = w.fighters[me].as_ref()?;
+                let pe = f.base + w.setup.bodies[f.body as usize].roles.pelvis.unwrap_or(0) as u16;
+                let moving = speed(Some(w.particles[pe as usize].p), Some(w.particles[pe as usize].q));
+                let still = !airborne(w, me) && moving <= SETTLE_SPEED;
+                if still || t - since >= SETTLE_TICKS {
+                    next(self, ThrowStep::Wind);
+                }
+                0
+            }
+            ThrowStep::Wind => {
+                // Back over the head: the tip above the shoulder and behind it.
+                let over = (tip.y - s.y).trunc() > 40 && (tip.x - s.x).trunc() * facing < 0;
+                if over || t - since >= WIND_TICKS {
+                    next(self, ThrowStep::Watch);
+                }
+                I::SHOULDER_UP | I::ELBOW_OUT
+            }
+            ThrowStep::Watch => {
+                let seen = self.seen.front().cloned().unwrap_or_else(|| w.clone());
+                if throw_window(w, &seen, me) {
+                    next(self, ThrowStep::Follow);
+                    return Some(I::SHOULDER_DOWN | I::ELBOW_OUT | I::THROW | to);
+                }
+                // Past the window: the tip in front of the thrower and
+                // below its shoulder, or the swing taking too long. Keep
+                // the blade rather than throw it at the ground.
+                let past = (tip.y - s.y).trunc() < -20 && (tip.x - s.x).trunc() * facing > 0;
+                if past || t - since >= SWING_TICKS {
+                    self.throw = None;
+                    return None;
+                }
+                I::SHOULDER_DOWN | I::ELBOW_OUT | to
+            }
+            ThrowStep::Follow => {
+                if t - since >= FOLLOW_TICKS {
+                    self.throw = None;
+                    return None;
+                }
+                I::SHOULDER_DOWN | to
+            }
+        })
+    }
+
+    /// The step of the throw under way, if a throw is.
+    pub fn throw_step(&self) -> Option<ThrowStep> {
+        self.throw.map(|(s, _)| s)
+    }
 }
 
 impl Tree {
@@ -835,7 +981,7 @@ impl Tree {
 
     pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
         let ids = view::tree_nodes(&rules, reaction).1;
-        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new(), period: view::TREE_SEARCH.2 }
+        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new(), period: view::TREE_SEARCH.2, throw: None }
     }
 
     fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
@@ -936,12 +1082,7 @@ impl Tree {
             ("pogo", 13..=21) => to,
             ("pogo", 22..=55) => I::SHOULDER_DOWN | I::ELBOW_OUT | to,
             ("stand", 0) => I::STAND,
-            // The throw (2026-10-05): two ticks of the shoulder rising, and
-            // the hand lets go on the third, the arm still rising, so the
-            // sword leaves on the upswing toward the opponent.
-            ("throw", 0..=1) => I::SHOULDER_UP | to,
-            ("throw", 2) => I::SHOULDER_UP | I::THROW,
-            ("throw", 3..=8) => 0,
+            ("throw", _) => return self.throw_keys(t, w, me),
             // Up onto the ledge overhead: a jump, and the stand key once the
             // pelvis has risen past the ledge's top (one jump lifts it about
             // 120 cm in 27 ticks; by tick 16 it has risen 100).
@@ -976,6 +1117,10 @@ impl Pilot for Tree {
                 t.active.extend(ids.conds.iter().copied());
             }
             t.active.push(ids.act);
+            // A throw lights the step it is on (view::tree_nodes).
+            if let (Some(step), false) = (self.throw_step(), ids.steps.is_empty()) {
+                t.active.push(ids.steps[step.index()]);
+            }
         }
         t
     }
