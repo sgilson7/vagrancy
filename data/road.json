@@ -65,11 +65,11 @@
     {"id": "harpooner", "requires": [{"beat": "juggler"}, {"headshot": "courier"}], "weapon": "trident"},
     {"id": "bird_scarer", "requires": [{"thrown": "scarecrow"}], "weapon": "boomerang"},
     {"id": "hare_hunter", "requires": [{"thrown": "juggler"}, {"beat": "bird_scarer"}], "weapon": "boomerang"},
-    {"id": "reed_cutter", "requires": [{"all_thrown": "sampler"}, {"beat": "hare_hunter"}, {"beat": "drover"}], "weapon": "boomerang"},
+    {"id": "reed_cutter", "requires": [{"thrown": "sampler"}, {"beat": "hare_hunter"}, {"beat": "drover"}], "weapon": "boomerang"},
     {"id": "crow_watcher", "requires": [{"thrown": "windmill"}, {"beat": "reed_cutter"}, {"beat": "thresher"}, {"beat": "pilgrim"}], "weapon": "boomerang"},
-    {"id": "shepherd", "requires": [{"all_thrown": "dyer"}, {"beat": "crow_watcher"}, {"beat": "cooper"}, {"beat": "courier"}, {"beat": "tinker"}], "weapon": "boomerang"},
+    {"id": "shepherd", "requires": [{"thrown": "dyer"}, {"beat": "crow_watcher"}, {"beat": "cooper"}, {"beat": "courier"}, {"beat": "tinker"}], "weapon": "boomerang"},
     {"id": "drum_maker", "requires": [{"thrown": "carpenter"}, {"beat": "shepherd"}, {"beat": "herbalist"}, {"beat": "smith"}, {"beat": "salt_trader"}, {"beat": "ox_herd"}], "weapon": "boomerang"},
-    {"id": "wind_reader", "requires": [{"all_thrown": "mason"}, {"beat": "drum_maker"}, {"beat": "falconer"}, {"beat": "reader"}, {"beat": "ropewalker"}, {"beat": "lamplighter"}, {"beat": "knife_grinder"}], "weapon": "boomerang"},
+    {"id": "wind_reader", "requires": [{"thrown": "mason"}, {"beat": "drum_maker"}, {"beat": "falconer"}, {"beat": "reader"}, {"beat": "ropewalker"}, {"beat": "lamplighter"}, {"beat": "knife_grinder"}], "weapon": "boomerang"},
     {"id": "local_deity", "requires": [{"beat": "watchman"}, {"beat": "warden"}, {"beat": "hermit"}, {"beat": "tanner"}, {"beat": "vaulter"}, {"beat": "general"}, {"beat": "duelist"}, {"beat": "stone_cutter"}, {"beat": "shrine_keeper"}, {"beat": "wind_reader"}], "four_arms": true, "row": 8}
   ]
 }
