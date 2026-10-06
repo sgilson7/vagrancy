@@ -16,6 +16,8 @@ pub struct Fatal {
     pub part: u8,
     /// Whose blade.
     pub by: u8,
+    /// The blade was thrown, not held.
+    pub thrown: bool,
 }
 
 /// How a round ended.
@@ -32,6 +34,8 @@ pub struct RoundResult {
     pub part: u8,
     /// Whose blade made the deciding cut (for ink, the loser's own seat).
     pub by: u8,
+    /// That cut was made by a thrown blade.
+    pub thrown: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -103,7 +107,8 @@ impl World {
         // while the round goes on, and a blade resting in it cut it into
         // slivers every tick until the particle count overflowed
         // (SECOND-ORDER-M5 row 49).
-        self.side_of(part.fighter as usize) != self.side_of(owner as usize)
+        // A turned boomerang is the exception: it cuts its own side.
+        (self.side_of(part.fighter as usize) != self.side_of(owner as usize) || (self.swords[si].turned && self.swords[si].flying))
             && (self.held(si) || self.swords[si].flying)
             && !self.dodging(owner as usize)
             && !dodged
@@ -161,7 +166,7 @@ impl World {
                         break;
                     }
                     let f = hit.f.clamp(Fx::ratio(1, 20), Fx::ratio(19, 20));
-                    if let Some(far) = self.cut(pi, f, owner) {
+                    if let Some(far) = self.cut_by(pi, f, owner, !self.held(si)) {
                         now.push((si as u8, far));
                     }
                     break;
@@ -187,7 +192,14 @@ impl World {
 
     /// Cut part `pi` straight across at fraction `f` from its near end, and
     /// drop everything beyond the cut as a piece. Returns the new far part.
+    #[cfg(test)]
     pub(crate) fn cut(&mut self, pi: usize, f: Fx, by: u8) -> Option<u16> {
+        self.cut_by(pi, f, by, false)
+    }
+
+    /// `cut`, saying whether the blade was thrown: a fatal cut keeps it, so
+    /// the result can tell a throw's kill from a held blade's.
+    pub(crate) fn cut_by(&mut self, pi: usize, f: Fx, by: u8, thrown: bool) -> Option<u16> {
         let part = self.parts[pi].clone();
         let (a, b) = (part.a as usize, part.b as usize);
         let at = V2::lerp(self.particles[a].p, self.particles[b].p, f);
@@ -268,7 +280,7 @@ impl World {
                 // near end: the same f the cut was made at.
                 if f >= band.from && f <= band.to {
                     if let Some(fi) = self.fighters[part.fighter as usize].as_mut() {
-                        fi.fatal.get_or_insert(Fatal { cause: band.cause, part: part.def, by });
+                        fi.fatal.get_or_insert(Fatal { cause: band.cause, part: part.def, by, thrown });
                     }
                 }
             }
@@ -307,8 +319,18 @@ impl World {
     pub(crate) fn clash(&mut self, drives: &[Drive]) {
         // Every pair of swords, in index order: with two seats, the one pair.
         let n = self.swords.len();
+        // A boomerang that is down and on its way home cuts nothing, and
+        // meets nothing: a blade resting against it held it on the ground.
+        // Nor does one already turned: the blade that turned it held it
+        // against itself until it was back, and it never reached its
+        // thrower (SECOND-ORDER-M5 row 67).
+        let ghost = |w: &World, si: usize| w.swords[si].back_at.is_some() && (!w.swords[si].flying || w.swords[si].turned);
         for ia in 0..n {
             for ib in ia + 1..n {
+                if ghost(self, ia) || ghost(self, ib) {
+                    self.set_clashing(ia, ib, false);
+                    continue;
+                }
                 self.clash_pair(ia, ib, drives);
             }
         }
@@ -396,6 +418,16 @@ impl World {
             let ((a0, a1), (b0, b1)) = pair;
             let (_, _, pe, qe) = contact::closest(at(a0), at(a1), at(b0), at(b1));
             self.events.push(Event::Clash { at: V2::lerp(pe, qe, Fx(ONE.0 / 2)) });
+            // A boomerang met in flight is turned (Sam, 2026-10-06), and
+            // flies at its thrower from now on.
+            let soon = self.tick + balance::HOMING_TICKS;
+            for si in [ia, ib] {
+                let s = &mut self.swords[si];
+                if s.flying && s.back_at.is_some() {
+                    s.turned = true;
+                    s.back_at = s.back_at.map(|b| b.min(soon));
+                }
+            }
         }
         self.set_clashing(ia, ib, true);
     }
@@ -452,10 +484,10 @@ impl World {
             }
             let side = f.side;
             let r = if let Some(fatal) = f.fatal {
-                Some(RoundResult { loser: Some(side), seat, cause: fatal.cause, part: fatal.part, by: fatal.by })
+                Some(RoundResult { loser: Some(side), seat, cause: fatal.cause, part: fatal.part, by: fatal.by, thrown: fatal.thrown })
             } else if f.ink <= 0 {
                 let most = (0..f.spilled.len()).max_by_key(|&k| (f.spilled[k], std::cmp::Reverse(k))).unwrap_or(0) as u8;
-                Some(RoundResult { loser: Some(side), seat, cause: Cause::Ink, part: most, by: seat })
+                Some(RoundResult { loser: Some(side), seat, cause: Cause::Ink, part: most, by: seat , thrown: false })
             } else {
                 None
             };
@@ -474,11 +506,11 @@ impl World {
             seats.iter().map(|&s| fell[s].unwrap()).max_by_key(|(at, r)| (*at, std::cmp::Reverse(r.seat))).map(|(_, r)| r)
         };
         let result = match (side_result(0), side_result(1)) {
-            (None, None) if self.reached() => RoundResult { loser: Some(1), seat: 1, cause: Cause::Reached, part: 0, by: 0 },
+            (None, None) if self.reached() => RoundResult { loser: Some(1), seat: 1, cause: Cause::Reached, part: 0, by: 0 , thrown: false },
             (None, None) if matches!(self.setup.objective, crate::body::Objective::HoldOut { ticks } if self.round_ticks + 1 >= ticks) => {
                 // Story mode's hold-out: seat 0 is still in the round when
                 // the time is up, so its side has won it.
-                RoundResult { loser: Some(1), seat: 1, cause: Cause::HeldOut, part: 0, by: 0 }
+                RoundResult { loser: Some(1), seat: 1, cause: Cause::HeldOut, part: 0, by: 0 , thrown: false }
             }
             (None, None) => {
                 // With every sword thrown and down, nobody can cut anybody,
@@ -498,7 +530,7 @@ impl World {
                 if tick - since < balance::DISARMED_DRAW_TICKS {
                     return;
                 }
-                RoundResult { loser: None, seat: 0, cause: Cause::Disarmed, part: 0, by: 0 }
+                RoundResult { loser: None, seat: 0, cause: Cause::Disarmed, part: 0, by: 0 , thrown: false }
             }
             (Some(a), Some(_)) => RoundResult { loser: None, ..a },
             (Some(r), None) | (None, Some(r)) => r,

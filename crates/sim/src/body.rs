@@ -116,6 +116,10 @@ pub struct SwordDef {
     /// from `from` (a fraction from `a`) to `b`. Empty means one edge, butt
     /// to tip, cutting from the end of the hilt: a plain sword.
     pub edges: Vec<BladeEdge>,
+    /// Thrown, it comes back to the hand after `balance::RETURN_TICKS`
+    /// (the boomerang).
+    #[serde(default)]
+    pub returns: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

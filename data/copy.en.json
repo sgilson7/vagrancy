@@ -95,7 +95,8 @@
     "tree, encyclopedia, train, menu.encyclopedia, menu.train": "new: every string (2026-10-06)",
     "story, menu.story, results.*.held_out, results.popup.held_out": "new: every string (2026-10-06)",
     "kc.K33-K35, kc_edge (new), tutorial.goal.on_ledge, tutorial.goal.throw_cut": "new (2026-10-06)",
-    "road.next_carry": "new"
+    "road.next_carry": "new",
+    "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown"
   },
   "_glossary": {
     "ink": {
@@ -380,7 +381,9 @@
       "with": "Beat {opponent_mid} carrying the {weapon}.",
       "met": "Done.",
       "headshot": "Beat {opponent_mid}, ending a round with a cut across the head.",
-      "untouched": "Beat {opponent_mid}, winning a round without being cut."
+      "untouched": "Beat {opponent_mid}, winning a round without being cut.",
+      "thrown": "Beat {opponent_mid}, ending a round with a thrown blade.",
+      "all_thrown": "Beat {opponent_mid}, with a thrown blade ending each round you win."
     },
     "tier": {
       "none": "Open from the start",
@@ -867,6 +870,55 @@
       "place": "A stony beach with boats pulled up above the tide line.",
       "does": "The harpooner carries a trident and usually throws it when you are a few steps away. After a throw, he backs off, guards high and dodges attacks at his head. Otherwise he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
       "try": "Try to cross the distance he throws from quickly, or stay farther back than it, because his throw lands most often from a few steps away."
+    },
+    "bird_scarer": {
+      "name": "The Bird Scarer",
+      "name_mid": "the bird scarer",
+      "place": "A millet field with strips of cloth tied to the stalks.",
+      "does": "The bird scarer carries a boomerang. When you are a few steps away, she sometimes throws it, then backs off until it comes back to her hand. Up close, she sweeps low.",
+      "try": "Try knocking her boomerang aside with your blade while it is in the air. It turns on her as it comes back."
+    },
+    "hare_hunter": {
+      "name": "The Hare Hunter",
+      "name_mid": "the hare hunter",
+      "place": "A dry hillside of short grass and rabbit holes.",
+      "does": "The hare hunter carries a boomerang and throws it from a few steps away, and at once if you fall. While it is gone, he backs off and dodges your blade.",
+      "try": "Try staying on your feet. Close in while his boomerang is in the air and he has nothing in his hands."
+    },
+    "reed_cutter": {
+      "name": "The Reed Cutter",
+      "name_mid": "the reed cutter",
+      "place": "A marsh path with bundles of cut reeds drying on racks.",
+      "does": "The reed cutter carries a boomerang and throws it from a few steps away, and when you fall. She dodges attacks at her head, sometimes even with the boomerang in her hand. Up close, she cuts overhead.",
+      "try": "Try guarding high when she is close, and keep your blade up when her boomerang is coming back. A boomerang knocked aside can cut her."
+    },
+    "crow_watcher": {
+      "name": "The Crow Watcher",
+      "name_mid": "the crow watcher",
+      "place": "A watchtower of lashed poles above a rice field.",
+      "does": "The crow watcher carries a boomerang. He throws it from a few steps away, when you fall and when you jump. Up close, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try not to jump when he can reach you with a throw. Meet his boomerang with your blade, and it goes back at him."
+    },
+    "shepherd": {
+      "name": "The Shepherd",
+      "name_mid": "the shepherd",
+      "place": "A high meadow with a stone wall and a gate tied shut with rope.",
+      "does": "The shepherd carries a boomerang and throws it from a few steps away, when you fall and when you jump. She dodges attacks at her head most of the time. Up close, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try waiting a little beyond her throw. After she throws, she has nothing in her hands until it comes back."
+    },
+    "drum_maker": {
+      "name": "The Drum Maker",
+      "name_mid": "the drum maker",
+      "place": "A workshop yard with hides stretched on frames to dry.",
+      "does": "The drum maker carries a boomerang and throws it from a few steps away, when you fall and when you jump. He dodges attacks at his head most of the time. Up close, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try parrying his boomerang in the air rather than dodging it. Turned, it flies back at his chest."
+    },
+    "wind_reader": {
+      "name": "The Wind Reader",
+      "name_mid": "the wind reader",
+      "place": "A bare ridge with a line of prayer flags snapping in the wind.",
+      "does": "The wind reader carries a boomerang and throws it from a few steps away, when you fall and when you jump. She dodges most attacks at her head. Up close, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try making her throw early, from too far away. Close in while the boomerang is out, and keep your blade between you and its way back."
     }
   },
   "local": {
@@ -1389,6 +1441,10 @@
     "trident": {
       "name": "trident",
       "desc": "A center blade with a prong on each side. It is the heaviest weapon you can carry."
+    },
+    "boomerang": {
+      "name": "boomerang",
+      "desc": "Smaller than the short sword, and bent. Thrown, it comes back to your hand after two seconds. It cuts until it first touches the ground. If a blade knocks it aside in the air, it can cut you on the way back."
     }
   },
   "maps": {

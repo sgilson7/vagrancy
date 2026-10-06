@@ -101,3 +101,14 @@ pub const AIR_DODGE_SPEED: Fx = Fx::int(9);
 /// down, before it is a draw (Sam, 2026-10-05: "it should end in a draw if
 /// no one dies after 4 seconds of throwing their weapons").
 pub const DISARMED_DRAW_TICKS: u32 = 4 * TICKS_PER_SECOND;
+
+/// A returning weapon (the boomerang, Sam 2026-10-06) is back in the hand
+/// this long after it leaves it.
+pub const RETURN_TICKS: u32 = 2 * TICKS_PER_SECOND;
+/// For the last this-many ticks of that it flies home on its own; before
+/// then it flies as it was thrown.
+pub const HOMING_TICKS: u32 = 45;
+/// The slowest it flies home, cm per tick (faster when it is farther than
+/// this covers in the time left): over MIN_CUT_SPEED, so a returning weapon
+/// that has not touched the ground still cuts what it meets.
+pub const HOMING_SPEED: Fx = Fx::int(12);

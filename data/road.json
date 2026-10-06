@@ -62,6 +62,13 @@
     {"id": "shrine_keeper", "requires": [{"beat": "net_mender"}, {"headshot": "cooper"}, {"untouched": "smith"}, {"beat": "bridge_keeper"}, {"beat": "roofer"}, {"beat": "bellringer"}, {"beat": "potter"}], "companion": {"pilot": "bellringer", "weapon": "kris"}, "map": "tiers"},
     {"id": "juggler", "requires": [{"beat": "scarecrow"}], "weapon": "short_sword"},
     {"id": "woodcutter", "requires": [{"beat": "juggler"}, {"untouched": "thresher"}], "weapon": "forked_blade"},
-    {"id": "harpooner", "requires": [{"beat": "juggler"}, {"headshot": "courier"}], "weapon": "trident"}
+    {"id": "harpooner", "requires": [{"beat": "juggler"}, {"headshot": "courier"}], "weapon": "trident"},
+    {"id": "bird_scarer", "requires": [{"thrown": "scarecrow"}], "weapon": "boomerang"},
+    {"id": "hare_hunter", "requires": [{"thrown": "juggler"}, {"beat": "bird_scarer"}], "weapon": "boomerang"},
+    {"id": "reed_cutter", "requires": [{"all_thrown": "sampler"}, {"beat": "hare_hunter"}, {"beat": "drover"}], "weapon": "boomerang"},
+    {"id": "crow_watcher", "requires": [{"thrown": "windmill"}, {"beat": "reed_cutter"}, {"beat": "thresher"}, {"beat": "pilgrim"}], "weapon": "boomerang"},
+    {"id": "shepherd", "requires": [{"all_thrown": "dyer"}, {"beat": "crow_watcher"}, {"beat": "cooper"}, {"beat": "courier"}, {"beat": "tinker"}], "weapon": "boomerang"},
+    {"id": "drum_maker", "requires": [{"thrown": "carpenter"}, {"beat": "shepherd"}, {"beat": "herbalist"}, {"beat": "smith"}, {"beat": "salt_trader"}, {"beat": "ox_herd"}], "weapon": "boomerang"},
+    {"id": "wind_reader", "requires": [{"all_thrown": "mason"}, {"beat": "drum_maker"}, {"beat": "falconer"}, {"beat": "reader"}, {"beat": "ropewalker"}, {"beat": "lamplighter"}, {"beat": "knife_grinder"}], "weapon": "boomerang"}
   ]
 }

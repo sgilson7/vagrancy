@@ -172,6 +172,9 @@ export function renderer(canvas, palette, numbers) {
       const h = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
       // Each edge of the weapon (one for a sword; a curve's bends, a fork's
       // prongs), then the hilt over them.
+      // A turned boomerang is ringed in its thrower's own ink: it is
+      // coming back for them.
+      if (s.turned) for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 2.4, inkColor(s.fighter));
       for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 1.1, palette.sword);
       capsule(a, h, one * 1.6, palette.hilt);
     }

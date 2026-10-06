@@ -142,6 +142,17 @@ pub struct Sword {
     /// Thrown and not yet down: it cuts though no hand holds it, until any
     /// point of it first touches the ground.
     pub flying: bool,
+    /// A weapon that comes back when thrown (the boomerang).
+    pub returns: bool,
+    /// While a returning weapon is out of the hand: the tick it is back.
+    pub back_at: Option<u32>,
+    /// A returning weapon another blade has met in flight: until it is down
+    /// or back, it cuts its own thrower too, and flies home at the chest
+    /// rather than the hand (Sam: "if it is deflected, it can become deadly
+    /// to the one who threw the weapon").
+    pub turned: bool,
+    /// The grips the throw took away, put back when it returns.
+    pub grips: Vec<Constraint>,
 }
 
 /// A held joint key this tick: the servo's target and who it turns.
@@ -306,7 +317,7 @@ impl World {
             } else {
                 sd.edges.iter().map(|e| (butt + e.a as u16, butt + e.b as u16, e.from)).collect()
             };
-            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false });
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false, returns: sd.returns, back_at: None, turned: false, grips: Vec::new() });
             let extra = sd.extra.len() as u8;
             for g in &sd.grips {
                 let hand = base + g.hand as u16;
@@ -368,6 +379,9 @@ impl World {
                 self.throw_sword(seat, inputs[seat]);
                 inputs[seat] = self.jump_and_dodge(seat, inputs[seat]);
             }
+        }
+        if matches!(self.phase, crate::fight::Phase::Fight) {
+            self.bring_back();
         }
         let mut acc = vec![V2::ZERO; self.particles.len()];
         let mut drives = Vec::new();
@@ -667,10 +681,118 @@ impl World {
         if !self.cons.iter().any(gripped) {
             return;
         }
+        let grips: Vec<Constraint> = self.cons.iter().filter(|c| gripped(c)).copied().collect();
         self.cons.retain(|c| !gripped(c));
+        let back = self.tick + balance::RETURN_TICKS;
         if let Some(s) = self.swords.iter_mut().find(|s| s.fighter as usize == seat) {
             s.flying = true;
+            if s.returns {
+                s.back_at = Some(back);
+                s.grips = grips;
+            }
         }
+    }
+
+    /// A returning weapon out of the hand: in its last HOMING_TICKS it flies
+    /// home at HOMING_SPEED, to where the hand would hold it, or at the
+    /// thrower's chest once it is turned; at `back_at` it is in the hand
+    /// again, down or not, and harmless to its thrower. A thrower out of the
+    /// round, or whose lead hand or wrist a cut has taken, gets nothing back:
+    /// the weapon flies on and falls. Read before `integrate`, which carries
+    /// the velocity this sets.
+    fn bring_back(&mut self) {
+        for k in 0..self.swords.len() {
+            let Some(back) = self.swords[k].back_at else { continue };
+            let seat = self.swords[k].fighter as usize;
+            let Some(home) = self.home(k) else {
+                self.swords[k].back_at = None;
+                self.swords[k].grips.clear();
+                continue;
+            };
+            let left = back.saturating_sub(self.tick);
+            if left == 0 {
+                for (&i, &at) in self.swords[k].points.clone().iter().zip(&home) {
+                    let p = &mut self.particles[i as usize];
+                    p.p = at;
+                    p.q = at;
+                }
+                // A rear hand a cut took meanwhile holds nothing.
+                let grips = std::mem::take(&mut self.swords[k].grips);
+                let kept: Vec<Constraint> = grips
+                    .into_iter()
+                    .filter(|c| matches!(c.tag, Tag::Grip { hand, .. } if self.particles[hand as usize].owner == Owner::Body(seat as u8)))
+                    .collect();
+                self.cons.extend(kept);
+                let s = &mut self.swords[k];
+                s.back_at = None;
+                s.flying = false;
+                s.turned = false;
+                continue;
+            }
+            if left > balance::HOMING_TICKS {
+                continue;
+            }
+            // One velocity for every point, so the weapon keeps its shape:
+            // its middle toward its middle at home, or toward the chest.
+            let pts = self.swords[k].points.clone();
+            let mid = |ps: &[V2]| V2::lerp(ps[0], ps[1], Fx(ONE.0 / 2));
+            let now: Vec<V2> = pts.iter().map(|&i| self.particles[i as usize].p).collect();
+            let target = if self.swords[k].turned { self.chest(seat) } else { mid(&home) };
+            let to = target - mid(&now);
+            // Fast enough to be there on time, never slower than
+            // HOMING_SPEED, never past the target.
+            let d = to.len();
+            let pace = Fx((d.0 / left as i32).max(balance::HOMING_SPEED.0)).min(d);
+            let mut v = to.with_len(pace);
+            // `integrate` takes gravity off again: it flies straight.
+            v.y += self.setup.physics.gravity;
+            for &i in &pts {
+                let p = &mut self.particles[i as usize];
+                p.q = p.p - v;
+            }
+        }
+    }
+
+    /// Where each point of sword `k` sits in its thrower's lead hand now:
+    /// the rest pose's weapon, carried in the frame of the lead grip's wrist
+    /// and hand. `None` when that hand or wrist is no longer the fighter's,
+    /// or the fighter is out.
+    fn home(&self, k: usize) -> Option<Vec<V2>> {
+        let seat = self.swords[k].fighter as usize;
+        let f = self.fighters[seat].as_ref()?;
+        if self.out(seat) {
+            return None;
+        }
+        let def = self.setup.bodies[f.body as usize].clone();
+        let sd = def.sword.as_ref()?;
+        let g = sd.grips.first()?;
+        let stiff = g.stiff?;
+        let (hi, wi) = (f.base + g.hand as u16, f.base + stiff as u16);
+        let mine = |i: u16| self.particles[i as usize].owner == Owner::Body(seat as u8);
+        if !mine(hi) || !mine(wi) {
+            return None;
+        }
+        let (hand_def, wrist_def) = (def.points[g.hand as usize].at, def.points[stiff as usize].at);
+        let axis_def = hand_def - wrist_def;
+        let n = axis_def.len_sq_raw().max(1);
+        let hand = self.particles[hi as usize].p;
+        let axis = hand - self.particles[wi as usize].p;
+        let rest = [sd.butt, sd.tip].into_iter().chain(sd.extra.iter().copied());
+        Some(
+            rest.map(|e| {
+                let d = e - hand_def;
+                hand + axis.scale(axis_def.dot_raw(d), n) + axis.perp().scale(axis_def.cross_raw(d) * f.facing as i64, n)
+            })
+            .collect(),
+        )
+    }
+
+    /// The middle of a fighter's chest: halfway from shoulder to pelvis.
+    fn chest(&self, seat: usize) -> V2 {
+        let f = self.fighters[seat].as_ref().expect("a thrower is seated");
+        let r = &self.setup.bodies[f.body as usize].roles;
+        let at = |i: Option<u8>| self.particles[(f.base + i.unwrap_or(0) as u16) as usize].p;
+        V2::lerp(at(r.shoulder), at(r.pelvis), Fx(ONE.0 / 2))
     }
 
     /// A thrown sword that has touched the ground is down: from then on it
@@ -687,6 +809,7 @@ impl World {
                 p.p.y <= p.rad + ONE
             }) {
                 self.swords[k].flying = false;
+                self.swords[k].turned = false;
             }
         }
     }

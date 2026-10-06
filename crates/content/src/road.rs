@@ -73,12 +73,18 @@ pub enum Req {
     Headshot(String),
     /// Won it, in a match where the player won a round without being cut.
     Untouched(String),
+    /// Won it, in a match where the player's thrown blade ended a round
+    /// (Sam, 2026-10-06: "killing an enemy by throwing a weapon at them").
+    Thrown(String),
+    /// Won it, with a thrown blade ending every round the player won ("or
+    /// winning every round in a fight by throwing a weapon at them").
+    AllThrown(String),
 }
 
 impl Req {
     pub fn stop(&self) -> &str {
         match self {
-            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) => s,
+            Req::Beat(s) | Req::Flawless(s) | Req::Quick { stop: s, .. } | Req::With { stop: s, .. } | Req::Headshot(s) | Req::Untouched(s) | Req::Thrown(s) | Req::AllThrown(s) => s,
         }
     }
 
@@ -91,6 +97,8 @@ impl Req {
             Req::With { weapon, .. } => b.with.iter().any(|w| w == weapon),
             Req::Headshot(_) => b.headshot,
             Req::Untouched(_) => b.untouched,
+            Req::Thrown(_) => b.thrown,
+            Req::AllThrown(_) => b.all_thrown,
         }
     }
 
@@ -105,6 +113,8 @@ impl Req {
             Req::With { weapon, .. } => ("road.req.with", BTreeMap::from([("weapon".to_string(), weapon.clone())])),
             Req::Headshot(_) => ("road.req.headshot", BTreeMap::new()),
             Req::Untouched(_) => ("road.req.untouched", BTreeMap::new()),
+            Req::Thrown(_) => ("road.req.thrown", BTreeMap::new()),
+            Req::AllThrown(_) => ("road.req.all_thrown", BTreeMap::new()),
         }
     }
 }
@@ -154,19 +164,26 @@ pub struct Best {
     /// A won match here had a round the player won without being cut.
     #[serde(default)]
     pub untouched: bool,
+    /// A won match here had a round ended by the player's thrown blade. A
+    /// save from before version 8 has none.
+    #[serde(default)]
+    pub thrown: bool,
+    /// A won match here had every round the player won ended that way.
+    #[serde(default)]
+    pub all_thrown: bool,
 }
 
 impl Best {
-    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new(), headshot: false, untouched: false };
+    pub const UNKNOWN: Best = Best { losses: u32::MAX, ticks: u32::MAX, with: Vec::new(), headshot: false, untouched: false, thrown: false, all_thrown: false };
 
     /// One won match, carrying `weapon`, with no feats.
     pub fn won(losses: u32, ticks: u32, weapon: &str) -> Best {
-        Best { losses, ticks, with: vec![weapon.to_string()], headshot: false, untouched: false }
+        Best { losses, ticks, with: vec![weapon.to_string()], headshot: false, untouched: false, thrown: false, all_thrown: false }
     }
 
     /// The same result with the feats a match showed.
     pub fn with_feats(self, f: Feats) -> Best {
-        Best { headshot: f.headshot, untouched: f.untouched, ..self }
+        Best { headshot: f.headshot, untouched: f.untouched, thrown: f.thrown, all_thrown: f.won > 0 && f.won_thrown == f.won, ..self }
     }
 
     /// The better of two results, each part on its own: the fewest losses
@@ -183,6 +200,8 @@ impl Best {
             with,
             headshot: self.headshot || other.headshot,
             untouched: self.untouched || other.untouched,
+            thrown: self.thrown || other.thrown,
+            all_thrown: self.all_thrown || other.all_thrown,
         }
     }
 }
@@ -193,6 +212,11 @@ impl Best {
 pub struct Feats {
     pub headshot: bool,
     pub untouched: bool,
+    /// A round the player won ended with its thrown blade's cut.
+    pub thrown: bool,
+    /// Rounds the player won, and how many of those a throw ended.
+    pub won: u32,
+    pub won_thrown: u32,
     /// The player has been cut in the round under way.
     cut: bool,
 }
@@ -207,6 +231,10 @@ impl Feats {
                     if result.loser == Some(1) {
                         self.headshot |= result.by == 0 && crate::messages::headshot(w, &result);
                         self.untouched |= !self.cut;
+                        let by_throw = result.by == 0 && result.thrown;
+                        self.thrown |= by_throw;
+                        self.won += 1;
+                        self.won_thrown += by_throw as u32;
                     }
                     self.cut = false;
                 }

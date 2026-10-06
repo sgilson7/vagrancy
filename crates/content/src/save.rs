@@ -24,7 +24,10 @@ pub const FORMAT: &str = "vagrancy.save";
 /// reads as it is, with neither.
 /// 7: how many chapters of story mode are finished. A version 6 file reads
 /// as it is, with none.
-pub const VERSION: u32 = 7;
+/// 8: each best result says whether a won match there had a round ended by
+/// a thrown blade, and every won round ended so (the boomerang's fights). A
+/// version 7 file reads as it is, with neither.
+pub const VERSION: u32 = 8;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -301,8 +304,8 @@ mod tests {
 
     #[test]
     fn a_save_from_a_newer_version_is_refused_by_name() {
-        let text = encode(&fresh()).replace("\"version\": 7", "\"version\": 8");
-        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 8, ours: 7 }));
+        let text = encode(&fresh()).replace("\"version\": 8", "\"version\": 9");
+        assert_eq!(decode(&text), Err(SaveError::Newer { theirs: 9, ours: 8 }));
     }
 
     #[test]
@@ -347,7 +350,7 @@ mod tests {
 
     #[test]
     fn a_version_1_save_keeps_its_wins_as_wins_of_unknown_margin() {
-        let v1 = encode(&fresh()).replace("\"version\": 7", "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
+        let v1 = encode(&fresh()).replace(&format!("\"version\": {VERSION}"), "\"version\": 1").replace("\"best\": {}", "\"cleared\": [\"scarecrow\", \"thresher\"]").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
         let s = decode(&v1).expect("a version 1 save loads");
         let unknown = crate::road::Best::UNKNOWN;
         assert_eq!(s.road.best, BTreeMap::from([("scarecrow".to_string(), unknown.clone()), ("thresher".to_string(), unknown)]));
@@ -362,7 +365,7 @@ mod tests {
 
     #[test]
     fn a_version_2_save_loads_with_no_tutorial_done_and_a_finished_mission_round_trips() {
-        let v2 = encode(&fresh()).replace("\"version\": 7", "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
+        let v2 = encode(&fresh()).replace(&format!("\"version\": {VERSION}"), "\"version\": 2").replace(",\n    \"tutorial\": []", "").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
         assert!(!v2.contains("tutorial"), "{v2}");
         let s = decode(&v2).expect("a version 2 save loads");
         assert!(s.tutorial.is_empty());
@@ -392,7 +395,7 @@ mod tests {
         s.weapon = "no such weapon".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
         // A version 3 save carries the sword.
-        let v3 = encode(&fresh()).replace("\"version\": 7", "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
+        let v3 = encode(&fresh()).replace(&format!("\"version\": {VERSION}"), "\"version\": 3").replace(",\n    \"weapon\": \"sword\"", "").replace(",\n    \"story\": 0", "");
         assert!(!v3.contains("weapon"), "{v3}");
         assert_eq!(decode(&v3).unwrap().weapon, "sword");
     }
@@ -401,7 +404,7 @@ mod tests {
     fn a_version_4_save_keeps_its_wins_with_no_weapon_named_and_a_win_names_its_weapon() {
         let mut s = fresh();
         s.road.best.insert("scarecrow".into(), crate::road::Best::won(0, 900, "sword"));
-        let v4 = encode(&s).replace("\"version\": 7", "\"version\": 4").replace(",\n          \"with\": [\n            \"sword\"\n          ]", "");
+        let v4 = encode(&s).replace(&format!("\"version\": {VERSION}"), "\"version\": 4").replace(",\n          \"with\": [\n            \"sword\"\n          ]", "");
         assert!(!v4.contains("with"), "{v4}");
         let back = decode(&v4).expect("a version 4 save loads");
         assert!(back.road.best["scarecrow"].with.is_empty());
@@ -422,7 +425,7 @@ mod tests {
         f.headshot = true;
         f.untouched = true;
         s.road.best.insert("thresher".into(), crate::road::Best::won(0, 900, "sword").with_feats(f));
-        let v5 = encode(&s).replace("\"version\": 7", "\"version\": 5").replace("\"headshot\": true,\n          ", "").replace(",\n          \"untouched\": true", "");
+        let v5 = encode(&s).replace(&format!("\"version\": {VERSION}"), "\"version\": 5").replace("\"headshot\": true,\n          ", "").replace(",\n          \"untouched\": true", "");
         assert!(!v5.contains("headshot") && !v5.contains("untouched"), "{v5}");
         let back = decode(&v5).expect("a version 5 save loads");
         use crate::road::Req;

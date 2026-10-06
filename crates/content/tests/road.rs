@@ -284,7 +284,7 @@ fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     // and the knife grinder (the short sword's challenge).
     let opened = record(&mut best, "scarecrow", Best::won(0, 3000, "short_sword"));
     assert_eq!(opened, ["drover", "knife_grinder"]);
-    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000, with: vec!["short_sword".into(), "sword".into()], headshot: false, untouched: false }, "each part of the best is kept on its own");
+    assert_eq!(best["scarecrow"], Best { losses: 0, ticks: 2000, with: vec!["short_sword".into(), "sword".into()], headshot: false, untouched: false, thrown: false, all_thrown: false }, "each part of the best is kept on its own");
     // A quick requirement: the ropewalker asks for the courier in 90 s.
     for id in ["thresher", "drover", "sampler", "salt_trader"] {
         record(&mut best, id, Best::won(2, 99_999, "sword"));
@@ -486,7 +486,7 @@ fn after_a_win_that_opens_nothing_the_next_goal_is_the_nearest_locked_fight() {
     // challenge asks for the scimitar, which the pilgrim has not yet given.
     let mut first = BTreeMap::new();
     let all: Vec<String> = content::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
-    first.insert("scarecrow".to_string(), Best { losses: 0, ticks: 1, with: all.clone(), headshot: true, untouched: true });
+    first.insert("scarecrow".to_string(), Best { losses: 0, ticks: 1, with: all.clone(), headshot: true, untouched: true, thrown: true, all_thrown: true });
     let (_, req) = next_goal(&first).expect("a next goal");
     if let Req::With { weapon, .. } = &req {
         assert_eq!(&content::weapons::usable(weapon, &first), weapon, "the next goal asks for the {weapon}, which is locked");
@@ -500,7 +500,7 @@ fn after_a_win_that_opens_nothing_the_next_goal_is_the_nearest_locked_fight() {
     assert_eq!((opens.as_str(), req), ("ox_herd", Req::With { stop: "tinker".into(), weapon: "scimitar".into() }));
     // Nothing is suggested once every fight is open.
     for s in road() {
-        best.insert(s.id, Best { losses: 0, ticks: 1, with: content::weapons::weapons().into_iter().map(|w| w.id).collect(), headshot: true, untouched: true });
+        best.insert(s.id, Best { losses: 0, ticks: 1, with: content::weapons::weapons().into_iter().map(|w| w.id).collect(), headshot: true, untouched: true, thrown: true, all_thrown: true });
     }
     assert_eq!(next_goal(&best), None);
 }

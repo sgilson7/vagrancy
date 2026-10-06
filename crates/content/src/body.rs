@@ -168,6 +168,7 @@ fn build(b: BodyJson) -> BodyDef {
                 .collect(),
             // A plain sword; data/weapons.json reshapes it (crate::weapons).
             extra: Vec::new(),
+            returns: false,
             edges: Vec::new(),
         }
     });

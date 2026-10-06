@@ -47,4 +47,8 @@ pub use world::World;
 /// 13: a seat may set its side and facing, the arena's width is in the
 /// setup, and a stage to cross is won by reaching its end. A match that sets
 /// none of them plays exactly as in 12.
-pub const SIM_VERSION: u32 = 13;
+/// 14: a returning weapon (the boomerang) comes back to the hand, and a
+/// blade that meets it in flight turns it on its thrower; a result says
+/// whether a thrown blade made the deciding cut. A match with no boomerang
+/// in it plays exactly as in 13.
+pub const SIM_VERSION: u32 = 14;

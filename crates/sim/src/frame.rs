@@ -50,6 +50,8 @@ pub struct SwordView {
     pub held: bool,
     /// Thrown and still cutting.
     pub flying: bool,
+    /// A boomerang a blade met in flight: it can cut its thrower.
+    pub turned: bool,
     /// Every cutting edge, as two particle indices: one for a plain sword.
     pub edges: Vec<[u16; 2]>,
 }
@@ -93,6 +95,7 @@ pub fn frame(w: &World) -> Frame {
                 held: w.cons.iter().any(|c| matches!(c.tag, crate::world::Tag::Grip { fighter, .. } if fighter == s.fighter)),
                 edges: s.edges.iter().map(|e| [e.0, e.1]).collect(),
                 flying: s.flying,
+                turned: s.turned && s.flying,
             })
             .collect(),
         fighters: w

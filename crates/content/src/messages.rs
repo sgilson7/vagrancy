@@ -204,7 +204,7 @@ mod tests {
     }
 
     fn result(loser: Option<u8>, cause: Cause, part: u8, by: u8) -> RoundResult {
-        RoundResult { loser, seat: loser.unwrap_or(0), cause, part, by }
+        RoundResult { loser, seat: loser.unwrap_or(0), cause, part, by, thrown: false }
     }
 
     fn world() -> World {

@@ -7,6 +7,7 @@
     {"id": "scimitar", "length_pct": 85, "mass_pct": 110, "shape": {"curve": [[50, 14]]}, "unlock": {"beat": "pilgrim"}},
     {"id": "kris", "length_pct": 95, "mass_pct": 140, "shape": {"curve": [[30, 6], [55, -6], [80, 6]]}, "unlock": {"beat": "knife_grinder"}},
     {"id": "forked_blade", "length_pct": 90, "mass_pct": 190, "shape": {"prongs": {"fork_pct": 75, "prongs": [[100, 10], [100, -10]]}}, "unlock": {"beat": "ox_herd"}},
-    {"id": "trident", "length_pct": 88, "mass_pct": 210, "shape": {"prongs": {"fork_pct": 70, "prongs": [[95, 16], [95, -16]]}}, "unlock": {"beat": "eel_fisher"}}
+    {"id": "trident", "length_pct": 88, "mass_pct": 210, "shape": {"prongs": {"fork_pct": 70, "prongs": [[95, 16], [95, -16]]}}, "unlock": {"beat": "eel_fisher"}},
+    {"id": "boomerang", "length_pct": 55, "mass_pct": 70, "hilt_pct": 60, "shape": {"curve": [[50, 38]]}, "unlock": {"beat": "bird_scarer"}, "returns": true}
   ]
 }

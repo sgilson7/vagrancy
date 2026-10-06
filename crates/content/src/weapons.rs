@@ -44,6 +44,9 @@ pub struct Weapon {
     /// Carried only by opponents (data/road.json's `weapon`), never chosen.
     #[serde(default)]
     pub enemy_only: bool,
+    /// Thrown, it comes back to the hand (the boomerang).
+    #[serde(default)]
+    pub returns: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
@@ -88,6 +91,7 @@ pub fn usable(id: &str, best: &BTreeMap<String, Best>) -> String {
 /// do not move. Mass is shared among the weapon's points.
 pub fn reshape(base: &SwordDef, w: &Weapon) -> SwordDef {
     let mut s = base.clone();
+    s.returns = w.returns;
     s.hilt = Fx((base.hilt.0 as i64 * w.hilt_pct / 100) as i32);
     let axis = base.tip - base.butt;
     let now = axis.len().trunc() as i64;

@@ -89,3 +89,4 @@ and anything decided since. Newest entries go at the bottom of their section.
 - **Bit 6 of the input byte is "ready for the next round".** The round restarts through `World::step` like everything else.
 - **Points in `data/body.json` are numbered in name order**, so the numbering does not depend on how the JSON object was written.
 - **A replay carries its `Setup`, physics included.** A constant that lives in `Setup` can change without invalidating old replays. A constant that lives in code cannot, and changing one means bumping `SIM_VERSION`.
+- **A boomerang is put back in the hand, not flown into it.** It homes for its last `HOMING_TICKS` and is then placed in the lead hand's frame with the grips the throw took. Flying it until it touched the hand could miss, and a miss would leave the round with no blade. A boomerang that is down, or turned, passes through blades, because a blade resting against it held it in place (SECOND-ORDER-M5 row 67).
