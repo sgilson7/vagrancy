@@ -40,6 +40,9 @@ let fighters = [];     // [{ name, tree, by }], left then right
 let challenge = null;  // { sess, link, peer, viewer, opponent, started, timer }
 let prev = null, cur = null, acc = 0, last = 0, reported = false, nextAt = 0;
 let bot = null;
+// Whether the trees are drawn over the fighters: the bot can turn them off
+// for a fight (Sam, 2026-10-07: "turn off the behavior trees sometimes").
+let showTrees = true;
 
 function nameOf(f) { return f.id ? t(`opponents.${f.id}.name`) : (f.name || t('btlab.editor.unnamed')); }
 function treeFor(f) {
@@ -96,7 +99,7 @@ function loop(now) {
     }
     if (cur && cur.phase) {
       const traces = challenge ? [JSON.parse(challenge.sess.pilot_report())].filter(Boolean) : JSON.parse(game.report());
-      draw.trees(traces.map((r) => ({ seat: r.seat, tree: challenge ? fighters[1].treeData : fighters[r.seat].treeData, trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })));
+      draw.trees(!showTrees ? [] : traces.map((r) => ({ seat: r.seat, tree: challenge ? fighters[1].treeData : fighters[r.seat].treeData, trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })));
       draw(prev || cur, cur, Math.min(1, acc / tickMs));
       if (cur.phase === 'match_over' && !reported) finish();
     }
@@ -204,6 +207,7 @@ function connect(url) {
     else if (m.type === 'queue') list('arena-queue', 'arena.queue', m.items, (q) => el('li', {}, fill(q.viewer), ' ', el('span', { 'data-copy': `arena.kind.${q.kind}` }, t(`arena.kind.${q.kind}`))));
     else if (m.type === 'leaders') list('arena-leaders', 'arena.leaders', m.items, (q) => el('li', {}, fill(q.viewer), ' ', fill(q.xp)));
     else if (m.type === 'how') how(m);
+    else if (m.type === 'trees') showTrees = !!m.show;
     else if (m.type === 'check') send({ type: 'checked', id: m.id, ...JSON.parse(lab_check(m.tree)) });
   };
   bot.onclose = () => { bot = null; setTimeout(() => connect(url), 3000); };
@@ -240,7 +244,7 @@ async function main() {
   if (url && /^ws:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(url)) connect(url);
   else randomExhibition();
   document.body.dataset.ready = '1';
-  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge }) };
+  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees }) };
   requestAnimationFrame(loop);
 }
 main();
