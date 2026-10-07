@@ -98,10 +98,11 @@ def fill(m):
     if "{" in s.replace("{hash}", ""):
         sys.exit(f"{m.group(1)} has a placeholder packaging cannot fill: {s}")
     return html.escape(s, quote=True)
-p = f"{web}/index.html"
-page = re.sub(r"<!--.*?-->\s*", "", open(p).read(), flags=re.S)
-page = re.sub(r"\{\{([a-z_.]+)\}\}", fill, page)
-open(p, "w").write(page)
+# The game's page and the BT Lab's, each holding {{key}} tokens.
+for p in (f"{web}/index.html", f"{web}/bt-lab.html"):
+    page = re.sub(r"<!--.*?-->\s*", "", open(p).read(), flags=re.S)
+    page = re.sub(r"\{\{([a-z_.]+)\}\}", fill, page)
+    open(p, "w").write(page)
 flat = {}
 def walk(v, path):
     if isinstance(v, dict):
@@ -130,7 +131,7 @@ bust() { S="$2" R="$3" perl -0777 -pi -e 's/\Q$ENV{S}\E/$ENV{R}/g' "$1"; }
 
 # Everything the browser caches, whatever it is called — hashed before
 # stamping, which is what makes it stable.
-BUILD=$(cat "$WEB"/*.js "$WEB/index.html" "$WEB/styles.css" "$WEB/data/copy.en.json" \
+BUILD=$(cat "$WEB"/*.js "$WEB/index.html" "$WEB/bt-lab.html" "$WEB/styles.css" "$WEB/data/copy.en.json" \
             "$WEB/pkg/$WASM.js" "$WEB/pkg/${WASM}_bg.wasm" | sha256 | cut -c1-8)
 
 # Every relative import in every shipped module, rather than a list of the
@@ -144,6 +145,9 @@ done
 bust "$WEB/pkg/$WASM.js" "new URL('${WASM}_bg.wasm', import.meta.url)" \
                          "new URL('${WASM}_bg.wasm?v=$BUILD', import.meta.url)"
 bust "$WEB/index.html"   'src="app.js"'      "src=\"app.js?v=$BUILD\""
+bust "$WEB/bt-lab.html"  'src="btlab.js"'    "src=\"btlab.js?v=$BUILD\""
+bust "$WEB/bt-lab.html"  'href="styles.css"' "href=\"styles.css?v=$BUILD\""
+perl -0777 -pi -e "s/\{hash\}/$BUILD/g" "$WEB/bt-lab.html"
 bust "$WEB/index.html"   'href="styles.css"' "href=\"styles.css?v=$BUILD\""
 bust "$WEB/index.html"   '__BUILD__'         "$BUILD"
 perl -0777 -pi -e "s/\Q__BUILD__\E/$BUILD/g" "$WEB/index.html"
@@ -151,6 +155,7 @@ perl -0777 -pi -e "s/\Q__BUILD__\E/$BUILD/g" "$WEB/index.html"
 perl -0777 -pi -e "s/\{hash\}/$BUILD/g" "$WEB/index.html"
 
 grep -q "app.js?v=$BUILD" "$WEB/index.html" || die "cache-busting did not apply"
+grep -q "btlab.js?v=$BUILD" "$WEB/bt-lab.html" || die "the BT Lab's cache-busting did not apply"
 grep -q "box-sizing" "$WEB/styles.css"      || die "styles.css lost its rules in packaging"
 grep -q "?v=$BUILD" "$WEB/pkg/$WASM.js"     || die "wasm URL not stamped"
 if grep -RnoE "from '\./[A-Za-z0-9_/-]+\.js'" "$WEB"/*.js; then

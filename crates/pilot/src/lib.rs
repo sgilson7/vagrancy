@@ -15,6 +15,7 @@ use sim::body::SEATS;
 use sim::{Input, World};
 use std::collections::VecDeque;
 
+pub mod moves;
 pub mod view;
 
 /// One opponent's entry in `data/pilots.json`.
@@ -42,6 +43,22 @@ pub enum Spec {
     Many { arms: Box<Spec>, upper: Box<Spec>, legs: Box<Spec> },
 }
 
+impl Spec {
+    /// Its kind, as data/pilots.json names it.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            Spec::Still { .. } => "still",
+            Spec::Pose { .. } => "pose",
+            Spec::Loop { .. } => "loop",
+            Spec::Machine { .. } => "machine",
+            Spec::Replayer { .. } => "replayer",
+            Spec::Search { .. } => "search",
+            Spec::Tree { .. } => "tree",
+            Spec::Many { .. } => "many",
+        }
+    }
+}
+
 fn default_period() -> u32 {
     6
 }
@@ -55,6 +72,12 @@ pub trait Pilot {
     /// pilot's spec. Reading it changes nothing.
     fn trace(&self) -> view::Trace {
         view::Trace::default()
+    }
+    /// What it pressed on the last tick and why (moves::Explain), for the
+    /// BT Lab; one for each tree of a many-armed pilot. Reading it changes
+    /// nothing.
+    fn explain(&self) -> Vec<moves::Explain> {
+        Vec::new()
     }
 }
 
@@ -146,6 +169,28 @@ impl Pilot for Many {
         self.arms.observe(last);
         self.upper.observe(last.map(Input::arms_swapped));
         self.legs.observe(last);
+    }
+
+    fn explain(&self) -> Vec<moves::Explain> {
+        // The upper tree pressed the first pair's keys on its traded world;
+        // the keys it gave the body are the second pair's.
+        let part = |mut v: Vec<moves::Explain>, p: &'static str, swap: bool| {
+            for e in &mut v {
+                e.part = Some(p);
+                if swap {
+                    e.keys = Input(e.keys).arms_swapped().0;
+                    if let Some(pw) = e.pose.as_mut() {
+                        pw.shoulder.key = Input(pw.shoulder.key).arms_swapped().0;
+                        pw.elbow.key = Input(pw.elbow.key).arms_swapped().0;
+                    }
+                }
+            }
+            v
+        };
+        let mut out = part(self.arms.explain(), "tree.many.arms", false);
+        out.extend(part(self.upper.explain(), "tree.many.upper", true));
+        out.extend(part(self.legs.explain(), "tree.many.legs", false));
+        out
     }
 
     fn trace(&self) -> view::Trace {
@@ -305,31 +350,37 @@ fn turn_milli(a: V2, b: V2) -> i64 {
 /// toward the pose until it got there and overshot every time; the
 /// gatekeeper, who "does not swing", swung (SECOND-ORDER-M5).
 fn pose_keys(w: &World, seat: usize, shoulder: i32, elbow: i32) -> u16 {
-    let Some([(u, u0), (f, f0)]) = arm(w, seat) else { return 0 };
+    pose_why(w, seat, shoulder, elbow).0
+}
+
+/// `pose_keys`, with the numbers each joint's key was chosen from.
+fn pose_why(w: &World, seat: usize, shoulder: i32, elbow: i32) -> (u16, moves::PoseWhy) {
+    let mut why = moves::PoseWhy { shoulder_deg: shoulder, elbow_deg: elbow, ..Default::default() };
+    let Some([(u, u0), (f, f0)]) = arm(w, seat) else { return (0, why) };
     let face = facing(w, seat) as i64;
     let want = V2::new(cos_deg(shoulder) * face as i32, sin_deg(shoulder));
-    let steer = |err: i64, speed: i64, plus: u16, minus: u16| -> u16 {
-        // Aim to close a tenth of the error each tick, at most 0.12 rad/tick.
-        let aim = (err / 10).clamp(-120, 120);
-        if speed < aim - 8 {
+    let steer = |err: i64, speed: i64, plus: u16, minus: u16| -> moves::Joint {
+        // Aim to close a share of the error each tick, up to a limit.
+        let aim = (err / moves::POSE_SHARE).clamp(-moves::POSE_MAX, moves::POSE_MAX);
+        let key = if speed < aim - moves::POSE_BAND {
             plus
-        } else if speed > aim + 8 {
+        } else if speed > aim + moves::POSE_BAND {
             minus
         } else {
             0
-        }
+        };
+        moves::Joint { gap: err, aim, speed, key }
     };
-    let mut b = 0;
     // Facing +x, counterclockwise is "up"; facing -x it is "down".
     let err = turn_milli(u, want) * face;
     let speed = turn_milli(u0, u) * face;
-    b |= steer(err, speed, Input::SHOULDER_UP, Input::SHOULDER_DOWN);
+    why.shoulder = steer(err, speed, Input::SHOULDER_UP, Input::SHOULDER_DOWN);
     // The elbow's bend is the turn from the upper arm to the forearm.
     let bend = turn_milli(u, f) * face;
     let bend0 = turn_milli(u0, f0) * face;
     let target = (sin_deg(elbow).0 as i64 * 1000) / ONE.0 as i64;
-    b |= steer(target - bend, bend - bend0, Input::ELBOW_IN, Input::ELBOW_OUT);
-    b
+    why.elbow = steer(target - bend, bend - bend0, Input::ELBOW_IN, Input::ELBOW_OUT);
+    (why.shoulder.key | why.elbow.key, why)
 }
 
 // --- the kinds -------------------------------------------------------------------------
@@ -576,11 +627,13 @@ pub struct Search {
     chosen: Input,
     left: u32,
     others: [Input; SEATS],
+    /// The last choice, for the BT Lab.
+    pub why: moves::SearchWhy,
 }
 
 impl Search {
     pub fn new(horizon: u32, reaction: u32, branches: u32, period: u32) -> Search {
-        Search { horizon, reaction, branches, period: period.max(1), seen: VecDeque::new(), chosen: Input::NONE, left: 0, others: [Input::NONE; SEATS] }
+        Search { horizon, reaction, branches, period: period.max(1), seen: VecDeque::new(), chosen: Input::NONE, left: 0, others: [Input::NONE; SEATS], why: moves::SearchWhy::default() }
     }
 
     fn candidates(&self, w: &World, seat: usize) -> Vec<Input> {
@@ -651,6 +704,9 @@ impl Pilot for Search {
     fn trace(&self) -> view::Trace {
         view::Trace { active: vec![0], ..Default::default() }
     }
+    fn explain(&self) -> Vec<moves::Explain> {
+        vec![moves::Explain { mv: Some("search".into()), keys: self.chosen.0, search: Some(self.why.clone()), ..Default::default() }]
+    }
     fn observe(&mut self, last: [Input; SEATS]) {
         self.others = last.map(|i| Input(i.0 & !Input::READY));
     }
@@ -665,10 +721,12 @@ impl Pilot for Search {
         }
         if self.left > 0 {
             self.left -= 1;
+            self.why.keeps = self.left;
             return self.chosen;
         }
         let base = self.seen.front().unwrap();
         let mut best = (i64::MIN, Input::NONE);
+        let mut tried = Vec::new();
         for c in self.candidates(base, seat) {
             let mut trial = base.clone();
             let mut inputs = self.others;
@@ -697,12 +755,14 @@ impl Pilot for Search {
                 }
             }
             let s = Search::score(&trial, seat) + cuts;
+            tried.push((c.0, s));
             if s > best.0 {
                 best = (s, c);
             }
         }
         self.chosen = best.1;
         self.left = self.period - 1;
+        self.why = moves::SearchWhy { tried, chosen: self.chosen.0, keeps: self.left, horizon: self.horizon };
         self.chosen
     }
 }
@@ -826,6 +886,8 @@ pub struct Tree {
     pub period: u32,
     /// The step of a throw under way, and the tick of the move it began on.
     throw: Option<(ThrowStep, u32)>,
+    /// What the last tick pressed and why.
+    why: moves::Explain,
 }
 
 /// The steps of a throw, after the two-handed axe throw as coaches teach it
@@ -867,7 +929,7 @@ const FOLLOW_TICKS: u32 = 6;
 /// The window: the blade's middle, flying on from where it is with gravity
 /// and drag, passes this near the target's body before it is down, and
 /// arrives fast enough to cut.
-const WINDOW_CM: i32 = 30;
+pub const THROW_WINDOW_CM: i32 = 30;
 const ARRIVE_SPEED: i32 = 8;
 const FLIGHT_TICKS: u32 = 120;
 
@@ -896,7 +958,7 @@ pub fn throw_window(w: &World, seen: &World, seat: usize) -> bool {
         }
         let den = ab.len_sq_raw().max(1);
         let near = a + ab.scale((c - a).dot_raw(ab).clamp(0, den), den);
-        if (c - near).len().trunc() < WINDOW_CM {
+        if (c - near).len().trunc() < THROW_WINDOW_CM {
             return v.len().trunc() >= ARRIVE_SPEED;
         }
     }
@@ -942,7 +1004,8 @@ impl Tree {
             }
             ThrowStep::Watch => {
                 let seen = self.seen.front().cloned().unwrap_or_else(|| w.clone());
-                if throw_window(w, &seen, me) {
+                self.why.window = throw_window(w, &seen, me);
+                if self.why.window {
                     next(self, ThrowStep::Follow);
                     return Some(I::SHOULDER_DOWN | I::ELBOW_OUT | I::THROW | to);
                 }
@@ -981,7 +1044,7 @@ impl Tree {
 
     pub fn new(rules: Vec<Rule>, reaction: u32, salt: u64) -> Tree {
         let ids = view::tree_nodes(&rules, reaction).1;
-        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new(), period: view::TREE_SEARCH.2, throw: None }
+        Tree { rules, reaction, seen: VecDeque::new(), rng: sim::rng::Rng::new(0x7EE ^ salt), current: None, search: None, ids, running: None, checked: Vec::new(), period: view::TREE_SEARCH.2, throw: None, why: moves::Explain::default() }
     }
 
     fn holds(&mut self, c: &Cond, w: &World, me: usize) -> bool {
@@ -1051,56 +1114,48 @@ impl Tree {
 
     /// One tick of a move, or `None` when it has finished.
     fn play(&mut self, name: &str, t: u32, w: &World, me: usize) -> Option<u16> {
-        let to = step_toward(w, me, true);
-        let away = step_toward(w, me, false);
-        use Input as I;
-        Some(match (name, t) {
-            ("approach", 0..=7) => to,
-            ("retreat", 0..=7) => away,
-            ("guard", 0..=9) => pose_keys(w, me, 10, 10),
-            ("high_guard", 0..=9) => pose_keys(w, me, 70, 20),
-            ("low_guard", 0..=9) => pose_keys(w, me, -30, 10),
-            ("overhead", 0..=15) => I::SHOULDER_UP,
-            ("overhead", 16..=33) => I::SHOULDER_DOWN | I::ELBOW_OUT,
-            ("low_sweep", 0..=19) => I::SHOULDER_DOWN | to,
-            ("thrust", 0..=7) => I::ELBOW_IN,
-            ("thrust", 8..=17) => I::ELBOW_OUT | to,
-            ("spin", 0..=23) => I::SHOULDER_UP | to,
-            ("jump_strike", 0) => I::JUMP | to,
-            ("jump_strike", 1..=9) => I::SHOULDER_UP | to,
-            ("jump_strike", 10..=29) => I::SHOULDER_DOWN | to,
-            ("bounce_strike", 0) => I::JUMP,
-            ("bounce_strike", 1..=13) => I::SHOULDER_UP,
-            ("bounce_strike", 14) => I::JUMP | to,
-            ("bounce_strike", 15..=35) => I::SHOULDER_DOWN | to,
-            ("dodge_away", 0) => I::DODGE | away,
-            ("dodge_away", 1..=17) => 0,
-            ("dodge_in", 0) => I::DODGE | to,
-            ("dodge_in", 1..=17) => 0,
-            ("dodge_in", 18..=35) => I::SHOULDER_DOWN | I::ELBOW_OUT,
-            ("pogo", 0..=12) => I::ELBOW_IN | to,
-            ("pogo", 13..=21) => to,
-            ("pogo", 22..=55) => I::SHOULDER_DOWN | I::ELBOW_OUT | to,
-            ("stand", 0) => I::STAND,
-            ("throw", _) => return self.throw_keys(t, w, me),
-            // Up onto the ledge overhead: a jump, and the stand key once the
-            // pelvis has risen past the ledge's top (one jump lifts it about
-            // 120 cm in 27 ticks; by tick 16 it has risen 100).
-            ("climb", 0) => I::JUMP,
-            ("climb", 1..=15) => 0,
-            ("climb", 16) => I::STAND,
-            ("wait", 0..=9) => 0,
-            ("search", 0..=11) => {
+        // One table of moves (crate::moves), read here and by the BT Lab.
+        let step = |st: moves::Step| match st {
+            moves::Step::None => 0,
+            moves::Step::Toward => step_toward(w, me, true),
+            moves::Step::Away => step_toward(w, me, false),
+        };
+        Some(match moves::recipe(name)? {
+            moves::Recipe::Script { beats } => {
+                let (k, b) = beats.iter().enumerate().find(|(_, b)| b.from <= t && t <= b.to)?;
+                self.why.beat = Some(k);
+                self.why.step_keys = step(b.step);
+                b.keys | self.why.step_keys
+            }
+            moves::Recipe::Pose { shoulder, elbow, ticks } => {
+                if t > ticks {
+                    return None;
+                }
+                let (k, why) = pose_why(w, me, shoulder, elbow);
+                self.why.pose = Some(why);
+                k
+            }
+            moves::Recipe::Search { ticks } => {
+                if t > ticks {
+                    return None;
+                }
                 // The search sees the world as old as the tree does: built
                 // with a reaction of zero it read the present, and the
                 // archivist won every match in about a second.
                 let reaction = self.reaction;
                 let s = self.search.get_or_insert_with(|| Search::new(view::TREE_SEARCH.0, reaction, view::TREE_SEARCH.1, self.period));
-                s.input(w, me).0
+                let k = s.input(w, me).0;
+                self.why.search = Some(s.why.clone());
+                k
             }
-            _ => return None,
+            moves::Recipe::Throw => {
+                let k = self.throw_keys(t, w, me)?;
+                self.why.throw_step = self.throw_step().map(|st| st.index());
+                k
+            }
         })
     }
+
 }
 
 impl Pilot for Tree {
@@ -1124,6 +1179,9 @@ impl Pilot for Tree {
         }
         t
     }
+    fn explain(&self) -> Vec<moves::Explain> {
+        vec![self.why.clone()]
+    }
     fn observe(&mut self, last: [Input; SEATS]) {
         if let Some(s) = self.search.as_mut() {
             s.observe(last);
@@ -1131,6 +1189,7 @@ impl Pilot for Tree {
     }
 
     fn input(&mut self, w: &World, seat: usize) -> Input {
+        self.why = moves::Explain::default();
         self.seen.push_back(w.clone());
         while self.seen.len() as u32 > self.reaction + 1 {
             self.seen.pop_front();
@@ -1164,6 +1223,9 @@ impl Pilot for Tree {
         let Some((name, t)) = self.current.clone() else { return Input::NONE };
         match self.play(&name, t, w, seat) {
             Some(b) => {
+                self.why.mv = Some(name.clone());
+                self.why.t = t;
+                self.why.keys = b;
                 self.current = Some((name, t + 1));
                 Input(b)
             }

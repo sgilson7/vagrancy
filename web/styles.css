@@ -205,3 +205,41 @@ button.bind.listening { outline: 3px solid var(--focus); }
 .item.featured button:hover::after, .item.featured button:focus-visible::after { width: 120%; }
 .item.featured button:active { transform: skew(-6deg) translate(3px, 3px); box-shadow: 2px 2px 0 var(--fighters-right-stripe); }
 .item.featured .desc { font-size: 1.05em; }
+
+/* --- the BT Lab (bt-lab.html) ------------------------------------------- */
+body.btlab #app { max-width: 1240px; }
+body.btlab #lab { display: grid; gap: 14px; }
+body.btlab #stage { width: 100%; height: auto; }
+#tour { border: 2px solid var(--fighters-right-body); padding: 10px 16px; background: var(--paper); }
+#tour .question { font-style: italic; }
+#inspect { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
+@media (max-width: 900px) { #inspect { grid-template-columns: 1fr; } }
+.bt-scroll { overflow: auto; max-height: 520px; border: 1px solid var(--ground-line); }
+.bt-svg .edges path { fill: none; stroke: var(--ground-line); stroke-width: 1.5; }
+.bt-svg .edges path.active { stroke: var(--focus); stroke-width: 3; }
+.bt-svg .node rect { fill: var(--paper); stroke: var(--line); stroke-width: 1; }
+.bt-svg .node.interrupt rect { stroke-dasharray: 5 3; }
+.bt-svg .node.active rect { fill: var(--focus); stroke: var(--focus); }
+.bt-svg .node.active .node-text { color: var(--paper); }
+.bt-svg .node.held rect { stroke: var(--fighters-right-body); stroke-width: 3; }
+.bt-svg .node.failed { opacity: 0.35; }
+.bt-svg .node-text { font-size: 12px; line-height: 1.15; color: var(--line); height: 100%; display: flex; align-items: center; }
+.bt-legend { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.9em; }
+.bt-legend .swatch { display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: middle; border: 1px solid var(--line); background: var(--paper); }
+.bt-legend .lg-active .swatch { background: var(--focus); border-color: var(--focus); }
+.bt-legend .lg-held .swatch { border: 3px solid var(--fighters-right-body); }
+.bt-legend .lg-failed .swatch { opacity: 0.35; }
+.bt-legend .lg-interrupt .swatch { border-style: dashed; }
+#keys-panel .explain { border-top: 1px solid var(--ground-line); padding-top: 6px; }
+#keys-panel .now { font-weight: bold; }
+table.recipe { border-collapse: collapse; margin: 6px 0; font-size: 0.92em; }
+table.recipe th, table.recipe td { border: 1px solid var(--ground-line); padding: 3px 8px; text-align: left; }
+table.recipe tr.on td, table.recipe tr.on th { background: var(--meter-back); font-weight: bold; }
+.caps kbd { display: inline-block; border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; margin: 1px 3px 1px 0; font-family: inherit; font-size: 0.85em; background: var(--paper); }
+.throw-steps li.on { font-weight: bold; color: var(--focus); }
+.keyboard { display: flex; flex-wrap: wrap; gap: 6px; }
+.keyboard .cap { border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; min-width: 110px; font-size: 0.82em; background: var(--paper); }
+.keyboard .cap.down { background: var(--focus); color: var(--paper); border-color: var(--focus); }
+.keyboard .cap-key { display: block; font-weight: bold; font-size: 1.1em; }
+#timeline-panel canvas { width: 100%; height: auto; border: 1px solid var(--ground-line); }
+body.btlab #hud { display: flex; gap: 18px; justify-content: center; }

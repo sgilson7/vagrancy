@@ -1,0 +1,510 @@
+// The BT Lab (Sam, 2026-10-06): a classroom demo of how a behavior tree
+// becomes key presses, built on the game's own pilots. Like the game's page
+// it draws what core sends and decides nothing: the tree, what ran, and the
+// keys and the reasons for them come from core (crates/pilot/src/moves.rs,
+// crates/wasm Lab); every word is a copy string.
+import init, {
+  copy_json, palette_json, numbers as coreNumbers, controls_json, tree_json, maps_json,
+  Lab, lab_roster_json, lab_moves_json, bubbles_step,
+} from './pkg/vagrancy_wasm.js';
+import { renderer } from './draw.js';
+import { listen, bits, keyName } from './keys.js';
+
+const BUILD = '__BUILD__';
+let COPY, N, PAL, CONTROLS, ROSTER, MOVES, ACTION_BITS, draw;
+
+const $ = (id) => document.getElementById(id);
+function t(key, vars = {}) {
+  const s = key.split('.').reduce((o, k) => (o == null ? o : o[k]), COPY);
+  if (typeof s !== 'string') throw new Error(`no copy string at ${key}`);
+  const all = { game: COPY.game.name, hash: BUILD, ...vars };
+  return s.replace(/\{([a-z_.]+)\}/g, (m, p) => {
+    if (!(p in all)) throw new Error(`no value for {${p}} in ${key}`);
+    return String(all[p]);
+  });
+}
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'on') for (const [ev, fn] of Object.entries(v)) e.addEventListener(ev, fn);
+    else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids) if (k != null && k !== false) e.append(k);
+  return e;
+}
+const say = (key, vars, attrs = {}) => el('p', { 'data-copy': key, ...attrs }, t(key, vars));
+const button = (key, onclick, vars, attrs = {}) => el('button', { type: 'button', 'data-copy': key, on: { click: onclick }, ...attrs }, t(key, vars));
+// A value filled from data, not a sentence: a key's name, a number.
+const fill = (text, attrs = {}) => el('span', { 'data-fill': '', ...attrs }, String(text));
+const name = (id) => t(`opponents.${id}.name`);
+
+// --- what is running ---------------------------------------------------------------
+
+const S = {
+  mode: 'watch', left: 'lamplighter', right: 'drover', opp: 'lamplighter', map: 'flat',
+  inspect: 1, speed: 1, paused: false, floating: false, tour: 0,
+};
+let lab = null;
+let prev = null, cur = null, report = [], acc = 0, last = 0, stepOnce = false;
+// The last few seconds of each seat's keys and running move, newest last.
+let history = [];
+const HISTORY_TICKS = 180;
+
+function start() {
+  const seed = (Math.random() * 0xffffffff) >>> 0;
+  const tuning = N.default_tuning;
+  lab = S.mode === 'watch' ? Lab.watch(seed, tuning, S.left, S.right, S.map) : Lab.play(seed, tuning, S.opp);
+  if (S.mode === 'play') S.inspect = 1;
+  cur = JSON.parse(lab.frame());
+  prev = null;
+  history = [];
+  report = [];
+  acc = 0;
+  draw.reset();
+  buildTree();
+  renderTransport();
+  renderPanels();
+}
+
+function tickOnce() {
+  // In a fight of your own, the next round starts when the last one is
+  // read; the pilots press "ready" themselves.
+  const mine = S.mode === 'play' ? bits(CONTROLS.solo, ACTION_BITS) | (cur && cur.phase !== 'fight' ? N.ready_bit : 0) : 0;
+  lab.step(mine, 0);
+  prev = cur;
+  cur = JSON.parse(lab.frame());
+  draw.events(cur);
+  report = JSON.parse(lab.report());
+  history.push({ tick: lab.tick(), seats: report.map((r) => ({ seat: r.seat, keys: r.keys, mv: (r.explain[0] || {}).mv || null, t: (r.explain[0] || {}).t || 0 })) });
+  if (history.length > HISTORY_TICKS) history.shift();
+}
+
+function loop(now) {
+  const tickMs = 1000 / N.ticks_per_second;
+  if (lab) {
+    let n = 0;
+    if (!S.paused) {
+      acc += Math.min(now - (last || now), 250) * S.speed;
+      while (acc >= tickMs && n < 8) { tickOnce(); acc -= tickMs; n += 1; }
+    } else if (stepOnce) {
+      tickOnce(); n = 1; stepOnce = false; acc = 0;
+    }
+    if (n) renderPanels();
+    draw.trees(S.floating ? report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
+    draw(prev || cur, cur, S.paused ? 1 : Math.min(1, acc / tickMs));
+  }
+  last = now;
+  requestAnimationFrame(loop);
+}
+
+// --- the trees ---------------------------------------------------------------------
+
+const TREES = new Map();
+function treeOf(id) {
+  if (!TREES.has(id)) {
+    const fillText = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fillText); return n; };
+    TREES.set(id, fillText(JSON.parse(tree_json(id))));
+  }
+  return TREES.get(id);
+}
+
+// Columns and rows, as the arena's floating trees lay them out (draw.js):
+// a selector, parallel or repeat spreads its children across; a sequence
+// stacks its steps under itself.
+const across = (n) => n.kind === 'selector' || n.kind === 'parallel' || n.kind === 'repeat';
+function lay(n, col, row, out) {
+  if (!n.children.length) { out.set(n.id, { col, row, n }); return 1; }
+  if (across(n)) {
+    let c = col;
+    for (const k of n.children) c += lay(k, c, row + 1, out);
+    out.set(n.id, { col: col + (c - col - 1) / 2, row, n });
+    return c - col;
+  }
+  out.set(n.id, { col, row, n });
+  let r = row + 1, w = 1;
+  for (const k of n.children) {
+    const sub = new Map();
+    w = Math.max(w, lay(k, col, r, sub));
+    for (const [id, v] of sub) out.set(id, v);
+    r = Math.max(...[...sub.values()].map((v) => v.row)) + 1;
+  }
+  return w;
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+const svg = (tag, attrs = {}) => {
+  const e = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+};
+const BOX_W = 168, BOX_H = 40, COL = 180, ROW = 56;
+let nodeEls = new Map();
+
+function inspectedId() {
+  const r = S.mode === 'watch' ? (S.inspect === 0 ? S.left : S.right) : S.opp;
+  return r;
+}
+
+function buildTree() {
+  const panel = $('tree-panel');
+  const id = inspectedId();
+  const tree = treeOf(id);
+  const pos = new Map();
+  const cols = lay(tree, 0, 0, pos);
+  const rows = Math.max(...[...pos.values()].map((v) => v.row)) + 1;
+  const W = cols * COL + 20, H = rows * ROW + 20;
+  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'bt-svg', role: 'img', 'aria-label': t('btlab.tree.heading', { opponent: name(id) }) });
+  const at = (nid) => { const v = pos.get(nid); return [10 + v.col * COL, 10 + v.row * ROW]; };
+  const edges = svg('g', { class: 'edges' });
+  for (const v of pos.values()) {
+    for (const k of v.n.children) {
+      const [x1, y1] = at(v.n.id), [x2, y2] = at(k.id);
+      const d = across(v.n)
+        ? `M${x1 + BOX_W / 2},${y1 + BOX_H} L${x2 + BOX_W / 2},${y2}`
+        : `M${x1 + 10},${y1 + BOX_H} L${x1 + 10},${y2 + BOX_H / 2} L${x2},${y2 + BOX_H / 2}`;
+      edges.append(svg('path', { d, 'data-from': v.n.id, 'data-to': k.id }));
+    }
+  }
+  root.append(edges);
+  nodeEls = new Map();
+  for (const v of pos.values()) {
+    const [x, y] = at(v.n.id);
+    const g = svg('g', { class: `node kind-${v.n.kind}${v.n.interrupt ? ' interrupt' : ''}`, 'data-id': v.n.id, transform: `translate(${x},${y})` });
+    g.append(svg('rect', { width: BOX_W, height: BOX_H, rx: v.n.kind === 'condition' ? 18 : 4 }));
+    const im = svg('image', { href: `icons/${v.n.icon}.png`, x: 4, y: 6, width: 28, height: 28 });
+    g.append(im);
+    const fo = svg('foreignObject', { x: 36, y: 2, width: BOX_W - 40, height: BOX_H - 4 });
+    const div = document.createElement('div');
+    div.className = 'node-text';
+    div.textContent = v.n.text;
+    div.setAttribute('data-fill', '');
+    fo.append(div);
+    g.append(fo);
+    nodeEls.set(v.n.id, g);
+    root.append(g);
+  }
+  const legend = el('ul', { class: 'bt-legend' },
+    ...['active', 'held', 'failed', 'interrupt'].map((k) => el('li', { class: `lg-${k}` }, el('span', { class: 'swatch' }), t(`btlab.legend.${k}`))));
+  panel.replaceChildren(
+    el('h2', { 'data-copy': 'btlab.tree.heading' }, t('btlab.tree.heading', { opponent: name(id) })),
+    say('btlab.tree.desc', {}, { class: 'desc' }),
+    legend,
+    el('div', { class: 'bt-scroll' }, root));
+}
+
+function lightTree(r) {
+  if (!r) return;
+  const active = new Set(r.active), held = new Set(r.held), failed = new Set(r.failed);
+  for (const [nid, g] of nodeEls) {
+    g.classList.toggle('active', active.has(nid));
+    g.classList.toggle('held', held.has(nid) && !active.has(nid));
+    g.classList.toggle('failed', failed.has(nid) && !active.has(nid));
+  }
+  for (const p of $('tree-panel').querySelectorAll('path')) {
+    p.classList.toggle('active', active.has(+p.dataset.from) && active.has(+p.dataset.to));
+  }
+}
+
+// --- from the action to the keys ----------------------------------------------------
+
+// Each input bit, named as Settings names it, with the key it is bound to
+// for one player; the second pair of arms has no key.
+function keyRows(many) {
+  const rows = N.actions.map(([action, bit]) => ({ bit, label: t(`settings.keys.actions.${action}`), key: CONTROLS.solo[action] ? keyName(CONTROLS.solo[action]) : '' }));
+  if (many) {
+    ['shoulder2_up', 'shoulder2_down', 'elbow2_in', 'elbow2_out'].forEach((k, i) => rows.push({ bit: MOVES.arms2[i], label: t(`btlab.keys.arms2.${k}`), key: '' }));
+  }
+  return rows;
+}
+const keysOf = (bitsSet, many) => keyRows(many).filter((r) => bitsSet & r.bit);
+const caps = (bitsSet, many) => {
+  const ks = keysOf(bitsSet, many);
+  return ks.length ? el('span', { class: 'caps' }, ...ks.map((r) => el('kbd', {}, fill(r.label)))) : say('btlab.key.none', {}, { class: 'none' });
+};
+const mrad = (n) => fill(t('btlab.mrad', { n }));
+
+function recipeOf(mv) {
+  return (MOVES.moves.find((m) => m.id === mv) || {}).recipe;
+}
+
+function explainBlock(e, many) {
+  const kids = [];
+  if (e.part) kids.push(el('h4', { 'data-copy': e.part }, t(e.part)));
+  if (!e.mv) {
+    kids.push(say('btlab.idle'));
+    return el('div', { class: 'explain' }, ...kids);
+  }
+  kids.push(say('btlab.now', { move: t(`tree.act.${e.mv}`), t: e.t }, { class: 'now' }));
+  const r = recipeOf(e.mv);
+  if (r && r.kind === 'script') {
+    kids.push(say('btlab.script.intro', {}, { class: 'desc' }));
+    const rows = r.beats.map((b, i) => el('tr', { class: i === e.beat ? 'on' : '' },
+      el('td', {}, fill(t('btlab.script.span', { from: b.from, to: b.to }))),
+      el('td', {}, caps(b.keys, many)),
+      el('td', {}, fill(t(`btlab.step.${b.step}`)))));
+    kids.push(el('table', { class: 'recipe' },
+      el('thead', {}, el('tr', {}, ...['ticks', 'keys', 'step'].map((h) => el('th', { 'data-copy': `btlab.script.${h}` }, t(`btlab.script.${h}`))))),
+      el('tbody', {}, ...rows)));
+  } else if (r && r.kind === 'pose' && e.pose) {
+    const p = e.pose;
+    kids.push(say('btlab.pose.intro', { shoulder: p.shoulder_deg, elbow: p.elbow_deg }, { class: 'desc' }));
+    kids.push(say('btlab.pose.rule', { share: MOVES.pose.share, max: MOVES.pose.max, band: MOVES.pose.band }, { class: 'desc' }));
+    const row = (k, j) => el('tr', {},
+      el('th', { 'data-copy': `btlab.pose.${k}` }, t(`btlab.pose.${k}`)),
+      el('td', {}, mrad(j.gap)), el('td', {}, mrad(j.aim)), el('td', {}, mrad(j.speed)),
+      el('td', {}, caps(j.key, many)));
+    kids.push(el('table', { class: 'recipe' },
+      el('thead', {}, el('tr', {}, ...['joint', 'gap', 'aim', 'turn', 'key'].map((h) => el('th', { 'data-copy': `btlab.pose.${h}` }, t(`btlab.pose.${h}`))))),
+      el('tbody', {}, row('shoulder', p.shoulder), row('elbow', p.elbow))));
+  } else if (r && r.kind === 'search' && e.search) {
+    const s = e.search;
+    kids.push(say('btlab.search.intro', { horizon_ms: Math.round(s.horizon * 1000 / N.ticks_per_second) }, { class: 'desc' }));
+    if (s.tried.length) {
+      kids.push(el('table', { class: 'recipe' },
+        el('thead', {}, el('tr', {}, ...['keys', 'score'].map((h) => el('th', { 'data-copy': `btlab.search.${h}` }, t(`btlab.search.${h}`))))),
+        el('tbody', {}, ...s.tried.map(([k, sc]) => el('tr', { class: k === s.chosen ? 'on' : '' }, el('td', {}, caps(k, many)), el('td', {}, fill(sc)))))));
+    }
+    kids.push(say('btlab.search.keeps', { n: s.keeps }, { class: 'desc' }));
+  } else if (r && r.kind === 'throw') {
+    kids.push(say('btlab.throw.intro', {}, { class: 'desc' }));
+    const steps = ['throw_settle', 'throw_wind', 'throw_watch', 'throw_release'];
+    kids.push(el('ol', { class: 'throw-steps' }, ...steps.map((s, i) => el('li', { class: i === e.throw_step ? 'on' : '', 'data-copy': `tree.act.${s}` }, t(`tree.act.${s}`)))));
+    if (e.throw_step === 2) kids.push(say(e.window ? 'btlab.throw.open' : 'btlab.throw.shut', { cm: MOVES.throw_window_cm }));
+  }
+  if (e.step_keys) kids.push(say('btlab.step_added', {}, { class: 'desc' }));
+  kids.push(el('h4', { 'data-copy': 'btlab.keys.from_this' }, t('btlab.keys.from_this')), caps(e.keys, many));
+  return el('div', { class: 'explain' }, ...kids);
+}
+
+function renderPanels() {
+  const r = report.find((x) => x.seat === S.inspect) || report.find((x) => x.seat === 1);
+  lightTree(r);
+  const panel = $('keys-panel');
+  const many = !!(r && r.explain.length > 1);
+  const kids = [el('h2', { 'data-copy': 'btlab.keys.heading' }, t('btlab.keys.heading'))];
+  if (r) {
+    for (const e of r.explain) kids.push(explainBlock(e, many));
+    kids.push(el('h3', { 'data-copy': 'btlab.keys.pressed' }, t('btlab.keys.pressed')));
+    kids.push(el('div', { class: 'keyboard' }, ...keyRows(many).map((k) => el('div', { class: `cap${r.keys & k.bit ? ' down' : ''}`, 'data-bit': k.bit },
+      el('span', { class: 'cap-key', 'data-fill': '' }, k.key || '·'), el('span', { class: 'cap-label', 'data-fill': '' }, k.label)))));
+  }
+  panel.replaceChildren(...kids);
+  renderTimeline(many);
+  renderHud();
+}
+
+function renderHud() {
+  if (!cur) return;
+  const names = S.mode === 'watch' ? [name(S.left), name(S.right)] : [t('fighters.left.name'), name(S.opp)];
+  $('hud').replaceChildren(
+    el('span', { 'data-copy': 'btlab.tick' }, t('btlab.tick', { tick: lab.tick() })), ' ',
+    el('span', { 'data-copy': 'hud.round' }, t('hud.round', { round: cur.round })), ' ',
+    el('span', { 'data-copy': 'hud.score' }, t('hud.score', { left_name: names[0], left_wins: cur.wins[0], right_name: names[1], right_wins: cur.wins[1] })));
+}
+
+// --- the timeline: each key, the last few seconds ----------------------------------------
+
+function renderTimeline(many) {
+  const panel = $('timeline-panel');
+  let cv = panel.querySelector('canvas');
+  if (!cv) {
+    cv = el('canvas', { width: 900, height: 300, 'aria-label': t('btlab.timeline.heading', { seconds: HISTORY_TICKS / N.ticks_per_second }) });
+    panel.replaceChildren(
+      el('h2', { 'data-copy': 'btlab.timeline.heading' }, t('btlab.timeline.heading', { seconds: HISTORY_TICKS / N.ticks_per_second })),
+      say('btlab.timeline.desc', {}, { class: 'desc' }), cv);
+  }
+  const rows = keyRows(many);
+  const ctx = cv.getContext('2d');
+  const LABEL = 230, top = 22, rh = Math.min(24, (cv.height - top) / rows.length), cw = (cv.width - LABEL) / HISTORY_TICKS;
+  ctx.fillStyle = PAL.paper; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.font = '12px Georgia, serif';
+  rows.forEach((row, i) => {
+    ctx.fillStyle = PAL.line;
+    ctx.fillText(row.label, 4, top + i * rh + rh * 0.7);
+    ctx.strokeStyle = PAL.meter_back;
+    ctx.beginPath(); ctx.moveTo(LABEL, top + (i + 1) * rh); ctx.lineTo(cv.width, top + (i + 1) * rh); ctx.stroke();
+  });
+  // A thin line where a move starts (its tick 0), named when it is a
+  // different move from the one named last.
+  let lastLabel = null;
+  history.forEach((h, x) => {
+    const s = h.seats.find((q) => q.seat === S.inspect) || h.seats.find((q) => q.seat === 1);
+    if (!s) return;
+    const px = LABEL + x * cw;
+    if (s.mv && s.t === 0) {
+      ctx.strokeStyle = PAL.fighters.right.body;
+      ctx.beginPath(); ctx.moveTo(px, top - 4); ctx.lineTo(px, cv.height); ctx.stroke();
+      if (s.mv !== lastLabel) { ctx.fillStyle = PAL.fighters.right.stripe; ctx.fillText(t(`tree.act.${s.mv}`), px + 3, 14); lastLabel = s.mv; }
+    }
+    rows.forEach((row, i) => {
+      if (s.keys & row.bit) { ctx.fillStyle = PAL.focus; ctx.fillRect(px, top + i * rh + 3, Math.max(1, cw), rh - 6); }
+    });
+  });
+}
+
+// --- the controls -------------------------------------------------------------------------
+
+const SPEEDS = [[1, 'watch.speed.full.label'], [0.5, 'watch.speed.half.label'], [0.25, 'watch.speed.quarter.label'], [0.125, 'btlab.speed.eighth.label']];
+
+function renderTransport() {
+  const box = $('transport');
+  const pause = button(S.paused ? 'btlab.resume.label' : 'btlab.pause.label', () => { S.paused = !S.paused; renderTransport(); }, {}, { id: 'lab-pause' });
+  const step = button('btlab.step.label', () => { stepOnce = true; }, {}, { id: 'lab-step', disabled: !S.paused });
+  const speeds = SPEEDS.map(([v, key]) => {
+    const b = button(key, () => { S.speed = v; renderTransport(); });
+    b.classList.toggle('picked', S.speed === v);
+    b.setAttribute('aria-pressed', String(S.speed === v));
+    return b;
+  });
+  const insp = S.mode === 'watch'
+    ? el('p', {}, el('label', { 'data-copy': 'btlab.inspect.label' }, t('btlab.inspect.label')), ' ',
+      ...[0, 1].map((seat) => {
+        const b = button('btlab.inspect.seat', () => { S.inspect = seat; buildTree(); renderTransport(); renderPanels(); }, { opponent: name(seat === 0 ? S.left : S.right) });
+        b.classList.toggle('picked', S.inspect === seat);
+        return b;
+      }))
+    : null;
+  const floating = el('label', {}, el('input', { type: 'checkbox', id: 'lab-floating', checked: S.floating, on: { change: (e) => { S.floating = e.target.checked; } } }), ' ', t('btlab.floating'));
+  box.replaceChildren(
+    el('div', { class: 'actions' }, pause, step, ...speeds),
+    insp, el('p', {}, floating),
+    say('btlab.shortcuts', {}, { class: 'desc' }));
+}
+
+function roster() {
+  // Grouped by row of the road, as arcade mode lays them out.
+  const byRow = new Map();
+  for (const r of ROSTER) {
+    if (!byRow.has(r.level)) byRow.set(r.level, []);
+    byRow.get(r.level).push(r);
+  }
+  return [...byRow.entries()].sort((a, b) => a[0] - b[0]);
+}
+function picker(id, labelKey, value, onChange) {
+  const sel = el('select', { id, on: { change: () => onChange(sel.value) } },
+    ...roster().map(([row, rs]) => el('optgroup', { label: t('btlab.row', { row }) },
+      ...rs.map((r) => el('option', { value: r.id }, name(r.id))))));
+  sel.value = value;
+  return el('p', {}, el('label', { for: id, 'data-copy': labelKey }, t(labelKey)), ' ', sel);
+}
+
+function renderSetup() {
+  const box = $('setup');
+  const modes = ['watch', 'play'].map((m) => {
+    const b = button(`btlab.mode.${m}`, () => { S.mode = m; renderSetup(); });
+    b.classList.toggle('picked', S.mode === m);
+    return b;
+  });
+  const maps = JSON.parse(maps_json()).maps.map((m) => m.id);
+  const map = el('select', { id: 'lab-map', on: { change: () => { S.map = map.value; } } }, ...maps.map((m) => el('option', { value: m }, t(`maps.${m}.name`))));
+  map.value = S.map;
+  const kids = [el('h2', { 'data-copy': 'btlab.setup.heading' }, t('btlab.setup.heading')), el('div', { class: 'actions' }, ...modes)];
+  if (S.mode === 'watch') {
+    kids.push(picker('lab-left', 'btlab.left', S.left, (v) => { S.left = v; }), picker('lab-right', 'btlab.right', S.right, (v) => { S.right = v; }),
+      el('p', {}, el('label', { for: 'lab-map', 'data-copy': 'local.map' }, t('local.map')), ' ', map));
+  } else {
+    kids.push(picker('lab-opp', 'btlab.opponent', S.opp, (v) => { S.opp = v; }), say('btlab.play_keys', keyVars(), { class: 'desc' }));
+  }
+  kids.push(el('div', { class: 'actions' }, button('btlab.start.label', start, {}, { id: 'lab-start' })));
+  box.replaceChildren(...kids);
+}
+function keyVars() {
+  const v = {};
+  for (const [action, code] of Object.entries(CONTROLS.solo)) v[`key.${action}`] = keyName(code);
+  return v;
+}
+
+// --- the class tour -------------------------------------------------------------------------
+
+// Each step sets the lab up to show one idea (copy btlab.tour.<id>).
+const TOUR = [
+  { id: 'tasks', mode: 'watch', left: 'drover', right: 'scarecrow', inspect: 0, speed: 0.5 },
+  { id: 'selector', mode: 'watch', left: 'lamplighter', right: 'drover', inspect: 0, speed: 0.5 },
+  { id: 'sequence', mode: 'watch', left: 'cooper', right: 'drover', inspect: 0, speed: 0.5 },
+  { id: 'running', mode: 'watch', left: 'courier', right: 'lamplighter', inspect: 0, speed: 0.25 },
+  { id: 'script', mode: 'watch', left: 'hay_mower', right: 'scarecrow', inspect: 0, speed: 0.25, until: 'overhead' },
+  { id: 'pose', mode: 'watch', left: 'lamplighter', right: 'scarecrow', inspect: 0, speed: 0.25, until: 'high_guard' },
+  { id: 'search', mode: 'watch', left: 'archivist', right: 'drover', inspect: 0, speed: 0.25, until: 'search' },
+  { id: 'throw', mode: 'watch', left: 'harpooner', right: 'drover', inspect: 0, speed: 0.25, until: 'throw' },
+  { id: 'parallel', mode: 'watch', left: 'local_deity', right: 'drover', inspect: 0, speed: 0.25 },
+  { id: 'decorator', mode: 'watch', left: 'thresher', right: 'scarecrow', inspect: 0, speed: 0.5 },
+  { id: 'yours', mode: 'play', opp: 'lamplighter', inspect: 1, speed: 1 },
+];
+
+function renderTour() {
+  const step = TOUR[S.tour];
+  const k = (f) => `btlab.tour.${step.id}.${f}`;
+  $('tour').replaceChildren(
+    el('h2', { 'data-copy': 'btlab.tour.heading' }, t('btlab.tour.heading')),
+    say('btlab.tour.step', { n: S.tour + 1, count: TOUR.length }, { class: 'desc' }),
+    el('h3', { 'data-copy': k('title') }, t(k('title'))),
+    say(k('body')),
+    el('p', { class: 'question' }, el('strong', { 'data-copy': 'btlab.tour.discuss' }, t('btlab.tour.discuss')), ' ', el('span', { 'data-copy': k('question') }, t(k('question')))),
+    el('div', { class: 'actions' },
+      button('btlab.tour.prev.label', () => { S.tour = Math.max(0, S.tour - 1); renderTour(); }, {}, { disabled: S.tour === 0 }),
+      button('btlab.tour.setup.label', () => setUp(step), {}, { id: 'tour-setup' }),
+      button('btlab.tour.next.label', () => { S.tour = Math.min(TOUR.length - 1, S.tour + 1); renderTour(); }, {}, { disabled: S.tour === TOUR.length - 1 })));
+}
+
+function setUp(step) {
+  S.mode = step.mode;
+  if (step.left) S.left = step.left;
+  if (step.right) S.right = step.right;
+  if (step.opp) S.opp = step.opp;
+  S.inspect = step.inspect;
+  S.speed = step.speed;
+  S.paused = !!step.paused;
+  renderSetup();
+  start();
+  // A step about one move runs the match on until that move starts, then
+  // pauses there, so the class can step through it a tick at a time.
+  if (step.until) {
+    const running = () => {
+      const r = report.find((x) => x.seat === S.inspect);
+      return r && r.explain.some((e) => e.mv === step.until);
+    };
+    for (let i = 0; i < 60 * 60 && !running(); i += 1) tickOnce();
+    S.paused = true;
+    renderTransport();
+    renderPanels();
+  }
+}
+
+// --- start ---------------------------------------------------------------------------------
+
+async function main() {
+  try {
+    await init();
+    COPY = JSON.parse(copy_json());
+    N = JSON.parse(coreNumbers());
+    PAL = JSON.parse(palette_json());
+    CONTROLS = JSON.parse(controls_json());
+    ROSTER = JSON.parse(lab_roster_json());
+    MOVES = JSON.parse(lab_moves_json());
+    ACTION_BITS = Object.fromEntries(N.actions);
+  } catch (e) {
+    console.error(e);
+    $('loading-error').hidden = false;
+    return;
+  }
+  listen((code) => S.mode === 'play' && Object.values(CONTROLS.solo).includes(code));
+  draw = renderer($('stage'), PAL, N);
+  draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
+  // Space pauses and resumes; the full stop steps a tick while paused.
+  window.addEventListener('keydown', (e) => {
+    if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    if (e.code === 'Space') { e.preventDefault(); S.paused = !S.paused; renderTransport(); }
+    if (e.code === 'Period' && S.paused) { e.preventDefault(); stepOnce = true; }
+  });
+  $('status').hidden = true;
+  $('lab').hidden = false;
+  renderTour();
+  renderSetup();
+  setUp(TOUR[0]);
+  document.body.dataset.ready = '1';
+  // For the gate: what the lab shows and what core pressed.
+  window.btlab = { report: () => report, keys: () => (lab ? Array.from(lab.keys()) : []), tick: () => (lab ? lab.tick() : 0), state: () => ({ ...S }) };
+  requestAnimationFrame(loop);
+}
+
+main();

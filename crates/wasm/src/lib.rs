@@ -430,6 +430,130 @@ impl Exhibition {
     }
 }
 
+/// The BT Lab (Sam, 2026-10-06: a classroom demo of "how the high level
+/// behaviors and nodes get converted into controls execution"): any road
+/// opponent, watched against another or fought with the keys, with what
+/// each pilot pressed and why on every tick. Nothing is saved.
+#[wasm_bindgen]
+pub struct Lab {
+    rec: Recording,
+    /// A pilot per seat; seat 0 has none when a person plays it.
+    pilots: Vec<Option<Box<dyn pilot::Pilot>>>,
+    last: [Input; sim::body::SEATS],
+    ids: [String; 2],
+    player: bool,
+}
+
+#[wasm_bindgen]
+impl Lab {
+    /// Two opponents, left against right.
+    pub fn watch(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Lab {
+        Lab {
+            rec: Recording::new(content::setup::exhibition(seed as u64, tuning, [left, right], map)),
+            pilots: [left, right].iter().map(|id| Some(pilot::build(&content::road::pilot(id)))).collect(),
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [left.into(), right.into()],
+            player: false,
+        }
+    }
+    /// You, with the sword, against `opponent` as arcade mode sets it.
+    pub fn play(seed: u32, tuning: u8, opponent: &str) -> Lab {
+        let mut pilots: Vec<Option<Box<dyn pilot::Pilot>>> = vec![None];
+        pilots.extend(content::road::crew(opponent).iter().map(|s| Some(pilot::build(s))));
+        Lab {
+            rec: Recording::new(content::setup::road(seed as u64, tuning, opponent)),
+            pilots,
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [String::new(), opponent.into()],
+            player: true,
+        }
+    }
+    /// One tick: a person's keys for seat 0 when playing, each pilot's for
+    /// its seat.
+    pub fn step(&mut self, mine: u16, _other: u16) {
+        let mut i = [Input::NONE; sim::body::SEATS];
+        if self.player {
+            i[0] = Input(mine);
+        }
+        for (k, p) in self.pilots.iter_mut().enumerate() {
+            if let Some(p) = p {
+                p.observe(self.last);
+                i[k] = p.input(&self.rec.world, k);
+            }
+        }
+        self.rec.step_all(i);
+        self.last = i;
+    }
+    pub fn frame(&self) -> String {
+        serde_json::to_string(&frame::frame(&self.rec.world)).unwrap()
+    }
+    /// Each piloted seat's last tick: `[{ seat, id, keys, active, held,
+    /// failed, explain: [moves::Explain] }]`.
+    pub fn report(&self) -> String {
+        let all: Vec<serde_json::Value> = self
+            .pilots
+            .iter()
+            .enumerate()
+            .filter_map(|(k, p)| p.as_ref().map(|p| (k, p)))
+            .map(|(k, p)| {
+                let t = p.trace();
+                let id = if k < 2 && !self.ids[k].is_empty() { self.ids[k].clone() } else { String::new() };
+                json!({ "seat": k, "id": id, "keys": self.last[k].0, "active": t.active, "held": t.held, "failed": t.failed, "explain": p.explain() })
+            })
+            .collect();
+        serde_json::to_string(&all).unwrap()
+    }
+    /// The keys each seat pressed on the last tick.
+    pub fn keys(&self) -> Vec<u16> {
+        self.last.iter().map(|i| i.0).collect()
+    }
+    pub fn phase_text(&self, _opponent: &str) -> String {
+        if self.player {
+            content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &self.ids[1] }).to_string()
+        } else {
+            let ids = [self.ids[0].as_str(), self.ids[1].as_str()];
+            content::messages::phase_text(&self.rec.world, content::messages::Audience::Exhibition { ids }).to_string()
+        }
+    }
+    pub fn checksum(&self) -> String {
+        format!("{:016x}", self.rec.world.checksum())
+    }
+    pub fn tick(&self) -> u32 {
+        self.rec.world.tick
+    }
+    pub fn is_replay(&self) -> bool {
+        false
+    }
+    pub fn done(&self) -> bool {
+        false
+    }
+    pub fn replay_bytes(&self) -> Vec<u8> {
+        self.rec.bytes()
+    }
+    pub fn recorded_checksum(&self) -> String {
+        String::new()
+    }
+}
+
+/// Each road opponent, secret ones included, for the BT Lab's pickers: id,
+/// row, weapon and the values its introduction's placeholders take.
+#[wasm_bindgen]
+pub fn lab_roster_json() -> String {
+    let all: Vec<serde_json::Value> = content::road::road()
+        .iter()
+        .map(|st| json!({ "id": st.id, "level": st.level(), "weapon": st.weapon, "numbers": content::road::intro_numbers(&st.id), "kind": content::road::pilot(&st.id).kind() }))
+        .collect();
+    serde_json::to_string(&all).unwrap()
+}
+
+/// The moves a tree may run and each one's recipe (pilot::moves).
+#[wasm_bindgen]
+pub fn lab_moves_json() -> String {
+    let all: Vec<serde_json::Value> = pilot::moves::MOVES.iter().map(|m| json!({ "id": m, "recipe": pilot::moves::recipe(m) })).collect();
+    let pose = json!({ "share": pilot::moves::POSE_SHARE, "max": pilot::moves::POSE_MAX, "band": pilot::moves::POSE_BAND });
+    json!({ "moves": all, "arms2": sim::Input::ARMS2, "arms": sim::Input::ARMS, "pose": pose, "throw_window_cm": pilot::THROW_WINDOW_CM }).to_string()
+}
+
 /// A story mode run (content::story): the scene's fight being played, the
 /// run's lives, and what comes after each fight, all decided in core.
 #[wasm_bindgen]

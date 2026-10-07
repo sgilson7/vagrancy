@@ -1078,6 +1078,48 @@ def story_mode_runs_in_full_and_opens_its_extra_chapter(page, name):
 
 
 @check
+def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
+    # Sam, 2026-10-06: a classroom demo of "how the high level behaviors and
+    # nodes get converted into controls execution, like how does the
+    # behavior tree high guard get converted to inputs".
+    fails = []
+    page.goto(ORIGIN + "/bt-lab.html", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab)")
+    if page.locator("#tree-panel .node").count() < 3:
+        fails.append(f"{name}: the BT Lab drew no tree")
+    # Paused, a tick at a time: the keys the panel lights are the keys core
+    # pressed for the inspected seat.
+    page.click("#lab-pause")
+    for _ in range(12):
+        page.click("#lab-step")
+        page.wait_for_timeout(40)
+        rep = page.evaluate("window.btlab.report()")
+        keys = page.evaluate("window.btlab.keys()")
+        st = page.evaluate("window.btlab.state()")
+        r = next((x for x in rep if x["seat"] == st["inspect"]), None)
+        if r is None or r["keys"] != keys[st["inspect"]]:
+            fails.append(f"{name}: the lab reported keys {r and r['keys']} for seat {st['inspect']}, which pressed {keys[st['inspect']]}")
+            break
+        lit = page.evaluate("[...document.querySelectorAll('#keys-panel .cap.down')].reduce((a, c) => a | +c.dataset.bit, 0)")
+        if lit != keys[st["inspect"]]:
+            fails.append(f"{name}: the lab lit the keys {lit:#b} where core pressed {keys[st['inspect']]:#b}")
+            break
+    # The pose step of the tour stops with high guard running, and shows its
+    # controller.
+    for _ in range(5):
+        page.click('[data-copy="btlab.tour.next.label"]')
+    page.click("#tour-setup")
+    page.wait_for_selector('[data-copy="btlab.pose.rule"]', timeout=15000)
+    fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a pose)")
+    page.goto(ORIGIN + "/", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the BT Lab lights the tree, shows the keys core pressed tick by tick, and stops its pose step on high guard")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

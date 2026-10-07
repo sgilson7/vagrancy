@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{btlab.title}}</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="btlab">
+<!-- The BT Lab: every word is a {{key}} token or a copy key btlab.js fills,
+     as on the game's own page (package-web.sh, crates/content/tests/copy.rs). -->
+<main id="app">
+  <header id="masthead">
+    <h1 id="title">{{btlab.title}}</h1>
+    <p class="desc">{{btlab.subtitle}}</p>
+  </header>
+  <p id="status" role="status">{{game.loading}}</p>
+  <p id="loading-error" role="alert" hidden>{{game.loading_error}}</p>
+  <noscript><p>{{game.fallback}}</p></noscript>
+  <div id="lab" hidden>
+    <section id="tour"></section>
+    <section id="setup"></section>
+    <section id="transport"></section>
+    <div id="hud" role="status"></div>
+    <canvas id="stage" aria-label="{{game.canvas_name}}" width="1200" height="640"></canvas>
+    <div id="inspect">
+      <section id="tree-panel"></section>
+      <section id="keys-panel"></section>
+    </div>
+    <section id="timeline-panel"></section>
+  </div>
+  <footer id="foot">
+    <a href="./">{{btlab.game_link}}</a>
+    <a id="back" href="https://sgilson7.github.io/">{{game.back_link}}</a>
+    <span id="build">{{game.build}}</span>
+  </footer>
+</main>
+<script type="module" src="btlab.js"></script>
+</body>
+</html>
