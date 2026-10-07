@@ -129,7 +129,10 @@ export function renderer(canvas, palette, numbers) {
     if (arena > half) {
       let sum = 0, n = 0;
       for (const p of cur.parts) if (p.fighter === 0 && p.attached) { sum += pts[p.a][0]; n += 1; }
-      const px = n ? sum / n / one : 0;
+      // While a round's end is looked at, the camera is on the cut: on a
+      // wide ground it can be far from the left fighter, and the close-up
+      // showed bare ground (the stream, 2026-10-07).
+      const px = focus && focus.at ? focus.at[0] / one : n ? sum / n / one : 0;
       camX = Math.max(-(arena - half), Math.min(arena - half, px));
     } else {
       camX = 0;

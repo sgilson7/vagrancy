@@ -194,7 +194,10 @@ pub fn focus(w: &World, r: &RoundResult) -> Value {
             sim::fight::Event::Cut { seat, part, at, .. } if *seat == loser && *part == r.part => Some(*at),
             _ => None,
         })
-        .or_else(|| if headshot(w, r) { pilot::head(w, loser as usize) } else { part_at() });
+        .or_else(|| if headshot(w, r) { pilot::head(w, loser as usize) } else { part_at() })
+        // The part gone from the world (a piece cut off and cleared): the
+        // fighter's head, so the round still ends in a close-up.
+        .or_else(|| pilot::head(w, loser as usize));
     match at {
         Some(p) => json!([p.x.0, p.y.0]),
         None => Value::Null,
