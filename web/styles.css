@@ -207,11 +207,45 @@ button.bind.listening { outline: 3px solid var(--focus); }
 .item.featured .desc { font-size: 1.05em; }
 
 /* --- the BT Lab (bt-lab.html) ------------------------------------------- */
-body.btlab #app { max-width: 1240px; }
 body.btlab #lab { display: grid; gap: 14px; }
 body.btlab #stage { width: 100%; height: auto; }
-#tour { border: 2px solid var(--fighters-right-body); padding: 10px 16px; background: var(--paper); }
-#tour .question { font-style: italic; }
+/* The lesson: pages to scroll through, the lecture beside the fight that
+   shows it; the lab and the editor below. */
+html:has(body.btlab) { scroll-snap-type: y proximity; }
+body.btlab #app { max-width: 1500px; }
+.lesson-head { padding: 8px 0 4px; }
+.lesson-page { min-height: 100vh; box-sizing: border-box; scroll-snap-align: start; padding: 28px 40px 28px 0;
+               display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: center;
+               border-top: 1px solid var(--ground-line); }
+.lesson-page .lecture h2 { font-size: 2em; margin: 0 0 10px; }
+.lesson-page .lecture h3, .lesson-page .in-game h3 { margin: 0 0 8px; color: var(--fighters-right-stripe); font-size: 1em;
+               text-transform: uppercase; letter-spacing: 0.08em; }
+.lesson-page .lecture p { font-size: 1.15em; line-height: 1.5; max-width: 60ch; }
+.lesson-page canvas { width: 100%; height: auto; border: 1px solid var(--line); display: block; }
+.lesson-page .question { font-style: italic; font-size: 1.1em; }
+.lecture-fig { width: 100%; max-height: 260px; margin: 10px 0; display: block; }
+.lecture-fig .fig-edge { stroke: var(--line); stroke-width: 1.5; }
+.lecture-fig .fig-node rect, .lecture-fig .fig-node ellipse, .lecture-fig .fig-node path { fill: var(--paper); stroke: var(--line); stroke-width: 1.5; }
+.lecture-fig .fig-leaf rect { stroke: var(--fighters-left-ink); }
+.lecture-fig .fig-symbol { font-size: 20px; font-weight: bold; fill: var(--line); }
+.lecture-fig .fig-decor { font-size: 12px; fill: var(--line); }
+.lecture-fig .fig-weight { font-size: 12px; font-style: italic; fill: var(--fighters-right-stripe); }
+.lecture-fig .fig-text { font-size: 13px; line-height: 1.15; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--line); }
+.demo-readout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; min-height: 4.5em; }
+.demo-readout p { margin: 0 0 4px; }
+.demo-readout .side-0 p { color: var(--fighters-left-ink); }
+.demo-readout .side-1 p { color: var(--fighters-right-stripe); }
+#lesson-rail { position: fixed; right: 14px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+#lesson-rail a { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); background: var(--paper); display: block; }
+#lesson-rail a.on { background: var(--focus); border-color: var(--focus); }
+#lesson-rail a.rail-lab, #lesson-rail a.rail-editor { border-radius: 2px; margin-top: 6px; }
+#lab-section { border-top: 3px solid var(--fighters-right-body); padding-top: 12px; display: grid; gap: 14px; scroll-snap-align: start; }
+#lab-section > h2 { font-size: 2em; margin: 0; }
+body.btlab #editor { border-top: 3px solid var(--fighters-right-body); padding-top: 12px; scroll-snap-align: start; }
+@media (max-width: 900px) {
+  .lesson-page { grid-template-columns: 1fr; min-height: 0; padding-right: 28px; }
+  #lesson-rail { right: 6px; }
+}
 #inspect { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 14px; align-items: start; }
 @media (max-width: 900px) { #inspect { grid-template-columns: 1fr; } }
 .bt-scroll { overflow: auto; max-height: 520px; border: 1px solid var(--ground-line); }

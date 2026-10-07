@@ -1105,11 +1105,27 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
         if lit != keys[st["inspect"]]:
             fails.append(f"{name}: the lab lit the keys {lit:#b} where core pressed {keys[st['inspect']]:#b}")
             break
-    # The pose step of the tour stops with high guard running, and shows its
+    # Sam, 2026-10-07: the lesson is pages to scroll through, the lecture
+    # beside a fight that shows it. The page in view plays, and one at a time.
+    page.evaluate("document.getElementById('lesson-factor').scrollIntoView()")
+    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'factor' && window.btlab.lesson().tick > 30", timeout=15000)
+    if page.locator("#lesson-factor svg.lecture-fig").count() != 2:
+        fails.append(f"{name}: the factoring page did not draw the lecture's two trees")
+    fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a lesson page)")
+    # The page about chance plays the same fight again from the same start.
+    page.evaluate("document.getElementById('lesson-chance').scrollIntoView()")
+    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'chance' && window.btlab.lesson().tick > 30", timeout=15000)
+    seed = page.evaluate("window.btlab.lesson().seed")
+    page.click("#lesson-chance .lesson-replay")
+    again = page.evaluate("window.btlab.lesson()")
+    if again["seed"] != seed or again["tick"] > 5:
+        fails.append(f"{name}: playing again from the same start gave {again}, from seed {seed}")
+    page.evaluate("document.getElementById('lab-section').scrollIntoView()")
+    page.wait_for_function("window.btlab.lesson() === null", timeout=5000)
+    # The pose page opens the lab with high guard running, and shows its
     # controller.
-    for _ in range(5):
-        page.click('[data-copy="btlab.tour.next.label"]')
-    page.click("#tour-setup")
+    page.evaluate("document.getElementById('lesson-pose').scrollIntoView()")
+    page.click("#lesson-pose .lesson-open")
     page.wait_for_selector('[data-copy="btlab.pose.rule"]', timeout=15000)
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a pose)")
     # The editor: a number out of range is refused with its rule named; a
@@ -1142,7 +1158,7 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     page.goto(ORIGIN + "/", wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: the BT Lab lights the tree, shows the keys core pressed tick by tick, stops its pose step on high guard, and its editor refuses, runs and shares a tree")
+        print(f"ok: {name}: the BT Lab lesson plays the page in view and replays a start, the lab lights the tree and shows the keys core pressed tick by tick, the pose page stops on high guard, and the editor refuses, runs and shares a tree")
     return fails
 
 

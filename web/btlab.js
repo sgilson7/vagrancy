@@ -42,7 +42,7 @@ const name = (id) => t(`opponents.${id}.name`);
 
 const S = {
   mode: 'watch', left: 'lamplighter', right: 'drover', opp: 'lamplighter', map: 'flat',
-  inspect: 1, speed: 1, paused: false, floating: false, tour: 0,
+  inspect: 1, speed: 1, paused: false, floating: false,
 };
 let lab = null;
 let prev = null, cur = null, report = [], acc = 0, last = 0, stepOnce = false;
@@ -87,7 +87,7 @@ function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (lab) {
     let n = 0;
-    if (!S.paused) {
+    if (!S.paused && labVisible) {
       acc += Math.min(now - (last || now), 250) * S.speed;
       while (acc >= tickMs && n < 8) { tickOnce(); acc -= tickMs; n += 1; }
     } else if (stepOnce) {
@@ -97,6 +97,7 @@ function loop(now) {
     draw.trees(S.floating ? report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, S.paused ? 1 : Math.min(1, acc / tickMs));
   }
+  demoTick(now, now - (last || now));
   last = now;
   requestAnimationFrame(loop);
 }
@@ -429,37 +430,261 @@ function keyVars() {
   return v;
 }
 
-// --- the class tour -------------------------------------------------------------------------
+// --- the lesson: pages to scroll through (Sam, 2026-10-07) -----------------------------
 
-// Each step sets the lab up to show one idea (copy btlab.tour.<id>).
-const TOUR = [
-  { id: 'tasks', mode: 'watch', left: 'drover', right: 'scarecrow', inspect: 0, speed: 0.5 },
-  { id: 'selector', mode: 'watch', left: 'lamplighter', right: 'drover', inspect: 0, speed: 0.5 },
-  { id: 'sequence', mode: 'watch', left: 'cooper', right: 'drover', inspect: 0, speed: 0.5 },
-  { id: 'running', mode: 'watch', left: 'courier', right: 'lamplighter', inspect: 0, speed: 0.25 },
-  { id: 'script', mode: 'watch', left: 'hay_mower', right: 'scarecrow', inspect: 0, speed: 0.25, until: 'overhead' },
-  { id: 'pose', mode: 'watch', left: 'lamplighter', right: 'scarecrow', inspect: 0, speed: 0.25, until: 'high_guard' },
-  { id: 'search', mode: 'watch', left: 'archivist', right: 'drover', inspect: 0, speed: 0.25, until: 'search' },
-  { id: 'throw', mode: 'watch', left: 'harpooner', right: 'drover', inspect: 0, speed: 0.25, until: 'throw' },
-  { id: 'parallel', mode: 'watch', left: 'local_deity', right: 'drover', inspect: 0, speed: 0.25 },
-  { id: 'decorator', mode: 'watch', left: 'thresher', right: 'scarecrow', inspect: 0, speed: 0.5 },
-  { id: 'yours', mode: 'play', opp: 'lamplighter', inspect: 1, speed: 1 },
+// Each page puts the lecture's idea (copy btlab.lesson.<id>) beside a fight
+// that shows it, drawn with the trees over the fighters. `demo` is what the
+// page plays; `lab` is what "Open this in the lab below" sets up there.
+// Lecture figures use the lecture's drawing: ovals for composites, boxes for
+// conditions and actions, diamonds for decorators.
+const leaf = (label) => ({ label });
+const node = (kind, ...kids) => ({ kind, kids });
+const FIGURES = {
+  tasks: [node('seq', leaf('opp_near'), leaf('swing'))],
+  sequence: [node('seq', leaf('move_to_door'), leaf('unlock'), leaf('open'), leaf('enter'))],
+  selector: [node('sel', leaf('cover'), leaf('flee'), leaf('fight'))],
+  factor: [
+    node('sel', node('seq', leaf('door_open'), leaf('enter')), node('seq', leaf('move_to_door'), leaf('unlock'), leaf('open'), leaf('enter'))),
+    node('seq', node('sel', leaf('door_open'), node('seq', leaf('move_to_door'), leaf('open'))), leaf('enter')),
+  ],
+  random: [{ ...node('rsel', leaf('smoke'), leaf('patrol'), leaf('chat')), weights: ['rare', 'common', 'sometimes'] }],
+  decorator: [node('until_fail', node('seq', leaf('visible'), leaf('shoot')))],
+  parallel: [node('par', leaf('reload'), leaf('take_cover'))],
+  script: [node('seq', leaf('pathfind'), leaf('follow'))],
+};
+// The trees the lesson writes in the editor's own shape (content::custom).
+const FACTOR_TREE = { reaction_ticks: 10, rules: [
+  { if: ['me_down'], do: 'stand', interrupt: true },
+  { if: [{ gap_below: 200 }, { chance: 40 }], do: 'overhead' },
+  { if: [{ gap_below: 200 }], do: 'thrust' },
+  { if: [{ gap_above: 240 }], do: 'approach' },
+  { do: 'guard' },
+] };
+const RANDOM_PCT = [25, 50];
+const RANDOM_TREE = { reaction_ticks: 10, rules: [
+  { if: ['me_down'], do: 'stand', interrupt: true },
+  { if: [{ gap_below: 220 }, { chance: RANDOM_PCT[0] }], do: 'overhead' },
+  { if: [{ gap_below: 220 }, { chance: RANDOM_PCT[1] }], do: 'low_sweep' },
+  { if: [{ gap_below: 220 }], do: 'thrust' },
+  { if: [{ gap_above: 260 }], do: 'approach' },
+  { do: 'guard' },
+] };
+const LESSON = [
+  { id: 'tasks', demo: { left: 'drover', right: 'scarecrow', speed: 0.5 } },
+  { id: 'sequence', demo: { left: 'cooper', right: 'drover', speed: 0.5 } },
+  { id: 'selector', demo: { left: 'lamplighter', right: 'drover', speed: 0.5 } },
+  { id: 'running', demo: { left: 'courier', right: 'lamplighter', speed: 0.25 } },
+  { id: 'factor', demo: { tree: FACTOR_TREE, right: 'drover', speed: 0.5 } },
+  { id: 'random', demo: { tree: RANDOM_TREE, right: 'drover', speed: 0.5 }, vars: { first_pct: RANDOM_PCT[0], second_pct: RANDOM_PCT[1] } },
+  { id: 'decorator', demo: { left: 'thresher', right: 'scarecrow', speed: 0.5 } },
+  { id: 'parallel', demo: { left: 'local_deity', right: 'drover', speed: 0.25 } },
+  { id: 'chance', demo: { left: 'smith', right: 'courier', speed: 0.5, replay: true } },
+  { id: 'script', beyond: false, demo: { left: 'hay_mower', right: 'scarecrow', speed: 0.25 }, lab: { until: 'overhead' } },
+  { id: 'pose', beyond: true, demo: { left: 'lamplighter', right: 'scarecrow', speed: 0.25 }, lab: { until: 'high_guard' } },
+  { id: 'search', beyond: true, demo: { left: 'archivist', right: 'drover', speed: 0.25 }, lab: { until: 'search' } },
+  { id: 'throw', beyond: true, demo: { left: 'harpooner', right: 'drover', speed: 0.25 }, lab: { until: 'throw' } },
+  { id: 'yours', opp: 'lamplighter' },
 ];
+// The lab's set-up for a page: the page's two fighters, the left one inspected.
+const labStep = (pg) => ({ mode: 'watch', left: pg.demo.left, right: pg.demo.right, inspect: 0, speed: pg.demo.speed, ...(pg.lab || {}) });
 
-function renderTour() {
-  const step = TOUR[S.tour];
-  const k = (f) => `btlab.tour.${step.id}.${f}`;
-  $('tour').replaceChildren(
-    el('h2', { 'data-copy': 'btlab.tour.heading' }, t('btlab.tour.heading')),
-    say('btlab.tour.step', { n: S.tour + 1, count: TOUR.length }, { class: 'desc' }),
-    el('h3', { 'data-copy': k('title') }, t(k('title'))),
-    say(k('body')),
-    el('p', { class: 'question' }, el('strong', { 'data-copy': 'btlab.tour.discuss' }, t('btlab.tour.discuss')), ' ', el('span', { 'data-copy': k('question') }, t(k('question')))),
-    el('div', { class: 'actions' },
-      button('btlab.tour.prev.label', () => { S.tour = Math.max(0, S.tour - 1); renderTour(); }, {}, { disabled: S.tour === 0 }),
-      button('btlab.tour.setup.label', () => setUp(step), {}, { id: 'tour-setup' }),
-      button('btlab.tour.next.label', () => { S.tour = Math.min(TOUR.length - 1, S.tour + 1); renderTour(); }, {}, { disabled: S.tour === TOUR.length - 1 })));
+const FIG_COL = 150, FIG_ROW = 84, LEAF_W = 136, LEAF_H = 44;
+const SYMBOL = { seq: '→', sel: '?', rsel: '~?', par: '⇉' };
+function figure(spec, ariaKey) {
+  const pos = new Map();
+  let next = 0, depth = 0;
+  const place = (n, row) => {
+    depth = Math.max(depth, row);
+    if (!n.kids) { pos.set(n, { x: next++, y: row }); return; }
+    n.kids.forEach((k) => place(k, row + 1));
+    const xs = n.kids.map((k) => pos.get(k).x);
+    pos.set(n, { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: row });
+  };
+  place(spec, 0);
+  const W = next * FIG_COL, H = (depth + 1) * FIG_ROW;
+  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'lecture-fig', role: 'img', 'aria-label': t(ariaKey) });
+  const at = (n) => { const p = pos.get(n); return [p.x * FIG_COL + FIG_COL / 2, p.y * FIG_ROW + LEAF_H / 2 + 6]; };
+  const draw1 = (n) => {
+    const [x, y] = at(n);
+    (n.kids || []).forEach((k, i) => {
+      const [x2, y2] = at(k);
+      root.append(svg('line', { x1: x, y1: y + 18, x2, y2: y2 - LEAF_H / 2, class: 'fig-edge' }));
+      if (spec.weights && n === spec) {
+        // Near the child's end of the edge, on the outside of it.
+        const wx = x + (x2 - x) * 0.6, wy = y + 18 + (y2 - LEAF_H / 2 - y - 18) * 0.6;
+        const side = x2 < x - 1 ? 'end' : x2 > x + 1 ? 'start' : 'start';
+        const tx = svg('text', { x: wx + (side === 'end' ? -8 : 8), y: wy - 4, 'text-anchor': side, class: 'fig-weight', 'data-copy': `btlab.lesson.label.${spec.weights[i]}` });
+        tx.textContent = t(`btlab.lesson.label.${spec.weights[i]}`);
+        root.append(tx);
+      }
+      draw1(k);
+    });
+    const g = svg('g', { class: `fig-node fig-${n.kids ? n.kind : 'leaf'}` });
+    if (!n.kids) {
+      g.append(svg('rect', { x: x - LEAF_W / 2, y: y - LEAF_H / 2, width: LEAF_W, height: LEAF_H, rx: 3 }));
+      const fo = svg('foreignObject', { x: x - LEAF_W / 2 + 4, y: y - LEAF_H / 2 + 2, width: LEAF_W - 8, height: LEAF_H - 4 });
+      fo.append(el('div', { class: 'fig-text', 'data-copy': `btlab.lesson.label.${n.label}` }, t(`btlab.lesson.label.${n.label}`)));
+      g.append(fo);
+    } else if (SYMBOL[n.kind]) {
+      g.append(svg('ellipse', { cx: x, cy: y, rx: 30, ry: 18 }));
+      const tx = svg('text', { x, y: y + 6, 'text-anchor': 'middle', class: 'fig-symbol', 'data-fill': '' });
+      tx.textContent = SYMBOL[n.kind];
+      g.append(tx);
+    } else {
+      g.append(svg('path', { d: `M${x},${y - 26} L${x + 46},${y} L${x},${y + 26} L${x - 46},${y} Z` }));
+      const tx = svg('text', { x, y: y + 5, 'text-anchor': 'middle', class: 'fig-decor', 'data-copy': `btlab.lesson.label.${n.kind}` });
+      tx.textContent = t(`btlab.lesson.label.${n.kind}`);
+      g.append(tx);
+    }
+    root.append(g);
+  };
+  draw1(spec);
+  return root;
 }
+
+// One page's fight. A single one plays at a time, the page most in view;
+// the others are freed so a long lesson costs one fight's work.
+let demo = null;
+const DESCRIBED = new Map();
+function describedTree(key, tree) {
+  if (!DESCRIBED.has(key)) {
+    const fillText = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fillText); return n; };
+    DESCRIBED.set(key, fillText(JSON.parse(lab_describe_json(JSON.stringify(tree)))));
+  }
+  return DESCRIBED.get(key);
+}
+function demoNames(pg) {
+  return [pg.demo.tree ? t('btlab.lesson.page_tree') : name(pg.demo.left), name(pg.demo.right)];
+}
+function startDemo(pg, seed) {
+  stopDemo();
+  const box = document.querySelector(`.lesson-page[data-page="${pg.id}"]`);
+  const canvas = box.querySelector('canvas');
+  const d = { pg, box, seed: seed ?? ((Math.random() * 0xffffffff) >>> 0), acc: 0, prev: null, report: [], over: 0, paused: false, shown: -1 };
+  d.draw = canvas.renderer ||= renderer(canvas, PAL, N);
+  d.draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
+  d.lab = pg.demo.tree
+    ? Lab.watch_custom(d.seed, N.default_tuning, JSON.stringify(pg.demo.tree), pg.demo.right, 'flat')
+    : Lab.watch(d.seed, N.default_tuning, pg.demo.left, pg.demo.right, 'flat');
+  d.cur = JSON.parse(d.lab.frame());
+  d.draw.reset();
+  demo = d;
+}
+function stopDemo() {
+  if (demo) { demo.lab.free(); demo = null; }
+}
+function demoTick(now, dt) {
+  const d = demo;
+  if (!d) return;
+  const tickMs = 1000 / N.ticks_per_second;
+  if (!d.paused) {
+    d.acc += Math.min(dt, 250) * d.pg.demo.speed;
+    let n = 0;
+    while (d.acc >= tickMs && n < 8) {
+      d.lab.step(0, 0);
+      d.prev = d.cur;
+      d.cur = JSON.parse(d.lab.frame());
+      d.draw.events(d.cur);
+      d.report = JSON.parse(d.lab.report());
+      d.acc -= tickMs;
+      n += 1;
+    }
+  }
+  // A finished match starts over after a moment: from the same start on
+  // the page about chance, from a new one elsewhere.
+  if (d.cur.phase === 'match_over') {
+    d.over ||= now;
+    if (now - d.over > 2500) { startDemo(d.pg, d.pg.demo.replay ? d.seed : undefined); return; }
+  }
+  const treeFor = (r) => (r.id === 'custom' ? describedTree(d.pg.id, d.pg.demo.tree) : treeOf(r.id));
+  d.draw.trees(d.report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeFor(r), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })));
+  d.draw(d.prev || d.cur, d.cur, d.paused ? 1 : Math.min(1, d.acc / tickMs));
+  // What each fighter runs and presses, a few times a second.
+  const tick = d.lab.tick();
+  if (tick - d.shown >= 6 || tick < d.shown) {
+    d.shown = tick;
+    const names = demoNames(d.pg);
+    d.box.querySelector('.demo-readout').replaceChildren(...[0, 1].map((seat) => {
+      const r = d.report.find((x) => x.seat === seat);
+      const e = r && r.explain[0];
+      const line = e && e.mv
+        ? say('btlab.lesson.now', { opponent: names[seat], move: t(`tree.act.${e.mv}`) })
+        : say('btlab.lesson.idle', { opponent: names[seat] });
+      return el('div', { class: `readout side-${seat}` }, line,
+        el('span', { class: 'desc', 'data-copy': 'btlab.lesson.keys' }, t('btlab.lesson.keys')), ' ', caps(r ? r.keys : 0, !!(r && r.explain.length > 1)));
+    }));
+  }
+}
+
+function goToLab(step) {
+  setUp(step);
+  $('lab-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderLesson() {
+  const k = (pg, f) => `btlab.lesson.${pg.id}.${f}`;
+  const pages = LESSON.map((pg, i) => {
+    const lect = [];
+    for (let n = 1; COPY.btlab.lesson[pg.id][`lecture_${n}`]; n += 1) lect.push(say(k(pg, `lecture_${n}`)));
+    const figs = (FIGURES[pg.id] || []).map((f) => figure(f, k(pg, 'figure')));
+    const actions = [];
+    if (pg.id === 'yours') {
+      actions.push(button('btlab.lesson.yours.fight.label', () => goToLab({ mode: 'play', opp: pg.opp, inspect: 1, speed: 1 }), { opponent_mid: t(`opponents.${pg.opp}.name_mid`) }, { id: 'lesson-fight' }),
+        button('btlab.lesson.yours.write.label', () => $('editor').scrollIntoView({ behavior: 'smooth' })));
+    } else {
+      actions.push(button(demo && demo.paused ? 'btlab.resume.label' : 'btlab.pause.label', (e) => {
+        if (!demo || demo.pg !== pg) return;
+        demo.paused = !demo.paused;
+        e.target.textContent = t(demo.paused ? 'btlab.resume.label' : 'btlab.pause.label');
+        e.target.dataset.copy = demo.paused ? 'btlab.resume.label' : 'btlab.pause.label';
+      }));
+      if (pg.demo.replay) {
+        actions.push(button('btlab.lesson.replay.label', () => startDemo(pg, demo && demo.pg === pg ? demo.seed : undefined), {}, { class: 'lesson-replay' }),
+          button('btlab.lesson.reseed.label', () => startDemo(pg)));
+      }
+      actions.push(pg.demo.tree
+        ? button('btlab.lesson.copy_tree.label', () => { EDIT = JSON.parse(JSON.stringify(pg.demo.tree)); keep(); renderEditor(); $('editor').scrollIntoView({ behavior: 'smooth' }); })
+        : button('btlab.lesson.open_lab.label', () => goToLab(labStep(pg)), {}, { class: 'lesson-open' }));
+    }
+    const side = pg.id === 'yours'
+      ? [say(k(pg, 'demo'), pg.vars)]
+      : [el('canvas', { width: 1200, height: 640, 'aria-label': t('game.canvas_name') }), el('div', { class: 'demo-readout', role: 'status' }), say(k(pg, 'demo'), pg.vars)];
+    return el('section', { class: 'lesson-page', id: `lesson-${pg.id}`, 'data-page': pg.id },
+      el('div', { class: 'lecture' },
+        say('btlab.lesson.page', { n: i + 1, count: LESSON.length }, { class: 'desc' }),
+        el('h2', { 'data-copy': k(pg, 'title') }, t(k(pg, 'title'))),
+        el('h3', { 'data-copy': pg.beyond ? 'btlab.lesson.beyond' : 'btlab.lesson.lecture' }, t(pg.beyond ? 'btlab.lesson.beyond' : 'btlab.lesson.lecture')),
+        ...lect, ...figs),
+      el('div', { class: 'in-game' },
+        el('h3', { 'data-copy': 'btlab.lesson.in_game' }, t('btlab.lesson.in_game')),
+        ...side,
+        el('p', { class: 'question' }, el('strong', { 'data-copy': 'btlab.lesson.discuss' }, t('btlab.lesson.discuss')), ' ', el('span', { 'data-copy': k(pg, 'question') }, t(k(pg, 'question')))),
+        el('div', { class: 'actions' }, ...actions)));
+  });
+  const rail = el('nav', { id: 'lesson-rail', 'aria-label': t('btlab.lesson.contents') },
+    ...LESSON.map((pg) => el('a', { href: `#lesson-${pg.id}`, 'data-page': pg.id, 'aria-label': t(`btlab.lesson.${pg.id}.title`), title: t(`btlab.lesson.${pg.id}.title`) })),
+    el('a', { href: '#lab-section', class: 'rail-lab', 'aria-label': t('btlab.lesson.to_lab'), title: t('btlab.lesson.to_lab') }),
+    el('a', { href: '#editor', class: 'rail-editor', 'aria-label': t('btlab.lesson.to_editor'), title: t('btlab.lesson.to_editor') }));
+  $('lesson').replaceChildren(
+    el('header', { class: 'lesson-head' },
+      el('h2', { 'data-copy': 'btlab.lesson.heading' }, t('btlab.lesson.heading')),
+      say('btlab.lesson.intro', {}, { class: 'desc' })),
+    ...pages, rail);
+  // The page most in view plays; the rail marks it.
+  const seen = new Map();
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) seen.set(e.target.dataset.page, e.intersectionRatio);
+    const [best, ratio] = [...seen.entries()].sort((a, b) => b[1] - a[1])[0] || [];
+    for (const a of rail.querySelectorAll('a[data-page]')) a.classList.toggle('on', a.dataset.page === best && ratio > 0.25);
+    const pg = ratio > 0.25 ? LESSON.find((p) => p.id === best) : null;
+    if (!pg || !pg.demo) { stopDemo(); return; }
+    if (!demo || demo.pg !== pg) startDemo(pg);
+  }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+  for (const p of $('lesson').querySelectorAll('.lesson-page')) io.observe(p);
+  // The lab below runs only while it is on screen, or a tick at a time.
+  new IntersectionObserver((entries) => { for (const e of entries) labVisible = e.isIntersecting; }).observe($('lab-section'));
+}
+let labVisible = false;
 
 function setUp(step) {
   S.mode = step.mode;
@@ -572,8 +797,8 @@ function renderEditor() {
       button('btlab.editor.reset.label', () => { EDIT = JSON.parse(JSON.stringify(STARTER)); redo(); })),
     status,
     el('div', { class: 'actions' },
-      button('btlab.editor.watch.label', () => { if (check.ok) { renderSetup(); start('watch'); } }, { opponent: name(S.right) }, { id: 'editor-watch', disabled: !check.ok }),
-      button('btlab.editor.fight.label', () => { if (check.ok) start('play'); }, {}, { id: 'editor-fight', disabled: !check.ok })),
+      button('btlab.editor.watch.label', () => { if (check.ok) { renderSetup(); start('watch'); $('lab-section').scrollIntoView({ behavior: 'smooth' }); } }, { opponent: name(S.right) }, { id: 'editor-watch', disabled: !check.ok }),
+      button('btlab.editor.fight.label', () => { if (check.ok) { start('play'); $('lab-section').scrollIntoView({ behavior: 'smooth' }); } }, {}, { id: 'editor-fight', disabled: !check.ok })),
     say('btlab.editor.against', {}, { class: 'desc' }),
     el('h3', { 'data-copy': 'btlab.editor.share' }, t('btlab.editor.share')),
     el('div', { class: 'actions' }, button('btlab.editor.make_code.label', () => {
@@ -618,13 +843,14 @@ async function main() {
   });
   $('status').hidden = true;
   $('lab').hidden = false;
-  renderTour();
   renderEditor();
   renderSetup();
-  setUp(TOUR[0]);
+  setUp(labStep(LESSON[0]));
+  renderLesson();
   document.body.dataset.ready = '1';
   // For the gate: what the lab shows and what core pressed.
-  window.btlab = { report: () => report, keys: () => (lab ? Array.from(lab.keys()) : []), tick: () => (lab ? lab.tick() : 0), state: () => ({ ...S }) };
+  window.btlab = { report: () => report, keys: () => (lab ? Array.from(lab.keys()) : []), tick: () => (lab ? lab.tick() : 0), state: () => ({ ...S }),
+    lesson: () => (demo ? { page: demo.pg.id, tick: demo.lab.tick(), seed: demo.seed } : null) };
   requestAnimationFrame(loop);
 }
 

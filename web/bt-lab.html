@@ -18,17 +18,21 @@
   <p id="loading-error" role="alert" hidden>{{game.loading_error}}</p>
   <noscript><p>{{game.fallback}}</p></noscript>
   <div id="lab" hidden>
-    <section id="tour"></section>
-    <section id="editor"></section>
-    <section id="setup"></section>
-    <section id="transport"></section>
-    <div id="hud" role="status"></div>
-    <canvas id="stage" aria-label="{{game.canvas_name}}" width="1200" height="640"></canvas>
-    <div id="inspect">
-      <section id="tree-panel"></section>
-      <section id="keys-panel"></section>
+    <div id="lesson"></div>
+    <div id="lab-section">
+      <h2>{{btlab.lesson.to_lab}}</h2>
+      <p class="desc">{{btlab.lesson.lab_intro}}</p>
+      <section id="setup"></section>
+      <section id="transport"></section>
+      <div id="hud" role="status"></div>
+      <canvas id="stage" aria-label="{{game.canvas_name}}" width="1200" height="640"></canvas>
+      <div id="inspect">
+        <section id="tree-panel"></section>
+        <section id="keys-panel"></section>
+      </div>
+      <section id="timeline-panel"></section>
     </div>
-    <section id="timeline-panel"></section>
+    <section id="editor"></section>
   </div>
   <footer id="foot">
     <a href="./">{{btlab.game_link}}</a>
