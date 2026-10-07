@@ -79,7 +79,9 @@ function start(custom = null) {
 function tickOnce() {
   // In a fight of your own, the next round starts when the last one is
   // read; the pilots press "ready" themselves.
-  const mine = S.mode === 'play' ? bits(CONTROLS.solo, ACTION_BITS) | (cur && cur.phase !== 'fight' ? N.ready_bit : 0) : 0;
+  // The lab moves on to the next round by itself, in either mode.
+  const ready = cur && cur.phase !== 'fight' ? N.ready_bit : 0;
+  const mine = S.mode === 'play' ? bits(CONTROLS.solo, ACTION_BITS) | ready : ready;
   lab.step(mine, 0);
   prev = cur;
   cur = JSON.parse(lab.frame());
@@ -613,7 +615,7 @@ function demoTick(now, dt) {
     d.acc += Math.min(dt, 250) * d.pg.demo.speed;
     let n = 0;
     while (d.acc >= tickMs && n < 8) {
-      d.lab.step(0, 0);
+      d.lab.step(d.cur && d.cur.phase !== 'fight' ? N.ready_bit : 0, 0);
       d.prev = d.cur;
       d.cur = JSON.parse(d.lab.frame());
       d.draw.events(d.cur);

@@ -535,15 +535,19 @@ impl Lab {
     }
     /// One tick: a person's keys for seat 0 when playing, each pilot's for
     /// its seat.
+    /// One tick. The pilots' next round starts only when the page passes
+    /// the ready bit in `mine` (pilot::ready_when_asked): the stream lets a
+    /// round's end play out before it asks.
     pub fn step(&mut self, mine: u16, _other: u16) {
         let mut i = [Input::NONE; sim::body::SEATS];
         if self.player {
             i[0] = Input(mine);
         }
+        let asked = Input(mine).has(Input::READY);
         for (k, p) in self.pilots.iter_mut().enumerate() {
             if let Some(p) = p {
                 p.observe(self.last);
-                i[k] = p.input(&self.rec.world, k);
+                i[k] = pilot::ready_when_asked(p.input(&self.rec.world, k), asked);
             }
         }
         self.rec.step_all(i);
