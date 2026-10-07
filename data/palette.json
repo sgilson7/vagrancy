@@ -11,7 +11,37 @@
   "focus": "#3E4A89",
   "meter_back": "#CFC4AB",
   "fighters": {
-    "left": { "body": "#3E4A89", "ink": "#3E4A89", "pattern": "solid", "stripe": "#3E4A89" },
-    "right": { "body": "#B8862B", "ink": "#B8862B", "pattern": "stripes", "stripe": "#7A5618" }
+    "left": {
+      "body": "#3E4A89",
+      "ink": "#3E4A89",
+      "pattern": "solid",
+      "stripe": "#3E4A89"
+    },
+    "right": {
+      "body": "#B8862B",
+      "ink": "#B8862B",
+      "pattern": "stripes",
+      "stripe": "#7A5618"
+    }
+  },
+  "art": {
+    "_about": "The region art behind the arcade chart (analysis/art/regions.py), after Sam_Comm_final.png: flat fills, plum ink lines, a mustard sky, peach and sage. Warm tones sit just past the red band.",
+    "ink": "#3B2A3F",
+    "sky": "#E9C46A",
+    "sky_light": "#F2DC98",
+    "cloud": "#F6E7B8",
+    "peach": "#EBA77C",
+    "peach_dark": "#D98B5C",
+    "cream": "#F3E6C4",
+    "sage": "#9DB58A",
+    "sage_dark": "#6F8F66",
+    "olive": "#B9B566",
+    "teal": "#79ADA4",
+    "teal_dark": "#4F8580",
+    "slate": "#6E8494",
+    "stone": "#C9B79C",
+    "wood": "#A9774E",
+    "gold": "#E3B04B",
+    "shadow": "#5B4A63"
   }
 }

@@ -474,7 +474,7 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
   wires.setAttribute('aria-hidden', 'true');
   tree.append(wires);
   const nodeButton = (n) => {
-    const b = el('button', { type: 'button', class: `node ${n.state}${n.reward ? ' reward' : ''}`, [attr]: n.id, 'data-copy': n.name,
+    const b = el('button', { type: 'button', class: `node ${n.state}${n.reward ? ' reward' : ''}${n.next ? ' next-up' : ''}`, [attr]: n.id, 'data-copy': n.name,
       on: {
         click: () => pick(n.id),
         mouseenter: () => hoverNode(n.id),
@@ -486,34 +486,36 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
     return b;
   };
   if (layout === 'chart') {
-    // A chart, after Weapon Master's map: each row a region in its own
-    // band, its fights as seals set about it rather than in a line, joined
-    // by routes. The scatter is a fixed pattern, so the chart is the same
-    // each time it is drawn.
-    const BAND = 132;
+    // A chart, after Weapon Master's map: each row a region in its own band,
+    // over that region's art (analysis/art/regions.py), its fights as seals
+    // joined by routes. Wide and scrolled sideways, like a large skill tree
+    // (Sam, 2026-10-07), so the fights sit farther apart and fewer routes
+    // cross. The scatter is a fixed pattern, so the chart is the same each
+    // time it is drawn.
+    const BAND = 190, GAP = 200, EDGE = 90;
+    const widest = Math.max(...rows.filter(Boolean).map((r) => r.length));
+    const width = Math.max(1100, widest * GAP + 2 * EDGE);
+    tree.style.width = `${width}px`;
     tree.style.height = `${rows.length * BAND}px`;
     rows.forEach((row, l) => {
       if (!row) return;
-      const band = el('div', { class: `band band-${l % 2}`, 'data-level': String(l) }, rowLabel(l));
+      // The art runs a little past the band on each side and fades out, so
+      // each region melts into the next.
+      const art = el('div', { class: 'band-art', 'aria-hidden': 'true' });
+      art.style.top = `${l * BAND - 36}px`;
+      art.style.height = `${BAND + 72}px`;
+      art.style.backgroundImage = `url(art/region-${l}.png)`;
+      tree.append(art);
+      const band = el('div', { class: 'band', 'data-level': String(l) }, rowLabel(l));
       band.style.top = `${l * BAND}px`;
       band.style.height = `${BAND}px`;
       tree.append(band);
-      // Across: spread evenly, scattered a little, kept off the edges, and
-      // never closer than three quarters of the even spacing, so names in a
-      // full row do not run into each other.
-      const step = 100 / row.length;
-      let prevX = -Infinity;
-      const xs = row.map((n, i) => {
-        let x = Math.max(9, Math.min(91, (i + 0.5) * step + Math.sin(l * 1.7 + i * 2.3) * (24 / row.length)));
-        x = Math.max(x, prevX + step * 0.75);
-        prevX = x;
-        return x;
-      });
+      const step = (width - 2 * EDGE) / row.length;
       row.forEach((n, i) => {
         const b = nodeButton(n);
-        const x = xs[i];
-        const y = l * BAND + 30 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 14;
-        b.style.left = `${x}%`;
+        const x = EDGE + (i + 0.5) * step + Math.sin(l * 1.7 + i * 2.3) * step * 0.14;
+        const y = l * BAND + 52 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 22;
+        b.style.left = `${x}px`;
         b.style.top = `${y}px`;
         tree.append(b);
       });
@@ -741,7 +743,14 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
     for (const [k, b] of buttons) b.classList.toggle('picked', k === id);
     detail(id, card);
   }
-  show(...before, card, tree, tip, button('menu.back.label', menu));
+  // The chart scrolls sideways in its own frame, opened on the fight to
+  // take next.
+  const holder = layout === 'chart' ? el('div', { class: 'chart-scroll' }, tree) : tree;
+  show(...before, card, holder, tip, button('menu.back.label', menu));
+  if (layout === 'chart') {
+    const next = tree.querySelector('.next-up');
+    if (next) holder.scrollLeft = Math.max(0, next.offsetLeft - holder.clientWidth / 2);
+  }
   pick(first);
   wire();
   new ResizeObserver(() => { if (tree.isConnected) wire(); }).observe(tree);
@@ -824,6 +833,13 @@ function road() {
     lockedKey: 'road.locked',
     requires: s.requires.map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
   }));
+  // The deepest fight that is open and not yet won, set apart on the chart
+  // with the arcade button's flair (Sam, 2026-10-07): how far down the
+  // player has come.
+  const ready = stops.filter((s) => s.open && !s.won);
+  const deepest = ready.length ? Math.max(...ready.map((s) => s.level)) : null;
+  const nextUp = ready.find((s) => s.level === deepest);
+  if (nextUp) nodes.find((n) => n.id === nextUp.id).next = true;
   const view = roadView();
   // A row a fight sets for itself (the deities') is not a count of its
   // requirements, so it goes by its region in every view.
@@ -895,7 +911,9 @@ function chaptersScreen({ stops, detail, first, before }) {
     const b = el('button', { type: 'button', class: `stage ${state}${s.rewards.length ? ' reward' : ''}`, 'data-stop': s.id,
       on: { click: () => { for (const x of stage.querySelectorAll('.stage')) x.classList.toggle('picked', x === b); detail(s.id, card); } } },
     el('strong', { 'data-copy': `opponents.${s.id}.name` }, t(`opponents.${s.id}.name`)),
-    ...s.requires.map((r) => reqLine(r, { class: r.met ? 'met' : 'unmet' })));
+    // Requirements under a fight still locked, each struck through once met;
+    // an open or won fight shows none.
+    ...(state === 'locked' ? s.requires.map((r) => reqLine(r, { class: r.met ? 'met' : 'unmet' })) : []));
     return b;
   });
   const stage = el('div', { id: 'chapter-stages' }, ...cards);

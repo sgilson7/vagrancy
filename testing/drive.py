@@ -1120,6 +1120,46 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
 
 
 @check
+def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_left(page, name):
+    # Sam, 2026-10-07: art for each region, a wide chart with the deepest
+    # fight to take next set apart, and chapter cards that show a locked
+    # fight's requirements and drop them once it is open.
+    fails = []
+    road = shown_road()
+    lvl = lambda st: st.get("row", len(st["requires"]))
+    won = [st["id"] for st in road if lvl(st) <= 1]
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {k: {"losses": 1, "ticks": 9999, "with": ["sword"]} for k in won}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#road-tree.chart .node")
+    nxt = page.evaluate("[...document.querySelectorAll('#road-tree.chart .node.next-up')].map(e => [e.dataset.stop, e.className])")
+    if len(nxt) != 1 or "open" not in nxt[0][1] or nxt[0][0] in won:
+        fails.append(f"{name}: the chart marks {nxt} as next, not one open fight not yet won")
+    elif lvl(next(st for st in road if st["id"] == nxt[0][0])) != 2:
+        fails.append(f"{name}: the next fight {nxt[0][0]} is not in the deepest open row")
+    art = page.evaluate("Promise.all([...document.querySelectorAll('#road-tree.chart .band-art')].map(e => new Promise(r => { const i = new Image(); i.onload = () => r(i.naturalWidth); i.onerror = () => r(0); i.src = getComputedStyle(e).backgroundImage.slice(5, -2); })))")
+    if not art or 0 in art:
+        fails.append(f"{name}: region art that did not load: {art}")
+    click_copy(page, "road.view.chapters.label")
+    page.wait_for_selector("#chapter-stages")
+    page.click('[data-chapter="2"]')
+    page.wait_for_timeout(200)
+    bad_open = page.evaluate("[...document.querySelectorAll('#chapter-stages .stage.open')].filter(e => e.querySelector('p')).length")
+    locked = page.evaluate("[...document.querySelectorAll('#chapter-stages .stage.locked')].map(e => e.querySelectorAll('p').length)")
+    if bad_open or not locked or 0 in locked:
+        fails.append(f"{name}: in the chapter view open fights show {bad_open} requirement lists and locked ones show {locked}")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the chart marks {nxt[0][0]} as next over {len(art)} regions' art, and the chapter cards show what is left")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

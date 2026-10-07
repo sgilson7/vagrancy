@@ -243,3 +243,27 @@ table.recipe tr.on td, table.recipe tr.on th { background: var(--meter-back); fo
 .keyboard .cap-key { display: block; font-weight: bold; font-size: 1.1em; }
 #timeline-panel canvas { width: 100%; height: auto; border: 1px solid var(--ground-line); }
 body.btlab #hud { display: flex; gap: 18px; justify-content: center; }
+
+/* The chart, wide and scrolled sideways, over each region's art (Sam,
+   2026-10-07). */
+.chart-scroll { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--ground-line); margin-bottom: 16px; }
+.chart-scroll #road-tree.chart { border: none; }
+#road-tree.chart .band-art { position: absolute; left: 0; right: 0; z-index: 0; pointer-events: none;
+  background-size: auto 100%; background-repeat: repeat-x; background-position: left center; opacity: 0.72;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%); }
+#road-tree.chart .band { background: transparent !important; opacity: 1; }
+#road-tree.chart .band .tier-label { display: inline-block; background: var(--paper); padding: 2px 8px; border: 1px solid var(--ground-line); font-style: italic; }
+#road-tree.chart .node { background: transparent; }
+#road-tree.chart .node:not(.next-up) { text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper); }
+/* The fight to take next: the arcade button's ink, ochre edge and shadow. */
+#road-tree.chart .node.next-up { z-index: 2; color: var(--paper); background: var(--line); padding: 30px 10px 6px;
+  border: 3px solid var(--fighters-right-body); box-shadow: 5px 5px 0 var(--fighters-right-stripe); transform: translateX(-50%) skew(-6deg); }
+#road-tree.chart .node.next-up::before { border-color: var(--fighters-right-body); background: var(--paper); top: 4px; }
+/* The chapter view: a locked fight is greyed with its requirements under it,
+   each struck through once met; an open fight drops them and takes the
+   ready color; a won fight is struck through (Sam, 2026-10-07). */
+#chapter-stages .stage.locked { opacity: 0.6; }
+#chapter-stages .stage .met { text-decoration: line-through; opacity: 0.75; }
+#chapter-stages .stage.open { background: var(--fighters-right-body); color: var(--paper); border-color: var(--fighters-right-stripe); }
+#chapter-stages .stage.won strong, #chapter-stages .stage.flawless strong { text-decoration: line-through; text-decoration-thickness: 2px; }
