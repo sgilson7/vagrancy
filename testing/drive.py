@@ -670,10 +670,14 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     shown = page.locator('#weapons .weapon:not([data-weapon="four_arms"])').count()
     if shown != len(carryable):
         fails.append(f"{name}: the road shows {shown} weapons, not the {len(carryable)} a player can carry")
-    # The final fight's prizes, the cursed blade and four arms, wait for it.
-    for prize in ("longsword", "four_arms"):
-        if page.locator(f'#weapons [data-weapon="{prize}"].locked').count() != 1:
-            fails.append(f"{name}: a fresh save does not show the {prize} locked")
+    # The cursed blade waits for the final fight, shown locked and last;
+    # four arms is not shown until it is won.
+    if page.locator('#weapons [data-weapon="longsword"].locked').count() != 1:
+        fails.append(f"{name}: a fresh save does not show the cursed blade locked")
+    if page.evaluate("[...document.querySelectorAll('#weapons .weapon')].map(e => e.dataset.weapon).pop()") != "longsword":
+        fails.append(f"{name}: the cursed blade is not last in the weapon list")
+    if page.locator('#weapons [data-weapon="four_arms"]').count() != 0:
+        fails.append(f"{name}: a fresh save shows four arms")
     click_copy(page, "menu.back.label")
     # A save that has beaten the pilgrim, who carries the scimitar.
     save = page.evaluate("window.vagrancy.save()")

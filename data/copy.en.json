@@ -103,7 +103,8 @@
     "watch": "new: menu.watch, watch (all its strings), watch.trees, watch.hide_trees, watch.show_trees",
     "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)",
     "thrown_split": "new: road.req.thrown (rewritten to name the parts, at Sam's request), road.req.bladeless",
-    "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release"
+    "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release",
+    "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)"
   },
   "_glossary": {
     "ink": {
@@ -961,6 +962,174 @@
       "place": "A cave beneath the shrine, where the cursed blade was first forged.",
       "does": "The guardian deity has arms at its waist, at its shoulders and at its neck, and a cursed blade in each pair of hands. Its arms move in two groups: the waist pair with the shoulder pair below, and the neck pair with the shoulder pair above. The lower group looks a short way ahead before it chooses, the upper group guards high, thrusts when you jump and cuts overhead up close, and its legs close in and dodge most attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
       "try": "Try staying farther back than its blades reach and going in after a swing has passed, because each of its blades reaches farther than yours."
+    },
+    "hoop_roller": {
+      "name": "The Hoop Roller",
+      "name_mid": "the hoop roller",
+      "place": "A dirt lane where children roll iron hoops between the houses.",
+      "does": "The hoop roller carries a chakram, a ring with a cutting rim. When you are a few steps away, she sometimes throws it, and it comes back to her hand. While it is away, she backs off and dodges some attacks at her head. Up close, she sweeps low.",
+      "try": "Try closing in while the ring is in the air, because until it comes back there is nothing in her hands."
+    },
+    "coin_minter": {
+      "name": "The Coin Minter",
+      "name_mid": "the coin minter",
+      "place": "A stone mint with a furnace and stacks of copper blanks.",
+      "does": "The coin minter carries a chakram, a ring with a cutting rim. When you are a few steps away, he sometimes throws it, and it comes back to his hand. While it is away, he backs off and dodges some attacks at his head. Up close, he sweeps low.",
+      "try": "Try meeting the ring with your blade as it flies. A ring knocked aside in the air turns back on its thrower."
+    },
+    "bangle_seller": {
+      "name": "The Bangle Seller",
+      "name_mid": "the bangle seller",
+      "place": "A market stall hung with strings of glass and brass bangles.",
+      "does": "The bangle seller carries a chakram, a ring with a cutting rim. When you are a few steps away, she sometimes throws it, and it comes back to her hand. While it is away, she backs off and dodges many attacks at her head. She throws it at once some of the times you fall. Up close, she sweeps low.",
+      "try": "Try staying out of the few steps it is thrown from, closer or farther, so the throw has nowhere to land."
+    },
+    "wheelwright": {
+      "name": "The Wheelwright",
+      "name_mid": "the wheelwright",
+      "place": "A workshop yard full of cart wheels waiting for their rims.",
+      "does": "The wheelwright carries a chakram, a ring with a cutting rim. When you are a few steps away, he sometimes throws it, and it comes back to his hand. While it is away, he backs off and dodges many attacks at his head. He throws it at once some of the times you fall. Up close, he sweeps low. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try staying on your feet, because a fall is when the ring comes."
+    },
+    "moon_watcher": {
+      "name": "The Moon Watcher",
+      "name_mid": "the moon watcher",
+      "place": "A rooftop platform where the village marks the phases of the moon.",
+      "does": "The moon watcher carries a chakram, a ring with a cutting rim. When you are a few steps away, she sometimes throws it, and it comes back to her hand. While it is away, she backs off and dodges most attacks at her head. She throws it at once some of the times you fall. Up close, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try closing in while the ring is in the air, because until it comes back there is nothing in her hands."
+    },
+    "quoit_thrower": {
+      "name": "The Quoit Thrower",
+      "name_mid": "the quoit thrower",
+      "place": "A green where the village plays at quoits on feast days.",
+      "does": "The quoit thrower carries a chakram, a ring with a cutting rim. When you are a few steps away, he sometimes throws it, and it comes back to his hand. While it is away, he backs off and dodges most attacks at his head. He throws it at once some of the times you fall. Up close, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try meeting the ring with your blade as it flies. A ring knocked aside in the air turns back on its thrower."
+    },
+    "sun_priest": {
+      "name": "The Sun Priest",
+      "name_mid": "the sun priest",
+      "place": "A courtyard with a bronze sun disc fixed above the gate.",
+      "does": "The sun priest carries a chakram, a ring with a cutting rim. When you are a few steps away, she sometimes throws it, and it comes back to her hand. While it is away, she backs off and dodges most attacks at her head. She throws it at once some of the times you fall. Up close, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try staying out of the few steps it is thrown from, closer or farther, so the throw has nowhere to land."
+    },
+    "ring_keeper": {
+      "name": "The Ring Keeper",
+      "name_mid": "the ring keeper",
+      "place": "A round stone hall at the edge of the village, its door barred.",
+      "does": "The ring keeper carries a chakram, a ring with a cutting rim. When you are a few steps away, he sometimes throws it, and it comes back to his hand. While it is away, he backs off and dodges most attacks at his head. He throws it at once some of the times you fall. Up close, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try staying on your feet, because a fall is when the ring comes."
+    },
+    "hay_mower": {
+      "name": "The Hay Mower",
+      "name_mid": "the hay mower",
+      "place": "A meadow half cut, with the hay laid out in rows to dry.",
+      "does": "The hay mower carries a scythe, a long pole with a hooked blade at its end. She keeps you at the reach of the blade: she closes in from far off, backs away when you come inside it, and swings the blade over or low.",
+      "try": "Try getting inside the blade's reach, because the pole does not cut."
+    },
+    "gleaner": {
+      "name": "The Gleaner",
+      "name_mid": "the gleaner",
+      "place": "A harvested wheat field with a few stalks left standing.",
+      "does": "The gleaner carries a scythe, a long pole with a hooked blade at its end. He keeps you at the reach of the blade: he closes in from far off, backs away when you come inside it, and swings the blade over or low.",
+      "try": "Try waiting for the blade to pass before you step in, because the swing takes time to come round again."
+    },
+    "thatcher": {
+      "name": "The Thatcher",
+      "name_mid": "the thatcher",
+      "place": "A barn roof half covered in fresh bundles of straw.",
+      "does": "The thatcher carries a scythe, a long pole with a hooked blade at its end. She keeps you at the reach of the blade: she closes in from far off, backs away when you come inside it, and swings the blade over or low. She dodges many attacks at her head.",
+      "try": "Try guarding low as you close in, because the low swing comes along the ground."
+    },
+    "orchard_keeper": {
+      "name": "The Orchard Keeper",
+      "name_mid": "the orchard keeper",
+      "place": "An orchard of old pear trees with ladders against the trunks.",
+      "does": "The orchard keeper carries a scythe, a long pole with a hooked blade at its end. He keeps you at the reach of the blade: he closes in from far off, backs away when you come inside it, and swings the blade over or low. He dodges many attacks at his head. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try going in after a swing has passed, before the blade comes back over."
+    },
+    "grave_digger": {
+      "name": "The Grave Digger",
+      "name_mid": "the grave digger",
+      "place": "A quiet hillside where the village keeps its family plots.",
+      "does": "The grave digger carries a scythe, a long pole with a hooked blade at its end. She keeps you at the reach of the blade: she closes in from far off, backs away when you come inside it, and swings the blade over or low. She dodges most attacks at her head. When you are farther off than the blade reaches, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try getting inside the blade's reach, because the pole does not cut."
+    },
+    "field_warden": {
+      "name": "The Field Warden",
+      "name_mid": "the field warden",
+      "place": "A watch hut on stilts above the terraced fields.",
+      "does": "The field warden carries a scythe, a long pole with a hooked blade at its end. She keeps you at the reach of the blade: she closes in from far off, backs away when you come inside it, and swings the blade over or low. She dodges most attacks at her head. When you are farther off than the blade reaches, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try guarding low as you close in, because the low swing comes along the ground."
+    },
+    "harvest_keeper": {
+      "name": "The Harvest Keeper",
+      "name_mid": "the harvest keeper",
+      "place": "A granary courtyard with the year's grain stored in tall jars.",
+      "does": "The harvest keeper carries a scythe, a long pole with a hooked blade at its end. He keeps you at the reach of the blade: he closes in from far off, backs away when you come inside it, and swings the blade over or low. He dodges most attacks at his head. When you are farther off than the blade reaches, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try going in after a swing has passed, before the blade comes back over."
+    },
+    "stilt_walker": {
+      "name": "The Stilt Walker",
+      "name_mid": "the stilt walker",
+      "place": "A festival street lined with paper lanterns.",
+      "does": "The stilt walker carries a twin blade, a blade at each end of a short handle. She closes in, and up close she either spins both blades round or sweeps low.",
+      "try": "Try staying a little out of reach while the blades spin, then going in when they stop."
+    },
+    "acrobat": {
+      "name": "The Acrobat",
+      "name_mid": "the acrobat",
+      "place": "A square with a rope stretched between two poles.",
+      "does": "The acrobat carries a twin blade, a blade at each end of a short handle. He closes in, and up close he either spins both blades round or sweeps low.",
+      "try": "Try cutting at the handle between the blades, where neither one can reach."
+    },
+    "lion_dancer": {
+      "name": "The Lion Dancer",
+      "name_mid": "the lion dancer",
+      "place": "A temple forecourt cleared for the new year dance.",
+      "does": "The lion dancer carries a twin blade, a blade at each end of a short handle. She closes in, and up close she either spins both blades round or sweeps low. She dodges many attacks at her head.",
+      "try": "Try keeping your blade high, because the second blade comes round after the first."
+    },
+    "punt_poler": {
+      "name": "The Punt Poler",
+      "name_mid": "the punt poler",
+      "place": "A canal landing with flat boats tied along the bank.",
+      "does": "The punt poler carries a twin blade, a blade at each end of a short handle. He closes in, and up close he either spins both blades round or sweeps low. He dodges many attacks at his head. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try backing off when the spin starts, because the spin carries both blades past you."
+    },
+    "temple_guard": {
+      "name": "The Temple Guard",
+      "name_mid": "the temple guard",
+      "place": "The steps of the village temple, under a carved wooden gate.",
+      "does": "The temple guard carries a twin blade, a blade at each end of a short handle. She closes in, and up close she either spins both blades round or sweeps low. She dodges most attacks at her head. Farther off, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try staying a little out of reach while the blades spin, then going in when they stop."
+    },
+    "fan_dancer": {
+      "name": "The Fan Dancer",
+      "name_mid": "the fan dancer",
+      "place": "A wooden stage built over a pond.",
+      "does": "The fan dancer carries a twin blade, a blade at each end of a short handle. He closes in, and up close he either spins both blades round or sweeps low. He dodges most attacks at his head. Farther off, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try cutting at the handle between the blades, where neither one can reach."
+    },
+    "festival_master": {
+      "name": "The Festival Master",
+      "name_mid": "the festival master",
+      "place": "The main square on the night of the harvest festival.",
+      "does": "The festival master carries a twin blade, a blade at each end of a short handle. She closes in, and up close she either spins both blades round or sweeps low. She dodges most attacks at her head. Farther off, she looks a short way ahead before she chooses. She reacts about {reaction_ms} milliseconds after she sees your blade move.",
+      "try": "Try keeping your blade high, because the second blade comes round after the first."
+    },
+    "sword_dancer": {
+      "name": "The Sword Dancer",
+      "name_mid": "the sword dancer",
+      "place": "An open floor of polished boards in the headman's house.",
+      "does": "The sword dancer carries a twin blade, a blade at each end of a short handle. He closes in, and up close he either spins both blades round or sweeps low. He dodges most attacks at his head. Farther off, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try backing off when the spin starts, because the spin carries both blades past you."
+    },
+    "sheaf_binder": {
+      "name": "The Sheaf Binder",
+      "name_mid": "the sheaf binder",
+      "place": "A cut field where the sheaves are tied and stacked to dry.",
+      "does": "The sheaf binder carries a scythe, a long pole with a hooked blade at its end. He keeps you at the reach of the blade: he closes in from far off, backs away when you come inside it, and swings the blade over or low. He dodges most attacks at his head. When you are farther off than the blade reaches, he looks a short way ahead before he chooses. He reacts about {reaction_ms} milliseconds after he sees your blade move.",
+      "try": "Try waiting for the blade to pass before you step in, because the swing takes time to come round again."
     }
   },
   "local": {
@@ -1487,6 +1656,18 @@
     "boomerang": {
       "name": "boomerang",
       "desc": "Smaller than the short sword, and bent. Thrown, it comes back to your hand after two seconds. It cuts until it first touches the ground. If a blade knocks it aside in the air, it can cut you on the way back."
+    },
+    "chakram": {
+      "name": "chakram",
+      "desc": "A flat ring with a cutting rim, smaller than the short sword, that cuts along its whole edge. Thrown, it comes back to your hand after two seconds, and it cuts until it first touches the ground. A blade that meets it in the air turns it back at you."
+    },
+    "scythe": {
+      "name": "scythe",
+      "desc": "A long pole with a curved blade hooked back from its end. The pole does not cut, so the blade has to reach the other fighter, and it reaches farther than the sword."
+    },
+    "twin_blade": {
+      "name": "twin blade",
+      "desc": "A blade at each end of a short handle. A swing that carries one blade past the other fighter brings the second blade round after it."
     }
   },
   "maps": {

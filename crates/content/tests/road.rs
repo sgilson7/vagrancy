@@ -279,7 +279,9 @@ fn each_chapter_has_two_weapon_carriers_and_each_challenge_can_be_met() {
 fn a_win_opens_the_fights_that_asked_for_it_and_no_others() {
     let mut best = BTreeMap::new();
     let open_now = |b: &BTreeMap<String, Best>| road().into_iter().filter(|s| content::road::open(s, b)).map(|s| s.id).collect::<Vec<_>>();
-    assert_eq!(open_now(&best), ["scarecrow", "tinker", "pilgrim"]);
+    // Open from the start: the scarecrow and the first carrier of each
+    // weapon won on the road's first row.
+    assert_eq!(open_now(&best), ["scarecrow", "tinker", "pilgrim", "hoop_roller", "hay_mower", "stilt_walker"]);
     // A win with a round lost opens what a win opens; the drover asks for a
     // flawless one.
     let opened = record(&mut best, "scarecrow", Best::won(1, 2000, "sword"));

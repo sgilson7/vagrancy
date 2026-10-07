@@ -62,6 +62,12 @@ pub enum Shape {
     Curve(Vec<[i64; 2]>),
     /// Prongs from a fork on the line from butt to tip.
     Prongs { fork_pct: i64, prongs: Vec<[i64; 2]> },
+    /// A ring whose diameter runs from butt to tip, cutting all the way
+    /// round (the chakram).
+    Ring {},
+    /// A second blade out behind the hands, `back_pct` of the front one's
+    /// length, with the handle between them (the twin blade).
+    Twin { back_pct: i64 },
 }
 
 fn hundred() -> i64 {
@@ -131,6 +137,40 @@ pub fn reshape(base: &SwordDef, w: &Weapon) -> SwordDef {
             let mut edges = vec![BladeEdge { a: 0, b: 1, from: hilt_frac(s.butt, s.tip) }];
             edges.extend((0..prongs.len() as u8).map(|k| BladeEdge { a: 2, b: 3 + k, from: Fx(0) }));
             s.edges = edges;
+        }
+        Shape::Ring {} => {
+            // Round the top half from the butt to the tip, then back along
+            // the bottom: 45 degrees apart on a circle of the length across.
+            let rim = [[15, 35], [50, 50], [85, 35], [85, -35], [50, -50], [15, -35]];
+            s.extra = rim.iter().map(|&[a, c]| point(a, c)).collect();
+            let chain: [u8; 9] = [0, 2, 3, 4, 1, 5, 6, 7, 0];
+            let first = s.extra[0];
+            s.edges = chain
+                .windows(2)
+                .enumerate()
+                .map(|(k, p)| BladeEdge { a: p[0], b: p[1], from: if k == 0 { hilt_frac(s.butt, first) } else { Fx(0) } })
+                .collect();
+        }
+        Shape::Twin { back_pct } => {
+            // The butt goes back by the second blade's length; the old butt,
+            // where the handle starts, stays as point 2. The hands keep their
+            // distance from it, so their fractions along the longer weapon
+            // change.
+            let old = s.butt;
+            let front = (s.tip - old).len();
+            let back = (s.tip - old).scale(*back_pct, 100);
+            s.butt = old - back;
+            let whole = (s.tip - s.butt).len().0.max(1) as i64;
+            for g in &mut s.grips {
+                let d = (g.at * front).0 as i64 + back.len().0 as i64;
+                g.at = Fx::ratio(d, whole);
+            }
+            s.extra = vec![old];
+            s.edges = vec![
+                // Behind the hands, cutting from half a handle back.
+                BladeEdge { a: 2, b: 0, from: Fx::ratio(hilt.0 as i64 / 2, back.len().0.max(1) as i64) },
+                BladeEdge { a: 2, b: 1, from: hilt_frac(old, s.tip) },
+            ];
         }
     }
     let n = 2 + s.extra.len() as i64;

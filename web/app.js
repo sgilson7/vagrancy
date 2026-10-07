@@ -753,9 +753,11 @@ function weaponPanel(redraw) {
     }
     return el('div', { class: `weapon ${w.carried ? 'carried' : w.unlocked ? 'open' : 'locked'}`, 'data-weapon': w.id }, ...kids);
   });
-  // Four arms, won at the final fight: two of the carried weapon.
+  // Four arms, won at the final fight: two of the carried weapon. Not shown
+  // until it is won (Sam, 2026-10-06: "4 arm should be hidden until you
+  // defeat the deity").
   const arms = JSON.parse(arms_json(JSON.stringify(SAVE)));
-  if (arms.stop) {
+  if (arms.stop && arms.open) {
     const n = { arms: arms.arms };
     const kids = [el('h4', { 'data-copy': 'road.arms.name' }, t('road.arms.name', n)), say('road.arms.desc', {}, { class: 'desc' })];
     const choose = (four) => () => {

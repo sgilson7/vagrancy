@@ -42,6 +42,9 @@ fn every_weapon_holds_its_shape_and_cuts() {
             content::weapons::Shape::Straight {} => 1,
             content::weapons::Shape::Curve(b) => b.len() + 1,
             content::weapons::Shape::Prongs { prongs, .. } => prongs.len() + 1,
+            // Round the rim between eight points; a blade each side of the handle.
+            content::weapons::Shape::Ring {} => 8,
+            content::weapons::Shape::Twin { .. } => 2,
         };
         assert_eq!(s.edges.len(), shape, "the {} has the wrong number of edges", w.id);
     }

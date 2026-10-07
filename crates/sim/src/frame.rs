@@ -54,6 +54,9 @@ pub struct SwordView {
     pub turned: bool,
     /// Every cutting edge, as two particle indices: one for a plain sword.
     pub edges: Vec<[u16; 2]>,
+    /// Where along each edge it starts to cut, as a raw fixed-point
+    /// fraction from its first point: the part before is a handle or a pole.
+    pub cut_from: Vec<i32>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -95,6 +98,7 @@ pub fn frame(w: &World) -> Frame {
                 fighter: s.fighter,
                 held: w.held(k),
                 edges: s.edges.iter().map(|e| [e.0, e.1]).collect(),
+                cut_from: s.edges.iter().map(|e| e.2 .0).collect(),
                 flying: s.flying,
                 turned: s.turned && s.flying,
             })

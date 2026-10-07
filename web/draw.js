@@ -166,17 +166,17 @@ export function renderer(canvas, palette, numbers) {
     // sat inside the part it was cut from and none could be seen.
     for (const m of marks) dot(m.at, 4, inkColor(m.seat));
     for (const s of cur.swords) {
-      const a = pts[s.butt];
-      const b = pts[s.tip];
-      const f = s.hilt / one;
-      const h = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
-      // Each edge of the weapon (one for a sword; a curve's bends, a fork's
-      // prongs), then the hilt over them.
       // A turned boomerang is ringed in its thrower's own ink: it is
       // coming back for them.
       if (s.turned) for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 2.4, inkColor(s.fighter));
-      for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 1.1, palette.sword);
-      capsule(a, h, one * 1.6, palette.hilt);
+      // Each edge cuts from `cut_from` on; the part before it is a handle
+      // or a pole, in the hilt's color (a plain sword: its hilt).
+      s.edges.forEach(([i, j], k) => {
+        const p = pts[i], q = pts[j], g = (s.cut_from ? s.cut_from[k] : 0) / one;
+        const m = [p[0] + (q[0] - p[0]) * g, p[1] + (q[1] - p[1]) * g];
+        capsule(m, q, one * 1.1, palette.sword);
+        if (g > 0) capsule(p, m, one * 1.6, palette.hilt);
+      });
     }
     if (e > 0) {
       // The edges darken while the view is close.

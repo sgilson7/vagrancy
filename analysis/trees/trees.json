@@ -132,6 +132,131 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "acrobat": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 6,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 8,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 7,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 14,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "archivist": {
     "children": [
       {
@@ -224,6 +349,328 @@
         "interrupt": false,
         "kind": "search",
         "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "bangle_seller": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "low_sweep",
+        "id": 38,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Sweep low"
       }
     ],
     "icon": "selector",
@@ -1321,6 +1768,254 @@
         "interrupt": false,
         "kind": "action",
         "text": "Guard high"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "coin_minter": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 40 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 45 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 18,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 14,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 22,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 19,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 24,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 25,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 23,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 27,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 28,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 26,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "low_sweep",
+        "id": 29,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Sweep low"
       }
     ],
     "icon": "selector",
@@ -2713,6 +3408,164 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "fan_dancer": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 80 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 18,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "ferryman": {
     "children": [
       {
@@ -2754,6 +3607,347 @@
     "interrupt": false,
     "kind": "repeat",
     "text": "Repeat"
+  },
+  "festival_master": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 18,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "field_warden": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 21,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
   },
   "gambler": {
     "children": [
@@ -2952,6 +4146,339 @@
         "children": [],
         "icon": "search",
         "id": 11,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "gleaner": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 6,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 8,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 9,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 7,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 10,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 16,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 17,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "grave_digger": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 70 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 21,
         "interrupt": false,
         "kind": "search",
         "text": "Search: look 300 ms ahead, trying 11 key combinations"
@@ -3918,6 +5445,339 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "harvest_keeper": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 21,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "hay_mower": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 6,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 8,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 9,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 7,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 10,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 16,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 17,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "herbalist": {
     "children": [
       {
@@ -4143,6 +6003,254 @@
         "interrupt": false,
         "kind": "search",
         "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "hoop_roller": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 30 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 40 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 18,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 14,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 22,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 19,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 24,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 25,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 23,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 27,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 28,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 26,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "low_sweep",
+        "id": 29,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Sweep low"
       }
     ],
     "icon": "selector",
@@ -4890,6 +6998,164 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "lion_dancer": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 18,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "local_deity": {
     "children": [
       {
@@ -5624,6 +7890,328 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "moon_watcher": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 70 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 60 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 38,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "net_mender": {
     "children": [
       {
@@ -5766,6 +8354,189 @@
         "interrupt": false,
         "kind": "action",
         "text": "Guard high"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "orchard_keeper": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 60 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 21,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
       }
     ],
     "icon": "selector",
@@ -6209,6 +8980,486 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "punt_poler": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 60 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 18,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "quoit_thrower": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 80 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 65 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 38,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "reader": {
     "children": [],
     "icon": "search",
@@ -6629,6 +9880,328 @@
         "children": [],
         "icon": "search",
         "id": 10,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "ring_keeper": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 75 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 38,
         "interrupt": false,
         "kind": "search",
         "text": "Search: look 300 ms ahead, trying 11 key combinations"
@@ -7072,6 +10645,189 @@
     "interrupt": false,
     "kind": "action",
     "text": "Stand still"
+  },
+  "sheaf_binder": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 80 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 21,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
   },
   "shepherd": {
     "children": [
@@ -7760,6 +11516,131 @@
     "kind": "selector",
     "text": "Selector"
   },
+  "stilt_walker": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 6,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 8,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 7,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 14,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
   "stone_cutter": {
     "children": [
       {
@@ -7849,6 +11730,486 @@
         "children": [],
         "icon": "search",
         "id": 11,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "sun_priest": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 70 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 38,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "sword_dancer": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 90 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 18,
         "interrupt": false,
         "kind": "search",
         "text": "Search: look 300 ms ahead, trying 11 key combinations"
@@ -8031,6 +12392,347 @@
         "children": [],
         "icon": "guard",
         "id": 20,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Guard"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "temple_guard": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 75 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 70 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 260 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 13,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "spin",
+            "id": 14,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Spin the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 230 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 15,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "search",
+        "id": 18,
+        "interrupt": false,
+        "kind": "search",
+        "text": "Search: look 300 ms ahead, trying 11 key combinations"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "thatcher": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 80 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 7,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 9,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 340 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 10,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 8,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 170 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 13,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 11,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 15,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 16,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "overhead",
+            "id": 17,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Overhead swing"
+          }
+        ],
+        "icon": "sequence",
+        "id": 14,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "near",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "low_sweep",
+            "id": 20,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Sweep low"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "guard",
+        "id": 21,
         "interrupt": false,
         "kind": "action",
         "text": "Guard"
@@ -8967,6 +13669,328 @@
         "interrupt": false,
         "kind": "action",
         "text": "Guard low"
+      }
+    ],
+    "icon": "selector",
+    "id": 0,
+    "interrupt": false,
+    "kind": "selector",
+    "text": "Selector"
+  },
+  "wheelwright": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "down",
+            "id": 2,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It is knocked down"
+          },
+          {
+            "children": [],
+            "icon": "stand",
+            "id": 3,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Stand up"
+          }
+        ],
+        "icon": "sequence",
+        "id": 1,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 5,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "threat_head",
+            "id": 6,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Your point within 70 cm of its head"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 7,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 60 percent chance"
+          },
+          {
+            "children": [],
+            "icon": "dodge_away",
+            "id": 8,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Dodge away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 4,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 10,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "opp_down",
+            "id": 11,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "You are knocked down"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 12,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 50 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 14,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 15,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 16,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 17,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 13,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 9,
+        "interrupt": true,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "armed",
+            "id": 19,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It holds its sword"
+          },
+          {
+            "children": [],
+            "icon": "far",
+            "id": 20,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 180 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 21,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 320 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "chance",
+            "id": 22,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "A 55 percent chance"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "icon": "wait",
+                "id": 24,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Stand still and square"
+              },
+              {
+                "children": [],
+                "icon": "raise",
+                "id": 25,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Bring the blade back over the head"
+              },
+              {
+                "children": [],
+                "icon": "watch",
+                "id": 26,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Swing forward with a step, watching the blade"
+              },
+              {
+                "children": [],
+                "icon": "throw",
+                "id": 27,
+                "interrupt": false,
+                "kind": "action",
+                "text": "Let go when its flight meets you, then follow through"
+              }
+            ],
+            "icon": "throw",
+            "id": 23,
+            "interrupt": false,
+            "kind": "sequence",
+            "text": "Throw the sword"
+          }
+        ],
+        "icon": "sequence",
+        "id": 18,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 29,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "near",
+            "id": 30,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Closer than 300 cm to you"
+          },
+          {
+            "children": [],
+            "icon": "retreat",
+            "id": 31,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Back away"
+          }
+        ],
+        "icon": "sequence",
+        "id": 28,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "unarmed",
+            "id": 33,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "It has thrown its sword"
+          },
+          {
+            "children": [],
+            "icon": "guard",
+            "id": 34,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Guard"
+          }
+        ],
+        "icon": "sequence",
+        "id": 32,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "icon": "far",
+            "id": 36,
+            "interrupt": false,
+            "kind": "condition",
+            "text": "Farther than 230 cm from you"
+          },
+          {
+            "children": [],
+            "icon": "approach",
+            "id": 37,
+            "interrupt": false,
+            "kind": "action",
+            "text": "Approach"
+          }
+        ],
+        "icon": "sequence",
+        "id": 35,
+        "interrupt": false,
+        "kind": "sequence",
+        "text": "Sequence"
+      },
+      {
+        "children": [],
+        "icon": "low_sweep",
+        "id": 38,
+        "interrupt": false,
+        "kind": "action",
+        "text": "Sweep low"
       }
     ],
     "icon": "selector",

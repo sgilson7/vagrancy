@@ -3,11 +3,14 @@
   "weapons": [
     {"id": "sword", "length_pct": 100, "mass_pct": 100, "shape": {"straight": {}}},
     {"id": "short_sword", "length_pct": 72, "mass_pct": 60, "shape": {"straight": {}}, "unlock": {"beat": "tinker"}},
-    {"id": "longsword", "length_pct": 133, "mass_pct": 133, "shape": {"straight": {}}, "unlock": {"beat": "local_deity"}, "prize": true},
     {"id": "scimitar", "length_pct": 85, "mass_pct": 110, "shape": {"curve": [[50, 14]]}, "unlock": {"beat": "pilgrim"}},
     {"id": "kris", "length_pct": 95, "mass_pct": 140, "shape": {"curve": [[30, 6], [55, -6], [80, 6]]}, "unlock": {"beat": "knife_grinder"}},
     {"id": "forked_blade", "length_pct": 90, "mass_pct": 190, "shape": {"prongs": {"fork_pct": 75, "prongs": [[100, 10], [100, -10]]}}, "unlock": {"beat": "ox_herd"}},
     {"id": "trident", "length_pct": 88, "mass_pct": 210, "shape": {"prongs": {"fork_pct": 70, "prongs": [[95, 16], [95, -16]]}}, "unlock": {"beat": "eel_fisher"}},
-    {"id": "boomerang", "length_pct": 55, "mass_pct": 70, "hilt_pct": 60, "shape": {"curve": [[50, 38]]}, "unlock": {"beat": "bird_scarer"}, "returns": true}
+    {"id": "boomerang", "length_pct": 55, "mass_pct": 70, "hilt_pct": 60, "shape": {"curve": [[50, 38]]}, "unlock": {"beat": "bird_scarer"}, "returns": true},
+    {"id": "chakram", "length_pct": 42, "mass_pct": 90, "hilt_pct": 50, "shape": {"ring": {}}, "unlock": {"beat": "hoop_roller"}, "returns": true},
+    {"id": "scythe", "length_pct": 125, "mass_pct": 280, "hilt_pct": 650, "shape": {"prongs": {"fork_pct": 97, "prongs": [[78, -30]]}}, "unlock": {"beat": "hay_mower"}},
+    {"id": "twin_blade", "length_pct": 70, "mass_pct": 140, "shape": {"twin": {"back_pct": 50}}, "unlock": {"beat": "stilt_walker"}},
+    {"id": "longsword", "length_pct": 133, "mass_pct": 133, "shape": {"straight": {}}, "unlock": {"beat": "local_deity"}, "prize": true}
   ]
 }

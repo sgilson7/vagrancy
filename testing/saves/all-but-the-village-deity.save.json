@@ -56,12 +56,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "acrobat": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "archivist": {
@@ -75,12 +100,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "bangle_seller": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "bargeman": {
@@ -94,12 +144,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "bell_founder": {
@@ -113,12 +166,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "bellringer": {
@@ -132,12 +188,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "bird_scarer": {
@@ -151,12 +210,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "boatwright": {
@@ -170,12 +232,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "brewer": {
@@ -189,12 +254,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "bridge_keeper": {
@@ -208,12 +276,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "carpenter": {
@@ -227,12 +298,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "cartographer": {
@@ -246,12 +320,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "charcoal_burner": {
@@ -265,12 +342,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "coin_minter": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "cooper": {
@@ -284,12 +386,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "courier": {
@@ -303,12 +408,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "crow_watcher": {
@@ -322,12 +430,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "drover": {
@@ -341,12 +452,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "drum_maker": {
@@ -360,12 +474,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "duelist": {
@@ -379,12 +496,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "dyer": {
@@ -398,12 +518,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "eel_fisher": {
@@ -417,12 +540,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "falconer": {
@@ -436,12 +562,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "fan_dancer": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "ferryman": {
@@ -455,12 +606,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "festival_master": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "field_warden": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "gambler": {
@@ -474,12 +672,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "gatekeeper": {
@@ -493,12 +694,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "general": {
@@ -512,12 +716,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "gleaner": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "grave_digger": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "hare_hunter": {
@@ -531,12 +782,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "harpooner": {
@@ -550,12 +804,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "harvest_keeper": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "hay_mower": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "herbalist": {
@@ -569,12 +870,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "hermit": {
@@ -588,12 +892,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "hoop_roller": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "juggler": {
@@ -607,12 +936,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "kite_maker": {
@@ -626,12 +958,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "knife_grinder": {
@@ -645,12 +980,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "lacquerer": {
@@ -664,12 +1002,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "lamplighter": {
@@ -683,12 +1024,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "lion_dancer": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "magistrate": {
@@ -702,12 +1068,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "mason": {
@@ -721,12 +1090,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "monk": {
@@ -740,12 +1112,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "moon_watcher": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "net_mender": {
@@ -759,12 +1156,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "orchard_keeper": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "ox_herd": {
@@ -778,12 +1200,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "paper_maker": {
@@ -797,12 +1222,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "pilgrim": {
@@ -816,12 +1244,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "porter": {
@@ -835,12 +1266,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "post_rider": {
@@ -854,12 +1288,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "potter": {
@@ -873,12 +1310,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "punt_poler": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "quoit_thrower": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "reader": {
@@ -892,12 +1376,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "reed_cutter": {
@@ -911,12 +1398,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "rice_broker": {
@@ -930,12 +1420,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "ring_keeper": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "roofer": {
@@ -949,12 +1464,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "ropewalker": {
@@ -968,12 +1486,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "salt_trader": {
@@ -987,12 +1508,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "sampler": {
@@ -1006,12 +1530,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "scarecrow": {
@@ -1025,12 +1552,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "sheaf_binder": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "shepherd": {
@@ -1044,12 +1596,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "shrine_keeper": {
@@ -1063,12 +1618,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "smith": {
@@ -1082,12 +1640,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "stilt_walker": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "stone_cutter": {
@@ -1101,12 +1684,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "sun_priest": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "sword_dancer": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "tanner": {
@@ -1120,12 +1750,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "tea_picker": {
@@ -1139,12 +1772,59 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "temple_guard": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "thatcher": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "thresher": {
@@ -1158,12 +1838,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "tinker": {
@@ -1177,12 +1860,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "toll_collector": {
@@ -1196,12 +1882,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "vaulter": {
@@ -1215,12 +1904,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "warden": {
@@ -1234,12 +1926,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "watchman": {
@@ -1253,12 +1948,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "weaver": {
@@ -1272,12 +1970,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "well_digger": {
@@ -1291,12 +1992,37 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
+          ]
+        },
+        "wheelwright": {
+          "all_thrown": true,
+          "bladeless": true,
+          "headshot": true,
+          "losses": 0,
+          "thrown": true,
+          "ticks": 3600,
+          "untouched": true,
+          "with": [
+            "sword",
+            "short_sword",
+            "scimitar",
+            "kris",
+            "forked_blade",
+            "trident",
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "wind_reader": {
@@ -1310,12 +2036,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "windmill": {
@@ -1329,12 +2058,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         },
         "woodcutter": {
@@ -1348,12 +2080,15 @@
           "with": [
             "sword",
             "short_sword",
-            "longsword",
             "scimitar",
             "kris",
             "forked_blade",
             "trident",
-            "boomerang"
+            "boomerang",
+            "chakram",
+            "scythe",
+            "twin_blade",
+            "longsword"
           ]
         }
       }
