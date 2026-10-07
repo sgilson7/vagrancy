@@ -468,6 +468,29 @@ impl Lab {
             player: true,
         }
     }
+    /// A tree written in the editor (content::custom), on the left with the
+    /// sword, against a road opponent; or why it cannot run.
+    pub fn watch_custom(seed: u32, tuning: u8, tree: &str, right: &str, map: &str) -> Result<Lab, String> {
+        let spec = content::custom::parse(tree).map_err(|r| r.key.to_string())?;
+        Ok(Lab {
+            rec: Recording::new(content::custom::watch(seed as u64, tuning, right, map)),
+            pilots: vec![Some(pilot::build(&spec)), Some(pilot::build(&content::road::pilot(right)))],
+            last: [Input::NONE; sim::body::SEATS],
+            ids: ["custom".into(), right.into()],
+            player: false,
+        })
+    }
+    /// You against a tree written in the editor; or why it cannot run.
+    pub fn play_custom(seed: u32, tuning: u8, tree: &str, map: &str) -> Result<Lab, String> {
+        let spec = content::custom::parse(tree).map_err(|r| r.key.to_string())?;
+        Ok(Lab {
+            rec: Recording::new(content::custom::play(seed as u64, tuning, map)),
+            pilots: vec![None, Some(pilot::build(&spec))],
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [String::new(), "custom".into()],
+            player: true,
+        })
+    }
     /// One tick: a person's keys for seat 0 when playing, each pilot's for
     /// its seat.
     pub fn step(&mut self, mine: u16, _other: u16) {
@@ -509,6 +532,10 @@ impl Lab {
     }
     pub fn phase_text(&self, _opponent: &str) -> String {
         if self.player {
+            // A written tree has no road name; its sentences name the colors.
+            if self.ids[1] == "custom" {
+                return content::messages::phase_text(&self.rec.world, content::messages::Audience::Versus).to_string();
+            }
             content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &self.ids[1] }).to_string()
         } else {
             let ids = [self.ids[0].as_str(), self.ids[1].as_str()];
@@ -544,6 +571,39 @@ pub fn lab_roster_json() -> String {
         .map(|st| json!({ "id": st.id, "level": st.level(), "weapon": st.weapon, "numbers": content::road::intro_numbers(&st.id), "kind": content::road::pilot(&st.id).kind() }))
         .collect();
     serde_json::to_string(&all).unwrap()
+}
+
+/// Whether a written tree runs: `{ ok }`, or `{ ok: false, key, rule }`
+/// naming the reason as a copy key and the rule it is in.
+#[wasm_bindgen]
+pub fn lab_check(tree: &str) -> String {
+    match content::custom::parse(tree) {
+        Ok(_) => json!({ "ok": true }).to_string(),
+        Err(r) => json!({ "ok": false, "key": r.key, "rule": r.rule }).to_string(),
+    }
+}
+
+/// A written tree as core draws a pilot (pilot::view::describe), or null.
+#[wasm_bindgen]
+pub fn lab_describe_json(tree: &str) -> String {
+    match content::custom::parse(tree) {
+        Ok(spec) => serde_json::to_string(&pilot::view::describe(&spec)).unwrap(),
+        Err(_) => "null".into(),
+    }
+}
+
+/// What the editor offers: the conditions (name, unit of its number), the
+/// moves, and the limits on a written tree.
+#[wasm_bindgen]
+pub fn lab_conditions_json() -> String {
+    use content::custom as c;
+    let conds: Vec<serde_json::Value> = c::CONDITIONS.iter().map(|(n, u)| json!({ "id": n, "unit": u })).collect();
+    json!({
+        "conditions": conds, "moves": pilot::moves::MOVES,
+        "max_rules": c::MAX_RULES, "max_conds": c::MAX_CONDS,
+        "reaction": [c::REACTION_TICKS.0, c::REACTION_TICKS.1], "distance": [c::DISTANCE_CM.0, c::DISTANCE_CM.1],
+    })
+    .to_string()
 }
 
 /// The moves a tree may run and each one's recipe (pilot::moves).

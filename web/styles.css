@@ -267,3 +267,14 @@ body.btlab #hud { display: flex; gap: 18px; justify-content: center; }
 #chapter-stages .stage .met { text-decoration: line-through; opacity: 0.75; }
 #chapter-stages .stage.open { background: var(--fighters-right-body); color: var(--paper); border-color: var(--fighters-right-stripe); }
 #chapter-stages .stage.won strong, #chapter-stages .stage.flawless strong { text-decoration: line-through; text-decoration-thickness: 2px; }
+
+/* The BT Lab's editor. */
+#editor { border: 1px solid var(--ground-line); padding: 10px 16px; }
+#editor ol.rules { padding-left: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+#editor li.rule { border: 1px solid var(--line); padding: 8px 10px; background: var(--paper); }
+#editor li.rule.refused { border: 2px solid var(--focus); }
+#editor ul.conds { padding-left: 16px; }
+#editor ul.conds input[type=number] { width: 70px; }
+#editor textarea { width: 100%; font-family: inherit; font-size: 0.85em; }
+#editor .ok { color: var(--focus); font-weight: bold; }
+#editor .refused { color: var(--focus); font-weight: bold; }

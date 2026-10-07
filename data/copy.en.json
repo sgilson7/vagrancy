@@ -44,7 +44,10 @@
     "shoulder, elbow": "a pose's upper-arm and elbow angles in degrees, from pilot::moves::recipe",
     "share, max, band": "the pose controller's constants, pilot::moves::POSE_SHARE, POSE_MAX and POSE_BAND",
     "row": "a row of the arcade tree, from data/road.json",
-    "from, to": "a script beat's first and last tick, from pilot::moves"
+    "from, to": "a script beat's first and last tick, from pilot::moves",
+    "max_rules, max_conds": "the limits on a written tree, content::custom::MAX_RULES and MAX_CONDS",
+    "lo, hi": "the range of a written tree's reaction time in ticks, content::custom::REACTION_TICKS",
+    "ms": "a reaction time in milliseconds, from ticks and the tick rate"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -114,7 +117,7 @@
     "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release",
     "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)",
     "story_full": "new: story.full, story.next.game_over, story.extra, story.scene.x1_giant_general to x8_guardian",
-    "btlab": "new: btlab (the BT Lab page, all its strings)"
+    "btlab": "new: btlab (the BT Lab page, all its strings); btlab.editor (the tree editor)"
   },
   "_glossary": {
     "ink": {
@@ -2087,6 +2090,72 @@
         "title": "Your turn",
         "body": "Fight the lamplighter with the keys and watch its tree answer you. Stand still for a while, then walk in, then back away.",
         "question": "Which of your moves made it change rules, and why that rule?"
+      }
+    },
+    "editor": {
+      "heading": "Write a tree of your own",
+      "intro": "Your fighter carries the sword and runs the tree you write here, on the same code as the opponents. A tree is a list of rules, tried in order: the first rule whose conditions hold runs its action. Up to {max_rules} rules, each with up to {max_conds} conditions.",
+      "name": "Its name",
+      "unnamed": "Your fighter",
+      "reaction": "Its reaction time, in ticks ({lo} to {hi}):",
+      "reaction_ms": "That is {ms} milliseconds.",
+      "rule": "Rule {n}",
+      "if": "If each of these holds:",
+      "then": "then run:",
+      "condition": "Condition",
+      "move": "Action",
+      "interrupt": "Check this rule on each tick, even while another action runs",
+      "search_move": "Look a short way ahead and press the best keys",
+      "unit": {
+        "cm": "cm",
+        "pct": "percent"
+      },
+      "add_condition": {
+        "label": "Add a condition"
+      },
+      "remove_condition": {
+        "label": "Remove this condition"
+      },
+      "up": {
+        "label": "Move up"
+      },
+      "down": {
+        "label": "Move down"
+      },
+      "remove_rule": {
+        "label": "Remove this rule"
+      },
+      "add_rule": {
+        "label": "Add a rule"
+      },
+      "reset": {
+        "label": "Start again from the example"
+      },
+      "ok": "This tree runs.",
+      "watch": {
+        "label": "Watch it fight {opponent}"
+      },
+      "fight": {
+        "label": "Fight it yourself"
+      },
+      "against": "The opponent it watches against is the one chosen on the right under What to run.",
+      "share": "Share it",
+      "make_code": {
+        "label": "Make a share code"
+      },
+      "code": "The share code for this tree",
+      "paste": "Paste a share code here",
+      "load_code": {
+        "label": "Load this share code"
+      },
+      "refuse": {
+        "shape": "This is not a tree the lab can read.",
+        "reaction": "The reaction time is out of range.",
+        "rules": "A tree needs at least one rule, and no more than the limit.",
+        "conditions": "Rule {n} has more conditions than the limit.",
+        "move": "Rule {n} names an action the lab does not know.",
+        "number": "A number in rule {n} is out of range.",
+        "code": "That share code could not be read."
       }
     }
   }

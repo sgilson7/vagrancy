@@ -5,13 +5,13 @@
 // crates/wasm Lab); every word is a copy string.
 import init, {
   copy_json, palette_json, numbers as coreNumbers, controls_json, tree_json, maps_json,
-  Lab, lab_roster_json, lab_moves_json, bubbles_step,
+  Lab, lab_roster_json, lab_moves_json, bubbles_step, lab_check, lab_describe_json, lab_conditions_json,
 } from './pkg/vagrancy_wasm.js';
 import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 
 const BUILD = '__BUILD__';
-let COPY, N, PAL, CONTROLS, ROSTER, MOVES, ACTION_BITS, draw;
+let COPY, N, PAL, CONTROLS, ROSTER, MOVES, EDITOR, ACTION_BITS, draw;
 
 const $ = (id) => document.getElementById(id);
 function t(key, vars = {}) {
@@ -50,10 +50,14 @@ let prev = null, cur = null, report = [], acc = 0, last = 0, stepOnce = false;
 let history = [];
 const HISTORY_TICKS = 180;
 
-function start() {
+function start(custom = null) {
   const seed = (Math.random() * 0xffffffff) >>> 0;
   const tuning = N.default_tuning;
-  lab = S.mode === 'watch' ? Lab.watch(seed, tuning, S.left, S.right, S.map) : Lab.play(seed, tuning, S.opp);
+  S.custom = custom;
+  TREES.delete('custom');
+  if (custom === 'watch') { lab = Lab.watch_custom(seed, tuning, JSON.stringify(EDIT), S.right, S.map); S.mode = 'watch'; S.inspect = 0; }
+  else if (custom === 'play') { lab = Lab.play_custom(seed, tuning, JSON.stringify(EDIT), S.map); S.mode = 'play'; }
+  else lab = S.mode === 'watch' ? Lab.watch(seed, tuning, S.left, S.right, S.map) : Lab.play(seed, tuning, S.opp);
   if (S.mode === 'play') S.inspect = 1;
   cur = JSON.parse(lab.frame());
   prev = null;
@@ -101,6 +105,10 @@ function loop(now) {
 
 const TREES = new Map();
 function treeOf(id) {
+  if (id === 'custom' && !TREES.has(id)) {
+    const fillText = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fillText); return n; };
+    TREES.set(id, fillText(JSON.parse(lab_describe_json(JSON.stringify(EDIT)))));
+  }
   if (!TREES.has(id)) {
     const fillText = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fillText); return n; };
     TREES.set(id, fillText(JSON.parse(tree_json(id))));
@@ -141,9 +149,13 @@ const BOX_W = 168, BOX_H = 40, COL = 180, ROW = 56;
 let nodeEls = new Map();
 
 function inspectedId() {
-  const r = S.mode === 'watch' ? (S.inspect === 0 ? S.left : S.right) : S.opp;
-  return r;
+  if (S.custom === 'watch') return S.inspect === 0 ? 'custom' : S.right;
+  if (S.custom === 'play') return 'custom';
+  return S.mode === 'watch' ? (S.inspect === 0 ? S.left : S.right) : S.opp;
 }
+// A road opponent's name, or the written tree's own, which is the writer's
+// words and so drawn as data.
+const fighterName = (id) => (id === 'custom' ? (EDIT.name || t('btlab.editor.unnamed')) : name(id));
 
 function buildTree() {
   const panel = $('tree-panel');
@@ -153,7 +165,7 @@ function buildTree() {
   const cols = lay(tree, 0, 0, pos);
   const rows = Math.max(...[...pos.values()].map((v) => v.row)) + 1;
   const W = cols * COL + 20, H = rows * ROW + 20;
-  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'bt-svg', role: 'img', 'aria-label': t('btlab.tree.heading', { opponent: name(id) }) });
+  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, class: 'bt-svg', role: 'img', 'aria-label': t('btlab.tree.heading', { opponent: fighterName(id) }) });
   const at = (nid) => { const v = pos.get(nid); return [10 + v.col * COL, 10 + v.row * ROW]; };
   const edges = svg('g', { class: 'edges' });
   for (const v of pos.values()) {
@@ -186,7 +198,7 @@ function buildTree() {
   const legend = el('ul', { class: 'bt-legend' },
     ...['active', 'held', 'failed', 'interrupt'].map((k) => el('li', { class: `lg-${k}` }, el('span', { class: 'swatch' }), t(`btlab.legend.${k}`))));
   panel.replaceChildren(
-    el('h2', { 'data-copy': 'btlab.tree.heading' }, t('btlab.tree.heading', { opponent: name(id) })),
+    el('h2', { 'data-copy': 'btlab.tree.heading' }, t('btlab.tree.heading', { opponent: fighterName(id) })),
     say('btlab.tree.desc', {}, { class: 'desc' }),
     legend,
     el('div', { class: 'bt-scroll' }, root));
@@ -295,7 +307,9 @@ function renderPanels() {
 
 function renderHud() {
   if (!cur) return;
-  const names = S.mode === 'watch' ? [name(S.left), name(S.right)] : [t('fighters.left.name'), name(S.opp)];
+  const names = S.custom === 'watch' ? [fighterName('custom'), name(S.right)]
+    : S.custom === 'play' ? [t('fighters.left.name'), fighterName('custom')]
+    : S.mode === 'watch' ? [name(S.left), name(S.right)] : [t('fighters.left.name'), name(S.opp)];
   $('hud').replaceChildren(
     el('span', { 'data-copy': 'btlab.tick' }, t('btlab.tick', { tick: lab.tick() })), ' ',
     el('span', { 'data-copy': 'hud.round' }, t('hud.round', { round: cur.round })), ' ',
@@ -359,7 +373,8 @@ function renderTransport() {
   const insp = S.mode === 'watch'
     ? el('p', {}, el('label', { 'data-copy': 'btlab.inspect.label' }, t('btlab.inspect.label')), ' ',
       ...[0, 1].map((seat) => {
-        const b = button('btlab.inspect.seat', () => { S.inspect = seat; buildTree(); renderTransport(); renderPanels(); }, { opponent: name(seat === 0 ? S.left : S.right) });
+        const who = S.custom === 'watch' ? (seat === 0 ? 'custom' : S.right) : (seat === 0 ? S.left : S.right);
+        const b = button('btlab.inspect.seat', () => { S.inspect = seat; buildTree(); renderTransport(); renderPanels(); }, { opponent: fighterName(who) });
         b.classList.toggle('picked', S.inspect === seat);
         return b;
       }))
@@ -470,6 +485,110 @@ function setUp(step) {
   }
 }
 
+// --- the editor: a tree of your own (Sam, 2026-10-07) -------------------------------------
+
+// The tree being written, in data/pilots.json's shape: it is checked and run
+// by core (content::custom), kept in this browser, and shared as a code.
+const STARTER = { name: '', reaction_ticks: 14, rules: [
+  { if: ['me_down'], do: 'stand', interrupt: true },
+  { if: [{ gap_above: 240 }], do: 'approach' },
+  { if: [{ gap_below: 200 }, { chance: 50 }], do: 'overhead' },
+  { do: 'guard' },
+] };
+let EDIT = load();
+function load() {
+  try { const t0 = localStorage.getItem('vagrancy.btlab.tree'); if (t0) return JSON.parse(t0); } catch { /* storage off */ }
+  return JSON.parse(JSON.stringify(STARTER));
+}
+function keep() {
+  try { localStorage.setItem('vagrancy.btlab.tree', JSON.stringify(EDIT)); } catch { /* storage off */ }
+}
+const condId = (c) => (typeof c === 'string' ? c : Object.keys(c)[0]);
+const condVal = (c) => (typeof c === 'string' ? null : Object.values(c)[0]);
+const unitOf = (id) => (EDITOR.conditions.find((x) => x.id === id) || {}).unit;
+function condLabel(id) {
+  const unit = unitOf(id);
+  return t(`tree.cond.${id}`, unit === 'cm' ? { cm: '…' } : unit === 'pct' ? { pct: '…' } : {});
+}
+function moveLabel(m) {
+  return m === 'search' ? t('btlab.editor.search_move') : t(`tree.act.${m}`);
+}
+// A share code: the tree as JSON, in base64 so it survives a chat message.
+const toCode = (tree) => btoa(unescape(encodeURIComponent(JSON.stringify(tree))));
+const fromCode = (code) => JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+
+function renderEditor() {
+  const box = $('editor');
+  const check = JSON.parse(lab_check(JSON.stringify(EDIT)));
+  const redo = () => { keep(); renderEditor(); };
+  const rules = EDIT.rules.map((r, k) => {
+    const conds = (r.if || []).map((c, j) => {
+      const id = condId(c);
+      const unit = unitOf(id);
+      const sel = el('select', { 'aria-label': t('btlab.editor.condition'), on: { change: () => {
+        const u = unitOf(sel.value);
+        r.if[j] = u ? { [sel.value]: u === 'pct' ? 50 : 200 } : sel.value;
+        redo();
+      } } }, ...EDITOR.conditions.map((x) => el('option', { value: x.id }, condLabel(x.id))));
+      sel.value = id;
+      const num = unit ? el('input', { type: 'number', value: condVal(c), 'aria-label': t(`btlab.editor.unit.${unit}`),
+        on: { change: (e) => { r.if[j] = { [id]: Number(e.target.value) }; redo(); } } }) : null;
+      return el('li', {}, sel, ' ', num, ' ', unit ? el('span', { 'data-copy': `btlab.editor.unit.${unit}` }, t(`btlab.editor.unit.${unit}`)) : null, ' ',
+        button('btlab.editor.remove_condition.label', () => { r.if.splice(j, 1); redo(); }));
+    });
+    const mv = el('select', { 'aria-label': t('btlab.editor.move'), on: { change: () => { r.do = mv.value; redo(); } } },
+      ...EDITOR.moves.map((m) => el('option', { value: m }, moveLabel(m))));
+    mv.value = r.do;
+    const intr = el('label', {}, el('input', { type: 'checkbox', checked: r.interrupt ? true : null,
+      on: { change: (e) => { r.interrupt = e.target.checked; redo(); } } }), ' ', t('btlab.editor.interrupt'));
+    return el('li', { class: `rule${check.rule === k ? ' refused' : ''}`, 'data-rule': String(k) },
+      el('h4', { 'data-copy': 'btlab.editor.rule' }, t('btlab.editor.rule', { n: k + 1 })),
+      say('btlab.editor.if', {}, { class: 'desc' }),
+      el('ul', { class: 'conds' }, ...conds),
+      button('btlab.editor.add_condition.label', () => { (r.if ||= []).push('me_grounded'); redo(); }),
+      el('p', {}, el('label', { 'data-copy': 'btlab.editor.then' }, t('btlab.editor.then')), ' ', mv),
+      el('p', {}, intr),
+      el('div', { class: 'actions' },
+        button('btlab.editor.up.label', () => { if (k > 0) { [EDIT.rules[k - 1], EDIT.rules[k]] = [EDIT.rules[k], EDIT.rules[k - 1]]; redo(); } }),
+        button('btlab.editor.down.label', () => { if (k < EDIT.rules.length - 1) { [EDIT.rules[k + 1], EDIT.rules[k]] = [EDIT.rules[k], EDIT.rules[k + 1]]; redo(); } }),
+        button('btlab.editor.remove_rule.label', () => { EDIT.rules.splice(k, 1); redo(); })));
+  });
+  const nameIn = el('input', { type: 'text', id: 'editor-name', maxlength: 40, value: EDIT.name || '', on: { change: (e) => { EDIT.name = e.target.value; redo(); } } });
+  const react = el('input', { type: 'number', id: 'editor-reaction', min: EDITOR.reaction[0], max: EDITOR.reaction[1], value: EDIT.reaction_ticks,
+    on: { change: (e) => { EDIT.reaction_ticks = Number(e.target.value); redo(); } } });
+  const status = check.ok ? say('btlab.editor.ok', {}, { class: 'ok', id: 'editor-status' })
+    : say(check.key, { n: (check.rule ?? 0) + 1 }, { class: 'refused', id: 'editor-status' });
+  const codeOut = el('textarea', { id: 'editor-code', rows: 3, readonly: true, 'aria-label': t('btlab.editor.code') });
+  const codeIn = el('textarea', { id: 'editor-code-in', rows: 3, 'aria-label': t('btlab.editor.paste') });
+  box.replaceChildren(
+    el('h2', { 'data-copy': 'btlab.editor.heading' }, t('btlab.editor.heading')),
+    say('btlab.editor.intro', { max_rules: EDITOR.max_rules, max_conds: EDITOR.max_conds }, { class: 'desc' }),
+    el('p', {}, el('label', { for: 'editor-name', 'data-copy': 'btlab.editor.name' }, t('btlab.editor.name')), ' ', nameIn),
+    el('p', {}, el('label', { for: 'editor-reaction', 'data-copy': 'btlab.editor.reaction' }, t('btlab.editor.reaction', { lo: EDITOR.reaction[0], hi: EDITOR.reaction[1] })), ' ', react,
+      ' ', el('span', { 'data-copy': 'btlab.editor.reaction_ms' }, t('btlab.editor.reaction_ms', { ms: Math.round(EDIT.reaction_ticks * 1000 / N.ticks_per_second) }))),
+    el('ol', { class: 'rules' }, ...rules),
+    el('div', { class: 'actions' },
+      button('btlab.editor.add_rule.label', () => { EDIT.rules.push({ if: [], do: 'guard' }); redo(); }, {}, { id: 'editor-add-rule' }),
+      button('btlab.editor.reset.label', () => { EDIT = JSON.parse(JSON.stringify(STARTER)); redo(); })),
+    status,
+    el('div', { class: 'actions' },
+      button('btlab.editor.watch.label', () => { if (check.ok) { renderSetup(); start('watch'); } }, { opponent: name(S.right) }, { id: 'editor-watch', disabled: !check.ok }),
+      button('btlab.editor.fight.label', () => { if (check.ok) start('play'); }, {}, { id: 'editor-fight', disabled: !check.ok })),
+    say('btlab.editor.against', {}, { class: 'desc' }),
+    el('h3', { 'data-copy': 'btlab.editor.share' }, t('btlab.editor.share')),
+    el('div', { class: 'actions' }, button('btlab.editor.make_code.label', () => {
+      codeOut.value = toCode(EDIT);
+      codeOut.select();
+      // A browser may refuse the clipboard; the code is in the box anyway.
+      if (navigator.clipboard) navigator.clipboard.writeText(codeOut.value).catch(() => {});
+    }, {}, { id: 'editor-make-code' })),
+    codeOut,
+    codeIn,
+    el('div', { class: 'actions' }, button('btlab.editor.load_code.label', () => {
+      try { EDIT = fromCode(codeIn.value); redo(); } catch { $('editor-status').replaceWith(say('btlab.editor.refuse.code', {}, { class: 'refused', id: 'editor-status' })); }
+    }, {}, { id: 'editor-load-code' })));
+}
+
 // --- start ---------------------------------------------------------------------------------
 
 async function main() {
@@ -481,6 +600,7 @@ async function main() {
     CONTROLS = JSON.parse(controls_json());
     ROSTER = JSON.parse(lab_roster_json());
     MOVES = JSON.parse(lab_moves_json());
+    EDITOR = JSON.parse(lab_conditions_json());
     ACTION_BITS = Object.fromEntries(N.actions);
   } catch (e) {
     console.error(e);
@@ -499,6 +619,7 @@ async function main() {
   $('status').hidden = true;
   $('lab').hidden = false;
   renderTour();
+  renderEditor();
   renderSetup();
   setUp(TOUR[0]);
   document.body.dataset.ready = '1';

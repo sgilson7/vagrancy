@@ -1112,10 +1112,37 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     page.click("#tour-setup")
     page.wait_for_selector('[data-copy="btlab.pose.rule"]', timeout=15000)
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a pose)")
+    # The editor: a number out of range is refused with its rule named; a
+    # tree that runs can be watched; a share code loads back the same tree.
+    page.evaluate("localStorage.removeItem('vagrancy.btlab.tree')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.wait_for_selector('#editor-status[data-copy="btlab.editor.ok"]')
+    num = page.locator('#editor li.rule[data-rule="2"] input[type=number]').first
+    num.fill("5000"); num.dispatch_event("change")
+    page.wait_for_selector('#editor-status[data-copy="btlab.editor.refuse.number"]')
+    if page.locator('#editor li.rule.refused[data-rule="2"]').count() != 1:
+        fails.append(f"{name}: the editor did not mark the refused rule")
+    num = page.locator('#editor li.rule[data-rule="2"] input[type=number]').first
+    num.fill("180"); num.dispatch_event("change")
+    page.wait_for_selector('#editor-status[data-copy="btlab.editor.ok"]')
+    page.click("#editor-watch")
+    page.wait_for_timeout(1500)
+    if page.evaluate("window.btlab.tick()") < 30 or page.locator("#tree-panel .node").count() < 4:
+        fails.append(f"{name}: watching the written tree did not run it")
+    page.click("#editor-make-code")
+    code = page.input_value("#editor-code")
+    page.click('[data-copy="btlab.editor.reset.label"]')
+    page.fill("#editor-code-in", code)
+    page.click("#editor-load-code")
+    if page.locator('#editor li.rule[data-rule="2"] input[type=number]').first.input_value() != "180":
+        fails.append(f"{name}: a share code did not load back the tree it was made from")
+    fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab editor)")
+    page.evaluate("localStorage.removeItem('vagrancy.btlab.tree')")
     page.goto(ORIGIN + "/", wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: the BT Lab lights the tree, shows the keys core pressed tick by tick, and stops its pose step on high guard")
+        print(f"ok: {name}: the BT Lab lights the tree, shows the keys core pressed tick by tick, stops its pose step on high guard, and its editor refuses, runs and shares a tree")
     return fails
 
 

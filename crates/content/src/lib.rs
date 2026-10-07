@@ -4,6 +4,7 @@
 //! a human-written file lives here.
 
 pub mod copy;
+pub mod custom;
 pub mod body;
 pub mod bubbles;
 pub mod setup;
