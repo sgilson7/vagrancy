@@ -125,7 +125,8 @@
     "btlab.lesson": "new: every string; it replaces btlab.tour, whose demo and question strings moved into it unchanged",
     "weapons.longsword.villager_name, road.weapon_unfound, opponents.local_deity.place, opponents.local_deity.does": "new or rewritten (Sam, 2026-10-07): nothing says where the cursed blade is until it is found",
     "btlab.lesson.<page>.ringed": "new: what each lesson page rings in the tree over its fight",
-    "tree.act.search": "new: the search move named in the BT Lab, whose readouts froze the page without it"
+    "tree.act.search": "new: the search move named in the BT Lab, whose readouts froze the page without it",
+    "road.view.other": "new: the folded-away switch to the road’s other views"
   },
   "_glossary": {
     "ink": {
@@ -461,7 +462,8 @@
       },
       "sunburst": {
         "label": "Show the sunburst"
-      }
+      },
+      "other": "Other ways to draw the village"
     },
     "fight": {
       "label": "Fight {opponent_mid}"

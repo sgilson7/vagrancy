@@ -203,7 +203,16 @@ def the_browser_computes_what_the_native_build_computes(page, name):
 
 
 def click_copy(page, key):
+    # The road's other views are folded away (Sam, 2026-10-07); unfold first.
+    if key.startswith("road.view.") and page.locator("#road-views-box:not([open])").count():
+        page.click('#road-views-box summary')
     page.click(f'[data-copy="{key}"]')
+
+
+def pick_view(page, view):
+    if page.locator("#road-views-box:not([open])").count():
+        page.click('#road-views-box summary')
+    page.click(f'#road-views [data-view="{view}"]')
 
 
 @check
@@ -703,7 +712,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
         fails.append(f"{name}: carrying the scimitar did not reach the save")
     # The three designs.
     for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("sunburst", "#road-tree.sunburst .node", len(road)), ("chapters", "#chapters li", len({s.get("row", len(s['requires'])) for s in road}))):
-        page.click(f'#road-views [data-view="{view}"]')
+        pick_view(page, view)
         page.wait_for_selector(sel)
         if page.locator(sel).count() != want:
             fails.append(f"{name}: the {view} shows {page.locator(sel).count()} of {want}")
@@ -717,7 +726,7 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     page.wait_for_selector("#chapter-stages .stage")
     if page.locator("#chapter-stages .stage").count() != sum(1 for s in road if len(s["requires"]) == 1):
         fails.append(f"{name}: chapter 2 does not show the fights with one requirement")
-    page.click('#road-views [data-view="tree"]')
+    pick_view(page, "tree")
     page.wait_for_selector("#road-tree.rows .node")
     click_copy(page, "menu.back.label")
     # In the yard the scimitar is drawn with its two edges.

@@ -371,3 +371,8 @@ body.arena .bar span { position: relative; padding: 4px 10px; font-weight: bold;
   #road-tree.chart .node.next-up .seal-art { width: 96px; height: 72px; }
   #road-tree.chart .node.won::after, #road-tree.chart .node.flawless::after { left: calc(50% + 24px); top: 30px; width: 10px; height: 10px; }
 }
+
+/* The road's other views, folded away and quiet. */
+#road-views-box { margin-top: 18px; font-size: 0.8em; color: var(--muted); }
+#road-views-box summary { cursor: pointer; width: max-content; }
+#road-views-box:not([open]) summary { opacity: 0.6; }

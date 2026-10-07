@@ -817,9 +817,12 @@ function setRoadView(v) {
   try { localStorage.setItem('vagrancy.roadView', v); } catch { /* storage off */ }
 }
 
+// The chart is the road's view (Sam, 2026-10-07: "the chart should be the
+// default view, the views for the other ones should be somewhat hidden"):
+// the others sit folded away at the foot of the screen.
 function viewSwitch() {
   const now = roadView();
-  return el('div', { id: 'road-views', class: 'actions', role: 'group' }, ...ROAD_VIEWS.map((v) => {
+  const box = el('div', { id: 'road-views', class: 'actions', role: 'group' }, ...ROAD_VIEWS.map((v) => {
     const b = button(`road.view.${v}.label`, () => {
       try { localStorage.setItem('vagrancy.roadView', v); } catch { /* storage off */ }
       road();
@@ -828,6 +831,8 @@ function viewSwitch() {
     b.dataset.view = v;
     return b;
   }));
+  return el('details', { id: 'road-views-box', open: now !== 'chart' },
+    el('summary', { 'data-copy': 'road.view.other' }, t('road.view.other')), box);
 }
 
 function road() {
@@ -893,9 +898,10 @@ function road() {
   };
   // The fight picked last, or the first open one not yet won.
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
-  const before = [say('road.quest', {}, { class: 'desc', id: 'road-quest' }), weaponPanel(road), viewSwitch()];
+  const before = [say('road.quest', {}, { class: 'desc', id: 'road-quest' }), weaponPanel(road)];
   if (view === 'chapters') chaptersScreen({ stops, detail, first: first.id, before });
   else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' || view === 'sunburst' ? view : 'rows' });
+  $('screen').append(viewSwitch());
 }
 
 // Weapon Master's chapter select: a chapter for each row of the tree, and
