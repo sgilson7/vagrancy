@@ -87,6 +87,31 @@ pub fn unlocked(w: &Weapon, best: &BTreeMap<String, Best>) -> bool {
     !w.enemy_only && w.unlock.as_ref().is_none_or(|r| r.met(best))
 }
 
+/// Whether the player has found the cursed blade: won the fight that gives it.
+pub fn prize_found(best: &BTreeMap<String, Best>) -> bool {
+    weapons().iter().any(|w| w.prize && unlocked(w, best))
+}
+
+/// Whether a weapon's card may say how it is won. Nothing tells the player
+/// where the cursed blade is until they find it (Sam, 2026-10-07: "that is
+/// the point of your rampage to some extent").
+pub fn unlock_shown(w: &Weapon, best: &BTreeMap<String, Best>) -> bool {
+    !w.prize || unlocked(w, best)
+}
+
+/// The copy key a stop's weapon is named by on its card. Villagers who
+/// carry a blade of the cursed blade's shape carry a long blade, not the
+/// cursed one; only the guardian deity's blades are cursed, and its card is
+/// seen only after the blade is found.
+pub fn carried_name_key(weapon: &str, eight_arms: bool, best: &BTreeMap<String, Best>) -> String {
+    let prize = self::weapon(weapon).is_some_and(|w| w.prize);
+    if prize && !(eight_arms && prize_found(best)) {
+        format!("weapons.{weapon}.villager_name")
+    } else {
+        format!("weapons.{weapon}.name")
+    }
+}
+
 /// The weapon a player with these results carries when they ask for `id`:
 /// that one if they may, the sword if not.
 pub fn usable(id: &str, best: &BTreeMap<String, Best>) -> String {

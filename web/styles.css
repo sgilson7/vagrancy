@@ -333,3 +333,38 @@ body.arena .bar .fill { position: absolute; inset: 0 auto 0 0; }
 body.arena .bar.side-0 .fill { background: var(--fighters-left-ink); }
 body.arena .bar.side-1 .fill { background: var(--fighters-right-body); }
 body.arena .bar span { position: relative; padding: 4px 10px; font-weight: bold; color: var(--paper); mix-blend-mode: difference; }
+
+/* The chart's fights as small scenes (analysis/art/seals.py): each set off
+   from the region art by a paper halo; a locked one in grey, an open one
+   lifted and lit, a won one stamped. */
+#road-tree.chart .node:not(.next-up), #road-tree.chart .node.won, #road-tree.chart .node.flawless {
+  padding: 0 2px 2px; max-width: 160px; border: none; box-shadow: none; background: transparent; text-shadow: none; }
+#road-tree.chart .node .seal-name { display: inline-block; position: relative; padding: 1px 7px; border: 1px solid var(--ground-line);
+  border-radius: 3px; background: var(--paper); line-height: 1.25; }
+#road-tree.chart .node.next-up .seal-name { background: transparent; border: none; }
+#road-tree.chart .node.open:not(.next-up) .seal-name { border-color: var(--focus); border-width: 2px; }
+#road-tree.chart .node::before { display: none; }
+#road-tree.chart .node .seal-art { display: block; width: 150px; height: 112px; margin: 0 auto -6px; pointer-events: none;
+  filter: drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 6px var(--paper)) drop-shadow(0 3px 0 var(--ground-line));
+  transition: transform 160ms ease-out, filter 160ms ease-out; }
+#road-tree.chart .node.locked .seal-art { filter: grayscale(0.9) drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 6px var(--paper)) drop-shadow(0 2px 0 var(--ground-line)); opacity: 0.8; }
+#road-tree.chart .node.locked { color: var(--muted); }
+#road-tree.chart .node.open .seal-art { filter: drop-shadow(0 0 3px var(--paper)) drop-shadow(0 0 7px var(--focus)) drop-shadow(0 0 2px var(--focus)) drop-shadow(0 4px 0 var(--ground-line));
+  animation: seal-bob 2.4s ease-in-out infinite; }
+#road-tree.chart .node.open { font-weight: bold; }
+#road-tree.chart .node:hover .seal-art, #road-tree.chart .node:focus-visible .seal-art { transform: scale(1.1) translateY(-3px); }
+#road-tree.chart .node.next-up .seal-art { width: 170px; height: 128px; filter: drop-shadow(0 0 4px var(--paper)) drop-shadow(0 0 10px var(--fighters-right-body)) drop-shadow(0 0 3px var(--fighters-right-body)); }
+#road-tree.chart .node.next-up { padding: 0 10px 6px; }
+/* Won: a stamp at the scene's shoulder; won without losing a round, a double ring. */
+#road-tree.chart .node.won::after, #road-tree.chart .node.flawless::after { content: ""; position: absolute; top: 56px; left: calc(50% + 44px);
+  width: 16px; height: 16px; border-radius: 50%; background: var(--fighters-right-body); border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--line); transform: none; margin: 0; }
+#road-tree.chart .node.flawless::after { box-shadow: 0 0 0 1px var(--line), 0 0 0 4px var(--fighters-right-body); }
+#road-tree.chart .node.reward:not(.won):not(.flawless)::after { top: 60px; left: calc(50% + 48px); }
+@keyframes seal-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { #road-tree.chart .node.open .seal-art { animation: none; } }
+@media (max-width: 600px) {
+  #road-tree.chart .node .seal-art { width: 84px; height: 63px; margin-bottom: -6px; }
+  #road-tree.chart .node.next-up .seal-art { width: 96px; height: 72px; }
+  #road-tree.chart .node.won::after, #road-tree.chart .node.flawless::after { left: calc(50% + 24px); top: 30px; width: 10px; height: 10px; }
+}

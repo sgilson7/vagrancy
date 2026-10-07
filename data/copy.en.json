@@ -122,7 +122,8 @@
     "story_full": "new: story.full, story.next.game_over, story.extra, story.scene.x1_giant_general to x8_guardian",
     "btlab": "new: btlab (the BT Lab page, all its strings); btlab.editor (the tree editor)",
     "arena": "new: arena (the stream page, all its strings)",
-    "btlab.lesson": "new: every string; it replaces btlab.tour, whose demo and question strings moved into it unchanged"
+    "btlab.lesson": "new: every string; it replaces btlab.tour, whose demo and question strings moved into it unchanged",
+    "weapons.longsword.villager_name, road.weapon_unfound, opponents.local_deity.place, opponents.local_deity.does": "new or rewritten (Sam, 2026-10-07): nothing says where the cursed blade is until it is found"
   },
   "_glossary": {
     "ink": {
@@ -481,7 +482,8 @@
       }
     },
     "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you. The villagers you beat leave other blades behind, none of them the cursed one, so the search goes on.",
-    "revealed": "A new fight has appeared below the village deity: {opponent}."
+    "revealed": "A new fight has appeared below the village deity: {opponent}.",
+    "weapon_unfound": "Not found yet. The {weapon} is somewhere in this village."
   },
   "opponents": {
     "scarecrow": {
@@ -970,8 +972,8 @@
     "local_deity": {
       "name": "The Village Deity",
       "name_mid": "the village deity",
-      "place": "A hilltop shrine above the village, where the cursed blade rests on the altar.",
-      "does": "The village deity keeps the cursed blade. It has a second pair of arms, and a sword in each pair of hands. Each pair of arms decides on its own: the lower pair looks a short way ahead before it chooses, and the upper pair guards high, thrusts when you jump, and cuts overhead up close. Its legs decide on their own too: they close in, back off when you are very near, and dodge many attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
+      "place": "A hilltop shrine above the village, where nobody goes without a reason.",
+      "does": "It has a second pair of arms, and a sword in each pair of hands. Each pair of arms decides on its own: the lower pair looks a short way ahead before it chooses, and the upper pair guards high, thrusts when you jump, and cuts overhead up close. Its legs decide on their own too: they close in, back off when you are very near, and dodge many attacks at its head. It reacts about {reaction_ms} milliseconds after it sees your blade move.",
       "try": "Try staying on the ground, where its upper arms have no thrust for you. Two blades guard it at once, so wait for both to swing before you go in."
     },
     "guardian_deity": {
@@ -1653,7 +1655,8 @@
     },
     "longsword": {
       "name": "cursed blade",
-      "desc": "The blade you came to this village for. It is cursed, and it has chosen you to hold it next. It reaches farther than any other weapon."
+      "desc": "The blade you came to this village for. It is cursed, and it has chosen you to hold it next. It reaches farther than any other weapon.",
+      "villager_name": "long blade"
     },
     "scimitar": {
       "name": "scimitar",

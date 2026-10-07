@@ -482,6 +482,13 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
         mouseleave: unhover,
         blur: unhover,
       } }, t(n.name, n.nameVars));
+    // On the chart each fight stands in a small scene from its place
+    // (analysis/art/seals.py, Sam 2026-10-07): the drover among cows, the
+    // kite maker's seal a kite. The page greys or lights it by state.
+    if (layout === 'chart') {
+      b.replaceChildren(el('img', { class: 'seal-art', src: `art/seal/${n.id}.png`, alt: '', 'aria-hidden': 'true', draggable: 'false' }),
+        el('span', { class: 'seal-name' }, t(n.name, n.nameVars)));
+    }
     buttons.set(n.id, b);
     return b;
   };
@@ -514,7 +521,7 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
       row.forEach((n, i) => {
         const b = nodeButton(n);
         const x = EDGE + (i + 0.5) * step + Math.sin(l * 1.7 + i * 2.3) * step * 0.14;
-        const y = l * BAND + 52 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 22;
+        const y = l * BAND + 14 + (Math.cos(l * 1.3 + i * 1.9) + 1) * 10;
         b.style.left = `${x}px`;
         b.style.top = `${y}px`;
         tree.append(b);
@@ -772,8 +779,11 @@ function weaponPanel(redraw) {
         persist();
         redraw();
       }, { weapon: name }));
-    } else {
+    } else if (w.unlock) {
       kids.push(say('road.weapon_locked'), reqLine(w.unlock, { class: w.unlock.met ? 'met' : 'unmet' }));
+    } else {
+      // Core leaves out how the cursed blade is won until it is found.
+      kids.push(say('road.weapon_unfound', { weapon: name }));
     }
     return el('div', { class: `weapon ${w.carried ? 'carried' : w.unlocked ? 'open' : 'locked'}`, 'data-weapon': w.id }, ...kids);
   });
@@ -859,7 +869,7 @@ function road() {
       el('h3', { 'data-copy': o('name') }, t(o('name'))),
       say(o('place'), {}, { class: 'desc' }),
     ];
-    if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
+    if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(s.weapon_name) }));
     if (s.companion) {
       kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
     }
@@ -1268,7 +1278,7 @@ function treeImage(id) {
 function stopFacts(s) {
   const o = (k) => `opponents.${s.id}.${k}`;
   const kids = [say(o('place'), {}, { class: 'desc' })];
-  if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
+  if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(s.weapon_name) }));
   if (s.companion) kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
   if (s.map) kids.push(say(`maps.${s.map}.desc`, keyVars(BINDINGS.solo)));
   kids.push(

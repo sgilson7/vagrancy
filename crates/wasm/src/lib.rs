@@ -852,7 +852,7 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
             // The weapons a win here unlocks, Weapon Master's rewards.
             let rewards: Vec<serde_json::Value> = content::weapons::weapons()
                 .into_iter()
-                .filter(|w| !w.enemy_only && w.unlock.as_ref().is_some_and(|r| r.stop() == st.id))
+                .filter(|w| !w.enemy_only && w.unlock.as_ref().is_some_and(|r| r.stop() == st.id) && content::weapons::unlock_shown(w, best))
                 .map(|w| {
                     let r = w.unlock.clone().unwrap();
                     let (key, vars) = r.sentence();
@@ -865,6 +865,7 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
                 "named_row": st.row.is_some(),
                 "rewards": rewards,
                 "weapon": st.weapon,
+                "weapon_name": st.weapon.as_deref().map(|w| content::weapons::carried_name_key(w, st.eight_arms, best)),
                 "open": content::road::open(st, best),
                 "won": won.is_some(),
                 "flawless": won.is_some_and(|b| b.losses == 0),
@@ -974,7 +975,8 @@ pub fn weapons_json(save_text: &str) -> Result<String, String> {
         .into_iter()
         .filter(|w| !w.enemy_only)
         .map(|w| {
-            let unlock = w.unlock.as_ref().map(|r| {
+            // The cursed blade's way to be won is not shown until it is.
+            let unlock = w.unlock.as_ref().filter(|_| content::weapons::unlock_shown(&w, &s.road.best)).map(|r| {
                 let (key, vars) = r.sentence();
                 json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(&s.road.best) })
             });

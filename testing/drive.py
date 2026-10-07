@@ -679,6 +679,10 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     # four arms is not shown until it is won.
     if page.locator('#weapons [data-weapon="longsword"].locked').count() != 1:
         fails.append(f"{name}: a fresh save does not show the cursed blade locked")
+    # Sam, 2026-10-07: nothing says where the cursed blade is until it is found.
+    if page.locator('#weapons [data-weapon="longsword"] [data-copy="road.weapon_unfound"]').count() != 1 \
+            or page.locator('#weapons [data-weapon="longsword"] [data-copy="road.weapon_locked"]').count() != 0:
+        fails.append(f"{name}: the locked cursed blade's card says how it is won")
     if page.evaluate("[...document.querySelectorAll('#weapons .weapon')].map(e => e.dataset.weapon).pop()") != "longsword":
         fails.append(f"{name}: the cursed blade is not last in the weapon list")
     if page.locator('#weapons [data-weapon="four_arms"]').count() != 0:
@@ -1187,6 +1191,12 @@ def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_lef
     art = page.evaluate("Promise.all([...document.querySelectorAll('#road-tree.chart .band-art')].map(e => new Promise(r => { const i = new Image(); i.onload = () => r(i.naturalWidth); i.onerror = () => r(0); i.src = getComputedStyle(e).backgroundImage.slice(5, -2); })))")
     if not art or 0 in art:
         fails.append(f"{name}: region art that did not load: {art}")
+    # Sam, 2026-10-07: each fight in a scene of its own, set off from the art.
+    page.wait_for_function("[...document.querySelectorAll('#road-tree.chart .node img.seal-art')].every(i => i.complete)", timeout=15000)
+    scenes = page.evaluate("[...document.querySelectorAll('#road-tree.chart .node')].map(n => { const i = n.querySelector('img.seal-art'); return [n.dataset.stop, i ? i.naturalWidth : -1]; })")
+    unscened = [s for s, w in scenes if w <= 0]
+    if unscened:
+        fails.append(f"{name}: chart fights with no scene drawn: {unscened[:5]}")
     click_copy(page, "road.view.chapters.label")
     page.wait_for_selector("#chapter-stages")
     page.click('[data-chapter="2"]')
@@ -1199,7 +1209,7 @@ def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_lef
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: the chart marks {nxt[0][0]} as next over {len(art)} regions' art, and the chapter cards show what is left")
+        print(f"ok: {name}: the chart marks {nxt[0][0]} as next over {len(art)} regions' art with each of {len(scenes)} fights in its scene, and the chapter cards show what is left")
     return fails
 
 
