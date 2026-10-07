@@ -3,6 +3,7 @@
 //! weapon ... then make 1 enemy per layer per new weapon").
 
 use content::road::{road, Req};
+use std::collections::BTreeMap;
 use content::weapons::weapon;
 use sim::fight::Phase;
 use sim::{Input, World};
@@ -10,7 +11,7 @@ use sim::{Input, World};
 const NEW: [&str; 3] = ["chakram", "scythe", "twin_blade"];
 
 #[test]
-fn each_new_weapon_has_one_fighter_in_each_row_and_is_won_from_the_first() {
+fn each_new_weapon_has_one_fighter_in_each_row() {
     let road = road();
     let rows = road.iter().filter(|s| s.row.is_none()).map(|s| s.level()).max().unwrap();
     for w in NEW {
@@ -18,8 +19,6 @@ fn each_new_weapon_has_one_fighter_in_each_row_and_is_won_from_the_first() {
         for row in 0..=rows {
             assert_eq!(carriers.iter().filter(|s| s.level() == row).count(), 1, "the {w} has not one fighter in row {row}");
         }
-        let first = carriers.iter().find(|s| s.level() == 0).unwrap();
-        assert_eq!(weapon(w).unwrap().unlock, Some(Req::Beat(first.id.clone())), "the {w} is not won from its first fighter");
     }
     // The cursed blade is the last weapon on the list.
     assert_eq!(content::weapons::weapons().last().unwrap().id, "longsword");
@@ -95,4 +94,29 @@ fn the_new_fighters_use_the_moves_their_introductions_name() {
         let longest = k.split(|i| !i.has(Input::SHOULDER_UP)).map(|r| r.len()).max().unwrap_or(0);
         assert!(longest > 16, "the {id}'s longest spin was {longest} ticks");
     }
+}
+
+#[test]
+fn each_row_awards_a_weapon_from_a_villager_who_carries_it_the_first_row_two() {
+    // Sam (2026-10-06): "each layer a new weapon should be awarded from a
+    // fight, with more weapons stacked early rather than later ... you
+    // should find blades from random villagers that arent the cursed blade".
+    let road = road();
+    let level = |id: &str| road.iter().find(|s| s.id == id).unwrap().level();
+    let mut per_row: BTreeMap<usize, Vec<String>> = BTreeMap::new();
+    for w in content::weapons::weapons().into_iter().filter(|w| !w.prize) {
+        let Some(Req::Beat(at)) = &w.unlock else { continue };
+        let st = road.iter().find(|s| &s.id == at).unwrap();
+        assert_eq!(st.weapon.as_deref(), Some(w.id.as_str()), "the {} is won from the {}, who does not carry it", w.id, at);
+        per_row.entry(level(at)).or_default().push(w.id.clone());
+    }
+    let rows = road.iter().filter(|s| s.row.is_none()).map(|s| s.level()).max().unwrap();
+    let counts: Vec<usize> = (0..=rows).map(|r| per_row.get(&r).map_or(0, |v| v.len())).collect();
+    assert!(counts.iter().all(|&n| n >= 1), "a row awards no weapon: {per_row:?}");
+    assert!(counts.windows(2).all(|p| p[0] >= p[1]), "a later row awards more weapons than an earlier one: {counts:?}");
+    // The list is in the order they are won, the sword first and the
+    // cursed blade last.
+    let ids: Vec<String> = content::weapons::weapons().into_iter().map(|w| w.id).collect();
+    let won: Vec<String> = per_row.values().flatten().cloned().collect();
+    assert_eq!(ids[1..ids.len() - 1], won[..], "the weapon list is not in the order the weapons are won");
 }

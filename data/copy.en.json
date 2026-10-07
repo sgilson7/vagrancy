@@ -103,7 +103,7 @@
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
     "local_deity": "new: opponents.local_deity (all five strings; renamed the village deity, at Sam's request), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
     "watch": "new: menu.watch, watch (all its strings), watch.trees, watch.hide_trees, watch.show_trees, watch.speed (all three labels)",
-    "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)",
+    "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request); road.quest's last sentence (the blades villagers leave), at Sam's request",
     "thrown_split": "new: road.req.thrown (rewritten to name the parts, at Sam's request), road.req.bladeless",
     "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release",
     "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)",
@@ -465,7 +465,7 @@
         "label": "Fight with two arms"
       }
     },
-    "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you.",
+    "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you. The villagers you beat leave other blades behind, none of them the cursed one, so the search goes on.",
     "revealed": "A new fight has appeared below the village deity: {opponent}."
   },
   "opponents": {

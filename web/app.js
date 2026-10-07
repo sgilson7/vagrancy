@@ -8,6 +8,7 @@ import init, {
   arms_json, save_choose_arms, bubbles_step, story_extra_json,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
+import * as sfx from './sfx.js';
 import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 import { download, pick } from './files.js';
@@ -274,10 +275,19 @@ function menu() {
   hangUpOnline();
   delete document.body.dataset.phase;
   const item = (key, action) => el('div', { class: 'item' }, button(`${key}.label`, action), say(`${key}.desc`, key === 'menu.story' ? { lives: JSON.parse(story_json()).lives } : {}, { class: 'desc' }));
+  // Arcade mode first, set apart (Sam, 2026-10-06): its door makes a sound
+  // and opens on the chart.
+  const arcade = el('div', { class: 'item featured' },
+    button('menu.road.label', () => {
+      sfx.arcade(SAVE.state.options.music_volume / 100);
+      setRoadView('chart');
+      road();
+    }),
+    say('menu.road.desc', {}, { class: 'desc' }));
   show(
+    arcade,
     item('menu.story', storyMode),
     item('menu.tutorial', tutorial),
-    item('menu.road', road),
     item('menu.train', train),
     item('menu.encyclopedia', encyclopedia),
     item('menu.watch', watchMode),
@@ -782,7 +792,10 @@ function weaponPanel(redraw) {
 const ROAD_VIEWS = ['tree', 'chart', 'chapters', 'sunburst'];
 function roadView() {
   try { const v = localStorage.getItem('vagrancy.roadView'); if (ROAD_VIEWS.includes(v)) return v; } catch { /* storage off */ }
-  return 'tree';
+  return 'chart';
+}
+function setRoadView(v) {
+  try { localStorage.setItem('vagrancy.roadView', v); } catch { /* storage off */ }
 }
 
 function viewSwitch() {

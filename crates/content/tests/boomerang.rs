@@ -159,8 +159,9 @@ fn each_row_below_the_first_has_one_boomerang_fight_a_thrown_win_in_the_row_abov
         let r = thrown.unwrap_or_else(|| panic!("the {} asks for no thrown win", here[0].id));
         assert_eq!(level(r.stop()), row - 1, "the {}'s thrown win is not in the row above", here[0].id);
     }
-    let first = road.iter().find(|s| s.level() == 1 && s.weapon.as_deref() == Some("boomerang")).unwrap();
-    assert_eq!(content::weapons::weapon("boomerang").unwrap().unlock, Some(Req::Beat(first.id.clone())));
+    // Won from a boomerang fighter (crates/content/tests/new_weapons.rs).
+    let Some(Req::Beat(at)) = content::weapons::weapon("boomerang").unwrap().unlock else { panic!("the boomerang is not won by a win") };
+    assert!(road.iter().any(|s| s.id == at && s.weapon.as_deref() == Some("boomerang")));
 }
 
 #[test]

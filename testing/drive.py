@@ -542,6 +542,11 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     road = shown_road()
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#road-tree .node")
+    # Arcade mode opens on the chart (Sam, 2026-10-06).
+    if page.locator("#road-tree.chart").count() != 1:
+        fails.append(f"{name}: arcade mode did not open on the chart")
+    click_copy(page, "road.view.tree.label")
+    page.wait_for_selector("#road-tree .level")
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
     # One row per number of requirements, and every fight in its row; the
     # final fight names its own row (content::road::Stop::row).
