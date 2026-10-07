@@ -5,6 +5,7 @@
 
 pub mod copy;
 pub mod body;
+pub mod bubbles;
 pub mod setup;
 pub mod maps;
 pub mod messages;

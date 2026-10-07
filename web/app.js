@@ -5,7 +5,7 @@
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
   road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
-  arms_json, save_choose_arms,
+  arms_json, save_choose_arms, bubbles_step,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -1296,6 +1296,13 @@ let LAST_TRACES = [];
 
 // Who fights on each side, from the opponents this save has beaten.
 const WATCH = [null, null];
+// Whether watch mode draws the trees, remembered in this browser only.
+function watchTrees() {
+  try { return localStorage.getItem('vagrancy.watchTrees') !== 'off'; } catch { return true; }
+}
+function setWatchTrees(on) {
+  try { localStorage.setItem('vagrancy.watchTrees', on ? 'on' : 'off'); } catch { /* storage off */ }
+}
 
 function watchMode() {
   stop();
@@ -1318,6 +1325,9 @@ function watchMode() {
     picker(0, 'watch.left'),
     picker(1, 'watch.right'),
     mapPicker('watch', 'local.map'),
+    el('p', {}, el('label', { for: 'watch-trees', 'data-copy': 'watch.trees' },
+      el('input', { type: 'checkbox', id: 'watch-trees', checked: watchTrees() ? '' : null, on: { change: (e) => setWatchTrees(e.target.checked) } }),
+      ' ', t('watch.trees'))),
     el('div', { class: 'actions' },
       button('watch.start.label', watchFight),
       button('watch.random.label', () => { watchRandom(ids); watchFight(); }),
@@ -1342,8 +1352,18 @@ function watchFight() {
     button('watch.again.label', watchFight),
     button('watch.random.label', () => { watchRandom(ids); watchFight(); }),
     button('menu.watch.label', watchMode))], names);
+  // Show or hide the trees mid-match; the button names what it will do.
+  const toggle = el('div', { class: 'actions' });
+  const drawToggle = () => toggle.replaceChildren(button(watchTrees() ? 'watch.hide_trees.label' : 'watch.show_trees.label', () => {
+    setWatchTrees(!watchTrees());
+    // Off at once, though no tick follows (a match already over).
+    if (!watchTrees()) draw.trees([]);
+    drawToggle();
+  }));
+  drawToggle();
   show(watch.panel,
     say('watch.watching', { left_opponent: t(`opponents.${left}.name`), right_opponent: t(`opponents.${right}.name`) }, { class: 'desc' }),
+    toggle,
     el('div', { class: 'actions' }, button('watch.random.label', () => { watchRandom(ids); watchFight(); }), button('menu.watch.label', watchMode)));
   const caption = (n) => t('tree.now', { node: n.text });
   const g = new Exhibition(seed(), tuning(), left, right, MAP_CHOICE.watch);
@@ -1351,7 +1371,7 @@ function watchFight() {
     watch.tick(f);
     const traces = JSON.parse(game.traces());
     LAST_TRACES = traces;
-    draw.trees(traces.map((tr) => ({ seat: tr.seat, tree: treeOf(WATCH[tr.seat]), trace: tr, caption })));
+    draw.trees(watchTrees() ? traces.map((tr) => ({ seat: tr.seat, tree: treeOf(WATCH[tr.seat]), trace: tr, caption })) : []);
   });
 }
 
@@ -1788,6 +1808,7 @@ async function main() {
   restore();
   listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
+  draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   // The arena: the canvas, and the card that comes up over it.
   const stage = $('stage');
   const arena = el('div', { id: 'arena' });
@@ -1816,6 +1837,7 @@ async function main() {
     edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
     fighters: () => curFrame && curFrame.fighters.filter(Boolean).length,
     traces: () => LAST_TRACES,
+    trees: () => draw.shown(),
     platforms: () => curFrame && (curFrame.platforms || []).length,
     save: () => SAVE,
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },

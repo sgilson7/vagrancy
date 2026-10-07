@@ -100,7 +100,7 @@
     "road.next_carry": "new",
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
     "local_deity": "new: opponents.local_deity (all five strings; renamed the village deity, at Sam's request), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
-    "watch": "new: menu.watch, watch (all its strings)",
+    "watch": "new: menu.watch, watch (all its strings), watch.trees, watch.hide_trees, watch.show_trees",
     "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)",
     "thrown_split": "new: road.req.thrown (rewritten to name the parts, at Sam's request), road.req.bladeless",
     "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release"
@@ -1678,6 +1678,13 @@
     "again": {
       "label": "Watch them again"
     },
-    "watching": "{left_opponent} against {right_opponent}. The step of each tree that is running lights up."
+    "watching": "{left_opponent} against {right_opponent}. The step of each tree that is running lights up.",
+    "trees": "Show each opponent's behavior tree over its head",
+    "hide_trees": {
+      "label": "Hide the trees"
+    },
+    "show_trees": {
+      "label": "Show the trees"
+    }
   }
 }

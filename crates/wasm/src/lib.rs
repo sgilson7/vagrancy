@@ -25,6 +25,15 @@ pub fn tree_json(opponent: &str) -> String {
     serde_json::to_string(&pilot::view::describe(&content::road::pilot(opponent))).unwrap()
 }
 
+/// One frame of the floating trees (content::bubbles): the bubbles as JSON
+/// in, moved, as JSON out, within a `w` by `h` canvas.
+#[wasm_bindgen]
+pub fn bubbles_step(json: &str, w: f64, h: f64) -> String {
+    let mut bs: Vec<content::bubbles::Bubble> = serde_json::from_str(json).unwrap_or_default();
+    content::bubbles::step(&mut bs, w, h);
+    serde_json::to_string(&bs).unwrap()
+}
+
 /// The grounds a match can be on (data/maps.json): the pickers list them.
 #[wasm_bindgen]
 pub fn maps_json() -> String {

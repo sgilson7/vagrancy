@@ -923,6 +923,27 @@ def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
     for o in ("local_deity", "juggler"):
         if copy["opponents"][o]["name"] not in score:
             fails.append(f"{name}: the score line does not name {o}: {score!r}")
+    # Hidden, no tree is drawn.
+    click_copy(page, "watch.hide_trees.label")
+    page.wait_for_timeout(300)
+    if page.evaluate("window.vagrancy.trees()")["trees"] != 0:
+        fails.append(f"{name}: hiding the trees left them drawn")
+    click_copy(page, "watch.show_trees.label")
+    # Two of the widest trees, whose homes overlap: they float apart
+    # (content::bubbles) and do not overlap.
+    click_copy(page, "menu.watch.label")
+    page.wait_for_selector("#watch-0")
+    page.select_option("#watch-0", "local_deity")
+    page.select_option("#watch-1", "local_deity")
+    click_copy(page, "watch.start.label")
+    page.wait_for_selector('[data-copy="hud.round"]')
+    page.wait_for_timeout(1500)
+    shown = page.evaluate("window.vagrancy.trees()")
+    bs = shown["bubbles"]
+    if shown["trees"] != 2 or len(bs) != 2:
+        fails.append(f"{name}: watch mode draws {shown['trees']} trees, not both")
+    elif abs(bs[0]["x"] - bs[1]["x"]) < (bs[0]["w"] + bs[1]["w"]) / 2 and abs(bs[0]["y"] - bs[1]["y"]) < (bs[0]["h"] + bs[1]["h"]) / 2:
+        fails.append(f"{name}: the two trees overlap: {[(round(b['x']), round(b['y']), round(b['w']), round(b['h'])) for b in bs]}")
     fails += every_visible_line_is_a_copy_string(page, name + " (watching)")
     click_copy(page, "menu.watch.label")
     click_copy(page, "menu.back.label")

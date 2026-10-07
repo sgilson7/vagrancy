@@ -199,10 +199,19 @@ export function renderer(canvas, palette, numbers) {
     if (trees.length && cur.phase === 'fight') {
       const now = performance.now();
       const lit = new Set();
-      for (const e of trees) {
-        drawTree(e, pts, cur, now);
-        for (const id of e.trace.active) lit.add(`${e.seat}:${id}`);
-      }
+      // Each tree is a bubble core moves (content::bubbles): drawn home over
+      // its fighter, pushed off the others, kept on the canvas.
+      const boxes = trees.map((e) => measureTree(e, pts, cur)).filter(Boolean);
+      const list = boxes.map((b) => {
+        const s = bubbleAt.get(b.entry.seat) || { x: b.hx, y: b.hy, px: b.hx, py: b.hy };
+        return { x: s.x, y: s.y, px: s.px, py: s.py, w: b.w, h: b.h, hx: b.hx, hy: b.hy };
+      });
+      const moved = layoutBubbles ? layoutBubbles(list, W, H) : list;
+      boxes.forEach((b, k) => {
+        bubbleAt.set(b.entry.seat, moved[k]);
+        drawTree(b, moved[k], now);
+        for (const id of b.entry.trace.active) lit.add(`${b.entry.seat}:${id}`);
+      });
       litBefore = lit;
     }
     // Seat 0's meter at the top left, seat 1's at the top right, and on a
@@ -223,6 +232,13 @@ export function renderer(canvas, palette, numbers) {
   // that ran this tick, and keep the tree small enough to read at a glance).
   let trees = [];
   draw.trees = (list) => { trees = list || []; };
+  // Where each seat's bubble is and was, and the function in core that
+  // moves them a frame (wasm bubbles_step).
+  const bubbleAt = new Map();
+  let layoutBubbles = null;
+  draw.bubbleLayout = (fn) => { layoutBubbles = fn; };
+  // For the gate: how many trees are drawn, and where their bubbles are.
+  draw.shown = () => ({ trees: trees.length, bubbles: [...bubbleAt.values()] });
   const iconCache = new Map();
   const icon = (name, lit) => {
     const k = lit ? `${name}-lit` : name;
@@ -253,21 +269,34 @@ export function renderer(canvas, palette, numbers) {
   }
   const since = new Map(); // `${seat}:${id}` -> when that node lit
   let litBefore = new Set();
-  function drawTree(entry, pts, cur, now) {
-    const { seat, tree, trace } = entry;
-    // Over the fighter: its highest attached point, centred on its points.
+  // A tree's card: its layout, its size with the caption line above it
+  // (CAPTION_H), and its home, centred over the fighter's highest point.
+  const CAPTION_H = 24;
+  function measureTree(entry, pts, cur) {
     let top = -Infinity, sum = 0, cnt = 0;
     for (const p of cur.parts) {
-      if (p.fighter !== seat || !p.attached) continue;
+      if (p.fighter !== entry.seat || !p.attached) continue;
       for (const i of [p.a, p.b]) { top = Math.max(top, pts[i][1]); sum += pts[i][0]; cnt += 1; }
     }
-    if (!cnt) return;
+    if (!cnt) return null;
     const pos = new Map();
-    const cols = lay(tree, 0, 0, pos);
+    const cols = lay(entry.tree, 0, 0, pos);
     const rows = Math.max(...[...pos.values()].map((v) => v.row)) + 1;
-    const w = cols * COL_W, h = rows * ROW_H;
-    const cx = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, sx(sum / cnt)));
-    const y0 = Math.max(26, sy(top) - 30 - h);
+    const w = cols * COL_W + 8, h = rows * ROW_H + 4 + CAPTION_H;
+    const head = [sx(sum / cnt), sy(top)];
+    return { entry, pos, cols, w, h, head, hx: head[0], hy: head[1] - 30 - h / 2 };
+  }
+
+  function drawTree(box, at0, now) {
+    const { entry, pos, cols, head } = box;
+    const { seat, trace } = entry;
+    const cx = at0.x;
+    const y0 = at0.y - box.h / 2 + CAPTION_H + 4;
+    const w = box.w - 8, h = box.h - 4 - CAPTION_H;
+    // The bubble's tail, down to its fighter.
+    ctx.strokeStyle = palette.ground_line;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, at0.y + box.h / 2); ctx.lineTo(head[0], head[1] - 6); ctx.stroke();
     const at = (id) => { const v = pos.get(id); return [cx + (v.col - (cols - 1) / 2) * COL_W, y0 + v.row * ROW_H + NODE_R]; };
     const active = new Set(trace.active), held = new Set(trace.held), failed = new Set(trace.failed);
     for (const id of active) {
@@ -334,7 +363,7 @@ export function renderer(canvas, palette, numbers) {
   }
 
   let lastPhase = 'fight';
-  draw.reset = () => { marks = []; lastPhase = 'fight'; trees = []; since.clear(); litBefore = new Set(); };
+  draw.reset = () => { marks = []; lastPhase = 'fight'; trees = []; since.clear(); litBefore = new Set(); bubbleAt.clear(); };
   draw.events = (frame) => {
     // A new round stands both fighters back up; its marks start clean.
     if (lastPhase !== 'fight' && frame.phase === 'fight') marks = [];
