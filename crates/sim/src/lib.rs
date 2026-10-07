@@ -56,4 +56,4 @@ pub use world::World;
 /// elbow keys; a throw lets go of every weapon in hand.
 /// 16: a body's weapons past the first are a list (the guardian deity's
 /// eight arms hold four). A match plays exactly as in 15.
-pub const SIM_VERSION: u32 = 18;
+pub const SIM_VERSION: u32 = 17;

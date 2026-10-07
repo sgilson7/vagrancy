@@ -50,7 +50,6 @@ pub fn controls_json() -> String {
 pub fn numbers() -> String {
     json!({
         "ticks_per_second": balance::TICKS_PER_SECOND,
-        "rest_ticks": balance::REST_TICKS,
         "rounds_to_win": balance::ROUNDS_TO_WIN,
         "frac_bits": fx::FRAC_BITS,
         "arena_half": balance::ARENA_HALF.0,

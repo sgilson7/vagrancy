@@ -50,8 +50,7 @@ let speed = 1;
 // it, with the clock held, so one round reads apart from the next on stream
 // (Sam, 2026-10-07). The frames are the last ones core sent; nothing is
 // integrated. A live challenge is not held: its other player is in real time.
-// First the fight runs on slowly inside core's rest after the round
-// (balance::REST_TICKS), so the stream sees who fell; then the replay.
+// A held moment on the kill, so the stream sees who fell; then the replay.
 const PAUSE_MS = 1600, PAUSE_SPEED = 0.4, REPLAY_TICKS = 90, REPLAY_SPEED = 0.4, OUT_MS = 900;
 let recent = [], replay = null, holdUntil = 0, lastPhase = 'fight', ending = null;
 
@@ -97,7 +96,9 @@ function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (game) {
     let pace = challenge ? 1 : speed;
-    if (ending && performance.now() < ending.pauseUntil) pace *= PAUSE_SPEED;
+    // The pilots ready themselves the tick a round ends, so the pause
+    // holds still on the kill.
+    if (ending && performance.now() < ending.pauseUntil) pace = 0;
     else if (ending && !ending.replayed) {
       ending.replayed = true;
       replay = recent.length > 1 ? { frames: recent.slice(), start: performance.now() } : null;

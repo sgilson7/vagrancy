@@ -97,10 +97,9 @@ let FREEZE = null;
 // zoom into the cut ... then zoom back out and start the next round").
 // The page keeps the last REPLAY_TICKS frames core sent and draws them
 // again at REPLAY_SPEED; it integrates nothing.
-// First the fight runs on slowly for a moment while the view closes in on
-// whoever fell, inside the rest core holds after each round
-// (balance::REST_TICKS; Sam: "a samurai pause moment to see who died");
-// then, unless the player turned it off, the replay.
+// First the fight runs on slowly for a moment, so the player sees who fell
+// (Sam: "a samurai pause moment to see who died"); then, unless the player
+// turned it off, the replay, closing in on the cut.
 const PAUSE_MS = 1600;
 const PAUSE_SPEED = 0.4;
 const REPLAY_TICKS = 90;
@@ -202,7 +201,10 @@ function loop(now) {
     // A round has just ended: the fight runs on slowly for a moment, then
     // its end is played again (if wanted) with the clock held.
     let pace = SPEED;
-    if (ENDING && performance.now() < ENDING.pauseUntil) pace *= PAUSE_SPEED;
+    // Where the next round waits for the player (arcade mode, story mode),
+    // the fight runs on slowly; elsewhere the seats are ready the tick a
+    // round ends (two pilots, a recorded replay), so the pause holds still.
+    if (ENDING && performance.now() < ENDING.pauseUntil) pace *= game instanceof Road || game instanceof StoryRun ? PAUSE_SPEED : 0;
     else if (ENDING && !ENDING.replayed) {
       ENDING.replayed = true;
       const ms = holdMs() - PAUSE_MS;

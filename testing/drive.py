@@ -445,20 +445,19 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
         fails.append(f"{name}: the headshot's card is not in the winner's color")
     if page.inner_text("#death-popup .popup-head") != COPY["results"]["popup"]["head"]:
         fails.append(f"{name}: a headshot's card says {page.inner_text('#death-popup .popup-head')!r}")
-    # Sam, 2026-10-07: first the fight runs on slowly for a moment, so the
-    # player sees who fell; then the clock holds while the round's end is
-    # played again; then it runs on.
+    # Sam, 2026-10-07: a pause to see who fell, then the round's end played
+    # again, then on. A recorded replay's seats are ready the tick the round
+    # ends, so its pause holds the clock (arcade mode's runs on slowly; the
+    # player's own readiness holds the round there).
     t0 = page.evaluate("window.vagrancy.tick()")
     page.wait_for_timeout(800)
     t1 = page.evaluate("window.vagrancy.tick()")
-    if not 0 < t1 - t0 < 40:
-        fails.append(f"{name}: after the headshot the clock went from tick {t0} to {t1} in 0.8 s, not on slowly")
     page.wait_for_timeout(1300)
     t2 = page.evaluate("window.vagrancy.tick()")
     page.wait_for_timeout(800)
     t3 = page.evaluate("window.vagrancy.tick()")
-    if t3 != t2:
-        fails.append(f"{name}: the clock ran from tick {t2} to {t3} while the headshot was played again")
+    if not t0 == t1 == t2 == t3:
+        fails.append(f"{name}: the clock ran during the headshot's pause and replay: {[t0, t1, t2, t3]}")
     try:
         page.wait_for_function(f"window.vagrancy.tick() > {t3} + 30", timeout=9000)
     except Exception:
@@ -475,17 +474,18 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
         click_copy(page, "menu.replay.label")
     fc.value.set_files(str(fixture))
     page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
+    # The pause (1.6 s) and no replay: the clock runs again within 3 s.
     marks = []
-    for _ in range(8):
+    for _ in range(10):
         page.wait_for_timeout(500)
         marks.append(page.evaluate("window.vagrancy.tick()"))
-    if any(b <= a for a, b in zip(marks, marks[1:])):
-        fails.append(f"{name}: with the replays off, the clock stood still after the headshot: {marks}")
+    if not any(b > a for a, b in zip(marks[5:], marks[6:])):
+        fails.append(f"{name}: with the replays off, the clock stood still after the pause: {marks}")
     page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=20000)
     click_copy(page, "replay.stop.label")
     page.evaluate("localStorage.removeItem('vagrancy.roundReplays')")
     if not fails:
-        print(f"ok: {name}: a headshot pops its card, runs on slowly (ticks {t0} to {t1}), holds the clock for its replay at tick {t3}, then runs on; with replays off it runs on throughout")
+        print(f"ok: {name}: a headshot pops its card, holds the clock at tick {t3} through its pause and replay, then runs on; with replays off it runs on after the pause")
     return fails
 
 
