@@ -886,8 +886,15 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     click_copy(page, "menu.encyclopedia.label")
     page.wait_for_selector("#entries .entry")
-    if page.locator("#entries .entry").count() != len(road):
-        fails.append(f"{name}: the encyclopedia has {page.locator('#entries .entry').count()} entries, not {len(road)}")
+    # The encyclopedia lists the opponents arcade mode shows (Sam,
+    # 2026-10-07: fights stay hidden until a prerequisite is won or a rumor
+    # names them): on a fresh save, those open from the start and the
+    # rumored ones.
+    weapons = json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"]
+    rumored = {w["unlock"]["beat"] for w in weapons if w.get("rumor") == "start" and "beat" in w.get("unlock", {})}
+    known = {s["id"] for s in road if not s["requires"]} | rumored
+    if page.locator("#entries .entry").count() != len(known):
+        fails.append(f"{name}: the encyclopedia has {page.locator('#entries .entry').count()} entries, not the {len(known)} known at the start")
     first_row = sum(1 for s in road if not s["requires"])
     if page.locator("#entries .entry.open").count() != first_row:
         fails.append(f"{name}: a fresh save shows {page.locator('#entries .entry.open').count()} opponents in full, not the {first_row} open from the start")
@@ -950,7 +957,7 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     page.reload(wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: the encyclopedia shows {len(road)} opponents with their drawn trees; training offers the beaten ones, and both trees in a flanked fight light as the opponents run them")
+        print(f"ok: {name}: the encyclopedia shows the {len(known)} opponents known at the start with their drawn trees; training offers the beaten ones, and both trees in a flanked fight light as the opponents run them")
     return fails
 
 
