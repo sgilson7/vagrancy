@@ -515,3 +515,27 @@ fn after_a_win_that_opens_nothing_the_next_goal_is_the_nearest_locked_fight() {
     }
     assert_eq!(next_goal(&best), None);
 }
+
+#[test]
+fn a_fight_shows_once_open_from_the_start_or_a_prerequisite_is_won_or_a_rumor_names_it() {
+    // Sam, 2026-10-07: "enemies on the arcade mode map should ... not appear
+    // on the chart at all ... and only appears when you've done one of their
+    // pre-requisistes, or you've been told about them from a rumor".
+    use content::road::{known, road, Best};
+    use std::collections::BTreeMap;
+    let fresh = BTreeMap::new();
+    let rumored: Vec<String> = content::weapons::weapons().into_iter()
+        .filter(|w| content::weapons::rumored(w, &fresh))
+        .filter_map(|w| w.unlock.map(|r| r.stop().to_string())).collect();
+    for s in road() {
+        let want = !s.secret && (s.requires.is_empty() || rumored.contains(&s.id));
+        assert_eq!(known(&s, &fresh), want, "{} is {} at the start", s.id, if want { "hidden" } else { "shown" });
+    }
+    assert!(road().iter().filter(|s| known(s, &fresh)).count() < road().len() / 4, "a fresh chart shows most fights");
+    // A win shows the fights that ask for it.
+    let mut best = BTreeMap::new();
+    best.insert("scarecrow".to_string(), Best::won(0, 600, "sword"));
+    for s in road().into_iter().filter(|s| s.requires.iter().any(|r| r.stop() == "scarecrow")) {
+        assert!(known(&s, &best), "{} stays hidden after the scarecrow, which it asks for, is beaten", s.id);
+    }
+}

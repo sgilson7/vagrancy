@@ -581,6 +581,26 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     # Arcade mode opens on the chart (Sam, 2026-10-06).
     if page.locator("#road-tree.chart").count() != 1:
         fails.append(f"{name}: arcade mode did not open on the chart")
+    # Sam, 2026-10-07: a fresh chart shows the fights open from the start
+    # and those a rumor names, and no others, each open.
+    weapons = json.loads((ROOT / "data" / "weapons.json").read_text())["weapons"]
+    rumored = [w["unlock"]["beat"] for w in weapons if w.get("rumor") == "start" and "beat" in w.get("unlock", {})]
+    first_row = [s["id"] for s in road if not s["requires"]]
+    want = sorted(set(first_row) | set(rumored))
+    shown = sorted(page.evaluate("[...document.querySelectorAll('#road-tree .node')].map(n => n.dataset.stop)"))
+    if shown != want:
+        fails.append(f"{name}: a fresh chart shows {shown}, not {want}")
+    if page.locator("#road-tree .node.open").count() != len(first_row) or any(page.locator(f'[data-stop="{i}"].open').count() != 1 for i in first_row):
+        fails.append(f"{name}: a fresh road does not open exactly its first row, {first_row}")
+    # The whole tree, from a save that has met each fight's prerequisites
+    # but the last's: every fight is known there, and the last is locked.
+    late = json.loads((ROOT / "testing" / "saves" / "all-but-the-village-deity.save.json").read_text())
+    late["state"]["road"]["best"].pop(road[-1]["requires"][0]["beat"], None)
+    page.evaluate("t => localStorage.setItem('vagrancy.autosave', t)", json.dumps(late))
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#road-tree .node")
     click_copy(page, "road.view.tree.label")
     page.wait_for_selector("#road-tree .level")
     fails += every_visible_line_is_a_copy_string(page, name + " (road)")
@@ -596,11 +616,7 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     got = page.locator("#road-tree .wires path.unmet, #road-tree .wires path.met").count()
     if got != want:
         fails.append(f"{name}: the tree draws {got} lines for {want} requirements")
-    # On a fresh road only the first row is open.
-    first_row = [s["id"] for s in road if not s["requires"]]
-    if page.locator("#road-tree .node.open").count() != len(first_row) or any(page.locator(f'[data-stop="{i}"].open').count() != 1 for i in first_row):
-        fails.append(f"{name}: a fresh road does not open exactly its first row, {first_row}")
-    # Hovering a locked fight lists what it asks for, and lights its lines.
+    # Hovering a fight lists what it asks for, and lights its lines.
     last = road[-1]
     page.hover(f'[data-stop="{last["id"]}"]')
     page.wait_for_selector("#road-tip:not([hidden])")
@@ -626,11 +642,22 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     except Exception:
         fails.append(f"{name}: hovering a line showed nothing (box {box})")
     page.mouse.move(0, 0)
+    # The scarecrow beaten with a round lost: the thresher opens, and the
+    # drover, which asks for the scarecrow beaten without losing a round,
+    # shows and stays locked.
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {road[0]["id"]: {"losses": 1, "ticks": 3000, "with": ["sword"]}}
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#road-tree .node")
     # The thresher's numbers come from its pilot.
     page.click('[data-stop="thresher"]')
     does = page.inner_text('#stop-detail [data-copy="opponents.thresher.does"]')
     if "1.5 seconds" not in does:
         fails.append(f"{name}: the thresher's introduction does not state its pause from the pilot data: {does!r}")
+    page.click('[data-stop="drover"]')
     if page.locator('#stop-detail [data-copy="road.fight.label"]').count():
         fails.append(f"{name}: a locked fight offers a Fight button")
     page.click(f'[data-stop="{road[0]["id"]}"]')
@@ -641,8 +668,11 @@ def the_road_is_a_tree_that_says_what_opens_each_fight_and_its_first_fight_start
     click_copy(page, "results.to_road.label")
     page.wait_for_selector("#road-tree .node")
     click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
-        print(f"ok: {name}: the road is a tree with a row per count of requirements and a line per requirement; hovering a fight or a line says what it asks for; the first fight starts")
+        print(f"ok: {name}: a fresh chart shows only the fights open from the start or rumored; the road is a tree with a row per count of requirements and a line per requirement; hovering a fight or a line says what it asks for; the first fight starts")
     return fails
 
 
@@ -741,7 +771,16 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     fails += every_visible_line_is_a_copy_string(page, name + " (road, carrying the scimitar)")
     if page.evaluate("window.vagrancy.save().state.weapon") != "scimitar":
         fails.append(f"{name}: carrying the scimitar did not reach the save")
-    # The three designs.
+    # The three designs, each fight on them: a save that has met each
+    # fight's prerequisites (a fresh chart shows only what is known, Sam
+    # 2026-10-07), still carrying the scimitar.
+    late = json.loads((ROOT / "testing" / "saves" / "all-but-the-village-deity.save.json").read_text())
+    late["state"]["weapon"] = "scimitar"
+    page.evaluate("t => localStorage.setItem('vagrancy.autosave', t)", json.dumps(late))
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    page.wait_for_selector("#road-tree .node")
     for view, sel, want in (("chart", "#road-tree.chart .node", len(road)), ("sunburst", "#road-tree.sunburst .node", len(road)), ("chapters", "#chapters li", len({s.get("row", len(s['requires'])) for s in road}))):
         pick_view(page, view)
         page.wait_for_selector(sel)

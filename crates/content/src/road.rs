@@ -301,6 +301,22 @@ pub fn visible(stop: &Stop, best: &BTreeMap<String, Best>) -> bool {
     !stop.secret || last().is_some_and(|l| best.contains_key(&l.id))
 }
 
+/// Whether arcade mode puts this fight on its views (Sam, 2026-10-07: "only
+/// appears when you've done one of their pre-requisites, or you've been
+/// told about them from a rumor, to reduce visual clutter when you start
+/// out"): one open from the start, one already won, one with a won
+/// prerequisite, or one a rumor names as a weapon's carrier. A secret one
+/// waits, as `visible` says.
+pub fn known(stop: &Stop, best: &BTreeMap<String, Best>) -> bool {
+    visible(stop, best)
+        && (stop.requires.is_empty()
+            || best.contains_key(&stop.id)
+            || stop.requires.iter().any(|r| best.contains_key(r.stop()))
+            || crate::weapons::weapons().iter().any(|w| {
+                crate::weapons::rumored(w, best) && w.unlock.as_ref().is_some_and(|r| r.stop() == stop.id)
+            }))
+}
+
 /// Four arms for the player are won by beating the final fight.
 pub fn four_arms_open(best: &BTreeMap<String, Best>) -> bool {
     last().is_some_and(|s| best.contains_key(&s.id))

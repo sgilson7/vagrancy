@@ -853,7 +853,8 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
     // A secret fight is left out until the final fight is won.
     let stops: Vec<serde_json::Value> = content::road::road()
         .iter()
-        .filter(|st| content::road::visible(st, best))
+        // Only the fights the player knows of (content::road::known).
+        .filter(|st| content::road::known(st, best))
         .map(|st| {
             let won = best.get(&st.id);
             let requires: Vec<serde_json::Value> = st
@@ -861,7 +862,10 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
                 .iter()
                 .map(|r| {
                     let (key, vars) = r.sentence();
-                    json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(best) })
+                    // `shown`: whether the fight it names is on the views, so
+                    // the page draws a route only from a fight it shows.
+                    let shown = content::road::stop(r.stop()).is_some_and(|s| content::road::known(&s, best));
+                    json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(best), "shown": shown })
                 })
                 .collect();
             // The weapons a win here unlocks, Weapon Master's rewards.

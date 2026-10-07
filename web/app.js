@@ -639,7 +639,9 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
     let heads = nodes.filter((n) => n.row === 1 && kids.get(n.id).length).map((n) => n.id);
     const joints = [];
     const spread = nodes.filter((n) => n.row >= 1).length;
+    // Early on, with few fights known, no path may start yet.
     for (;;) {
+      if (!heads.length) break;
       const big = heads.reduce((m, h) => (size(h) > size(m) ? h : m), heads[0]);
       const grown = kids.get(big).filter((c) => kids.get(c).length);
       if (size(big) <= spread / 4 || !grown.length || heads.length - 1 + grown.length > 8) break;
@@ -765,12 +767,14 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
       if (layout === 'sunburst') shown = n.requires.filter((r) => r.from === tree.sunburst.parent.get(n.id));
       if (layout === 'chart' && n.requires.length > 1) {
         const cx = (id) => { const r = buttons.get(id).getBoundingClientRect(); return r.left + r.width / 2; };
-        const above = n.requires.filter((r) => byId.get(r.from).row === n.row - 1);
+        const above = n.requires.filter((r) => byId.has(r.from) && byId.get(r.from).row === n.row - 1);
         const pool = above.length ? above : n.requires;
         const here = cx(n.id);
         shown = [pool.reduce((best, r) => Math.abs(cx(r.from) - here) < Math.abs(cx(best.from) - here) ? r : best)];
       }
       for (const r of shown) {
+        // A route only between two fights on this view.
+        if (!buttons.has(r.from) || !buttons.has(n.id)) continue;
         const a = buttons.get(r.from).getBoundingClientRect();
         const c = buttons.get(n.id).getBoundingClientRect();
         let d;
@@ -1008,7 +1012,8 @@ function road() {
     state: s.flawless ? 'flawless' : s.won ? 'won' : s.open ? 'open' : 'locked',
     reward: s.rewards.length > 0,
     lockedKey: 'road.locked',
-    requires: s.requires.map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
+    // Routes only from fights on the views; the card still lists each.
+    requires: s.requires.filter((r) => r.shown).map((r) => ({ from: r.stop, met: r.met, line: () => reqLine(r) })),
   }));
   // The deepest fight that is open and not yet won, set apart on the chart
   // with the arcade button's flair (Sam, 2026-10-07): how far down the
