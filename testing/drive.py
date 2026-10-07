@@ -1092,8 +1092,9 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     # pressed for the inspected seat.
     page.click("#lab-pause")
     for _ in range(12):
+        before = page.evaluate("window.btlab.tick()")
         page.click("#lab-step")
-        page.wait_for_timeout(40)
+        page.wait_for_function(f"window.btlab.tick() > {before}", timeout=5000)
         rep = page.evaluate("window.btlab.report()")
         keys = page.evaluate("window.btlab.keys()")
         st = page.evaluate("window.btlab.state()")

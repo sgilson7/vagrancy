@@ -62,7 +62,9 @@ function start(custom = null) {
   cur = JSON.parse(lab.frame());
   prev = null;
   history = [];
-  report = [];
+  // What each seat would report before its first tick, so the panels have
+  // a tree and keys to show while the lab waits off screen.
+  report = JSON.parse(lab.report());
   acc = 0;
   draw.reset();
   buildTree();
