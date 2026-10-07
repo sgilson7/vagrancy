@@ -1187,6 +1187,25 @@ def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_lef
 
 
 @check
+def the_arena_runs_fights_on_its_own_with_no_bot(page, name):
+    # The stream's page (Sam, 2026-10-07): with no bot it runs exhibitions,
+    # so the stream always has a fight; its words are the copy file's.
+    fails = []
+    page.goto(ORIGIN + "/arena.html", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.wait_for_timeout(1500)
+    st = page.evaluate("window.arena.state()")
+    if st["tick"] < 20 or len(st["fighters"]) != 2:
+        fails.append(f"{name}: the arena is not running a fight: {st}")
+    fails += every_visible_line_is_a_copy_string(page, name + " (arena)")
+    page.goto(ORIGIN + "/", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the arena runs a fight on its own")
+    return fails
+
+
+@check
 def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp")):
     fails = []
     click_copy(page, "menu.settings.label")

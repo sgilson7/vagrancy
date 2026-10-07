@@ -47,7 +47,9 @@
     "from, to": "a script beat's first and last tick, from pilot::moves",
     "max_rules, max_conds": "the limits on a written tree, content::custom::MAX_RULES and MAX_CONDS",
     "lo, hi": "the range of a written tree's reaction time in ticks, content::custom::REACTION_TICKS",
-    "ms": "a reaction time in milliseconds, from ticks and the tick rate"
+    "ms": "a reaction time in milliseconds, from ticks and the tick rate",
+    "wins, losses": "a match's round wins, from the world",
+    "command, left, right, cost": "a chat command and what a turn costs, sent by the stream's bot (vagrancy-arena), drawn as data"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -117,7 +119,8 @@
     "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release",
     "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)",
     "story_full": "new: story.full, story.next.game_over, story.extra, story.scene.x1_giant_general to x8_guardian",
-    "btlab": "new: btlab (the BT Lab page, all its strings); btlab.editor (the tree editor)"
+    "btlab": "new: btlab (the BT Lab page, all its strings); btlab.editor (the tree editor)",
+    "arena": "new: arena (the stream page, all its strings)"
   },
   "_glossary": {
     "ink": {
@@ -2157,6 +2160,34 @@
         "number": "A number in rule {n} is out of range.",
         "code": "That share code could not be read."
       }
+    }
+  },
+  "arena": {
+    "title": "{game} arena",
+    "by": "written by",
+    "versus": "against",
+    "won": "won, {wins} rounds to {losses}.",
+    "draw": "The match ended in a draw.",
+    "join": "Join code:",
+    "join_for": "This code is for",
+    "predict": {
+      "heading": "Who wins?",
+      "open": "Predictions are open for {seconds} more seconds.",
+      "closed": "Predictions are closed for this fight."
+    },
+    "how": {
+      "heading": "How to take part",
+      "predict": "Type {left} or {right} to predict the winner. A right prediction earns experience.",
+      "xp": "Type {command} to see your experience.",
+      "fight": "Type {command} to spend {cost} experience on a turn: you get a join code for the game's online mode and fight on stream.",
+      "submit": "Type {command} and a share code from the BT Lab's editor to put your own tree in the queue."
+    },
+    "queue": "Up next",
+    "leaders": "Most experience",
+    "empty": "No one yet.",
+    "kind": {
+      "fight": "to fight",
+      "tree": "with a tree"
     }
   }
 }

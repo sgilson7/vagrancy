@@ -161,6 +161,10 @@ pub struct Online {
     weapon: String,
     map: String,
     armed: bool,
+    /// The arena's side of a stream challenge: a road opponent's pilot
+    /// presses this side's keys (Sam, 2026-10-07: viewers "fight live on
+    /// the twitch stream").
+    pilot: Option<Box<dyn pilot::Pilot>>,
 }
 
 #[wasm_bindgen]
@@ -169,10 +173,10 @@ impl Online {
     /// inside the setup.
     pub fn host(seed: u32, tuning: u8, build: &str, weapon: &str, map: &str) -> Online {
         let setup = content::setup::versus_with(seed as u64, tuning, [weapon, content::weapons::DEFAULT], map);
-        Online { s: net::Session::host(setup, build), seed, tuning, weapon: weapon.into(), map: map.into(), armed: false }
+        Online { s: net::Session::host(setup, build), seed, tuning, weapon: weapon.into(), map: map.into(), armed: false, pilot: None }
     }
     pub fn join(build: &str, weapon: &str) -> Online {
-        Online { s: net::Session::join(build, weapon), seed: 0, tuning: 0, weapon: weapon.into(), map: String::new(), armed: true }
+        Online { s: net::Session::join(build, weapon), seed: 0, tuning: 0, weapon: weapon.into(), map: String::new(), armed: true, pilot: None }
     }
     pub fn receive(&mut self, now: f64, bytes: &[u8]) {
         self.s.receive(now as u64, bytes);
@@ -193,6 +197,26 @@ impl Online {
     }
     pub fn ready(&mut self) {
         self.s.ready();
+    }
+    /// Let a road opponent's pilot play this side.
+    pub fn set_pilot(&mut self, id: &str) {
+        self.pilot = Some(pilot::build(&content::road::pilot(id)));
+    }
+    /// One tick with this side's keys from its pilot, which reads the
+    /// match as both sides have it. True if the world stepped.
+    pub fn step_piloted(&mut self, now: f64) -> bool {
+        let seat = self.s.seat() as usize;
+        let mine = match (self.pilot.as_mut(), self.s.world()) {
+            (Some(p), Some(w)) => p.input(w, seat),
+            _ => Input::NONE,
+        };
+        self.s.tick(now as u64, mine).is_some()
+    }
+    /// The pilot's last tick, as `Lab::report` gives it for one seat.
+    pub fn pilot_report(&self) -> String {
+        let Some(p) = self.pilot.as_ref() else { return "null".into() };
+        let t = p.trace();
+        json!({ "seat": self.s.seat(), "active": t.active, "held": t.held, "failed": t.failed }).to_string()
     }
     /// One tick of the page's clock with this side's input. True if the
     /// world stepped.

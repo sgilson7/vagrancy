@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{arena.title}}</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="arena">
+<!-- The stream's page (arena.js): every word a {{key}} token or a copy key. -->
+<main id="arena-app">
+  <p id="status" role="status">{{game.loading}}</p>
+  <p id="loading-error" role="alert" hidden>{{game.loading_error}}</p>
+  <div id="arena-main" hidden>
+    <section id="arena-stage">
+      <div id="arena-names"></div>
+      <canvas id="stage" aria-label="{{game.canvas_name}}" width="1200" height="640"></canvas>
+      <div id="arena-result" role="status"></div>
+    </section>
+    <aside id="arena-side">
+      <h1>{{arena.title}}</h1>
+      <section id="arena-predict"></section>
+      <section id="arena-how"></section>
+      <section id="arena-queue"></section>
+      <section id="arena-leaders"></section>
+    </aside>
+  </div>
+</main>
+<script type="module" src="arena.js"></script>
+</body>
+</html>

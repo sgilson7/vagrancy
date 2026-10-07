@@ -278,3 +278,21 @@ body.btlab #hud { display: flex; gap: 18px; justify-content: center; }
 #editor textarea { width: 100%; font-family: inherit; font-size: 0.85em; }
 #editor .ok { color: var(--focus); font-weight: bold; }
 #editor .refused { color: var(--focus); font-weight: bold; }
+
+/* The stream's arena (arena.html), laid out for a 1920 by 1080 capture. */
+body.arena { margin: 0; }
+body.arena #arena-main { display: grid; grid-template-columns: 1fr 520px; gap: 18px; padding: 18px; min-height: 100vh; box-sizing: border-box; }
+body.arena #stage { width: 100%; height: auto; border: 2px solid var(--line); }
+body.arena #arena-names { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.7em; margin-bottom: 8px; }
+body.arena .fighter-name.side-0 strong { color: var(--fighters-left-ink); }
+body.arena .fighter-name.side-1 strong { color: var(--fighters-right-stripe); }
+body.arena .versus { margin: 0; color: var(--muted); }
+body.arena #arena-result { font-size: 1.6em; min-height: 2.5em; }
+body.arena #arena-result .code { font-size: 1.8em; letter-spacing: 0.15em; font-weight: bold; padding: 2px 12px; border: 3px solid var(--fighters-right-body); background: var(--line); color: var(--paper); }
+body.arena #arena-side { border-left: 3px solid var(--fighters-right-body); padding-left: 18px; font-size: 1.15em; }
+body.arena #arena-side h1 { font-size: 2em; margin-top: 0; }
+body.arena .bar { position: relative; height: 34px; margin: 6px 0; border: 1px solid var(--line); background: var(--paper); }
+body.arena .bar .fill { position: absolute; inset: 0 auto 0 0; }
+body.arena .bar.side-0 .fill { background: var(--fighters-left-ink); }
+body.arena .bar.side-1 .fill { background: var(--fighters-right-body); }
+body.arena .bar span { position: relative; padding: 4px 10px; font-weight: bold; color: var(--paper); mix-blend-mode: difference; }
