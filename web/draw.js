@@ -196,6 +196,7 @@ export function renderer(canvas, palette, numbers) {
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     // The trees, over everything in the arena but the meters.
+    ringsDrawn = 0;
     if (trees.length && cur.phase === 'fight') {
       const now = performance.now();
       const lit = new Set();
@@ -231,6 +232,7 @@ export function renderer(canvas, palette, numbers) {
   // it is given (after the live views of behavior tree tools: light the path
   // that ran this tick, and keep the tree small enough to read at a glance).
   let trees = [];
+  let ringsDrawn = 0;
   draw.trees = (list) => { trees = list || []; };
   // Where each seat's bubble is and was, and the function in core that
   // moves them a frame (wasm bubbles_step).
@@ -238,14 +240,16 @@ export function renderer(canvas, palette, numbers) {
   let layoutBubbles = null;
   draw.bubbleLayout = (fn) => { layoutBubbles = fn; };
   // For the gate: how many trees are drawn, and where their bubbles are.
-  draw.shown = () => ({ trees: trees.length, bubbles: [...bubbleAt.values()] });
+  draw.shown = () => ({ trees: trees.length, bubbles: [...bubbleAt.values()], rings: ringsDrawn });
   const iconCache = new Map();
   const icon = (name, lit) => {
     const k = lit ? `${name}-lit` : name;
     if (!iconCache.has(k)) { const im = new Image(); im.src = `icons/${k}.png`; iconCache.set(k, im); }
     return iconCache.get(k);
   };
-  const NODE_R = 14, COL_W = 36, ROW_H = 34;
+  let NODE_R = 14, COL_W = 36, ROW_H = 34;
+  // Larger trees where a page is about them (the BT Lab's lesson).
+  draw.treeScale = (k) => { NODE_R = 14 * k; COL_W = 36 * k; ROW_H = 34 * k; };
   const across = (n) => n.kind === 'selector' || n.kind === 'parallel' || n.kind === 'repeat';
   // Columns and rows: a selector, parallel or repeat spreads its children
   // across; a sequence stacks its steps under itself.
@@ -344,6 +348,19 @@ export function renderer(canvas, palette, numbers) {
       ctx.setLineDash(n.interrupt ? [3, 2] : []);
       ctx.stroke();
       ctx.setLineDash([]);
+      // A node the page is about, ringed (the BT Lab's lesson).
+      // Dark on a paper gap, so it reads apart from a lit node's color,
+      // and breathing slowly so the eye finds it.
+      if (entry.ring && entry.ring.has(n.id)) {
+        const r = NODE_R + 6 + Math.sin(now / 300) * 1.5;
+        ctx.strokeStyle = palette.paper;
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = palette.line;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+        ringsDrawn += 1;
+      }
       const im = icon(n.icon, lit);
       if (im.complete && im.naturalWidth) ctx.drawImage(im, x - NODE_R + 2, y - NODE_R + 2, 2 * NODE_R - 4, 2 * NODE_R - 4);
       ctx.globalAlpha = 1;

@@ -40,9 +40,12 @@ const name = (id) => t(`opponents.${id}.name`);
 
 // --- what is running ---------------------------------------------------------------
 
+// The lab starts at an eighth of full speed (Sam, 2026-10-07), slow enough
+// to follow a tree; a fight of your own is played at full speed.
+const SLOW_DEFAULT = 0.125;
 const S = {
   mode: 'watch', left: 'lamplighter', right: 'drover', opp: 'lamplighter', map: 'flat',
-  inspect: 1, speed: 1, paused: false, floating: false,
+  inspect: 1, speed: SLOW_DEFAULT, paused: false, floating: false,
 };
 let lab = null;
 let prev = null, cur = null, report = [], acc = 0, last = 0, stepOnce = false;
@@ -58,7 +61,8 @@ function start(custom = null) {
   if (custom === 'watch') { lab = Lab.watch_custom(seed, tuning, JSON.stringify(EDIT), S.right, S.map); S.mode = 'watch'; S.inspect = 0; }
   else if (custom === 'play') { lab = Lab.play_custom(seed, tuning, JSON.stringify(EDIT), S.map); S.mode = 'play'; }
   else lab = S.mode === 'watch' ? Lab.watch(seed, tuning, S.left, S.right, S.map) : Lab.play(seed, tuning, S.opp);
-  if (S.mode === 'play') S.inspect = 1;
+  // A fight of your own plays at full speed; watching starts slow.
+  if (S.mode === 'play') { S.inspect = 1; S.speed = 1; }
   cur = JSON.parse(lab.frame());
   prev = null;
   history = [];
@@ -471,22 +475,40 @@ const RANDOM_TREE = { reaction_ticks: 10, rules: [
   { if: [{ gap_above: 260 }], do: 'approach' },
   { do: 'guard' },
 ] };
+// Each page rings, in the tree over its left fighter, the nodes it is about
+// (Sam, 2026-10-07: "each of the slides mentions a type of node ... which
+// should be present in the simulation to the right"); the gate checks each
+// page's fighter has one. Every page plays at an eighth of full speed.
+const SLOW = 0.125;
+const kindIs = (k) => (n) => n.kind === k;
+const labelIs = (k) => (n) => n.label.key === k;
 const LESSON = [
-  { id: 'tasks', demo: { left: 'drover', right: 'scarecrow', speed: 0.5 } },
-  { id: 'sequence', demo: { left: 'cooper', right: 'drover', speed: 0.5 } },
-  { id: 'selector', demo: { left: 'lamplighter', right: 'drover', speed: 0.5 } },
-  { id: 'running', demo: { left: 'courier', right: 'lamplighter', speed: 0.25 } },
-  { id: 'factor', demo: { tree: FACTOR_TREE, right: 'drover', speed: 0.5 } },
-  { id: 'random', demo: { tree: RANDOM_TREE, right: 'drover', speed: 0.5 }, vars: { first_pct: RANDOM_PCT[0], second_pct: RANDOM_PCT[1] } },
-  { id: 'decorator', demo: { left: 'thresher', right: 'scarecrow', speed: 0.5 } },
-  { id: 'parallel', demo: { left: 'local_deity', right: 'drover', speed: 0.25 } },
-  { id: 'chance', demo: { left: 'smith', right: 'courier', speed: 0.5, replay: true } },
-  { id: 'script', beyond: false, demo: { left: 'hay_mower', right: 'scarecrow', speed: 0.25 }, lab: { until: 'overhead' } },
-  { id: 'pose', beyond: true, demo: { left: 'lamplighter', right: 'scarecrow', speed: 0.25 }, lab: { until: 'high_guard' } },
-  { id: 'search', beyond: true, demo: { left: 'archivist', right: 'drover', speed: 0.25 }, lab: { until: 'search' } },
-  { id: 'throw', beyond: true, demo: { left: 'harpooner', right: 'drover', speed: 0.25 }, lab: { until: 'throw' } },
+  { id: 'tasks', ring: kindIs('condition'), demo: { left: 'drover', right: 'scarecrow' } },
+  { id: 'sequence', ring: kindIs('sequence'), demo: { left: 'cooper', right: 'drover' } },
+  { id: 'selector', ring: kindIs('selector'), demo: { left: 'lamplighter', right: 'drover' } },
+  { id: 'running', ring: (n) => !!n.interrupt, demo: { left: 'dyer', right: 'lamplighter' } },
+  { id: 'factor', ring: labelIs('tree.cond.gap_below'), demo: { tree: FACTOR_TREE, right: 'drover' } },
+  { id: 'random', ring: labelIs('tree.cond.chance'), demo: { tree: RANDOM_TREE, right: 'drover' }, vars: { first_pct: RANDOM_PCT[0], second_pct: RANDOM_PCT[1] } },
+  { id: 'decorator', ring: kindIs('repeat'), demo: { left: 'thresher', right: 'scarecrow' } },
+  { id: 'parallel', ring: kindIs('parallel'), demo: { left: 'local_deity', right: 'drover' } },
+  { id: 'chance', ring: labelIs('tree.cond.chance'), demo: { left: 'smith', right: 'courier', replay: true } },
+  { id: 'script', ring: labelIs('tree.act.overhead'), demo: { left: 'hay_mower', right: 'scarecrow' }, lab: { until: 'overhead' } },
+  { id: 'pose', beyond: true, ring: labelIs('tree.act.high_guard'), demo: { left: 'lamplighter', right: 'scarecrow' }, lab: { until: 'high_guard' } },
+  { id: 'search', beyond: true, ring: kindIs('search'), demo: { left: 'archivist', right: 'drover' }, lab: { until: 'search' } },
+  { id: 'throw', beyond: true, ring: labelIs('tree.act.throw'), demo: { left: 'harpooner', right: 'drover' }, lab: { until: 'throw' } },
   { id: 'yours', opp: 'lamplighter' },
 ];
+for (const pg of LESSON) if (pg.demo) pg.demo.speed = SLOW;
+// The page's left tree, and the ids of the nodes it rings in it.
+function pageTree(pg) {
+  return pg.demo.tree ? describedTree(pg.id, pg.demo.tree) : treeOf(pg.demo.left);
+}
+function ringedIds(pg) {
+  const out = new Set();
+  const walk = (n) => { if (pg.ring(n)) out.add(n.id); n.children.forEach(walk); };
+  walk(pageTree(pg));
+  return out;
+}
 // The lab's set-up for a page: the page's two fighters, the left one inspected.
 const labStep = (pg) => ({ mode: 'watch', left: pg.demo.left, right: pg.demo.right, inspect: 0, speed: pg.demo.speed, ...(pg.lab || {}) });
 
@@ -564,11 +586,15 @@ function startDemo(pg, seed) {
   const canvas = box.querySelector('canvas');
   const d = { pg, box, seed: seed ?? ((Math.random() * 0xffffffff) >>> 0), acc: 0, prev: null, report: [], over: 0, paused: false, shown: -1 };
   d.draw = canvas.renderer ||= renderer(canvas, PAL, N);
+  // A third larger, unless the tree is big enough to cover its fighter.
+  const count = (n) => 1 + n.children.reduce((a, k) => a + count(k), 0);
+  d.draw.treeScale(count(pageTree(pg)) <= 20 ? 1.3 : 1);
   d.draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   d.lab = pg.demo.tree
     ? Lab.watch_custom(d.seed, N.default_tuning, JSON.stringify(pg.demo.tree), pg.demo.right, 'flat')
     : Lab.watch(d.seed, N.default_tuning, pg.demo.left, pg.demo.right, 'flat');
   d.cur = JSON.parse(d.lab.frame());
+  d.ring = ringedIds(pg);
   d.draw.reset();
   demo = d;
 }
@@ -599,11 +625,11 @@ function demoTick(now, dt) {
     if (now - d.over > 2500) { startDemo(d.pg, d.pg.demo.replay ? d.seed : undefined); return; }
   }
   const treeFor = (r) => (r.id === 'custom' ? describedTree(d.pg.id, d.pg.demo.tree) : treeOf(r.id));
-  d.draw.trees(d.report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeFor(r), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })));
+  d.draw.trees(d.report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeFor(r), trace: r, ring: r.seat === 0 ? d.ring : null, caption: (nd) => t('tree.now', { node: nd.text }) })));
   d.draw(d.prev || d.cur, d.cur, d.paused ? 1 : Math.min(1, d.acc / tickMs));
   // What each fighter runs and presses, a few times a second.
   const tick = d.lab.tick();
-  if (tick - d.shown >= 6 || tick < d.shown) {
+  if (tick - d.shown >= 3 || tick < d.shown) {
     d.shown = tick;
     const names = demoNames(d.pg);
     d.box.querySelector('.demo-readout').replaceChildren(...[0, 1].map((seat) => {
@@ -650,7 +676,8 @@ function renderLesson() {
     }
     const side = pg.id === 'yours'
       ? [say(k(pg, 'demo'), pg.vars)]
-      : [el('canvas', { width: 1200, height: 640, 'aria-label': t('game.canvas_name') }), el('div', { class: 'demo-readout', role: 'status' }), say(k(pg, 'demo'), pg.vars)];
+      : [el('canvas', { width: 1200, height: 640, 'aria-label': t('game.canvas_name') }), say(k(pg, 'ringed'), {}, { class: 'ringed' }),
+        el('div', { class: 'demo-readout', role: 'status' }), say(k(pg, 'demo'), pg.vars)];
     return el('section', { class: 'lesson-page', id: `lesson-${pg.id}`, 'data-page': pg.id },
       el('div', { class: 'lecture' },
         say('btlab.lesson.page', { n: i + 1, count: LESSON.length }, { class: 'desc' }),
@@ -852,7 +879,9 @@ async function main() {
   document.body.dataset.ready = '1';
   // For the gate: what the lab shows and what core pressed.
   window.btlab = { report: () => report, keys: () => (lab ? Array.from(lab.keys()) : []), tick: () => (lab ? lab.tick() : 0), state: () => ({ ...S }),
-    lesson: () => (demo ? { page: demo.pg.id, tick: demo.lab.tick(), seed: demo.seed } : null) };
+    lesson: () => (demo ? { page: demo.pg.id, tick: demo.lab.tick(), seed: demo.seed, speed: demo.pg.demo.speed, rings: demo.draw.shown().rings } : null),
+    // Each page's ringed nodes, counted in its left fighter's tree.
+    lessonRings: () => Object.fromEntries(LESSON.filter((pg) => pg.demo).map((pg) => [pg.id, ringedIds(pg).size])) };
   requestAnimationFrame(loop);
 }
 

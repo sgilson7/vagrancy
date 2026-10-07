@@ -231,6 +231,9 @@ body.btlab #app { max-width: 1500px; }
 .lecture-fig .fig-decor { font-size: 12px; fill: var(--line); }
 .lecture-fig .fig-weight { font-size: 12px; font-style: italic; fill: var(--fighters-right-stripe); }
 .lecture-fig .fig-text { font-size: 13px; line-height: 1.15; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--line); }
+.lesson-page .ringed { color: var(--line); margin: 6px 0 0; padding-left: 26px; position: relative; }
+.lesson-page .ringed::before { content: ""; position: absolute; left: 2px; top: 0.2em; width: 12px; height: 12px; border-radius: 50%;
+  border: 3px solid var(--line); box-shadow: 0 0 0 2px var(--paper); }
 .demo-readout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0; min-height: 4.5em; }
 .demo-readout p { margin: 0 0 4px; }
 .demo-readout .side-0 p { color: var(--fighters-left-ink); }

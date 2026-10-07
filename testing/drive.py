@@ -1112,14 +1112,25 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
             break
     # Sam, 2026-10-07: the lesson is pages to scroll through, the lecture
     # beside a fight that shows it. The page in view plays, and one at a time.
+    # Sam, 2026-10-07: each page's node type is in the fight beside it,
+    # ringed in its tree, and the lab and the pages start at an eighth speed.
+    rings = page.evaluate("window.btlab.lessonRings()")
+    bare = [k for k, n in rings.items() if n < 1]
+    if bare:
+        fails.append(f"{name}: lesson pages whose fight has none of the nodes they are about: {bare}")
+    if page.evaluate("window.btlab.state().speed") != 0.125:
+        fails.append(f"{name}: the lab does not start at an eighth of full speed")
     page.evaluate("document.getElementById('lesson-factor').scrollIntoView()")
-    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'factor' && window.btlab.lesson().tick > 30", timeout=15000)
+    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'factor' && window.btlab.lesson().tick > 4", timeout=30000)
+    page.wait_for_function("window.btlab.lesson().rings > 0", timeout=30000)
+    if page.evaluate("window.btlab.lesson().speed") != 0.125:
+        fails.append(f"{name}: the lesson's fights do not play at an eighth of full speed")
     if page.locator("#lesson-factor svg.lecture-fig").count() != 2:
         fails.append(f"{name}: the factoring page did not draw the lecture's two trees")
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a lesson page)")
     # The page about chance plays the same fight again from the same start.
     page.evaluate("document.getElementById('lesson-chance').scrollIntoView()")
-    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'chance' && window.btlab.lesson().tick > 30", timeout=15000)
+    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'chance' && window.btlab.lesson().tick > 8", timeout=30000)
     seed = page.evaluate("window.btlab.lesson().seed")
     page.click("#lesson-chance .lesson-replay")
     again = page.evaluate("window.btlab.lesson()")
@@ -1148,8 +1159,12 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     num.fill("180"); num.dispatch_event("change")
     page.wait_for_selector('#editor-status[data-copy="btlab.editor.ok"]')
     page.click("#editor-watch")
-    page.wait_for_timeout(1500)
-    if page.evaluate("window.btlab.tick()") < 30 or page.locator("#tree-panel .node").count() < 4:
+    # The lab plays at an eighth of full speed, about eight ticks a second.
+    try:
+        page.wait_for_function("window.btlab.tick() >= 8", timeout=15000)
+    except Exception:
+        pass
+    if page.evaluate("window.btlab.tick()") < 8 or page.locator("#tree-panel .node").count() < 4:
         fails.append(f"{name}: watching the written tree did not run it")
     page.click("#editor-make-code")
     code = page.input_value("#editor-code")
