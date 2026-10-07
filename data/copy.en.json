@@ -465,7 +465,7 @@
         "label": "Fight with two arms"
       }
     },
-    "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you. The village deity holds it, below the last row of fights.",
+    "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you.",
     "revealed": "A new fight has appeared below the village deity: {opponent}."
   },
   "opponents": {
@@ -1638,7 +1638,7 @@
     },
     "longsword": {
       "name": "cursed blade",
-      "desc": "The blade you came to this village for. It is cursed and has chosen you to hold it next, so the village deity keeps it from you until you beat it. It reaches farther than any other weapon."
+      "desc": "The blade you came to this village for. It is cursed, and it has chosen you to hold it next. It reaches farther than any other weapon."
     },
     "scimitar": {
       "name": "scimitar",
