@@ -4,7 +4,7 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
-  road_json, tutorial_json, weapons_json, slosh_step, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, slosh_step, agent_next, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
   arms_json, save_choose_arms, bubbles_step, story_extra_json,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
@@ -458,6 +458,12 @@ async function loadReplay() {
     if (game && game.done()) document.body.dataset.replayDone = '1';
   });
 }
+
+const AGENT = (() => {
+  const v = new URLSearchParams(location.search).get('player');
+  return v !== null && /^\d+$/.test(v) ? Number(v) : null;
+})();
+let AGENT_PLAYED = 0;
 
 function seed() {
   // A fresh match gets a fresh spawn jitter. The seed travels in the replay,
@@ -1241,8 +1247,14 @@ function fight(id, goal = null) {
         button('results.replay.label', () => download(game.replay_bytes(), 'vagrancy.replay')))];
   });
   show(goal ? goalCallout(goal) : '', watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('results.to_road.label', road)));
-  const g = new Road(seed(), tuning(), id, SAVE.state.weapon, !!SAVE.state.four_arms);
-  start(g, withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => {
+  // With ?player=<seed>, the agent flies the player's seat (content::agent,
+  // for Sam's video): each fight's seed is that number plus the fights it
+  // has played, and its level is that count, so a run plays as `lab
+  // agent-run <seed>` printed it. The page sends it only the ready bit.
+  const g = AGENT === null ? new Road(seed(), tuning(), id, SAVE.state.weapon, !!SAVE.state.four_arms)
+    : Road.with_agent(AGENT + AGENT_PLAYED, tuning(), id, SAVE.state.weapon, !!SAVE.state.four_arms, AGENT_PLAYED);
+  if (AGENT !== null) AGENT_PLAYED += 1;
+  start(g, withReady(() => [AGENT === null ? bits(BINDINGS.solo, ACTION_BITS) : 0, 0]), (f) => {
     // Kept before the result is drawn, so the result can name what opened.
     if (!won && game && game.won && game.won()) {
       won = true;
@@ -1612,6 +1624,10 @@ function persist() {
 
 function restore() {
   let text = null;
+  // The agent's run starts from nothing when asked to (?player=<seed>&fresh).
+  if (AGENT !== null && new URLSearchParams(location.search).has('fresh')) {
+    try { for (const k of [AUTOSAVE, 'vagrancy.cursedLevel', 'vagrancy.cursedSet', 'vagrancy.roadView']) localStorage.removeItem(k); } catch (e) { /* storage off */ }
+  }
   try { text = localStorage.getItem(AUTOSAVE); } catch (e) { /* storage off */ }
   try {
     SAVE = JSON.parse(save_read(text || save_fresh()));
@@ -2069,6 +2085,9 @@ async function main() {
   $('status').hidden = true;
   // Hooks for testing/drive.py. They read core; they change nothing.
   window.vagrancy = {
+    // The agent's next fight by core's plan, and how many it has played.
+    agentNext: () => JSON.parse(agent_next(JSON.stringify(SAVE))),
+    agentPlayed: () => AGENT_PLAYED,
     scriptChecksum: (n) => script_checksum(n),
     checksum: () => game && game.checksum(),
     tick: () => game && game.tick(),
@@ -2100,6 +2119,8 @@ async function main() {
   if (m) joinRoom(m[1]); else menu();
   requestAnimationFrame(loop);
   document.body.dataset.ready = '1';
+  // The agent's run for Sam's video: the director works the page.
+  if (AGENT !== null) import('./director.js').then((d) => d.direct()).catch((e) => console.error(e));
 }
 
 main();

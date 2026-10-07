@@ -482,6 +482,60 @@ fn versus(args: &[String]) {
     println!("{} vs {}: {w} won, {l} lost, {u} unfinished of {matches}", args[1], args[2]);
 }
 
+/// The player's run through arcade mode (content::agent), as the video will
+/// play it: each fight's seed is the run's base plus the fights played
+/// before it, so the page plays the same matches. Prints each fight and the
+/// run's length.
+fn agent_run() {
+    use content::road::{Best, Feats};
+    let base: u64 = std::env::args().nth(2).and_then(|a| a.parse().ok()).unwrap_or(7);
+    // The tuning the page plays at: with no ?tuning= in the address, the
+    // page's tuning() reads Number(null), which is 0 (not DEFAULT_TUNING;
+    // reported to Sam, 2026-10-07).
+    let tuning: u8 = std::env::args().nth(3).and_then(|a| a.parse().ok()).unwrap_or(0);
+    let mut best = std::collections::BTreeMap::new();
+    let (mut played, mut ticks) = (0u32, 0u64);
+    println!("targets: {:?}", content::agent::targets());
+    while let Some(stop) = content::agent::next(&best) {
+        let seed = base + played as u64;
+        let mut rec = sim::replay::Recording::new(content::setup::road_with(seed, tuning, &stop, "sword", false));
+        let mut pilots: Vec<Box<dyn pilot::Pilot>> = vec![pilot::build(&content::agent::player(played))];
+        pilots.extend(content::road::crew(&stop).iter().map(pilot::build));
+        let mut last = [Input::NONE; sim::body::SEATS];
+        let mut feats = Feats::default();
+        for _ in 0..60 * 60 * 6 {
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in pilots.iter_mut().enumerate() {
+                p.observe(last);
+                i[k] = p.input(&rec.world, k);
+            }
+            // Between rounds the player presses ready, as the page's Enter does.
+            if !matches!(rec.world.phase, sim::fight::Phase::Fight) {
+                i[0] = Input(i[0].0 | sim::Input::READY);
+            }
+            rec.step_all(i);
+            feats.observe(&rec.world);
+            last = i;
+            if matches!(rec.world.phase, sim::fight::Phase::MatchOver { .. }) {
+                break;
+            }
+        }
+        let w = &rec.world;
+        let won = matches!(w.phase, sim::fight::Phase::MatchOver { .. }) && w.wins[0] > w.wins[1];
+        println!("{:>2} {:<14} level {:>2} {} {}-{} in {:>5} ticks", played + 1, stop, played, if won { "won " } else { "lost" }, w.wins[0], w.wins[1], w.tick);
+        if won {
+            content::road::record(&mut best, &stop, Best::won(w.wins[1], w.tick, "sword").with_feats(feats));
+        }
+        ticks += w.tick as u64;
+        played += 1;
+        if played > 80 {
+            println!("stopped after 80 fights");
+            break;
+        }
+    }
+    println!("{played} fights, {:.1} minutes of play", ticks as f64 / 60.0 / 60.0);
+}
+
 /// A replay whose first round ends with a cut across the head, so the gate
 /// can see the clock held for a headshot and then run on (Sam: "if someone
 /// gets headshot, stop the simulation to focus on it"). Written to
@@ -840,6 +894,7 @@ fn main() {
         Some("rate") => rate(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
+        Some("agent-run") => agent_run(),
         Some("versus") => versus(&args[1..]),
         Some("film") => film(&args[1..]),
         Some("roles") => roles(&args[1..]),

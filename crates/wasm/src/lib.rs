@@ -286,6 +286,9 @@ pub struct Road {
     opponent: String,
     /// What the player carries, as the save will record a win.
     weapon: String,
+    /// The player's seat flown by the agent (content::agent), for the
+    /// video Sam asked for; none when a person holds the keys.
+    agent: Option<Box<dyn pilot::Pilot>>,
 }
 
 #[wasm_bindgen]
@@ -299,12 +302,24 @@ impl Road {
             feats: content::road::Feats::default(),
             opponent: opponent.into(),
             weapon: weapon.into(),
+            agent: None,
         }
+    }
+    /// The same match with the player's seat flown by the agent at `level`
+    /// (content::agent::player): the page passes only the ready bit.
+    pub fn with_agent(seed: u32, tuning: u8, opponent: &str, weapon: &str, four: bool, level: u32) -> Road {
+        let mut r = Road::new(seed, tuning, opponent, weapon, four);
+        r.agent = Some(pilot::build(&content::agent::player(level)));
+        r
     }
     /// One tick: each pilot sees every seat's last input and the world,
     /// and answers with an input of its own.
     pub fn step(&mut self, mine: u16, _other: u16) {
         let mut i = [Input(mine), Input::NONE, Input::NONE];
+        if let Some(a) = self.agent.as_mut() {
+            a.observe(self.last);
+            i[0] = Input(a.input(&self.rec.world, 0).0 | (mine & Input::READY));
+        }
         for (k, p) in self.pilots.iter_mut().enumerate() {
             p.observe(self.last);
             i[k + 1] = p.input(&self.rec.world, k + 1);
@@ -998,6 +1013,14 @@ pub fn weapons_json(save_text: &str) -> Result<String, String> {
         .collect();
     let (won, total) = content::weapons::prize_progress(best);
     Ok(json!({ "weapons": list, "prize": { "won": won, "total": total, "found": content::weapons::prize_found(best) } }).to_string())
+}
+
+/// The fight the agent plays next with this save's results
+/// (content::agent::next), or null once its run is over.
+#[wasm_bindgen]
+pub fn agent_next(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    Ok(json!({ "stop": content::agent::next(&s.road.best), "targets": content::agent::targets() }).to_string())
 }
 
 /// One step of the liquid in the cursed blade's box (content::slosh): the
