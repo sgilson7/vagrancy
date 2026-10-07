@@ -50,7 +50,8 @@
     "ms": "a reaction time in milliseconds, from ticks and the tick rate",
     "wins, losses": "a match's round wins, from the world",
     "command, left, right, cost": "a chat command and what a turn costs, sent by the stream's bot (vagrancy-arena), drawn as data",
-    "first_pct, second_pct": "the chance, as a percent, of the first and second close rules in the BT Lab’s random page, from that page’s tree in web/btlab.js"
+    "first_pct, second_pct": "the chance, as a percent, of the first and second close rules in the BT Lab’s random page, from that page’s tree in web/btlab.js",
+    "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -129,7 +130,8 @@
     "road.view.other": "new: the folded-away switch to the road’s other views",
     "weapons.cursed_blade, weapons.longsword": "new or rewritten (Sam, 2026-10-07): the cursed blade is a sword in reach and weight; the longsword is the villagers’ long blade",
     "road.rumor.start, road.rumor.from": "new: the rumors that show a weapon and who carries it (Sam, 2026-10-07)",
-    "settings.save.reset": "new: the button that starts a fresh save (Sam, 2026-10-07)"
+    "settings.save.reset": "new: the button that starts a fresh save (Sam, 2026-10-07)",
+    "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree"
   },
   "_glossary": {
     "ink": {
@@ -2313,7 +2315,9 @@
       "predict": "Type {left} or {right} to predict the winner. A right prediction earns experience.",
       "xp": "Type {command} to see your experience.",
       "fight": "Type {command} to spend {cost} experience on a turn: you get a join code for the game's online mode and fight on stream.",
-      "submit": "Type {command} and a share code from the BT Lab's editor to put your own tree in the queue."
+      "submit": "Type {command} and a share code from the BT Lab's editor to spend {cost} experience and put your own tree in the queue.",
+      "speed": "Type {command} with {speeds} to change how fast the fights play. After a change, the speed stays put for {seconds} seconds.",
+      "trees": "Type {on} or {off} to show or hide the trees over the fighters for {minutes} minutes. Nobody can change them back until then."
     },
     "queue": "Up next",
     "leaders": "Most experience",

@@ -235,7 +235,9 @@ function how(cmds) {
       el('li', { 'data-copy': 'arena.how.predict' }, t('arena.how.predict', { left: cmds.left, right: cmds.right })),
       el('li', { 'data-copy': 'arena.how.xp' }, t('arena.how.xp', { command: cmds.xp })),
       el('li', { 'data-copy': 'arena.how.fight' }, t('arena.how.fight', { command: cmds.fight, cost: cmds.cost })),
-      el('li', { 'data-copy': 'arena.how.submit' }, t('arena.how.submit', { command: cmds.submit }))));
+      el('li', { 'data-copy': 'arena.how.submit' }, t('arena.how.submit', { command: cmds.submit, cost: cmds.submit_cost })),
+      cmds.speed ? el('li', { 'data-copy': 'arena.how.speed' }, t('arena.how.speed', { command: cmds.speed, speeds: cmds.speeds, seconds: cmds.speed_lock })) : null,
+      cmds.trees_on ? el('li', { 'data-copy': 'arena.how.trees' }, t('arena.how.trees', { on: cmds.trees_on, off: cmds.trees_off, minutes: cmds.trees_minutes })) : null));
 }
 function list(boxId, headKey, items, line) {
   $(boxId).replaceChildren(el('h2', { 'data-copy': headKey }, t(headKey)),
