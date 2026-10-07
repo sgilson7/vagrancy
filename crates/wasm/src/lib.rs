@@ -443,6 +443,7 @@ pub struct StoryRun {
     tuning: u8,
     weapon: String,
     four: bool,
+    last_next: Option<content::story::Next>,
 }
 
 #[wasm_bindgen]
@@ -451,6 +452,22 @@ impl StoryRun {
     pub fn new(seed: u32, tuning: u8, chapter: usize, weapon: &str, four: bool) -> StoryRun {
         let story = content::story::story();
         let run = content::story::Run::new(&story, chapter);
+        StoryRun::with(story, run, seed, tuning, weapon, four)
+    }
+    /// A full run: from the first chapter, the lives carried through, no
+    /// chapter started over.
+    pub fn full(seed: u32, tuning: u8, weapon: &str, four: bool) -> StoryRun {
+        let story = content::story::story();
+        let run = content::story::Run::full(&story);
+        StoryRun::with(story, run, seed, tuning, weapon, four)
+    }
+    /// One scene of the extra chapter.
+    pub fn extra(seed: u32, tuning: u8, index: usize, weapon: &str, four: bool) -> StoryRun {
+        let story = content::story::story();
+        let run = content::story::Run::extra(&story, index);
+        StoryRun::with(story, run, seed, tuning, weapon, four)
+    }
+    fn with(story: content::story::Story, run: content::story::Run, seed: u32, tuning: u8, weapon: &str, four: bool) -> StoryRun {
         let mut s = StoryRun {
             rec: Recording::new(content::setup::versus(0, tuning)),
             pilots: Vec::new(),
@@ -461,6 +478,7 @@ impl StoryRun {
             tuning,
             weapon: weapon.into(),
             four,
+            last_next: None,
         };
         s.begin();
         s
@@ -473,7 +491,7 @@ impl StoryRun {
         self.last = [Input::NONE; sim::body::SEATS];
     }
     fn outcome(&self) -> content::story::Outcome {
-        content::story::outcome(&self.rec.world, self.story.fight_seconds)
+        content::story::outcome(&self.rec.world, self.run.seconds(&self.story))
     }
     /// One tick, while the fight is being played; a fight that is decided
     /// stands still until `after`.
@@ -493,7 +511,7 @@ impl StoryRun {
     /// lives, seconds_left, outcome }`.
     pub fn status(&self) -> String {
         let scene = self.run.scene(&self.story);
-        let left = (self.story.fight_seconds * balance::TICKS_PER_SECOND).saturating_sub(self.rec.world.tick).div_ceil(balance::TICKS_PER_SECOND);
+        let left = (self.run.seconds(&self.story) * balance::TICKS_PER_SECOND).saturating_sub(self.rec.world.tick).div_ceil(balance::TICKS_PER_SECOND);
         let outcome = match self.outcome() {
             content::story::Outcome::Playing => "playing",
             content::story::Outcome::Won => "won",
@@ -505,6 +523,7 @@ impl StoryRun {
             "scene": self.run.scene, "scene_id": scene.id, "kind": format!("{:?}", scene.kind).to_lowercase(),
             "fight": self.run.fight, "fights": scene.fights.len(), "stop": scene.fights[self.run.fight],
             "lives": self.run.lives, "seconds_left": left, "outcome": outcome,
+            "full": self.run.full, "extra": self.run.extra, "rounds": scene.rounds,
         })
         .to_string()
     }
@@ -517,10 +536,31 @@ impl StoryRun {
             return String::new();
         }
         let next = self.run.after(&self.story, o);
-        if next != content::story::Next::End {
+        self.last_next = Some(next);
+        if !matches!(next, content::story::Next::End | content::story::Next::GameOver) {
             self.begin();
         }
-        format!("{next:?}").to_lowercase()
+        match next {
+            content::story::Next::GameOver => "game_over".into(),
+            n => format!("{n:?}").to_lowercase(),
+        }
+    }
+    /// How many chapters this run has cleared, after the last `after`.
+    pub fn cleared(&self) -> u32 {
+        self.last_next.map(|n| self.run.cleared(&self.story, n)).unwrap_or(0)
+    }
+    /// The save with what the last `after` finished: a chapter finished,
+    /// and, in a full run, the chapters it has cleared.
+    pub fn record(&self, save_text: &str) -> Result<String, String> {
+        let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+        let cleared = self.cleared();
+        if self.run.extra.is_none() {
+            s.story = s.story.max(cleared);
+            if self.run.full {
+                s.story_full = s.story_full.max(cleared);
+            }
+        }
+        Ok(content::save::encode(&s))
     }
     /// The save with the chapters finished so far: `chapter` (0-based) done.
     pub fn record_chapter(save_text: &str, chapter: u32) -> Result<String, String> {
@@ -553,6 +593,20 @@ impl StoryRun {
     pub fn recorded_checksum(&self) -> String {
         String::new()
     }
+}
+
+/// The extra chapter for a save: each scene, what it needs and whether
+/// it is open, and the save's best full run.
+#[wasm_bindgen]
+pub fn story_extra_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let story = content::story::story();
+    let extra: Vec<serde_json::Value> = story
+        .extra
+        .iter()
+        .map(|x| json!({ "needs": x.needs, "open": s.story_full >= x.needs, "id": x.scene.id, "kind": format!("{:?}", x.scene.kind).to_lowercase(), "fights": x.scene.fights, "rounds": x.scene.rounds }))
+        .collect();
+    Ok(json!({ "best": s.story_full, "chapters": story.chapters.len(), "lives": story.lives, "extra": extra }).to_string())
 }
 
 /// Story mode's chapters and scenes, for its screen.

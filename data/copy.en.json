@@ -27,7 +27,7 @@
     "weapon": "weapons.<id>.name, from data/weapons.json",
     "region": "road.region.<row>, the name of a row of the arcade mode tree; in story mode, the region the road goes on to",
     "won": "how many fights in a chapter of arcade mode the player has won",
-    "count": "how many requirements a level of the road's tree has, from data/road.json",
+    "count": "a count from core: how many requirements a level of the road's tree has (data/road.json), or how many chapters a full run of story mode cleared or must clear (content::story)",
     "companion": "opponents.<id>.name of the opponent at the player's back on a flanked stop, from data/road.json",
     "target_mid": "opponents.<id>.name_mid of the locked fight a next goal opens, chosen by core (content::road::next_goal)",
     "branches": "how many key combinations a search tries, from data/pilots.json",
@@ -36,7 +36,9 @@
     "lives": "story mode: the lives left in a run, from content::story",
     "fight, fights": "story mode: which fight of a scene, and how many it has",
     "arms": "How many arms the player fights with in that mode, counted by core from the body's hands (wasm arms_json).",
-    "left_opponent, right_opponent": "opponents.<id>.name of the opponent on that side, in watch mode"
+    "left_opponent, right_opponent": "opponents.<id>.name of the opponent on that side, in watch mode",
+    "chapters": "how many chapters story mode has, from data/story.json",
+    "rounds": "the round wins a story scene needs, its `rounds` in data/story.json"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -100,11 +102,12 @@
     "road.next_carry": "new",
     "opponents_boomerang": "new: bird_scarer, hare_hunter, reed_cutter, crow_watcher, shepherd, drum_maker, wind_reader (all five strings each), weapons.boomerang, road.req.thrown, road.req.all_thrown",
     "local_deity": "new: opponents.local_deity (all five strings; renamed the village deity, at Sam's request), weapons.longsword (renamed the cursed blade, at Sam's request; the opponents' introductions still say longsword), road.arms, tree.many, road.region.8",
-    "watch": "new: menu.watch, watch (all its strings), watch.trees, watch.hide_trees, watch.show_trees",
+    "watch": "new: menu.watch, watch (all its strings), watch.trees, watch.hide_trees, watch.show_trees, watch.speed (all three labels)",
     "guardian_deity": "new: opponents.guardian_deity (all five strings), road.quest, road.revealed, road.req.all_flawless, road.region.9, menu.road.desc and weapons.longsword.desc (rewritten for the quest, at Sam's request)",
     "thrown_split": "new: road.req.thrown (rewritten to name the parts, at Sam's request), road.req.bladeless",
     "throw_steps": "new: tree.act.throw_settle, throw_wind, throw_watch, throw_release",
-    "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)"
+    "new_weapons": "new: weapons.chakram, weapons.scythe, weapons.twin_blade, and opponents.hoop_roller, coin_minter, bangle_seller, wheelwright, moon_watcher, quoit_thrower, sun_priest, ring_keeper, hay_mower, gleaner, thatcher, orchard_keeper, grave_digger, sheaf_binder, field_warden, harvest_keeper, stilt_walker, acrobat, lion_dancer, punt_poler, temple_guard, fan_dancer, festival_master, sword_dancer (all five strings each)",
+    "story_full": "new: story.full, story.next.game_over, story.extra, story.scene.x1_giant_general to x8_guardian"
   },
   "_glossary": {
     "ink": {
@@ -1813,7 +1816,8 @@
       "chapter": "You have finished the chapter. The walk goes on to {region}.",
       "end": "You have walked from the rice fields to the far gate.",
       "retry": "You have {lives} lives left, and the scene starts again.",
-      "continue": "You have no lives left, so the chapter starts again with {lives} lives."
+      "continue": "You have no lives left, so the chapter starts again with {lives} lives.",
+      "game_over": "You have no lives left, and the run is over. It cleared {count} chapters."
     },
     "chapter_intro": {
       "0": "The walk starts at the edge of the rice fields. Cross the paddies to the shrine, then face the thresher, who swings in a steady rhythm.",
@@ -1842,7 +1846,33 @@
       "c7_throwers": "The juggler, the woodcutter and the harpooner, one after another. Each throws.",
       "c7_general": "The general and his longsword.",
       "c8_gauntlet": "The gatekeeper, the bellringer and the monk, one after another.",
-      "c8_archivist": "The archivist, grown to a giant, over two rounds."
+      "c8_archivist": "The archivist, grown to a giant, over two rounds.",
+      "x1_giant_general": "The general, grown to a giant half again your size, with his longsword.",
+      "x2_far_gate": "The watchman, the warden and the hermit, one after another: {fights} fights.",
+      "x3_hold_deity": "Stay in the round against the village deity until the clock runs down.",
+      "x4_team_deity": "You and the monk together, against the village deity.",
+      "x5_cross": "Cross the stage past the tanner, with the duelist waiting near the far end.",
+      "x6_masters": "The ring keeper, the harvest keeper and the sword dancer, one after another.",
+      "x7_giant_deity": "The village deity, grown to a giant half again your size.",
+      "x8_guardian": "The guardian deity, the hardest fight in the game, in a long match: the first to win {rounds} rounds takes it."
+    },
+    "full": {
+      "heading": "A full run",
+      "desc": "Walk from the first chapter to the last on {lives} lives that carry from chapter to chapter. No chapter starts over: with no lives left, the run is over. The more chapters you clear in one run, the more fights open in the extra chapter.",
+      "best": "Your best full run cleared {count} of {chapters} chapters.",
+      "start": {
+        "label": "Start a full run"
+      }
+    },
+    "extra": {
+      "heading": "Extra chapter",
+      "intro": "Fights past the end of the walk. Each one opens when a full run clears enough chapters.",
+      "needs": "Clear {count} chapters in one full run to open this fight.",
+      "start": {
+        "label": "Start this fight"
+      },
+      "end": "You have won this fight of the extra chapter.",
+      "game_over": "You have no lives left for this fight. Try it again from the story mode screen."
     }
   },
   "watch": {
@@ -1866,6 +1896,17 @@
     },
     "show_trees": {
       "label": "Show the trees"
+    },
+    "speed": {
+      "full": {
+        "label": "Full speed"
+      },
+      "half": {
+        "label": "Half speed"
+      },
+      "quarter": {
+        "label": "Quarter speed"
+      }
     }
   }
 }

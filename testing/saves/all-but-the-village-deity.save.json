@@ -2093,9 +2093,10 @@
         }
       }
     },
-    "story": 0,
+    "story": 8,
+    "story_full": 8,
     "tutorial": [],
     "weapon": "sword"
   },
-  "version": 10
+  "version": 11
 }

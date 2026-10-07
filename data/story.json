@@ -1,40 +1,279 @@
 {
-  "_about": "Story mode (Sam, 2026-10-06: build the story mode proposed in analysis/story/PROPOSAL.md, after Super Smash Bros. Melee's Adventure Mode). Eight chapters, one per region of the road (road.region.<region>), each a short run of scenes. A scene names fights from data/road.json by stop id, so each opponent brings its pilot, weapon, companion and ground from there. kind: duel (one fight), waves (its fights one after another), hold (stay in the round for hold_s seconds), cross (a stage `stage.half` cm each side of the middle: reach `stage.exit`, past the fight's opponent mid-stage and the stop `ahead` waiting near the end), team (the stop `ally` fights beside you, on your side). Each fight is one round unless rounds says otherwise, on a clock of fight_seconds; a lost fight, or one that runs out of time, costs a life and plays the scene again from its first fight; with no lives left the chapter starts over with lives restored. giant: the opponent is half again its size (content::story::GIANT).",
+  "_about": "Story mode (Sam, 2026-10-06: build the story mode proposed in analysis/story/PROPOSAL.md, after Super Smash Bros. Melee's Adventure Mode). Eight chapters, one per region of the road (road.region.<region>), each a short run of scenes. A scene names fights from data/road.json by stop id, so each opponent brings its pilot, weapon, companion and ground from there. kind: duel (one fight), waves (its fights one after another), hold (stay in the round for hold_s seconds), cross (a stage `stage.half` cm each side of the middle: reach `stage.exit`, past the fight's opponent mid-stage and the stop `ahead` waiting near the end), team (the stop `ally` fights beside you, on your side). Each fight is one round unless rounds says otherwise, on a clock of fight_seconds; a lost fight, or one that runs out of time, costs a life and plays the scene again from its first fight; with no lives left the chapter starts over with lives restored. giant: the opponent is half again its size (content::story::GIANT). A full run starts at the first chapter on the same lives and has no continue: with no lives left the run is over. extra: the extra chapter, each scene opening once a full run has cleared `needs` chapters; a scene may set its own `seconds` for its clock (Sam, 2026-10-06).",
   "lives": 3,
   "fight_seconds": 240,
   "chapters": [
-    {"region": 0, "scenes": [
-      {"id": "c1_cross", "kind": "cross", "fights": ["scarecrow"], "ahead": "thresher", "stage": {"half": 1800, "exit": 1650}},
-      {"id": "c1_thresher", "kind": "duel", "fights": ["thresher"]}
-    ]},
-    {"region": 1, "scenes": [
-      {"id": "c2_drovers", "kind": "waves", "fights": ["drover", "drover", "drover"]},
-      {"id": "c2_courier", "kind": "duel", "fights": ["courier"]}
-    ]},
-    {"region": 2, "scenes": [
-      {"id": "c3_ferryman", "kind": "duel", "fights": ["ferryman"]},
-      {"id": "c3_team", "kind": "team", "fights": ["eel_fisher"], "ally": "ferryman"},
-      {"id": "c3_tea_picker", "kind": "duel", "fights": ["tea_picker"]}
-    ]},
-    {"region": 3, "scenes": [
-      {"id": "c4_well_digger", "kind": "duel", "fights": ["well_digger"]},
-      {"id": "c4_cooper", "kind": "duel", "fights": ["cooper"], "giant": true}
-    ]},
-    {"region": 4, "scenes": [
-      {"id": "c5_reader", "kind": "hold", "fights": ["reader"], "hold_s": 30},
-      {"id": "c5_smith", "kind": "duel", "fights": ["smith"]}
-    ]},
-    {"region": 5, "scenes": [
-      {"id": "c6_roofer", "kind": "duel", "fights": ["roofer"]},
-      {"id": "c6_kite_maker", "kind": "duel", "fights": ["kite_maker"]}
-    ]},
-    {"region": 6, "scenes": [
-      {"id": "c7_throwers", "kind": "waves", "fights": ["juggler", "woodcutter", "harpooner"]},
-      {"id": "c7_general", "kind": "duel", "fights": ["general"]}
-    ]},
-    {"region": 7, "scenes": [
-      {"id": "c8_gauntlet", "kind": "waves", "fights": ["gatekeeper", "bellringer", "monk"]},
-      {"id": "c8_archivist", "kind": "duel", "fights": ["archivist"], "rounds": 2, "giant": true}
-    ]}
+    {
+      "region": 0,
+      "scenes": [
+        {
+          "id": "c1_cross",
+          "kind": "cross",
+          "fights": [
+            "scarecrow"
+          ],
+          "ahead": "thresher",
+          "stage": {
+            "half": 1800,
+            "exit": 1650
+          }
+        },
+        {
+          "id": "c1_thresher",
+          "kind": "duel",
+          "fights": [
+            "thresher"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 1,
+      "scenes": [
+        {
+          "id": "c2_drovers",
+          "kind": "waves",
+          "fights": [
+            "drover",
+            "drover",
+            "drover"
+          ]
+        },
+        {
+          "id": "c2_courier",
+          "kind": "duel",
+          "fights": [
+            "courier"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 2,
+      "scenes": [
+        {
+          "id": "c3_ferryman",
+          "kind": "duel",
+          "fights": [
+            "ferryman"
+          ]
+        },
+        {
+          "id": "c3_team",
+          "kind": "team",
+          "fights": [
+            "eel_fisher"
+          ],
+          "ally": "ferryman"
+        },
+        {
+          "id": "c3_tea_picker",
+          "kind": "duel",
+          "fights": [
+            "tea_picker"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 3,
+      "scenes": [
+        {
+          "id": "c4_well_digger",
+          "kind": "duel",
+          "fights": [
+            "well_digger"
+          ]
+        },
+        {
+          "id": "c4_cooper",
+          "kind": "duel",
+          "fights": [
+            "cooper"
+          ],
+          "giant": true
+        }
+      ]
+    },
+    {
+      "region": 4,
+      "scenes": [
+        {
+          "id": "c5_reader",
+          "kind": "hold",
+          "fights": [
+            "reader"
+          ],
+          "hold_s": 30
+        },
+        {
+          "id": "c5_smith",
+          "kind": "duel",
+          "fights": [
+            "smith"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 5,
+      "scenes": [
+        {
+          "id": "c6_roofer",
+          "kind": "duel",
+          "fights": [
+            "roofer"
+          ]
+        },
+        {
+          "id": "c6_kite_maker",
+          "kind": "duel",
+          "fights": [
+            "kite_maker"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 6,
+      "scenes": [
+        {
+          "id": "c7_throwers",
+          "kind": "waves",
+          "fights": [
+            "juggler",
+            "woodcutter",
+            "harpooner"
+          ]
+        },
+        {
+          "id": "c7_general",
+          "kind": "duel",
+          "fights": [
+            "general"
+          ]
+        }
+      ]
+    },
+    {
+      "region": 7,
+      "scenes": [
+        {
+          "id": "c8_gauntlet",
+          "kind": "waves",
+          "fights": [
+            "gatekeeper",
+            "bellringer",
+            "monk"
+          ]
+        },
+        {
+          "id": "c8_archivist",
+          "kind": "duel",
+          "fights": [
+            "archivist"
+          ],
+          "rounds": 2,
+          "giant": true
+        }
+      ]
+    }
+  ],
+  "extra": [
+    {
+      "needs": 1,
+      "scene": {
+        "id": "x1_giant_general",
+        "kind": "duel",
+        "fights": [
+          "general"
+        ],
+        "giant": true
+      }
+    },
+    {
+      "needs": 2,
+      "scene": {
+        "id": "x2_far_gate",
+        "kind": "waves",
+        "fights": [
+          "watchman",
+          "warden",
+          "hermit"
+        ]
+      }
+    },
+    {
+      "needs": 3,
+      "scene": {
+        "id": "x3_hold_deity",
+        "kind": "hold",
+        "fights": [
+          "local_deity"
+        ],
+        "hold_s": 45
+      }
+    },
+    {
+      "needs": 4,
+      "scene": {
+        "id": "x4_team_deity",
+        "kind": "team",
+        "fights": [
+          "local_deity"
+        ],
+        "ally": "monk"
+      }
+    },
+    {
+      "needs": 5,
+      "scene": {
+        "id": "x5_cross",
+        "kind": "cross",
+        "fights": [
+          "tanner"
+        ],
+        "ahead": "duelist",
+        "stage": {
+          "half": 1800,
+          "exit": 1650
+        }
+      }
+    },
+    {
+      "needs": 6,
+      "scene": {
+        "id": "x6_masters",
+        "kind": "waves",
+        "fights": [
+          "ring_keeper",
+          "harvest_keeper",
+          "sword_dancer"
+        ]
+      }
+    },
+    {
+      "needs": 7,
+      "scene": {
+        "id": "x7_giant_deity",
+        "kind": "duel",
+        "fights": [
+          "local_deity"
+        ],
+        "giant": true
+      }
+    },
+    {
+      "needs": 8,
+      "scene": {
+        "id": "x8_guardian",
+        "kind": "duel",
+        "fights": [
+          "guardian_deity"
+        ],
+        "rounds": 6,
+        "seconds": 900
+      }
+    }
   ]
 }

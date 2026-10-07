@@ -19,6 +19,18 @@ pub struct Story {
     pub lives: u32,
     pub fight_seconds: u32,
     pub chapters: Vec<Chapter>,
+    /// The extra chapter (Sam, 2026-10-06): scenes past the walk, each open
+    /// once a full run has cleared `needs` chapters.
+    #[serde(default)]
+    pub extra: Vec<Extra>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Extra {
+    /// Chapters a full run must clear to open it.
+    pub needs: u32,
+    pub scene: Scene,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -75,6 +87,10 @@ pub struct Scene {
     /// Team: the ally fighting beside you (a stop's pilot and weapon).
     #[serde(default)]
     pub ally: Option<String>,
+    /// Its own clock, in seconds, for a fight of many rounds; the story's
+    /// `fight_seconds` if unset.
+    #[serde(default)]
+    pub seconds: Option<u32>,
 }
 
 fn one() -> u32 {
@@ -177,6 +193,8 @@ pub enum Next {
     Retry,
     /// No lives left: the chapter again from its first scene, lives restored.
     Continue,
+    /// No lives left in a full run or an extra scene: the run is over.
+    GameOver,
 }
 
 /// Where a run stands.
@@ -186,15 +204,49 @@ pub struct Run {
     pub scene: usize,
     pub fight: usize,
     pub lives: u32,
+    /// A full run (Sam, 2026-10-06: "start from chapter 1 and have to
+    /// complete all the chapters until the final chapter on 3 lives"): the
+    /// lives carry from chapter to chapter and nothing starts over.
+    pub full: bool,
+    /// Playing one scene of the extra chapter, by index.
+    pub extra: Option<usize>,
 }
 
 impl Run {
     pub fn new(story: &Story, chapter: usize) -> Run {
-        Run { chapter, scene: 0, fight: 0, lives: story.lives }
+        Run { chapter, scene: 0, fight: 0, lives: story.lives, full: false, extra: None }
+    }
+
+    /// A full run, from the first chapter.
+    pub fn full(story: &Story) -> Run {
+        Run { full: true, ..Run::new(story, 0) }
+    }
+
+    /// One scene of the extra chapter.
+    pub fn extra(story: &Story, index: usize) -> Run {
+        Run { extra: Some(index), ..Run::new(story, 0) }
     }
 
     pub fn scene<'a>(&self, story: &'a Story) -> &'a Scene {
-        &story.chapters[self.chapter].scenes[self.scene]
+        match self.extra {
+            Some(i) => &story.extra[i].scene,
+            None => &story.chapters[self.chapter].scenes[self.scene],
+        }
+    }
+
+    /// The clock on this scene's fights, in seconds.
+    pub fn seconds(&self, story: &Story) -> u32 {
+        self.scene(story).seconds.unwrap_or(story.fight_seconds)
+    }
+
+    /// How many chapters this run has cleared, said after `after` returned
+    /// `next`: the chapter it has moved on to, or all of them at the end.
+    pub fn cleared(&self, story: &Story, next: Next) -> u32 {
+        match (self.extra, next) {
+            (Some(_), _) => 0,
+            (None, Next::End) => story.chapters.len() as u32,
+            (None, _) => self.chapter as u32,
+        }
     }
 
     /// Move on after a fight, and say where to.
@@ -207,6 +259,9 @@ impl Run {
                     return Next::Fight;
                 }
                 self.fight = 0;
+                if self.extra.is_some() {
+                    return Next::End;
+                }
                 if self.scene + 1 < story.chapters[self.chapter].scenes.len() {
                     self.scene += 1;
                     return Next::Scene;
@@ -223,6 +278,9 @@ impl Run {
                 if self.lives > 1 {
                     self.lives -= 1;
                     Next::Retry
+                } else if self.full || self.extra.is_some() {
+                    self.lives = 0;
+                    Next::GameOver
                 } else {
                     self.scene = 0;
                     self.lives = story.lives;

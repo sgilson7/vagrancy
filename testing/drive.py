@@ -914,6 +914,23 @@ def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
     page.select_option("#watch-1", "juggler")
     click_copy(page, "watch.start.label")
     page.wait_for_selector('[data-copy="hud.round"]')
+    # Quarter speed: the clock runs about a quarter as fast (Sam: "1/2 speed
+    # and at 1/4 speed to make the behavior trees easier to observe").
+    # Measured from the match's start, slow first, while no round can be
+    # over: measured later, Firefox's match had ended and its clock stood.
+    def rate():
+        t0 = page.evaluate("window.vagrancy.tick()")
+        page.wait_for_timeout(1000)
+        return page.evaluate("window.vagrancy.tick()") - t0
+    # Against the game's own rate (sim::balance::TICKS_PER_SECOND): a
+    # second at full speed can fall across the pause between rounds.
+    import re
+    tps = int(re.search(r"pub const TICKS_PER_SECOND: u32 = (\d+);", (ROOT / "crates" / "sim" / "src" / "balance.rs").read_text()).group(1))
+    click_copy(page, "watch.speed.quarter.label")
+    slow = rate()
+    click_copy(page, "watch.speed.full.label")
+    if not (0 < slow <= tps * 0.45):
+        fails.append(f"{name}: at quarter speed the clock ran {slow} ticks a second; the game runs {tps}")
     seen = set()
     for _ in range(20):
         page.wait_for_timeout(100)
@@ -1005,6 +1022,53 @@ def story_mode_plays_a_scene_and_moves_on(page, name):
     click_copy(page, "menu.back.label")
     if not fails:
         print(f"ok: {name}: story mode shows its chapters, plays the first scene ({got[0]}) and moves the run on ({got[1]})")
+    return fails
+
+
+@check
+def story_mode_runs_in_full_and_opens_its_extra_chapter(page, name):
+    # Sam, 2026-10-06: "a run where you start from chapter 1 and have to
+    # complete all the chapters until the final chapter on 3 lives ... based
+    # on how far you managed to get ... you unlock fights in an EXTRA chapter
+    # ... the final one being having to fight the hardest enemy in the game".
+    fails = []
+    story = json.loads((ROOT / "data" / "story.json").read_text())
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.story.label")
+    page.wait_for_selector("#story-extra .chapter")
+    n = page.locator("#story-extra .chapter").count()
+    if n != len(story["extra"]) or page.locator("#story-extra .chapter.open").count() != 0:
+        fails.append(f"{name}: a fresh save shows {n} extra fights with {page.locator('#story-extra .chapter.open').count()} open")
+    click_copy(page, "story.full.start.label")
+    page.wait_for_selector('[data-copy="story.begin.label"]')
+    if "1" not in page.locator('[data-copy="road.chapter"]').inner_text():
+        fails.append(f"{name}: a full run did not start at the first chapter")
+    click_copy(page, "menu.back.label")
+    # A save whose full run cleared the walk: each extra fight open, and the
+    # last is the guardian deity.
+    text = (ROOT / "testing" / "saves" / "all-but-the-guardian-deity.save.json").read_text()
+    page.evaluate("t => localStorage.setItem('vagrancy.autosave', t)", text)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.story.label")
+    page.wait_for_selector("#story-extra .chapter")
+    if page.locator("#story-extra .chapter.open").count() != len(story["extra"]):
+        fails.append(f"{name}: a save that cleared the walk opens {page.locator('#story-extra .chapter.open').count()} extra fights")
+    fails += every_visible_line_is_a_copy_string(page, name + " (story with the extra chapter)")
+    page.click(f'[data-extra="{len(story["extra"]) - 1}"] [data-copy="story.extra.start.label"]')
+    page.wait_for_selector('[data-copy="story.begin.label"]')
+    if page.locator('[data-copy="story.extra.heading"]').count() != 1 or page.locator('[data-copy="opponents.guardian_deity.name"]').count() != 1:
+        fails.append(f"{name}: the last extra fight's card is not the guardian deity's")
+    fails += every_visible_line_is_a_copy_string(page, name + " (the last extra fight)")
+    click_copy(page, "menu.back.label")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: a full run starts at chapter one, and the extra chapter opens by the best run, ending with the guardian deity")
     return fails
 
 

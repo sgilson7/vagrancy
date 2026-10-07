@@ -31,7 +31,9 @@ pub const FORMAT: &str = "vagrancy.save";
 /// is, with two.
 /// 10: each best result says whether a won match there had a round won with
 /// no blade in hand. A version 9 file reads as it is, with none.
-pub const VERSION: u32 = 10;
+/// 11: the most chapters cleared in one full run of story mode. A version
+/// 10 file reads as it is, with none.
+pub const VERSION: u32 = 11;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -50,6 +52,10 @@ pub struct SaveState {
     /// only when on.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub four_arms: bool,
+    /// The most chapters cleared in one full run of story mode. Written
+    /// only when there are some.
+    #[serde(default)]
+    pub story_full: u32,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -110,11 +116,13 @@ pub fn fresh() -> SaveState {
         weapon: crate::weapons::DEFAULT.to_string(),
         story: 0,
         four_arms: false,
+        story_full: 0,
     }
 }
 
 /// A save with each fight on the road won 3 rounds to none, with each feat
-/// a requirement can ask for, except the fights named in `unwon`: for Sam
+/// a requirement can ask for, and story mode cleared in a full run, except
+/// the fights named in `unwon`: for Sam
 /// to try the end of arcade mode without playing to it (`lab test-saves`,
 /// testing/saves/).
 pub fn finished(unwon: &[&str]) -> SaveState {
@@ -124,12 +132,16 @@ pub fn finished(unwon: &[&str]) -> SaveState {
         let best = crate::road::Best { losses: 0, ticks: 3600, with: with.clone(), headshot: true, untouched: true, thrown: true, all_thrown: true, bladeless: true };
         s.road.best.insert(st.id, best);
     }
+    // And story mode walked, in a full run: the extra chapter open.
+    let chapters = crate::story::story().chapters.len() as u32;
+    s.story = chapters;
+    s.story_full = chapters;
     s
 }
 
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
-    let SaveState { road, bindings, options, tutorial, weapon, story, four_arms } = s;
+    let SaveState { road, bindings, options, tutorial, weapon, story, four_arms, story_full } = s;
     let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
@@ -148,6 +160,9 @@ pub fn encode(s: &SaveState) -> String {
     // Written only when on, like the field's default.
     if *four_arms {
         body["state"]["four_arms"] = json!(true);
+    }
+    if *story_full > 0 {
+        body["state"]["story_full"] = json!(story_full);
     }
     serde_json::to_string_pretty(&body).expect("a save always encodes")
 }
@@ -247,17 +262,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV1 { road, bindings, options } = v1.state;
         let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
-        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
+        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
     } else if version < 3 {
         // No tutorial yet.
         let v2: FileV2 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV2 { road, bindings, options } = v2.state;
-        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
+        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
     } else if version < 4 {
         // No weapon chosen yet: the sword.
         let v3: FileV3 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV3 { road, bindings, options, tutorial } = v3.state;
-        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false }
+        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
     } else {
         let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         file.state
@@ -294,7 +309,7 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
 /// Known stops, the six actions in every group, no key used twice in a
 /// group, a volume in range.
 fn validate(s: &SaveState) -> bool {
-    if s.story as usize > crate::story::story().chapters.len() {
+    if s.story as usize > crate::story::story().chapters.len() || s.story_full as usize > crate::story::story().chapters.len() {
         return false;
     }
     let stops = crate::road::stops();

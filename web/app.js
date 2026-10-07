@@ -5,7 +5,7 @@
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
   road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
-  arms_json, save_choose_arms, bubbles_step,
+  arms_json, save_choose_arms, bubbles_step, story_extra_json,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import { renderer } from './draw.js';
@@ -82,6 +82,10 @@ let seats = () => [0, 0];
 let prevFrame = null;
 let curFrame = null;
 let acc = 0;
+// How fast real time feeds the clock: 1, or a half or a quarter in watch
+// mode, so the trees are easier to follow (Sam, 2026-10-06). The world steps
+// the same ticks, fewer of them each second; nothing about a match changes.
+let SPEED = 1;
 let last = 0;
 let draw = null;
 // Until when the clock is held for a headshot, and where to look.
@@ -148,6 +152,7 @@ function stop() {
   popupHide();
   if (draw && draw.trees) draw.trees([]);
   game = null;
+  SPEED = 1;
   $('stage').hidden = true;
   $('hud').hidden = true;
   music.fight(false);
@@ -156,7 +161,7 @@ function stop() {
 function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (game) {
-    acc += Math.min(now - (last || now), 250);
+    acc += Math.min(now - (last || now), 250) * SPEED;
     // Catch up at most eight ticks a frame, so a stalled tab does not
     // replay a burst of stale keys (Floodline caps its catch-up the same way).
     let n = 0;
@@ -1109,23 +1114,49 @@ function storyMode() {
     else kids.push(say('story.locked', {}, { class: 'desc' }));
     return el('article', { class: `chapter ${i < done ? 'done' : i <= done ? 'open' : 'locked'}`, 'data-chapter': String(i) }, ...kids);
   });
+  // The full run, and the extra chapter its best opens (Sam, 2026-10-06).
+  const ex = JSON.parse(story_extra_json(JSON.stringify(SAVE)));
+  const full = el('section', { id: 'story-full' },
+    el('h3', { 'data-copy': 'story.full.heading' }, t('story.full.heading')),
+    say('story.full.desc', { lives: ex.lives }, { class: 'desc' }),
+    say('story.full.best', { count: ex.best, chapters: ex.chapters }),
+    el('div', { class: 'actions' }, button('story.full.start.label', storyPlayFull)));
+  const extras = ex.extra.map((x, i) => {
+    const kids = [say(`story.scene.${x.id}`, { fights: x.fights.length, rounds: x.rounds })];
+    if (x.open) kids.push(el('div', { class: 'actions' }, button('story.extra.start.label', () => storyPlayExtra(i))));
+    else kids.push(say('story.extra.needs', { count: x.needs }, { class: 'desc' }));
+    return el('article', { class: `chapter ${x.open ? 'open' : 'locked'}`, 'data-extra': String(i) }, ...kids);
+  });
   show(say('story.intro', { seconds: st.fight_seconds }, { class: 'desc' }),
+    full,
     el('section', { id: 'story-chapters' }, ...chapters),
+    el('section', { id: 'story-extra' },
+      el('h3', { 'data-copy': 'story.extra.heading' }, t('story.extra.heading')),
+      say('story.extra.intro', {}, { class: 'desc' }), ...extras),
     el('div', { class: 'actions' }, button('menu.back.label', menu)));
 }
 
 function storyPlay(chapter) {
   storyCard(new StoryRun(seed(), tuning(), chapter, SAVE.state.weapon, !!SAVE.state.four_arms));
 }
+function storyPlayFull() {
+  storyCard(StoryRun.full(seed(), tuning(), SAVE.state.weapon, !!SAVE.state.four_arms));
+}
+function storyPlayExtra(i) {
+  storyCard(StoryRun.extra(seed(), tuning(), i, SAVE.state.weapon, !!SAVE.state.four_arms));
+}
 
 // Before each fight: the chapter, and what this scene asks.
 function storyCard(run) {
   stop();
   const s = JSON.parse(run.status());
-  const scene = JSON.parse(story_json()).chapters[s.chapter].scenes[s.scene];
-  show(el('h3', { 'data-copy': 'road.chapter' }, t('road.chapter', { n: s.chapter + 1, region: t(`road.region.${s.region}`) })),
-    s.scene === 0 && s.fight === 0 ? say(`story.chapter_intro.${s.region}`, {}, { class: 'desc' }) : '',
-    say(`story.scene.${s.scene_id}`, { fights: scene.fights.length }),
+  const extra = s.extra !== null && s.extra !== undefined;
+  const heading = extra
+    ? el('h3', { 'data-copy': 'story.extra.heading' }, t('story.extra.heading'))
+    : el('h3', { 'data-copy': 'road.chapter' }, t('road.chapter', { n: s.chapter + 1, region: t(`road.region.${s.region}`) }));
+  show(heading,
+    !extra && s.scene === 0 && s.fight === 0 ? say(`story.chapter_intro.${s.region}`, {}, { class: 'desc' }) : '',
+    say(`story.scene.${s.scene_id}`, { fights: s.fights, rounds: s.rounds }),
     el('h4', { 'data-copy': `opponents.${s.stop}.name` }, t(`opponents.${s.stop}.name`)),
     say(`opponents.${s.stop}.place`, {}, { class: 'desc' }),
     storyHud(s),
@@ -1165,16 +1196,18 @@ function storyFight(run) {
 function storyAfter(run, s) {
   if (game !== run) return;
   const next = run.after();
-  if (next === 'chapter' || next === 'end') {
-    SAVE = JSON.parse(save_read(StoryRun.record_chapter(JSON.stringify(SAVE), s.chapter)));
+  if (next === 'chapter' || next === 'end' || next === 'game_over') {
+    SAVE = JSON.parse(save_read(run.record(JSON.stringify(SAVE))));
     persist();
   }
   const after = JSON.parse(run.status());
   stop();
+  // An extra scene ends on its own words; a run, on how far it got.
+  const key = after.extra !== null && after.extra !== undefined && (next === 'end' || next === 'game_over') ? `story.extra.${next}` : `story.next.${next}`;
   show(say(`story.${s.outcome}`),
-    say(`story.next.${next}`, { lives: after.lives, region: t(`road.region.${after.region}`) }),
+    say(key, { lives: after.lives, region: t(`road.region.${after.region}`), count: run.cleared() }),
     el('div', { class: 'actions' },
-      button('story.go_on.label', next === 'end' ? storyMode : () => storyCard(run)),
+      button('story.go_on.label', next === 'end' || next === 'game_over' ? storyMode : () => storyCard(run)),
       button('menu.back.label', storyMode)));
   document.body.dataset.storyNext = next;
   const first = $('screen').querySelector('button');
@@ -1366,6 +1399,7 @@ function watchFight() {
   show(watch.panel,
     say('watch.watching', { left_opponent: t(`opponents.${left}.name`), right_opponent: t(`opponents.${right}.name`) }, { class: 'desc' }),
     toggle,
+    speedButtons(),
     el('div', { class: 'actions' }, button('watch.random.label', () => { watchRandom(ids); watchFight(); }), button('menu.watch.label', watchMode)));
   const caption = (n) => t('tree.now', { node: n.text });
   const g = new Exhibition(seed(), tuning(), left, right, MAP_CHOICE.watch);
@@ -1375,6 +1409,22 @@ function watchFight() {
     LAST_TRACES = traces;
     draw.trees(watchTrees() ? traces.map((tr) => ({ seat: tr.seat, tree: treeOf(WATCH[tr.seat]), trace: tr, caption })) : []);
   });
+  SPEED = WATCH_SPEED;
+}
+
+// Watch mode's speed, kept from one match to the next in this visit.
+let WATCH_SPEED = 1;
+const SPEEDS = [[1, 'watch.speed.full.label'], [0.5, 'watch.speed.half.label'], [0.25, 'watch.speed.quarter.label']];
+function speedButtons() {
+  const box = el('div', { class: 'actions', id: 'watch-speed', role: 'group' });
+  const draw = () => box.replaceChildren(...SPEEDS.map(([v, key]) => {
+    const b = button(key, () => { WATCH_SPEED = v; SPEED = v; draw(); });
+    b.classList.toggle('picked', WATCH_SPEED === v);
+    b.setAttribute('aria-pressed', String(WATCH_SPEED === v));
+    return b;
+  }));
+  draw();
+  return box;
 }
 
 // --- the save file (D15) ----------------------------------------------------------------

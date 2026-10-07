@@ -177,3 +177,92 @@ fn in_a_team_fight_the_ally_fights_the_opponent_and_never_the_player() {
     }
     assert!(ally_cuts > 0, "the ally never cut the opponent");
 }
+
+// --- the full run and the extra chapter (Sam, 2026-10-06) ------------------------
+
+#[test]
+fn a_full_run_carries_its_lives_from_chapter_to_chapter_and_ends_when_they_run_out() {
+    use content::story::{Next, Outcome, Run};
+    let st = story();
+    let mut run = Run::full(&st);
+    assert_eq!((run.chapter, run.lives), (0, st.lives));
+    // Lose a life in the first chapter, then clear it: the lost life stays
+    // lost in the next chapter.
+    assert_eq!(run.after(&st, Outcome::Lost), Next::Retry);
+    let mut next = Next::Retry;
+    while next != Next::Chapter {
+        next = run.after(&st, Outcome::Won);
+    }
+    assert_eq!((run.chapter, run.lives), (1, st.lives - 1));
+    assert_eq!(run.cleared(&st, next), 1);
+    // The rest of the lives go, and the run is over: no chapter starts again.
+    for _ in 0..st.lives - 2 {
+        assert_eq!(run.after(&st, Outcome::OutOfTime), Next::Retry);
+    }
+    assert_eq!(run.after(&st, Outcome::Lost), Next::GameOver);
+    assert_eq!(run.cleared(&st, Next::GameOver), 1);
+    // A chapter played on its own still starts over.
+    let mut one = Run::new(&st, 0);
+    for _ in 0..st.lives - 1 {
+        one.after(&st, Outcome::Lost);
+    }
+    assert_eq!(one.after(&st, Outcome::Lost), Next::Continue);
+}
+
+#[test]
+fn a_full_run_that_clears_the_walk_has_cleared_each_chapter() {
+    use content::story::{Next, Outcome, Run};
+    let st = story();
+    let mut run = Run::full(&st);
+    let mut next = run.after(&st, Outcome::Won);
+    while next != Next::End {
+        next = run.after(&st, Outcome::Won);
+    }
+    assert_eq!(run.cleared(&st, next), st.chapters.len() as u32);
+}
+
+#[test]
+fn the_extra_chapter_opens_a_fight_per_chapter_cleared_and_ends_with_the_hardest_fight_in_a_long_match() {
+    use content::story::{Next, Outcome, Run};
+    let st = story();
+    let needs: Vec<u32> = st.extra.iter().map(|x| x.needs).collect();
+    assert_eq!(needs, (1..=st.chapters.len() as u32).collect::<Vec<_>>(), "each chapter cleared should open one more extra fight");
+    // The last: the guardian deity, the yardstick's hardest (crates/content/
+    // tests/guardian.rs), first to win more rounds than a match asks, on a
+    // clock long enough for them.
+    let last = &st.extra.last().unwrap().scene;
+    assert_eq!(last.fights, ["guardian_deity"]);
+    assert!(last.rounds > sim::balance::ROUNDS_TO_WIN, "the last extra fight is not a long match");
+    assert!(last.seconds.unwrap_or(st.fight_seconds) > st.fight_seconds * 3);
+    let k = st.extra.len() - 1;
+    let w = World::new(setup(1, sim::balance::DEFAULT_TUNING, last, 0, "sword", false));
+    assert_eq!(w.setup.rounds_to_win, last.rounds);
+    assert_eq!(w.swords_of(1).len(), 4, "the last extra fight is not the eight-armed guardian");
+    // An extra scene is one scene: won, it ends; with no lives left, it is over.
+    let mut run = Run::extra(&st, k);
+    assert_eq!(run.seconds(&st), last.seconds.unwrap());
+    assert_eq!(run.after(&st, Outcome::Won), Next::End);
+    let mut run = Run::extra(&st, k);
+    for _ in 0..st.lives - 1 {
+        run.after(&st, Outcome::Lost);
+    }
+    assert_eq!(run.after(&st, Outcome::Lost), Next::GameOver);
+    // Each extra scene's fights are on the road and have words.
+    let copy: serde_json::Value = serde_json::from_str(content::copy::COPY_JSON).unwrap();
+    for x in &st.extra {
+        for id in x.scene.fights.iter().chain(x.scene.ahead.iter()).chain(x.scene.ally.iter()) {
+            assert!(content::road::stop(id).is_some(), "{} names {id}, not on the road", x.scene.id);
+        }
+        assert!(copy["story"]["scene"][&x.scene.id].is_string(), "no words for {}", x.scene.id);
+    }
+}
+
+#[test]
+fn a_save_keeps_the_best_full_run_and_refuses_more_chapters_than_there_are() {
+    use content::save::{decode, encode, fresh};
+    let mut s = fresh();
+    s.story_full = 3;
+    assert_eq!(decode(&encode(&s)).unwrap().story_full, 3);
+    s.story_full = story().chapters.len() as u32 + 1;
+    assert!(decode(&encode(&s)).is_err(), "a full run that cleared more chapters than there are was loaded");
+}
