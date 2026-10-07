@@ -186,6 +186,8 @@ pub struct World {
     pub round: u32,
     /// Ticks fought in the round under way.
     pub round_ticks: u32,
+    /// Ticks since the last round ended (`balance::REST_TICKS`).
+    pub rest_ticks: u32,
     pub wins: [u32; 2],
     /// Blade and part pairs in contact at the end of last tick: one cut per
     /// blade, per part, per contact (D11).
@@ -214,6 +216,7 @@ impl World {
             phase: crate::fight::Phase::Fight,
             round: 1,
             round_ticks: 0,
+            rest_ticks: 0,
             wins: [0, 0],
             touching: Vec::new(),
             clashing: Vec::new(),
@@ -232,6 +235,7 @@ impl World {
         self.clashing.clear();
         self.disarmed_since = None;
         self.round_ticks = 0;
+        self.rest_ticks = 0;
         self.next_piece = 0;
         self.particles.clear();
         self.parts.clear();
@@ -405,6 +409,8 @@ impl World {
         self.judge();
         if matches!(self.phase, crate::fight::Phase::Fight) {
             self.round_ticks += 1;
+        } else {
+            self.rest_ticks += 1;
         }
         self.tick += 1;
     }

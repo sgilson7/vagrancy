@@ -571,8 +571,10 @@ impl World {
             Phase::Fight => false,
             Phase::MatchOver { .. } => true,
             Phase::RoundOver { result, mut ready } => {
+                // Ready counts only once the rest after the round is over.
+                let rested = self.rest_ticks >= crate::balance::REST_TICKS;
                 for s in 0..SEATS {
-                    if inputs[s].has(Input::READY) || self.setup.seats[s].is_none() {
+                    if rested && inputs[s].has(Input::READY) || self.setup.seats[s].is_none() {
                         ready[s] = true;
                     }
                 }

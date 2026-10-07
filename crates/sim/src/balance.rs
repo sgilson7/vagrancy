@@ -10,6 +10,11 @@ use crate::fx::Fx;
 pub const TICKS_PER_SECOND: u32 = 60;
 /// Rounds a fighter must win to win the match (D13; Sam, Q8).
 pub const ROUNDS_TO_WIN: u32 = 3;
+/// Ticks after a round ends before the next can start, however soon each
+/// seat says it is ready: the fallen fall, and the player sees who it was
+/// (Sam, 2026-10-07: "after someone dies there needs to be like a samurai
+/// pause moment to see who died"). An opponent was ready on the next tick.
+pub const REST_TICKS: u32 = 90;
 /// Constraint relaxation passes per tick, in a fixed order (D4). *(guess)*
 pub const ITERATIONS: u32 = 8;
 

@@ -97,11 +97,27 @@ let FREEZE = null;
 // zoom into the cut ... then zoom back out and start the next round").
 // The page keeps the last REPLAY_TICKS frames core sent and draws them
 // again at REPLAY_SPEED; it integrates nothing.
-const REPLAY_TICKS = 60;
-const REPLAY_SPEED = 0.3;
+// First the fight runs on slowly for a moment while the view closes in on
+// whoever fell, inside the rest core holds after each round
+// (balance::REST_TICKS; Sam: "a samurai pause moment to see who died");
+// then, unless the player turned it off, the replay.
+const PAUSE_MS = 1600;
+const PAUSE_SPEED = 0.4;
+const REPLAY_TICKS = 90;
+const REPLAY_SPEED = 0.4;
+const OUT_MS = 700;
 let RECENT = [];
 let REPLAY = null; // { frames, start }
-const HOLD_MS = Math.round((REPLAY_TICKS * 1000) / 60 / REPLAY_SPEED) + 700;
+let ENDING = null; // { pauseUntil, replayed }
+// Whether each round's end is replayed: this browser's choice, on unless
+// turned off in Settings (Sam: "you have to be able to turn off the
+// extended end of round replays").
+function replaysOn() {
+  try { return localStorage.getItem('vagrancy.roundReplays') !== 'off'; } catch { return true; }
+}
+function holdMs() {
+  return PAUSE_MS + (replaysOn() && !stillMotion() ? Math.round((REPLAY_TICKS * 1000) / 60 / REPLAY_SPEED) : 0) + OUT_MS;
+}
 // And for at least this many drawn frames: where frames come slowly (CI's
 // headless Firefox, a loaded laptop), a hold measured in time alone could
 // end between two frames, so the card showed for one frame and was gone
@@ -120,6 +136,7 @@ function start(g, seatFn, tickFn = null) {
   acc = 0;
   RECENT = [];
   REPLAY = null;
+  ENDING = null;
   draw.reset();
   $('stage').hidden = false;
   music.fight(!game.is_replay());
@@ -182,7 +199,22 @@ function stop() {
 function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (game) {
-    acc += Math.min(now - (last || now), 250) * SPEED;
+    // A round has just ended: the fight runs on slowly for a moment, then
+    // its end is played again (if wanted) with the clock held.
+    let pace = SPEED;
+    if (ENDING && performance.now() < ENDING.pauseUntil) pace *= PAUSE_SPEED;
+    else if (ENDING && !ENDING.replayed) {
+      ENDING.replayed = true;
+      const ms = holdMs() - PAUSE_MS;
+      if (replaysOn() && !stillMotion() && RECENT.length > 1) {
+        REPLAY = { frames: RECENT.slice(), start: performance.now() };
+        // Only the replay closes in (Sam: "the initial kill should not zoom
+        // in, only the replay should").
+        draw.focus({ at: ENDING.at, start: REPLAY.start, dur: ms, still: false });
+      }
+      FREEZE = { until: performance.now() + ms - OUT_MS, frames: 0 };
+    }
+    acc += Math.min(now - (last || now), 250) * pace;
     // Catch up at most eight ticks a frame, so a stalled tab does not
     // replay a burst of stale keys (Floodline caps its catch-up the same way).
     let n = 0;
@@ -261,6 +293,8 @@ function matchWatcher(opponent, endButtons, names = null) {
         popupHide();
         // The next round named over the arena, so one round reads apart
         // from the last.
+        ENDING = null;
+        REPLAY = null;
         if (frame.round > 1) popupRound(frame.round);
         return;
       }
@@ -271,9 +305,7 @@ function matchWatcher(opponent, endButtons, names = null) {
       popupShow(said);
       if (said.focus) {
         const start = performance.now();
-        FREEZE = { until: start + HOLD_MS, frames: 0 };
-        if (!stillMotion() && RECENT.length > 1) REPLAY = { frames: RECENT.slice(), start };
-        draw.focus({ at: said.focus, start, dur: HOLD_MS, still: stillMotion() });
+        ENDING = { pauseUntil: start + PAUSE_MS, replayed: false, at: said.focus };
       }
       const kids = [sayChosen(said.round, { class: 'result' })];
       if (said.match) {
@@ -1272,7 +1304,7 @@ function fight(id, goal = null) {
     if (won && f.phase === 'match_over' && !cardShown) {
       cardShown = true;
       const mine = game;
-      setTimeout(() => { if (game === mine) popupMatchWon(opened, next, revealed); }, FREEZE ? HOLD_MS + 700 : 1600);
+      setTimeout(() => { if (game === mine) popupMatchWon(opened, next, revealed); }, ENDING ? holdMs() + 700 : 1600);
     }
   });
 }
@@ -1369,7 +1401,7 @@ function storyFight(run) {
       decided = true;
       document.body.dataset.storyOutcome = s.outcome;
       // Let the last round's card be read, then say how the fight went.
-      setTimeout(() => storyAfter(run, s), FREEZE ? HOLD_MS + 900 : 1400);
+      setTimeout(() => storyAfter(run, s), ENDING ? holdMs() + 900 : 1400);
     }
   });
 }
@@ -1924,7 +1956,19 @@ function beginOnline(net) {
 
 function settings() {
   stop();
-  show(musicSection(), youtubeSection(), keysSection(), saveSection(), button('menu.back.label', menu));
+  show(musicSection(), youtubeSection(), roundsSection(), keysSection(), saveSection(), button('menu.back.label', menu));
+}
+
+// The end of each round: the replay can be turned off, which keeps the
+// pause after the deciding cut.
+function roundsSection() {
+  const box = el('input', { type: 'checkbox', id: 'round-replays', checked: replaysOn() || null, on: { change: (e) => {
+    try { localStorage.setItem('vagrancy.roundReplays', e.target.checked ? 'on' : 'off'); } catch { /* storage off */ }
+  } } });
+  return el('section', { id: 'rounds' },
+    el('h2', { 'data-copy': 'settings.rounds.title' }, t('settings.rounds.title')),
+    el('p', {}, box, ' ', el('label', { for: 'round-replays', 'data-copy': 'settings.rounds.replay' }, t('settings.rounds.replay'))),
+    say('settings.rounds.desc', {}, { class: 'desc' }));
 }
 
 let REMEMBER = false;

@@ -131,7 +131,8 @@
     "weapons.cursed_blade, weapons.longsword": "new or rewritten (Sam, 2026-10-07): the cursed blade is a sword in reach and weight; the longsword is the villagers’ long blade",
     "road.rumor.start, road.rumor.from": "new: the rumors that show a weapon and who carries it (Sam, 2026-10-07)",
     "settings.save.reset": "new: the button that starts a fresh save (Sam, 2026-10-07)",
-    "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree"
+    "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree",
+    "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)"
   },
   "_glossary": {
     "ink": {
@@ -1325,6 +1326,11 @@
         "desc": "Press again to erase your progress in arcade mode, story mode and the tutorial. Your keys and options stay.",
         "done": "Progress erased. Arcade mode starts again from its first fight."
       }
+    },
+    "rounds": {
+      "title": "The end of a round",
+      "replay": "Replay the deciding cut, slowed down, after each round",
+      "desc": "Off, the fight still runs on slowly for a moment after the cut, so you can see who fell, and the next round follows."
     }
   },
   "replay": {

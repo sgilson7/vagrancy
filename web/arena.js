@@ -50,8 +50,10 @@ let speed = 1;
 // it, with the clock held, so one round reads apart from the next on stream
 // (Sam, 2026-10-07). The frames are the last ones core sent; nothing is
 // integrated. A live challenge is not held: its other player is in real time.
-const REPLAY_TICKS = 60, REPLAY_SPEED = 0.3;
-let recent = [], replay = null, holdUntil = 0, lastPhase = 'fight';
+// First the fight runs on slowly inside core's rest after the round
+// (balance::REST_TICKS), so the stream sees who fell; then the replay.
+const PAUSE_MS = 1600, PAUSE_SPEED = 0.4, REPLAY_TICKS = 90, REPLAY_SPEED = 0.4, OUT_MS = 900;
+let recent = [], replay = null, holdUntil = 0, lastPhase = 'fight', ending = null;
 
 function nameOf(f) { return f.id ? t(`opponents.${f.id}.name`) : (f.name || t('btlab.editor.unnamed')); }
 function treeFor(f) {
@@ -75,6 +77,7 @@ function begin() {
   recent = [];
   replay = null;
   holdUntil = 0;
+  ending = null;
   lastPhase = 'fight';
   reported = false;
   draw.reset();
@@ -93,7 +96,16 @@ function names() {
 function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (game) {
-    acc += Math.min(now - (last || now), 250) * (challenge ? 1 : speed);
+    let pace = challenge ? 1 : speed;
+    if (ending && performance.now() < ending.pauseUntil) pace *= PAUSE_SPEED;
+    else if (ending && !ending.replayed) {
+      ending.replayed = true;
+      replay = recent.length > 1 ? { frames: recent.slice(), start: performance.now() } : null;
+      holdUntil = performance.now() + (REPLAY_TICKS * 1000) / N.ticks_per_second / REPLAY_SPEED;
+      // Only the replay closes in on the cut; the kill itself is not zoomed.
+      if (replay) draw.focus({ at: ending.at, start: replay.start, dur: holdUntil - replay.start + OUT_MS, still: false });
+    }
+    acc += Math.min(now - (last || now), 250) * pace;
     if (!challenge && performance.now() < holdUntil) acc = 0;
     let n = 0;
     while (acc >= tickMs && n < 8) {
@@ -131,7 +143,7 @@ function loop(now) {
         replay = null;
         draw(prev || cur, cur, Math.min(1, acc / tickMs));
       }
-      if (cur.phase === 'match_over' && !reported && performance.now() >= holdUntil) finish();
+      if (cur.phase === 'match_over' && !reported && performance.now() >= holdUntil && !(ending && !ending.replayed)) finish();
     }
   }
   if (!bot && !challenge && nextAt && now > nextAt) { nextAt = 0; randomExhibition(); }
@@ -146,15 +158,13 @@ function roundEnded() {
   if (!said) return;
   $('arena-result').replaceChildren(el('p', { class: 'round-end', 'data-copy': said.popup.key }, t(said.popup.key, said.popup.vars)));
   if (challenge || !said.focus) return;
-  const start = performance.now();
-  const dur = (REPLAY_TICKS * 1000) / N.ticks_per_second / REPLAY_SPEED + 900;
-  holdUntil = start + dur;
-  replay = recent.length > 1 ? { frames: recent.slice(), start } : null;
-  draw.focus({ at: said.focus, start, dur, still: false });
+  ending = { pauseUntil: performance.now() + PAUSE_MS, replayed: false, at: said.focus };
 }
 // The next round named, so the stream can tell one round from the last.
 function roundCard(round) {
   draw.focus(null);
+  ending = null;
+  replay = null;
   $('arena-result').replaceChildren(el('p', { class: 'round-start', 'data-copy': 'hud.round' }, t('hud.round', { round })));
 }
 
@@ -296,7 +306,7 @@ async function main() {
   if (url && /^ws:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(url)) connect(url);
   else randomExhibition();
   document.body.dataset.ready = '1';
-  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, speed, held: performance.now() < holdUntil, replaying: !!replay }) };
+  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, speed, held: performance.now() < holdUntil, replaying: !!replay, pausing: !!(ending && !ending.replayed) }) };
   requestAnimationFrame(loop);
 }
 main();

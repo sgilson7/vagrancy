@@ -445,20 +445,47 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
         fails.append(f"{name}: the headshot's card is not in the winner's color")
     if page.inner_text("#death-popup .popup-head") != COPY["results"]["popup"]["head"]:
         fails.append(f"{name}: a headshot's card says {page.inner_text('#death-popup .popup-head')!r}")
+    # Sam, 2026-10-07: first the fight runs on slowly for a moment, so the
+    # player sees who fell; then the clock holds while the round's end is
+    # played again; then it runs on.
     t0 = page.evaluate("window.vagrancy.tick()")
     page.wait_for_timeout(800)
     t1 = page.evaluate("window.vagrancy.tick()")
-    if t1 != t0:
-        fails.append(f"{name}: the clock ran from tick {t0} to {t1} during a headshot")
-    # And then it runs on: the next round starts.
+    if not 0 < t1 - t0 < 40:
+        fails.append(f"{name}: after the headshot the clock went from tick {t0} to {t1} in 0.8 s, not on slowly")
+    page.wait_for_timeout(1300)
+    t2 = page.evaluate("window.vagrancy.tick()")
+    page.wait_for_timeout(800)
+    t3 = page.evaluate("window.vagrancy.tick()")
+    if t3 != t2:
+        fails.append(f"{name}: the clock ran from tick {t2} to {t3} while the headshot was played again")
     try:
-        page.wait_for_function(f"window.vagrancy.tick() > {t0} + 30", timeout=5000)
+        page.wait_for_function(f"window.vagrancy.tick() > {t3} + 30", timeout=9000)
     except Exception:
-        fails.append(f"{name}: the clock never ran again after the headshot at tick {t0}")
+        fails.append(f"{name}: the clock never ran again after the headshot's replay at tick {t3}")
     page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=20000)
     click_copy(page, "replay.stop.label")
+    # With the replays turned off in Settings, the pause stays and the
+    # clock is never held (Sam: "keep the end of round second or two
+    # continuation samurai pause").
+    click_copy(page, "menu.settings.label")
+    page.uncheck("#round-replays")
+    click_copy(page, "menu.back.label")
+    with page.expect_file_chooser() as fc:
+        click_copy(page, "menu.replay.label")
+    fc.value.set_files(str(fixture))
+    page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
+    marks = []
+    for _ in range(8):
+        page.wait_for_timeout(500)
+        marks.append(page.evaluate("window.vagrancy.tick()"))
+    if any(b <= a for a, b in zip(marks, marks[1:])):
+        fails.append(f"{name}: with the replays off, the clock stood still after the headshot: {marks}")
+    page.wait_for_function("document.body.dataset.replayDone === '1'", timeout=20000)
+    click_copy(page, "replay.stop.label")
+    page.evaluate("localStorage.removeItem('vagrancy.roundReplays')")
     if not fails:
-        print(f"ok: {name}: a headshot pops its card, holds the clock at tick {t0}, then lets it run on")
+        print(f"ok: {name}: a headshot pops its card, runs on slowly (ticks {t0} to {t1}), holds the clock for its replay at tick {t3}, then runs on; with replays off it runs on throughout")
     return fails
 
 
@@ -847,12 +874,16 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     page.click('#train-tiles [data-stop="tea_picker"]')
     page.click('#train-detail [data-copy="train.fight.label"]')
     page.wait_for_selector('[data-copy="hud.round"]')
+    # Up to 12 s: between rounds the trees stand still through the pause and
+    # the replay (Sam, 2026-10-07), and a quick round leaves little else.
     seen = set()
-    for _ in range(20):
+    for _ in range(120):
         page.wait_for_timeout(100)
         for tr in page.evaluate("window.vagrancy.traces()"):
             if tr["active"]:
                 seen.add(tr["seat"])
+        if seen == {0, 1}:
+            break
     if seen != {1, 2}:
         fails.append(f"{name}: in a flanked training fight the trees lit for seats {sorted(seen)}, not both opponents")
     fails += every_visible_line_is_a_copy_string(page, name + " (a training fight)")
@@ -953,12 +984,16 @@ def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
     click_copy(page, "watch.speed.full.label")
     if not (0 < slow <= tps * 0.45):
         fails.append(f"{name}: at quarter speed the clock ran {slow} ticks a second; the game runs {tps}")
+    # Up to 12 s: between rounds the trees stand still through the pause and
+    # the replay (Sam, 2026-10-07), and a quick round leaves little else.
     seen = set()
-    for _ in range(20):
+    for _ in range(120):
         page.wait_for_timeout(100)
         for tr in page.evaluate("window.vagrancy.traces()"):
             if tr["active"]:
                 seen.add(tr["seat"])
+        if seen == {0, 1}:
+            break
     if seen != {0, 1}:
         fails.append(f"{name}: in watch mode the trees lit for seats {sorted(seen)}, not both sides")
     score = page.locator('[data-copy="hud.score"]').inner_text()
@@ -1348,6 +1383,8 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
 
 @check
 def enter_goes_on_without_the_mouse(page, name):
+    # The next round waits out the pause after a round and its replay (Sam,
+    # 2026-10-07), so the waits for it below allow 15 s.
     # Sam: "you should be able to press a button to reset the match / go to
     # the next battle instead of having to click". Win at the first stop by
     # keyboard alone (it does not fight back), pressing Enter after each
@@ -1385,7 +1422,7 @@ def enter_goes_on_without_the_mouse(page, name):
             # the win opened (Sam: "it should pop up in a box like the other
             # boxes").
             try:
-                page.wait_for_selector('#death-popup [data-copy="results.popup.match_won"]', timeout=6000)
+                page.wait_for_selector('#death-popup [data-copy="results.popup.match_won"]', timeout=12000)
                 if not page.locator('#death-popup [data-copy="road.opened"]').count():
                     fails.append(f"{name}: the match's card does not say what the win opened")
             except Exception:
@@ -1393,7 +1430,7 @@ def enter_goes_on_without_the_mouse(page, name):
             onward = page.inner_text('#result [data-copy="road.fight.label"]')
             page.keyboard.press("Enter")
             try:
-                page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+                page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=15000)
             except Exception:
                 fails.append(f"{name}: after the match, Enter did not start the next stop: phase {page.evaluate('window.vagrancy.phase()')}")
                 break
@@ -1407,7 +1444,7 @@ def enter_goes_on_without_the_mouse(page, name):
             break
         page.keyboard.press("Enter")
         try:
-            page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+            page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=15000)
         except Exception:
             fails.append(f"{name}: after round {rounds + 1}, Enter did not start the next round: phase "
                          f"{page.evaluate('window.vagrancy.phase()')}, focus "
@@ -1451,9 +1488,9 @@ def a_win_that_opens_nothing_names_the_next_goal(page, name):
         if page.evaluate("document.body.dataset.phase") == "match_over":
             break
         page.keyboard.press("Enter")
-        page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=5000)
+        page.wait_for_function("document.body.dataset.phase === 'fight'", timeout=15000)
     try:
-        page.wait_for_selector('#death-popup [data-copy="road.next"]', timeout=6000)
+        page.wait_for_selector('#death-popup [data-copy="road.next"]', timeout=12000)
     except Exception:
         fails.append(f"{name}: a win that opened nothing did not name a next goal")
     fails += every_visible_line_is_a_copy_string(page, name + " (the next goal)")
