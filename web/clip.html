@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{clip.title}}</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="clip">
+<!-- A vertical frame for short clips (clip.js), rendered frame by frame by
+     analysis/video/make_short.py. Every word is a {{key}} or a copy key. -->
+<main id="clip-app">
+  <header id="clip-head">
+    <p id="clip-game">{{game.name}}</p>
+    <p id="clip-names"></p>
+  </header>
+  <canvas id="stage" aria-label="{{game.canvas_name}}" width="1080" height="1440"></canvas>
+  <p id="clip-caption"></p>
+</main>
+<script type="module" src="clip.js"></script>
+</body>
+</html>

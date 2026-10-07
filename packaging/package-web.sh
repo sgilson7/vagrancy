@@ -99,7 +99,7 @@ def fill(m):
         sys.exit(f"{m.group(1)} has a placeholder packaging cannot fill: {s}")
     return html.escape(s, quote=True)
 # The game's page and the BT Lab's, each holding {{key}} tokens.
-for p in (f"{web}/index.html", f"{web}/bt-lab.html", f"{web}/arena.html"):
+for p in (f"{web}/index.html", f"{web}/bt-lab.html", f"{web}/arena.html", f"{web}/clip.html"):
     page = re.sub(r"<!--.*?-->\s*", "", open(p).read(), flags=re.S)
     page = re.sub(r"\{\{([a-z_.]+)\}\}", fill, page)
     open(p, "w").write(page)
@@ -148,6 +148,8 @@ bust "$WEB/index.html"   'src="app.js"'      "src=\"app.js?v=$BUILD\""
 bust "$WEB/bt-lab.html"  'src="btlab.js"'    "src=\"btlab.js?v=$BUILD\""
 bust "$WEB/arena.html"   'src="arena.js"'    "src=\"arena.js?v=$BUILD\""
 bust "$WEB/arena.html"   'href="styles.css"' "href=\"styles.css?v=$BUILD\""
+bust "$WEB/clip.html"    'src="clip.js"'     "src=\"clip.js?v=$BUILD\""
+bust "$WEB/clip.html"    'href="styles.css"' "href=\"styles.css?v=$BUILD\""
 bust "$WEB/bt-lab.html"  'href="styles.css"' "href=\"styles.css?v=$BUILD\""
 perl -0777 -pi -e "s/\{hash\}/$BUILD/g" "$WEB/bt-lab.html"
 bust "$WEB/index.html"   'href="styles.css"' "href=\"styles.css?v=$BUILD\""

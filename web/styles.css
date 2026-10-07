@@ -380,3 +380,14 @@ body.arena .bar span { position: relative; padding: 4px 10px; font-weight: bold;
 #weapons .cursed-box { display: block; width: 100%; height: auto; margin: 6px 0; cursor: crosshair; }
 body.arena #arena-result .round-end, body.arena #arena-result .round-start { margin: 0; font-size: 1.5em; font-weight: bold; }
 body.arena #arena-result .round-start { color: var(--focus); }
+
+/* The vertical clip frame (clip.html), 1080 by 1920. */
+body.clip { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+body.clip #clip-app { display: grid; grid-template-rows: 300px 1440px 180px; height: 1920px; }
+body.clip #clip-head { text-align: center; padding-top: 70px; }
+body.clip #clip-game { margin: 0; font-size: 64px; letter-spacing: 0.08em; }
+body.clip #clip-names { margin: 18px 0 0; font-size: 44px; }
+body.clip #clip-names .side-0 { color: var(--fighters-left-ink); font-weight: bold; }
+body.clip #clip-names .side-1 { color: var(--fighters-right-stripe); font-weight: bold; }
+body.clip #stage { width: 1080px; height: 1440px; display: block; }
+body.clip #clip-caption { margin: 0; padding: 20px 60px 0; font-size: 46px; line-height: 1.25; text-align: center; font-weight: bold; }

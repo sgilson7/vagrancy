@@ -115,6 +115,15 @@ export function renderer(canvas, palette, numbers) {
   // in on where the blade landed, then opens again. `e` runs 0 → 1 → 0.
   let focus = null;
   draw.focus = (f) => { focus = f; };
+  // For a clip rendered frame by frame (clip.js): the time the drawing
+  // reads, and a camera that holds a zoom on a point of the world, which a
+  // round's close-up closes in from.
+  let clock = () => performance.now();
+  draw.clock = (fn) => { clock = fn || (() => performance.now()); };
+  let view = null;
+  draw.view = (v) => { view = v; };
+  // The transform the world was last drawn with, for placing the trees.
+  let worldM = new DOMMatrix();
   function closeness(now) {
     if (!focus || focus.still) return 0;
     const t = (now - focus.start) / focus.dur;
@@ -141,21 +150,33 @@ export function renderer(canvas, palette, numbers) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = palette.paper;
     ctx.fillRect(0, 0, W, H);
-    const e = closeness(performance.now());
-    if (e > 0) {
+    const e = closeness(clock());
+    if (view) {
+      // A held camera: the view's point at its place on the canvas, zoomed;
+      // a close-up blends from it toward the cut, closer still.
+      const vx = sx(view.at[0]), vy = sy(view.at[1]);
+      const qx = W / 2, qy = H * (view.y ?? 0.5);
+      const fx = e > 0 ? sx(focus.at[0]) : vx, fy = e > 0 ? sy(focus.at[1]) : vy;
+      const z = view.zoom * (1 + 0.8 * e);
+      const px = vx + (fx - vx) * e, py = vy + (fy - vy) * e;
+      ctx.setTransform(z, 0, 0, z, qx - z * px, qy + (H / 2 - qy) * e - z * py);
+    } else if (e > 0) {
       // The cut's point moves toward the middle as the view closes in.
       const px = sx(focus.at[0]), py = sy(focus.at[1]);
       const z = 1 + 1.6 * e;
       const tx = px + (W / 2 - px) * e, ty = py + (H / 2 - py) * e;
       ctx.setTransform(z, 0, 0, z, tx - z * px, ty - z * py);
     }
+    worldM = ctx.getTransform();
+    // The ground reaches past the canvas on each side and below, so a
+    // zoomed view never shows its edge.
     ctx.fillStyle = palette.ground;
-    ctx.fillRect(0, ground, W, H - ground);
+    ctx.fillRect(-W, ground, 3 * W, 3 * H);
     ctx.strokeStyle = palette.ground_line;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, ground + 0.5);
-    ctx.lineTo(W, ground + 0.5);
+    ctx.moveTo(-W, ground + 0.5);
+    ctx.lineTo(2 * W, ground + 0.5);
     ctx.stroke();
     // The end of a stage to cross: two posts and a lintel.
     if (cur.exit !== null && cur.exit !== undefined) {
@@ -230,10 +251,11 @@ export function renderer(canvas, palette, numbers) {
       ctx.globalAlpha = 1;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    // The trees, over everything in the arena but the meters.
+    // The trees, over everything in the arena but the meters, each over its
+    // fighter as the world was drawn (a zoomed view moves the head).
     ringsDrawn = 0;
     if (trees.length && cur.phase === 'fight') {
-      const now = performance.now();
+      const now = clock();
       const lit = new Set();
       // Each tree is a bubble core moves (content::bubbles): drawn home over
       // its fighter, pushed off the others, kept on the canvas.
@@ -322,7 +344,8 @@ export function renderer(canvas, palette, numbers) {
     const cols = lay(entry.tree, 0, 0, pos);
     const rows = Math.max(...[...pos.values()].map((v) => v.row)) + 1;
     const w = cols * COL_W + 8, h = rows * ROW_H + 4 + CAPTION_H;
-    const head = [sx(sum / cnt), sy(top)];
+    const hx = sx(sum / cnt), hy = sy(top);
+    const head = [worldM.a * hx + worldM.c * hy + worldM.e, worldM.b * hx + worldM.d * hy + worldM.f];
     return { entry, pos, cols, w, h, head, hx: head[0], hy: head[1] - 30 - h / 2 };
   }
 
@@ -403,14 +426,16 @@ export function renderer(canvas, palette, numbers) {
     // What it is doing now, in words, above the tree.
     const leaf = trace.active.length ? pos.get(trace.active[trace.active.length - 1]) : null;
     if (leaf && entry.caption) {
-      ctx.font = '13px Georgia, serif';
+      // The words grow with the tree (draw.treeScale).
+      const k = NODE_R / 14;
+      ctx.font = `${Math.round(13 * k)}px Georgia, serif`;
       const text = entry.caption(leaf.n);
       const tw = ctx.measureText(text).width;
-      const bx = Math.max(4, Math.min(W - tw - 12, cx - tw / 2 - 4));
+      const bx = Math.max(4, Math.min(W - tw - 12, cx - tw / 2 - 4 * k));
       ctx.fillStyle = palette.focus;
-      ctx.fillRect(bx, y0 - 24, tw + 8, 19);
+      ctx.fillRect(bx, y0 - 24 * k, tw + 8 * k, 19 * k);
       ctx.fillStyle = palette.paper;
-      ctx.fillText(text, bx + 4, y0 - 10);
+      ctx.fillText(text, bx + 4 * k, y0 - 10 * k);
     }
   }
 

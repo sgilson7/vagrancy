@@ -1366,6 +1366,31 @@ def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_lef
 
 
 @check
+def the_clip_frame_plays_a_round_to_its_cut_in_the_copy_files_words(page, name):
+    # Sam, 2026-10-07: short vertical clips of the wildest round endings
+    # (analysis/video/make_short.py drives this page frame by frame).
+    fails = []
+    page.goto(ORIGIN + "/clip.html", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.evaluate("s => window.clip.load(s)", {"left": "drover", "right": "hare_hunter", "seed": 1311, "from": 364 - 120})
+    page.evaluate("([k, v]) => window.clip.caption(k, v)", ["clip.trees", {}])
+    ended = None
+    for _ in range(200):
+        st = page.evaluate("o => window.clip.frame(o)", {"ticks": 2, "showTrees": {"seat": 0}})
+        if st["ended"]:
+            ended = st["ended"]["tick"]
+            break
+    if ended is None:
+        fails.append(f"{name}: the clip did not reach its round's end")
+    fails += every_visible_line_is_a_copy_string(page, name + " (clip)")
+    page.goto(ORIGIN + "/", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the clip frame played the drover's round to its cut at tick {ended}")
+    return fails
+
+
+@check
 def the_arena_runs_fights_on_its_own_with_no_bot(page, name):
     # The stream's page (Sam, 2026-10-07): with no bot it runs exhibitions,
     # so the stream always has a fight; its words are the copy file's.

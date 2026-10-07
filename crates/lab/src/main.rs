@@ -482,6 +482,80 @@ fn versus(args: &[String]) {
     println!("{} vs {}: {w} won, {l} lost, {u} unfinished of {matches}", args[1], args[2]);
 }
 
+/// The wildest round endings among stream-like matches, for short clips
+/// (Sam, 2026-10-07: "a shorts version of some of the craziest stuff that is
+/// happening on stream"). Each match is two road opponents, as the stream's
+/// exhibitions are, from a seed; each round's end is scored by what it does
+/// to the loser: pieces cut off by the end, more cut while the round plays
+/// out for 2.5 s (the stream's run-on), a cut across the head, a thrown
+/// blade. Prints the best as JSON lines: left, right, seed, round, the tick
+/// of the deciding cut, and why.
+fn highlights(args: &[String]) {
+    use sim::fight::{Event, Phase};
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(400);
+    let top: usize = args.get(1).and_then(|a| a.parse().ok()).unwrap_or(12);
+    let ids: Vec<String> = content::road::road().into_iter().filter(|s| !s.secret && s.companion.is_none() && !s.four_arms && !s.eight_arms).map(|s| s.id).collect();
+    let threads = 8u64;
+    let mut rows: Vec<(i64, String)> = std::thread::scope(|scope| {
+        let hs: Vec<_> = (0..threads)
+            .map(|k| {
+                let ids = ids.clone();
+                scope.spawn(move || {
+                    let mut out = Vec::new();
+                    for seed in (k..matches).step_by(threads as usize) {
+                        let n = ids.len() as u64;
+                        let (l, r) = (&ids[(seed * 7919 % n) as usize], &ids[((seed * 104729 + 13) % n) as usize]);
+                        if l == r {
+                            continue;
+                        }
+                        let mut w = sim::World::new(content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat"));
+                        let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+                        let mut last = [Input::NONE; sim::body::SEATS];
+                        let mut round = 1u32;
+                        while w.tick < 60 * 150 && !matches!(w.phase, Phase::MatchOver { .. }) {
+                            let mut i = [Input::NONE; sim::body::SEATS];
+                            for (k, p) in pilots.iter_mut().enumerate() {
+                                p.observe(last);
+                                i[k] = p.input(&w, k);
+                            }
+                            let was_fight = matches!(w.phase, Phase::Fight);
+                            w.step_all(i);
+                            last = i;
+                            if !was_fight || matches!(w.phase, Phase::Fight) {
+                                continue;
+                            }
+                            let (Phase::RoundOver { result, .. } | Phase::MatchOver { result }) = w.phase else { continue };
+                            let Some(_) = result.loser else { round += 1; continue };
+                            let loser = result.seat;
+                            let severed = w.parts.iter().filter(|p| p.fighter == loser && !p.attached).count() as i64;
+                            // The follow-through: the round played on, limp.
+                            let mut on = w.clone();
+                            let mut after = 0i64;
+                            for _ in 0..150 {
+                                on.step_all([Input::NONE; sim::body::SEATS]);
+                                after += on.events.iter().filter(|e| matches!(e, Event::Cut { seat, spilled: true, .. } if *seat == loser)).count() as i64;
+                            }
+                            let head = content::messages::headshot(&w, &result);
+                            let score = severed * 3 + after * 2 + if head { 6 } else { 0 } + if result.thrown { 5 } else { 0 };
+                            let killer = if result.by == 0 { l } else { r };
+                            let nodes = pilot::view::walk(&pilot::view::describe(&content::road::pilot(killer))).len();
+                            out.push((score, serde_json::json!({ "left": l, "right": r, "seed": seed, "round": round, "kill": w.tick, "by": result.by, "killer_nodes": nodes,
+                                "severed": severed, "after": after, "headshot": head, "thrown": result.thrown, "score": score }).to_string()));
+                            round += 1;
+                        }
+                    }
+                    out
+                })
+            })
+            .collect();
+        hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
+    });
+    rows.sort_by(|a, b| b.0.cmp(&a.0));
+    for (_, line) in rows.into_iter().take(top) {
+        println!("{line}");
+    }
+}
+
 /// The player's run through arcade mode (content::agent), as the video will
 /// play it: each fight's seed is the run's base plus the fights played
 /// before it, so the page plays the same matches. Prints each fight and the
@@ -895,6 +969,7 @@ fn main() {
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
         Some("agent-run") => agent_run(),
+        Some("highlights") => highlights(&args[1..]),
         Some("versus") => versus(&args[1..]),
         Some("film") => film(&args[1..]),
         Some("roles") => roles(&args[1..]),

@@ -51,7 +51,8 @@
     "wins, losses": "a match's round wins, from the world",
     "command, left, right, cost": "a chat command and what a turn costs, sent by the stream's bot (vagrancy-arena), drawn as data",
     "first_pct, second_pct": "the chance, as a percent, of the first and second close rules in the BT Lab’s random page, from that page’s tree in web/btlab.js",
-    "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data"
+    "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data",
+    "site": "the game's address, filled by analysis/video/make_short.py"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -132,7 +133,8 @@
     "road.rumor.start, road.rumor.from": "new: the rumors that show a weapon and who carries it (Sam, 2026-10-07)",
     "settings.save.reset": "new: the button that starts a fresh save (Sam, 2026-10-07)",
     "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree",
-    "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)"
+    "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)",
+    "clip": "new: the words burned into the short clips (Sam, 2026-10-07)"
   },
   "_glossary": {
     "ink": {
@@ -2332,5 +2334,11 @@
       "fight": "to fight",
       "tree": "with a tree"
     }
+  },
+  "clip": {
+    "title": "{game} clips",
+    "hook": "Each limb is simulated. A cut takes off whatever it crosses.",
+    "trees": "Each fighter runs its own behavior tree. The lit branch is the move it chose.",
+    "cta": "Free in your browser: {site}"
   }
 }
