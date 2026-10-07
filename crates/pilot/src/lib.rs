@@ -207,6 +207,15 @@ impl Pilot for Many {
 
 // --- what a pilot can see ----------------------------------------------------------
 
+/// A pilot's input with its ready bit kept only when a person asked for the
+/// next round (`asked`): in watch mode the round's end runs on until the
+/// viewer presses Enter (Sam, 2026-10-07: "the end of each round should run
+/// in the simulation until the player presses enter, its only in streaming
+/// mode that it should auto go to the next round").
+pub fn ready_when_asked(i: Input, asked: bool) -> Input {
+    if asked { i } else { Input(i.0 & !Input::READY) }
+}
+
 /// Between rounds every pilot presses ready; after the match, nothing.
 fn between(w: &World) -> Option<Input> {
     match w.phase {

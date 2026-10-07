@@ -418,12 +418,15 @@ impl Exhibition {
             ids: [left.into(), right.into()],
         }
     }
-    /// One tick: both pilots see the world and every seat's last input.
-    pub fn step(&mut self, _a: u16, _b: u16) {
+    /// One tick: both pilots see the world and every seat's last input. The
+    /// next round starts only when the page passes the ready bit in `a`
+    /// (pilot::ready_when_asked).
+    pub fn step(&mut self, a: u16, _b: u16) {
         let mut i = [Input::NONE; sim::body::SEATS];
+        let asked = Input(a).has(Input::READY);
         for (k, p) in self.pilots.iter_mut().enumerate() {
             p.observe(self.last);
-            i[k] = p.input(&self.rec.world, k);
+            i[k] = pilot::ready_when_asked(p.input(&self.rec.world, k), asked);
         }
         self.rec.step_all(i);
         self.last = i;

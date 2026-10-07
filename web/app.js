@@ -105,17 +105,20 @@ const PAUSE_SPEED = 0.4;
 const REPLAY_TICKS = 90;
 const REPLAY_SPEED = 0.4;
 const OUT_MS = 700;
+const HEADSHOT_MS = 1600;
 let RECENT = [];
 let REPLAY = null; // { frames, start }
 let ENDING = null; // { pauseUntil, replayed }
-// Whether each round's end is replayed: this browser's choice, on unless
-// turned off in Settings (Sam: "you have to be able to turn off the
-// extended end of round replays").
+// Whether each round's end is replayed: this browser's choice, off unless
+// turned on in Settings. Off, the round's end runs on in the simulation
+// until the player presses Enter, as the first version did (Sam,
+// 2026-10-07: "the first version of the end of round implementation was
+// the best").
 function replaysOn() {
-  try { return localStorage.getItem('vagrancy.roundReplays') !== 'off'; } catch { return true; }
+  try { return localStorage.getItem('vagrancy.roundReplays') === 'on'; } catch { return false; }
 }
 function holdMs() {
-  return PAUSE_MS + (replaysOn() && !stillMotion() ? Math.round((REPLAY_TICKS * 1000) / 60 / REPLAY_SPEED) : 0) + OUT_MS;
+  return replaysOn() && !stillMotion() ? PAUSE_MS + Math.round((REPLAY_TICKS * 1000) / 60 / REPLAY_SPEED) + OUT_MS : 0;
 }
 // And for at least this many drawn frames: where frames come slowly (CI's
 // headless Firefox, a loaded laptop), a hold measured in time alone could
@@ -243,7 +246,8 @@ function loop(now) {
       // a slow frame's catch-up played on past the headshot into the next
       // round before the card was ever drawn (CI's Firefox, 2026-10-06:
       // the page reached the replay's end with the hold never seen).
-      if (FREEZE) { acc = 0; break; }
+      // A round's end starts on a drawn frame: the batch stops there.
+      if (FREEZE || (ENDING && ENDING.fresh)) { if (ENDING) ENDING.fresh = false; acc = 0; break; }
     }
     if (game) {
       // The round's end again, slowly, then held on its last frame while
@@ -305,9 +309,15 @@ function matchWatcher(opponent, endButtons, names = null) {
       // screen about how someone died"), and for a headshot, the clock held
       // while the view closes in where the blade landed.
       popupShow(said);
-      if (said.focus) {
+      if (said.focus && replaysOn() && !stillMotion()) {
         const start = performance.now();
-        ENDING = { pauseUntil: start + PAUSE_MS, replayed: false, at: said.focus };
+        ENDING = { pauseUntil: start + PAUSE_MS, replayed: false, at: said.focus, fresh: true };
+      } else if (said.headshot && said.focus) {
+        // As the first version did: a headshot holds the clock while the
+        // view closes in on it (Sam: "stop the simulation to focus on it").
+        const start = performance.now();
+        FREEZE = { until: start + HEADSHOT_MS, frames: 0 };
+        draw.focus({ at: said.focus, start, dur: HEADSHOT_MS, still: stillMotion() });
       }
       const kids = [sayChosen(said.round, { class: 'result' })];
       if (said.match) {
@@ -1311,7 +1321,7 @@ function fight(id, goal = null) {
     if (won && f.phase === 'match_over' && !cardShown) {
       cardShown = true;
       const mine = game;
-      setTimeout(() => { if (game === mine) popupMatchWon(opened, next, revealed); }, ENDING ? holdMs() + 700 : 1600);
+      setTimeout(() => { if (game === mine) popupMatchWon(opened, next, revealed); }, ENDING ? holdMs() + 700 : FREEZE ? HEADSHOT_MS + 700 : 1600);
     }
   });
 }
@@ -1408,7 +1418,7 @@ function storyFight(run) {
       decided = true;
       document.body.dataset.storyOutcome = s.outcome;
       // Let the last round's card be read, then say how the fight went.
-      setTimeout(() => storyAfter(run, s), ENDING ? holdMs() + 900 : 1400);
+      setTimeout(() => storyAfter(run, s), ENDING ? holdMs() + 900 : FREEZE ? HEADSHOT_MS + 900 : 1400);
     }
   });
 }
@@ -1623,7 +1633,9 @@ function watchFight() {
     el('div', { class: 'actions' }, button('watch.random.label', () => { watchRandom(ids); watchFight(); }), button('menu.watch.label', watchMode)));
   const caption = (n) => t('tree.now', { node: n.text });
   const g = new Exhibition(seed(), tuning(), left, right, MAP_CHOICE.watch);
-  start(g, () => [0, 0], (f) => {
+  // The next round waits for the viewer's Enter (core's ready_when_asked).
+  READY = false;
+  start(g, withReady(() => [0, 0]), (f) => {
     watch.tick(f);
     const traces = JSON.parse(game.traces());
     LAST_TRACES = traces;
@@ -2145,6 +2157,7 @@ async function main() {
     recordedChecksum: () => game && game.recorded_checksum(),
     music: () => music.current(),
     phase: () => curFrame && curFrame.phase,
+    wins: () => curFrame && curFrame.wins,
     edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
     fighters: () => curFrame && curFrame.fighters.filter(Boolean).length,
     traces: () => LAST_TRACES,

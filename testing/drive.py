@@ -425,6 +425,8 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
     # (`lab fixture-headshot`).
     fails = []
     fixture = ROOT / "testing" / "replays" / "headshot.replay"
+    # The replays are off unless asked for (Sam, 2026-10-07); this check asks.
+    page.evaluate("localStorage.setItem('vagrancy.roundReplays', 'on')")
     with page.expect_file_chooser() as fc:
         click_copy(page, "menu.replay.label")
     fc.value.set_files(str(fixture))
@@ -474,7 +476,8 @@ def a_round_that_ends_pops_a_card_and_a_headshot_holds_the_clock(page, name):
         click_copy(page, "menu.replay.label")
     fc.value.set_files(str(fixture))
     page.wait_for_selector("#death-popup.headshot:not([hidden])", timeout=30000)
-    # The pause (1.6 s) and no replay: the clock runs again within 3 s.
+    # No replay: the headshot holds the clock a moment, as it first did,
+    # and the clock runs again within 3 s.
     marks = []
     for _ in range(10):
         page.wait_for_timeout(500)
@@ -915,9 +918,24 @@ def the_encyclopedia_and_training_show_each_opponents_tree_and_light_it_in_a_fig
     page.wait_for_selector('[data-copy="hud.round"]')
     # Up to 12 s: between rounds the trees stand still through the pause and
     # the replay (Sam, 2026-10-07), and a quick round leaves little else.
-    seen = set()
+    # In watch mode the next round waits for Enter (Sam, 2026-10-07), so a
+    # quick round is moved on.
+    # A round won with no Enter pressed since must still be at its end: the
+    # round's end runs on until Enter.
+    seen, scored = set(), sum(page.evaluate("window.vagrancy.wins()"))
     for _ in range(120):
         page.wait_for_timeout(100)
+        now = sum(page.evaluate("window.vagrancy.wins()"))
+        if now > scored:
+            if page.evaluate("window.vagrancy.phase()") == "fight":
+                fails.append(f"{name}: in watch mode the next round began without Enter")
+                break
+            page.wait_for_timeout(1500)
+            if page.evaluate("window.vagrancy.phase()") == "fight":
+                fails.append(f"{name}: in watch mode the round's end did not wait for Enter")
+                break
+            page.keyboard.press("Enter")
+            scored = now
         for tr in page.evaluate("window.vagrancy.traces()"):
             if tr["active"]:
                 seen.add(tr["seat"])
@@ -1035,6 +1053,16 @@ def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
             break
     if seen != {0, 1}:
         fails.append(f"{name}: in watch mode the trees lit for seats {sorted(seen)}, not both sides")
+    # Once a round is won, the game stays at its end until Enter.
+    now = sum(page.evaluate("window.vagrancy.wins()"))
+    try:
+        page.wait_for_function(f"window.vagrancy.wins()[0] + window.vagrancy.wins()[1] > {now}", timeout=90000)
+        page.wait_for_timeout(2000)
+        if page.evaluate("window.vagrancy.phase()") == "fight":
+            fails.append(f"{name}: in watch mode the next round began without Enter")
+        page.keyboard.press("Enter")
+    except Exception:
+        fails.append(f"{name}: no round of the watched match ended in 90 s")
     score = page.locator('[data-copy="hud.score"]').inner_text()
     copy = json.loads((ROOT / "data" / "copy.en.json").read_text())
     for o in ("local_deity", "juggler"):

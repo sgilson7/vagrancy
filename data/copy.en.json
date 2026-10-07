@@ -1330,7 +1330,7 @@
     "rounds": {
       "title": "The end of a round",
       "replay": "Replay the deciding cut, slowed down, after each round",
-      "desc": "Off, the fight still runs on slowly for a moment after the cut, so you can see who fell, and the next round follows."
+      "desc": "Off, the fight runs on after the deciding cut until you press Enter for the next round. On, the fight slows for a moment and then the cut is played again, slowed down."
     }
   },
   "replay": {
