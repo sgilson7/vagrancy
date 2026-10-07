@@ -9,7 +9,10 @@ function audio() {
     if (!AC) return null;
     ctx = new AC();
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // Firefox rejects this when the page goes away while the context wakes
+  // (CI's gate reloads straight after pressing arcade mode); a sound that
+  // cannot play is silence, not an error.
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
 }
 
@@ -76,6 +79,14 @@ function drum(c, out, at) {
 // Arcade mode's door: a drum, a quick scratch, then two plucked notes a
 // fourth apart. `volume` is the music volume, 0 to 1.
 export function arcade(volume = 0.7) {
+  try {
+    play(volume);
+  } catch {
+    // No sound: an old browser, or audio switched off.
+  }
+}
+
+function play(volume) {
   const c = audio();
   if (!c || volume <= 0) return;
   const out = c.createGain();
