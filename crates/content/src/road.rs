@@ -43,6 +43,10 @@ pub struct Stop {
     /// deity).
     #[serde(default)]
     pub eight_arms: bool,
+    /// A four-armed opponent's second weapon, for its other pair of arms
+    /// (the village deity: the cursed blade and a short sword).
+    #[serde(default)]
+    pub second_weapon: Option<String>,
     /// Not on the chart, nor anywhere a player sees the road, until the
     /// final fight is won (the guardian deity).
     #[serde(default)]

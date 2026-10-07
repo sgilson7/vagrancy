@@ -300,6 +300,11 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
     }
     // A weapon the player has not unlocked, or an enemy's, or one this
     // build does not know, becomes the sword rather than refusing the file.
+    // The cursed blade was the longsword until SIM_VERSION 17, when the
+    // longsword became the villagers' long blade.
+    if s.weapon == "longsword" {
+        s.weapon = "cursed_blade".into();
+    }
     s.weapon = crate::weapons::usable(&s.weapon, &s.road.best);
     // Four arms not yet won are two.
     s.four_arms &= crate::road::four_arms_open(&s.road.best);
@@ -430,14 +435,18 @@ mod tests {
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "a locked weapon was carried");
         s.road.best.insert("pilgrim".into(), crate::road::Best::won(1, 2000, "sword"));
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "scimitar");
-        // The cursed blade (the longsword) waits for the final fight.
+        // The cursed blade waits for the final fight.
         for id in crate::road::stops().into_iter().filter(|id| Some(id) != crate::road::last().map(|l| l.id).as_ref()) {
             s.road.best.insert(id, crate::road::Best::won(0, 1, "sword"));
         }
-        s.weapon = "longsword".into();
+        s.weapon = "cursed_blade".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword", "the cursed blade was carried before the local deity was beaten");
         s.road.best.insert("local_deity".into(), crate::road::Best::won(0, 1, "sword"));
-        assert_eq!(decode(&encode(&s)).unwrap().weapon, "longsword");
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "cursed_blade");
+        // A save from before SIM_VERSION 17 named it the longsword, which
+        // is now the villagers' long blade: it carries on as the cursed blade.
+        s.weapon = "longsword".into();
+        assert_eq!(decode(&encode(&s)).unwrap().weapon, "cursed_blade");
         s.weapon = "no such weapon".into();
         assert_eq!(decode(&encode(&s)).unwrap().weapon, "sword");
         // A version 3 save carries the sword.

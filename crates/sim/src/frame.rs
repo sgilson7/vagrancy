@@ -57,6 +57,8 @@ pub struct SwordView {
     /// Where along each edge it starts to cut, as a raw fixed-point
     /// fraction from its first point: the part before is a handle or a pole.
     pub cut_from: Vec<i32>,
+    /// The cursed blade: the page draws its two strands.
+    pub cursed: bool,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -101,6 +103,7 @@ pub fn frame(w: &World) -> Frame {
                 cut_from: s.edges.iter().map(|e| e.2 .0).collect(),
                 flying: s.flying,
                 turned: s.turned && s.flying,
+                cursed: s.cursed,
             })
             .collect(),
         fighters: w

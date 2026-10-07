@@ -94,7 +94,7 @@
     {"id": "fan_dancer", "requires": [{"beat": "temple_guard"}, {"beat": "bellringer"}, {"beat": "dyer"}, {"beat": "reed_cutter"}, {"beat": "sampler"}], "weapon": "twin_blade"},
     {"id": "festival_master", "requires": [{"beat": "fan_dancer"}, {"beat": "weaver"}, {"beat": "bridge_keeper"}, {"beat": "lacquerer"}, {"beat": "smith"}, {"beat": "eel_fisher"}], "weapon": "twin_blade"},
     {"id": "sword_dancer", "requires": [{"beat": "festival_master"}, {"with": {"stop": "magistrate", "weapon": "twin_blade"}}, {"beat": "brewer"}, {"beat": "weaver"}, {"beat": "bellringer"}, {"beat": "well_digger"}, {"beat": "hare_hunter"}], "weapon": "twin_blade"},
-    {"id": "local_deity", "requires": [{"beat": "watchman"}, {"beat": "warden"}, {"beat": "hermit"}, {"beat": "tanner"}, {"beat": "vaulter"}, {"beat": "general"}, {"beat": "duelist"}, {"beat": "stone_cutter"}, {"beat": "shrine_keeper"}, {"beat": "wind_reader"}, {"beat": "ring_keeper"}, {"beat": "harvest_keeper"}, {"beat": "sword_dancer"}], "four_arms": true, "row": 8},
-    {"id": "guardian_deity", "requires": [{"all_flawless": "local_deity"}], "weapon": "longsword", "eight_arms": true, "row": 9, "secret": true}
+    {"id": "local_deity", "weapon": "cursed_blade", "second_weapon": "short_sword", "requires": [{"beat": "watchman"}, {"beat": "warden"}, {"beat": "hermit"}, {"beat": "tanner"}, {"beat": "vaulter"}, {"beat": "general"}, {"beat": "duelist"}, {"beat": "stone_cutter"}, {"beat": "shrine_keeper"}, {"beat": "wind_reader"}, {"beat": "ring_keeper"}, {"beat": "harvest_keeper"}, {"beat": "sword_dancer"}], "four_arms": true, "row": 8},
+    {"id": "guardian_deity", "requires": [{"all_flawless": "local_deity"}], "weapon": "cursed_blade", "eight_arms": true, "row": 9, "secret": true}
   ]
 }

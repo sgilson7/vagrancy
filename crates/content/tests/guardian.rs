@@ -54,11 +54,12 @@ fn the_guardian_deity_has_eight_arms_and_a_cursed_blade_in_each_pair_of_hands() 
     let reach = |k: usize| w.swords[k].len.trunc();
     for k in mine {
         assert!(w.held(k));
-        // The cursed blade is a third longer than the sword (data/weapons.json);
-        // the waist and neck pairs' rest blades are placed by hand through
-        // both hands, so within a few cm.
-        let want = reach(player) * 133 / 100;
+        // The cursed blade is a sword in reach (data/weapons.json, Sam
+        // 2026-10-07); the waist and neck pairs' rest blades are placed by
+        // hand through both hands, so within a few cm. Each is cursed.
+        let want = reach(player) * content::weapons::weapon("cursed_blade").unwrap().length_pct as i32 / 100;
         assert!((reach(k) - want).abs() <= 4, "blade {k} is {} cm, not a cursed blade's {want}", reach(k));
+        assert!(w.swords[k].cursed, "blade {k} is not cursed");
     }
     // It stands: after five seconds with no keys its head is still high.
     let mut w = w;

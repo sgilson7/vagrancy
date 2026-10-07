@@ -126,7 +126,10 @@
     "weapons.longsword.villager_name, road.weapon_unfound, opponents.local_deity.place, opponents.local_deity.does": "new or rewritten (Sam, 2026-10-07): nothing says where the cursed blade is until it is found",
     "btlab.lesson.<page>.ringed": "new: what each lesson page rings in the tree over its fight",
     "tree.act.search": "new: the search move named in the BT Lab, whose readouts froze the page without it",
-    "road.view.other": "new: the folded-away switch to the road’s other views"
+    "road.view.other": "new: the folded-away switch to the road’s other views",
+    "weapons.cursed_blade, weapons.longsword": "new or rewritten (Sam, 2026-10-07): the cursed blade is a sword in reach and weight; the longsword is the villagers’ long blade",
+    "road.rumor.start, road.rumor.from": "new: the rumors that show a weapon and who carries it (Sam, 2026-10-07)",
+    "settings.save.reset": "new: the button that starts a fresh save (Sam, 2026-10-07)"
   },
   "_glossary": {
     "ink": {
@@ -211,7 +214,7 @@
   "menu": {
     "road": {
       "label": "Arcade mode",
-      "desc": "Fight your way through the village, one opponent at a time, looking for the cursed blade. A fight opens when you meet its requirements, such as beating the opponents above it."
+      "desc": "Fight your way through the village, one opponent at a time, looking for the cursed blade."
     },
     "local": {
       "label": "Play at one keyboard",
@@ -487,7 +490,11 @@
     },
     "quest": "A cursed blade has chosen you as its next holder, and it is somewhere in this village. You fight each person you meet, because any of them could be keeping it from you. The villagers you beat leave other blades behind, none of them the cursed one, so the search goes on.",
     "revealed": "A new fight has appeared below the village deity: {opponent}.",
-    "weapon_unfound": "Not found yet. The {weapon} is somewhere in this village."
+    "weapon_unfound": "Not found yet. The {weapon} is somewhere in this village.",
+    "rumor": {
+      "start": "A rumor you came with:",
+      "from": "A rumor from {opponent_mid}:"
+    }
   },
   "opponents": {
     "scarecrow": {
@@ -1307,6 +1314,14 @@
         "format": "This file is not a {game} save file, so nothing was loaded.",
         "newer": "This save file was written by a newer version of the game. It is save version {theirs}, and this build reads up to version {ours}. Nothing was loaded.",
         "damaged": "This save file is incomplete or damaged, so nothing was loaded. Your current progress is unchanged."
+      },
+      "reset": {
+        "label": "Start over",
+        "confirm": {
+          "label": "Erase my progress"
+        },
+        "desc": "Press again to erase your progress in arcade mode, story mode and the tutorial. Your keys and options stay.",
+        "done": "Progress erased. Arcade mode starts again from its first fight."
       }
     }
   },
@@ -1658,9 +1673,8 @@
       "desc": "Short and light. It turns quickly and reaches little."
     },
     "longsword": {
-      "name": "cursed blade",
-      "desc": "The blade you came to this village for. It is cursed, and it has chosen you to hold it next. It reaches farther than any other weapon.",
-      "villager_name": "long blade"
+      "name": "long blade",
+      "desc": "A villager’s blade, longer and heavier than the sword."
     },
     "scimitar": {
       "name": "scimitar",
@@ -1693,6 +1707,10 @@
     "twin_blade": {
       "name": "twin blade",
       "desc": "A blade at each end of a short handle. A swing that carries one blade past the other fighter brings the second blade round after it."
+    },
+    "cursed_blade": {
+      "name": "cursed blade",
+      "desc": "The blade you came to this village for. It is cursed, and it has chosen you to hold it next. It cuts as a sword does, with two strands twisting along its edge."
     }
   },
   "maps": {

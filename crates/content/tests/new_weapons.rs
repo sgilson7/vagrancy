@@ -21,7 +21,8 @@ fn each_new_weapon_has_one_fighter_in_each_row() {
         }
     }
     // The cursed blade is the last weapon on the list.
-    assert_eq!(content::weapons::weapons().last().unwrap().id, "longsword");
+    let last = content::weapons::weapons().last().unwrap().clone();
+    assert!(last.prize && last.id == "cursed_blade", "the {} is last on the list, not the cursed blade", last.id);
 }
 
 /// The player's weapon in the yard, as the world holds it.
@@ -116,7 +117,8 @@ fn each_row_awards_a_weapon_from_a_villager_who_carries_it_the_first_row_two() {
     assert!(counts.windows(2).all(|p| p[0] >= p[1]), "a later row awards more weapons than an earlier one: {counts:?}");
     // The list is in the order they are won, the sword first and the
     // cursed blade last.
-    let ids: Vec<String> = content::weapons::weapons().into_iter().map(|w| w.id).collect();
+    // The villagers' long blade is not won, so it is not in that order.
+    let ids: Vec<String> = content::weapons::weapons().into_iter().filter(|w| !w.enemy_only).map(|w| w.id).collect();
     let won: Vec<String> = per_row.values().flatten().cloned().collect();
     assert_eq!(ids[1..ids.len() - 1], won[..], "the weapon list is not in the order the weapons are won");
 }

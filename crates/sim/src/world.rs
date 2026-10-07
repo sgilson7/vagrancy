@@ -153,6 +153,8 @@ pub struct Sword {
     pub turned: bool,
     /// The grips the throw took away, put back when it returns.
     pub grips: Vec<Constraint>,
+    /// The cursed blade, drawn with its two strands (`SwordDef::cursed`).
+    pub cursed: bool,
 }
 
 /// A held joint key this tick: the servo's target and who it turns.
@@ -317,7 +319,7 @@ impl World {
             } else {
                 sd.edges.iter().map(|e| (butt + e.a as u16, butt + e.b as u16, e.from)).collect()
             };
-            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false, returns: sd.returns, back_at: None, turned: false, grips: Vec::new() });
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false, returns: sd.returns, back_at: None, turned: false, grips: Vec::new(), cursed: sd.cursed });
             let extra = sd.extra.len() as u8;
             for g in &sd.grips {
                 let hand = base + g.hand as u16;

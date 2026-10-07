@@ -47,10 +47,25 @@ pub struct Weapon {
     /// Thrown, it comes back to the hand (the boomerang).
     #[serde(default)]
     pub returns: bool,
-    /// The final fight's prize (the cursed blade): stronger than the sword,
-    /// and won only after every other fight.
+    /// The final fight's prize (the cursed blade), won only after every
+    /// other fight.
     #[serde(default)]
     pub prize: bool,
+    /// How the player hears where it is: from the start, or from a villager
+    /// they beat (Sam, 2026-10-07: "rumors you acquire from defeating
+    /// enemies that can make the weapon boxes appear and tell you who to
+    /// defeat to find them"). A weapon with none is not shown until won.
+    #[serde(default)]
+    pub rumor: Option<Rumor>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+pub enum Rumor {
+    /// Known when the player arrives.
+    Start,
+    /// Heard from this villager once beaten.
+    Beat(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
@@ -92,24 +107,44 @@ pub fn prize_found(best: &BTreeMap<String, Best>) -> bool {
     weapons().iter().any(|w| w.prize && unlocked(w, best))
 }
 
+/// Whether the player has heard where this weapon is.
+pub fn rumored(w: &Weapon, best: &BTreeMap<String, Best>) -> bool {
+    match &w.rumor {
+        Some(Rumor::Start) => true,
+        Some(Rumor::Beat(id)) => best.contains_key(id),
+        None => false,
+    }
+}
+
+/// Whether the weapon list shows it: the sword and the cursed blade from
+/// the start, the blade there to taunt the player; any other once it is won
+/// or rumored (Sam, 2026-10-07).
+pub fn shown(w: &Weapon, best: &BTreeMap<String, Best>) -> bool {
+    !w.enemy_only && (w.id == DEFAULT || w.prize || unlocked(w, best) || rumored(w, best))
+}
+
+/// How far the cursed blade has gathered: the fights won and the fights
+/// there are, the secret one left out. It is found when the village deity
+/// falls, which needs nearly each other fight won first.
+pub fn prize_progress(best: &BTreeMap<String, Best>) -> (u32, u32) {
+    let road = crate::road::road();
+    let shown: Vec<_> = road.iter().filter(|s| !s.secret).collect();
+    let won = shown.iter().filter(|s| best.contains_key(&s.id)).count() as u32;
+    (won, shown.len() as u32)
+}
+
 /// Whether a weapon's card may say how it is won. Nothing tells the player
 /// where the cursed blade is until they find it (Sam, 2026-10-07: "that is
 /// the point of your rampage to some extent").
 pub fn unlock_shown(w: &Weapon, best: &BTreeMap<String, Best>) -> bool {
-    !w.prize || unlocked(w, best)
+    !w.prize && rumored(w, best) || unlocked(w, best)
 }
 
-/// The copy key a stop's weapon is named by on its card. Villagers who
-/// carry a blade of the cursed blade's shape carry a long blade, not the
-/// cursed one; only the guardian deity's blades are cursed, and its card is
-/// seen only after the blade is found.
-pub fn carried_name_key(weapon: &str, eight_arms: bool, best: &BTreeMap<String, Best>) -> String {
-    let prize = self::weapon(weapon).is_some_and(|w| w.prize);
-    if prize && !(eight_arms && prize_found(best)) {
-        format!("weapons.{weapon}.villager_name")
-    } else {
-        format!("weapons.{weapon}.name")
-    }
+/// Whether a stop's card may say it carries `weapon`. The village deity
+/// wields the cursed blade, and its card is seen from the start, so until
+/// the blade is found the card leaves it unsaid (Sam, 2026-10-07).
+pub fn carried_shown(weapon: &str, best: &BTreeMap<String, Best>) -> bool {
+    !self::weapon(weapon).is_some_and(|w| w.prize) || prize_found(best)
 }
 
 /// The weapon a player with these results carries when they ask for `id`:
@@ -127,6 +162,7 @@ pub fn usable(id: &str, best: &BTreeMap<String, Best>) -> String {
 pub fn reshape(base: &SwordDef, w: &Weapon) -> SwordDef {
     let mut s = base.clone();
     s.returns = w.returns;
+    s.cursed = w.prize;
     s.hilt = Fx((base.hilt.0 as i64 * w.hilt_pct / 100) as i32);
     let axis = base.tip - base.butt;
     let now = axis.len().trunc() as i64;

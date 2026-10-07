@@ -123,6 +123,10 @@ pub struct SwordDef {
     /// (the boomerang).
     #[serde(default)]
     pub returns: bool,
+    /// The cursed blade: it cuts as a sword does, and is drawn with two
+    /// strands twisting along it (Sam, 2026-10-07). Only the drawing reads it.
+    #[serde(default)]
+    pub cursed: bool,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

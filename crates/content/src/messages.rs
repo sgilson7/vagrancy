@@ -132,10 +132,10 @@ pub fn phase_text(w: &World, who: Audience) -> Value {
     match w.phase {
         Phase::Fight => Value::Null,
         Phase::RoundOver { result, ready } => {
-            json!({ "round": round_result(w, &result, who), "ready": ready, "popup": popup(w, &result), "focus": focus(w, &result) })
+            json!({ "round": round_result(w, &result, who), "ready": ready, "popup": popup(w, &result), "focus": focus(w, &result), "headshot": headshot(w, &result) })
         }
         Phase::MatchOver { result } => {
-            json!({ "round": round_result(w, &result, who), "match": match_result(w, who), "popup": popup(w, &result), "focus": focus(w, &result) })
+            json!({ "round": round_result(w, &result, who), "match": match_result(w, who), "popup": popup(w, &result), "focus": focus(w, &result), "headshot": headshot(w, &result) })
         }
     }
 }
@@ -168,15 +168,25 @@ pub fn popup(w: &World, r: &RoundResult) -> Value {
     json!({ "key": key, "vars": {}, "winner": r.loser.map(|l| 1 - l) })
 }
 
-/// For a cut across the head, where the blade landed, in the world's raw
-/// fixed-point units like the frame's points: the page stops the clock and
-/// looks there (Sam: "stop the simulation to focus on it"). Read on the tick
-/// the round ended, which is the tick of the cut.
+/// Where the round was decided, in the world's raw fixed-point units like
+/// the frame's points: the page slows the last moments down and looks there
+/// as each round ends (Sam, 2026-10-07: "when someone dies, it should slow
+/// down and zoom into the cut that bled the ink that depleted their health
+/// to 0"; a headshot first, "stop the simulation to focus on it"). Where the
+/// deciding cut landed, if it landed this tick; for a fighter who ran out of
+/// ink, the part that spilled most; for a headshot, the head. Nothing for a
+/// draw. Read on the tick the round ended.
 pub fn focus(w: &World, r: &RoundResult) -> Value {
-    if !headshot(w, r) {
+    if r.loser.is_none() {
         return Value::Null;
     }
     let loser = r.seat;
+    let part_at = || {
+        w.parts.iter().find(|p| p.fighter == loser && p.def == r.part).map(|p| {
+            let (a, b) = (w.particles[p.a as usize].p, w.particles[p.b as usize].p);
+            sim::fx::V2::new(sim::fx::Fx((a.x.0 + b.x.0) / 2), sim::fx::Fx((a.y.0 + b.y.0) / 2))
+        })
+    };
     let at = w
         .events
         .iter()
@@ -184,7 +194,7 @@ pub fn focus(w: &World, r: &RoundResult) -> Value {
             sim::fight::Event::Cut { seat, part, at, .. } if *seat == loser && *part == r.part => Some(*at),
             _ => None,
         })
-        .or_else(|| pilot::head(w, loser as usize));
+        .or_else(|| if headshot(w, r) { pilot::head(w, loser as usize) } else { part_at() });
     match at {
         Some(p) => json!([p.x.0, p.y.0]),
         None => Value::Null,
@@ -276,16 +286,20 @@ mod tests {
         assert_eq!(popup(&w, &result(Some(1), Cause::Heart, chest, 0))["winner"], json!(0));
         assert_eq!(popup(&w, &result(Some(0), Cause::Ink, chest, 0))["winner"], json!(1));
         assert_eq!(popup(&w, &result(None, Cause::Neck, head, 0))["winner"], Value::Null);
-        // Only a cut across the head stops the clock, and it looks where the
-        // blade landed on that tick.
+        // Each decided round looks where the blade landed on that tick
+        // (Sam, 2026-10-07); a draw looks nowhere.
         let at = sim::fx::V2::cm(212, 151);
         w.events.push(sim::fight::Event::Cut { seat: 1, part: head, by: 0, at, spilled: true });
         assert_eq!(focus(&w, &result(Some(1), Cause::Neck, head, 0)), json!([at.x.0, at.y.0]));
-        assert_eq!(focus(&w, &result(Some(1), Cause::Neck, neck, 0)), Value::Null);
-        assert_eq!(focus(&w, &result(Some(1), Cause::Heart, chest, 0)), Value::Null);
-        // Without the cut among this tick's events, it looks at the head.
+        assert_eq!(focus(&w, &result(None, Cause::Neck, head, 0)), Value::Null);
+        // Without the cut among this tick's events, a headshot looks at the
+        // head, and a fighter who ran out of ink at the part that spilled most.
         w.events.clear();
         let h = pilot::head(&w, 1).unwrap();
         assert_eq!(focus(&w, &result(Some(1), Cause::Neck, head, 0)), json!([h.x.0, h.y.0]));
+        let p = w.parts.iter().find(|p| p.fighter == 1 && p.def == chest).unwrap();
+        let (a, b) = (w.particles[p.a as usize].p, w.particles[p.b as usize].p);
+        assert_eq!(focus(&w, &result(Some(1), Cause::Ink, chest, 0)), json!([(a.x.0 + b.x.0) / 2, (a.y.0 + b.y.0) / 2]));
+        assert!(!headshot(&w, &result(Some(1), Cause::Ink, chest, 0)) && headshot(&w, &result(Some(1), Cause::Neck, head, 0)));
     }
 }

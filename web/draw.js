@@ -2,6 +2,36 @@
 // integrates, predicts or detects a contact (D2). Every color comes from
 // data/palette.json, through core.
 
+// The cursed blade (Sam, 2026-10-07): no steel, two strands twisting about
+// each other from the hilt to the point, where they meet. `a` and `b` are
+// in pixels, `width` how far the strands swing apart; the strand behind is
+// drawn first, so they cross over and under.
+export function cursedStrands(ctx, a, b, width, palette, turns = 3) {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const N = 40;
+  const at = (t, sgn) => {
+    const amp = width * (1 - t * 0.85) * Math.sin(t * turns * Math.PI * 2) * sgn;
+    return [a[0] + dx * t + nx * amp, a[1] + dy * t + ny * amp];
+  };
+  const strand = (sgn, color, lw) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let k = 0; k <= N; k += 1) {
+      const p = at(k / N, sgn);
+      if (k === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+    }
+    ctx.stroke();
+  };
+  const lw = Math.max(1.5, width * 0.55);
+  strand(-1, palette.cursed.strand_b, lw);
+  strand(1, palette.cursed.strand_a, lw);
+}
+
 export function renderer(canvas, palette, numbers) {
   const ctx = canvas.getContext('2d');
   const one = 1 << numbers.frac_bits;
@@ -174,7 +204,9 @@ export function renderer(canvas, palette, numbers) {
       s.edges.forEach(([i, j], k) => {
         const p = pts[i], q = pts[j], g = (s.cut_from ? s.cut_from[k] : 0) / one;
         const m = [p[0] + (q[0] - p[0]) * g, p[1] + (q[1] - p[1]) * g];
-        capsule(m, q, one * 1.1, palette.sword);
+        // The cursed blade, which core marks, is its two strands.
+        if (s.cursed) cursedStrands(ctx, [sx(m[0]), sy(m[1])], [sx(q[0]), sy(q[1])], Math.max(3, 3.4 * scale), palette);
+        else capsule(m, q, one * 1.1, palette.sword);
         if (g > 0) capsule(p, m, one * 1.6, palette.hilt);
       });
     }

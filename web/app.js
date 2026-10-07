@@ -4,12 +4,12 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
-  road_json, tutorial_json, weapons_json, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, slosh_step, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
   arms_json, save_choose_arms, bubbles_step, story_extra_json,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
 import * as sfx from './sfx.js';
-import { renderer } from './draw.js';
+import { renderer, cursedStrands } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 import { download, pick } from './files.js';
 import * as music from './music.js';
@@ -89,9 +89,19 @@ let acc = 0;
 let SPEED = 1;
 let last = 0;
 let draw = null;
-// Until when the clock is held for a headshot, and where to look.
+// Until when the clock is held as a round ends, and where to look.
 let FREEZE = null;
-const HOLD_MS = 1600;
+// Each round's end is played again slowly, closing in on the cut that
+// decided it, before the next round (Sam, 2026-10-07: "each round ends
+// instantly and it looks wacky. when someone dies, it should slow down and
+// zoom into the cut ... then zoom back out and start the next round").
+// The page keeps the last REPLAY_TICKS frames core sent and draws them
+// again at REPLAY_SPEED; it integrates nothing.
+const REPLAY_TICKS = 60;
+const REPLAY_SPEED = 0.3;
+let RECENT = [];
+let REPLAY = null; // { frames, start }
+const HOLD_MS = Math.round((REPLAY_TICKS * 1000) / 60 / REPLAY_SPEED) + 700;
 // And for at least this many drawn frames: where frames come slowly (CI's
 // headless Firefox, a loaded laptop), a hold measured in time alone could
 // end between two frames, so the card showed for one frame and was gone
@@ -108,6 +118,8 @@ function start(g, seatFn, tickFn = null) {
   curFrame = JSON.parse(game.frame());
   prevFrame = null;
   acc = 0;
+  RECENT = [];
+  REPLAY = null;
   draw.reset();
   $('stage').hidden = false;
   music.fight(!game.is_replay());
@@ -119,7 +131,7 @@ function popupShow(said) {
   box.replaceChildren(
     el('p', { class: 'popup-head', 'data-copy': said.popup.key }, t(said.popup.key, said.popup.vars)),
     sayChosen(said.round, { class: 'popup-line' }));
-  box.classList.toggle('headshot', !!said.focus);
+  box.classList.toggle('headshot', !!said.headshot);
   // The winner's color; a draw keeps the paper's.
   box.classList.remove('won-0', 'won-1');
   if (said.popup.winner === 0 || said.popup.winner === 1) box.classList.add(`won-${said.popup.winner}`);
@@ -141,6 +153,14 @@ function popupMatchWon(opened, next, revealed = []) {
   box.classList.remove('headshot', 'won-1');
   box.classList.add('won-0');
   box.hidden = false;
+}
+// "Round 2" over the arena as a round starts, for a moment.
+function popupRound(round) {
+  const box = $('death-popup');
+  box.replaceChildren(el('p', { class: 'popup-head', 'data-copy': 'hud.round' }, t('hud.round', { round })));
+  box.classList.remove('headshot', 'won-0', 'won-1');
+  box.hidden = false;
+  setTimeout(() => { if (box.firstChild && box.firstChild.dataset.copy === 'hud.round') box.hidden = true; }, 1100);
 }
 function popupHide() {
   const box = $('death-popup');
@@ -179,6 +199,8 @@ function loop(now) {
       prevFrame = curFrame;
       curFrame = JSON.parse(game.frame());
       draw.events(curFrame);
+      RECENT.push(curFrame);
+      if (RECENT.length > REPLAY_TICKS) RECENT.shift();
       acc -= tickMs;
       n += 1;
       if (onTick) onTick(curFrame);
@@ -189,7 +211,19 @@ function loop(now) {
       // the page reached the replay's end with the hold never seen).
       if (FREEZE) { acc = 0; break; }
     }
-    if (game) draw(prevFrame, curFrame, Math.min(1, acc / tickMs));
+    if (game) {
+      // The round's end again, slowly, then held on its last frame while
+      // the view draws back out.
+      if (REPLAY && FREEZE) {
+        const f = ((performance.now() - REPLAY.start) * REPLAY_SPEED) / tickMs;
+        const i = Math.min(REPLAY.frames.length - 1, Math.floor(f));
+        const j = Math.min(REPLAY.frames.length - 1, i + 1);
+        draw(REPLAY.frames[i], REPLAY.frames[j], i === j ? 1 : f - i);
+      } else {
+        REPLAY = null;
+        draw(prevFrame, curFrame, Math.min(1, acc / tickMs));
+      }
+    }
   }
   last = now;
   requestAnimationFrame(loop);
@@ -225,6 +259,9 @@ function matchWatcher(opponent, endButtons, names = null) {
       if (phase === 'fight') {
         panel.replaceChildren();
         popupHide();
+        // The next round named over the arena, so one round reads apart
+        // from the last.
+        if (frame.round > 1) popupRound(frame.round);
         return;
       }
       const said = JSON.parse(game.phase_text(opponent));
@@ -235,6 +272,7 @@ function matchWatcher(opponent, endButtons, names = null) {
       if (said.focus) {
         const start = performance.now();
         FREEZE = { until: start + HOLD_MS, frames: 0 };
+        if (!stillMotion() && RECENT.length > 1) REPLAY = { frames: RECENT.slice(), start };
         draw.focus({ at: said.focus, start, dur: HOLD_MS, still: stillMotion() });
       }
       const kids = [sayChosen(said.round, { class: 'result' })];
@@ -328,8 +366,13 @@ function onlineWeaponPicker() {
   return el('p', {}, el('label', { for: 'weapon-online', 'data-copy': 'online.weapon' }, t('online.weapon')), ' ', pick);
 }
 
-function weaponList() {
+// The weapons this player may see, and how far the cursed blade has
+// gathered (content::weapons, through the shim).
+function weaponState() {
   return JSON.parse(weapons_json(JSON.stringify(SAVE)));
+}
+function weaponList() {
+  return weaponState().weapons;
 }
 
 function weaponPicker(seat, labelKey, vars) {
@@ -766,12 +809,16 @@ function mapScreen({ nodes, rowLabel, detail, first, attr, before = [], layout =
 // Weapon Master's equipment: what you carry, and what the road has yet to
 // give you.
 function weaponPanel(redraw) {
-  const cards = weaponList().map((w) => {
+  const state = weaponState();
+  const cards = state.weapons.map((w) => {
     const name = t(`weapons.${w.id}.name`);
     const kids = [
       el('h4', { 'data-copy': `weapons.${w.id}.name` }, name),
       say(`weapons.${w.id}.desc`, {}, { class: 'desc' }),
     ];
+    // The cursed blade's box: liquid that gathers with each fight won, until
+    // the village deity falls and it sets into the blade (Sam, 2026-10-07).
+    if (w.prize) kids.push(cursedBox(state.prize));
     if (w.carried) kids.push(say('road.carried', { weapon: name }));
     else if (w.unlocked) {
       kids.push(button('road.carry.label', () => {
@@ -780,7 +827,10 @@ function weaponPanel(redraw) {
         redraw();
       }, { weapon: name }));
     } else if (w.unlock) {
-      kids.push(say('road.weapon_locked'), reqLine(w.unlock, { class: w.unlock.met ? 'met' : 'unmet' }));
+      // A rumor says who carries it: one the player came with, or one a
+      // beaten villager told.
+      kids.push(w.rumor && w.rumor.from ? say('road.rumor.from', { opponent_mid: t(`opponents.${w.rumor.from}.name_mid`) }) : say('road.rumor.start'),
+        reqLine(w.unlock, { class: w.unlock.met ? 'met' : 'unmet' }));
     } else {
       // Core leaves out how the cursed blade is won until it is found.
       kids.push(say('road.weapon_unfound', { weapon: name }));
@@ -805,6 +855,78 @@ function weaponPanel(redraw) {
     cards.push(el('div', { class: `weapon ${arms.on ? 'carried' : arms.open ? 'open' : 'locked'}`, 'data-weapon': 'four_arms' }, ...kids));
   }
   return el('section', { id: 'weapons' }, el('h3', { 'data-copy': 'road.weapon_heading' }, t('road.weapon_heading')), el('div', { class: 'weapon-list' }, ...cards));
+}
+
+// The cursed blade's box. Core steps the liquid (content::slosh); the page
+// draws it, tips it a little with the pointer, and remembers in this
+// browser how full it was last seen, so a win is seen pouring in. Found, it
+// sets into the blade, once, and then shows the blade.
+function cursedBox(prize) {
+  const cv = el('canvas', { class: 'cursed-box', width: 480, height: 200, 'aria-hidden': 'true' });
+  const ctx = cv.getContext('2d');
+  const target = prize.total ? prize.won / prize.total : 0;
+  let seen = 0, setSeen = false;
+  try { seen = Number(localStorage.getItem('vagrancy.cursedLevel') || 0); setSeen = localStorage.getItem('vagrancy.cursedSet') === '1'; } catch { /* storage off */ }
+  let state = JSON.stringify({ level: Math.min(seen, target), h: [], v: [] });
+  let push = 0, t0 = performance.now(), setAt = null;
+  cv.addEventListener('pointermove', (e) => { push += e.movementX * 0.00025; });
+  const W = cv.width, H = cv.height, pad = 14;
+  const blade = (alpha) => {
+    ctx.globalAlpha = alpha;
+    // The hilt, then the two strands from the guard to the point.
+    ctx.fillStyle = PALETTE.hilt;
+    ctx.fillRect(pad + 6, H / 2 - 7, 56, 14);
+    ctx.fillRect(pad + 58, H / 2 - 26, 9, 52);
+    cursedStrands(ctx, [pad + 70, H / 2], [W - pad - 10, H / 2], 20, PALETTE, 4);
+    ctx.globalAlpha = 1;
+  };
+  const frame = (now) => {
+    if (!cv.isConnected) return;
+    requestAnimationFrame(frame);
+    const sway = Math.sin((now - t0) / 900) * 0.0004;
+    const fill = prize.found ? 1 : target;
+    const out = JSON.parse(slosh_step(state, fill, push + sway));
+    state = JSON.stringify(out);
+    push *= 0.9;
+    ctx.clearRect(0, 0, W, H);
+    // The blade it will become, faint, until it is found.
+    if (!prize.found) blade(0.14);
+    // Found and not yet seen set: the liquid fills, then gives way to the
+    // blade over a second and a half.
+    let liquid = 1;
+    if (prize.found) {
+      if (setSeen) { blade(1); return; }
+      if (setAt === null && out.level > 0.97) setAt = now;
+      if (setAt !== null) {
+        const k = Math.min(1, (now - setAt) / 1500);
+        liquid = 1 - k;
+        blade(k);
+        if (k >= 1) { setSeen = true; try { localStorage.setItem('vagrancy.cursedSet', '1'); } catch { /* storage off */ } }
+      }
+    }
+    const n = out.h.length, top = (i) => H - pad - (H - 2 * pad) * Math.min(1, Math.max(0, out.level + out.h[i]));
+    ctx.globalAlpha = 0.92 * liquid;
+    ctx.fillStyle = PALETTE.cursed.liquid;
+    ctx.beginPath();
+    ctx.moveTo(pad, H - pad);
+    for (let i = 0; i < n; i += 1) ctx.lineTo(pad + ((W - 2 * pad) * i) / (n - 1), top(i));
+    ctx.lineTo(W - pad, H - pad);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = PALETTE.cursed.liquid_light;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < n; i += 1) { const x = pad + ((W - 2 * pad) * i) / (n - 1); if (i) ctx.lineTo(x, top(i)); else ctx.moveTo(x, top(i)); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // The box.
+    ctx.strokeStyle = PALETTE.line;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(pad, pad, W - 2 * pad, H - 2 * pad);
+  };
+  try { localStorage.setItem('vagrancy.cursedLevel', String(target)); } catch { /* storage off */ }
+  requestAnimationFrame(frame);
+  return cv;
 }
 
 // Which design the road is drawn in, remembered in this browser only.
@@ -874,7 +996,7 @@ function road() {
       el('h3', { 'data-copy': o('name') }, t(o('name'))),
       say(o('place'), {}, { class: 'desc' }),
     ];
-    if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(s.weapon_name) }));
+    if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
     if (s.companion) {
       kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
     }
@@ -1284,7 +1406,7 @@ function treeImage(id) {
 function stopFacts(s) {
   const o = (k) => `opponents.${s.id}.${k}`;
   const kids = [say(o('place'), {}, { class: 'desc' })];
-  if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(s.weapon_name) }));
+  if (s.weapon) kids.push(say('road.carries', { opponent: t(o('name')), weapon: t(`weapons.${s.weapon}.name`) }));
   if (s.companion) kids.push(say('road.companion', { companion: t(`opponents.${s.companion.pilot}.name`), weapon: t(`weapons.${s.companion.weapon}.name`) }));
   if (s.map) kids.push(say(`maps.${s.map}.desc`, keyVars(BINDINGS.solo)));
   kids.push(
@@ -1500,6 +1622,22 @@ function restore() {
 }
 
 let SAVE_NOTE = null; // { key, vars } after a load
+let RESET_ASKED = false; // the first press of "start over", waiting for the second
+
+// A fresh save that keeps the player's keys and options (Sam, 2026-10-07:
+// "a button to reset your active save file, i do it alot for testing").
+function resetSave() {
+  const fresh = JSON.parse(save_fresh());
+  fresh.state.bindings = SAVE.state.bindings;
+  fresh.state.options = SAVE.state.options;
+  SAVE = JSON.parse(save_read(JSON.stringify(fresh)));
+  BINDINGS = SAVE.state.bindings;
+  persist();
+  // What this browser remembers of the cursed blade's box goes too.
+  try { localStorage.removeItem('vagrancy.cursedLevel'); localStorage.removeItem('vagrancy.cursedSet'); } catch { /* storage off */ }
+  ROAD_PICK = null;
+  SAVE_NOTE = { key: 'settings.save.reset.done', vars: {} };
+}
 
 function saveSection() {
   return el('section', { id: 'save' },
@@ -1518,7 +1656,11 @@ function saveSection() {
           SAVE_NOTE = JSON.parse(err);
         }
         settings();
-      })),
+      }),
+      RESET_ASKED
+        ? button('settings.save.reset.confirm.label', () => { RESET_ASKED = false; resetSave(); settings(); }, {}, { id: 'save-reset-confirm' })
+        : button('settings.save.reset.label', () => { RESET_ASKED = true; SAVE_NOTE = null; settings(); }, {}, { id: 'save-reset' })),
+    RESET_ASKED ? say('settings.save.reset.desc', {}, { class: 'desc', role: 'status' }) : null,
     say('settings.save.download.desc', {}, { class: 'desc' }),
     SAVE_NOTE ? say(SAVE_NOTE.key, SAVE_NOTE.vars, { role: 'status', id: 'save-note' }) : null,
     say('settings.save.autosave', {}, { class: 'desc' }),

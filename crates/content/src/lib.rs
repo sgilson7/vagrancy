@@ -8,6 +8,7 @@ pub mod custom;
 pub mod body;
 pub mod bubbles;
 pub mod setup;
+pub mod slosh;
 pub mod maps;
 pub mod messages;
 pub mod road;

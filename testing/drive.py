@@ -681,18 +681,22 @@ def a_weapon_won_on_the_road_is_carried_and_the_road_draws_three_ways(page, name
     road = shown_road()
     click_copy(page, "menu.road.label")
     page.wait_for_selector("#weapons")
-    shown = page.locator('#weapons .weapon:not([data-weapon="four_arms"])').count()
-    if shown != len(carryable):
-        fails.append(f"{name}: the road shows {shown} weapons, not the {len(carryable)} a player can carry")
+    # Sam, 2026-10-07: at first the sword, the cursed blade, and the one
+    # weapon the player has a rumor of; no other until won or rumored.
+    shown = page.evaluate("[...document.querySelectorAll('#weapons .weapon')].map(e => e.dataset.weapon)")
+    if sorted(shown) != sorted(["sword", "short_sword", "cursed_blade"]):
+        fails.append(f"{name}: a fresh save shows the weapons {shown}, not the sword, the rumored short sword and the cursed blade")
+    if page.locator('#weapons [data-weapon="cursed_blade"] canvas.cursed-box').count() != 1:
+        fails.append(f"{name}: the cursed blade has no box for its liquid")
     # The cursed blade waits for the final fight, shown locked and last;
     # four arms is not shown until it is won.
-    if page.locator('#weapons [data-weapon="longsword"].locked').count() != 1:
+    if page.locator('#weapons [data-weapon="cursed_blade"].locked').count() != 1:
         fails.append(f"{name}: a fresh save does not show the cursed blade locked")
     # Sam, 2026-10-07: nothing says where the cursed blade is until it is found.
-    if page.locator('#weapons [data-weapon="longsword"] [data-copy="road.weapon_unfound"]').count() != 1 \
-            or page.locator('#weapons [data-weapon="longsword"] [data-copy="road.weapon_locked"]').count() != 0:
+    if page.locator('#weapons [data-weapon="cursed_blade"] [data-copy="road.weapon_unfound"]').count() != 1 \
+            or page.locator('#weapons [data-weapon="cursed_blade"] [data-copy="road.weapon_locked"]').count() != 0:
         fails.append(f"{name}: the locked cursed blade's card says how it is won")
-    if page.evaluate("[...document.querySelectorAll('#weapons .weapon')].map(e => e.dataset.weapon).pop()") != "longsword":
+    if page.evaluate("[...document.querySelectorAll('#weapons .weapon')].map(e => e.dataset.weapon).pop()") != "cursed_blade":
         fails.append(f"{name}: the cursed blade is not last in the weapon list")
     if page.locator('#weapons [data-weapon="four_arms"]').count() != 0:
         fails.append(f"{name}: a fresh save shows four arms")
@@ -1321,8 +1325,24 @@ def a_save_file_round_trips_and_a_bad_one_is_refused(page, name, tmp=Path("/tmp"
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
     if list(page.evaluate("window.vagrancy.save().state.road.best")) != [first]:
         fails.append(f"{name}: the road progress did not survive a reload")
+    # Sam, 2026-10-07: a button that starts the save over, keeping the keys.
+    keys = page.evaluate("window.vagrancy.save().state.bindings")
+    click_copy(page, "menu.settings.label")
+    click_copy(page, "settings.save.reset.label")
+    if page.evaluate("Object.keys(window.vagrancy.save().state.road.best).length") == 0:
+        fails.append(f"{name}: one press of start over erased the progress")
+    click_copy(page, "settings.save.reset.confirm.label")
+    page.wait_for_selector('[data-copy="settings.save.reset.done"]')
+    after = page.evaluate("window.vagrancy.save().state")
+    if after["road"]["best"] or after["bindings"] != keys:
+        fails.append(f"{name}: starting over left progress {list(after['road']['best'])} or changed the keys")
+    click_copy(page, "menu.back.label")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if page.evaluate("Object.keys(window.vagrancy.save().state.road.best).length"):
+        fails.append(f"{name}: the progress came back after starting over and reloading")
     if not fails:
-        print(f"ok: {name}: a save downloads, loads back with its progress, survives a reload, and newer or foreign files are refused by name")
+        print(f"ok: {name}: a save downloads, loads back with its progress, survives a reload, newer or foreign files are refused by name, and start over erases the progress in two presses and keeps the keys")
     return fails
 
 

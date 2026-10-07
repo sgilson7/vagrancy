@@ -376,3 +376,7 @@ body.arena .bar span { position: relative; padding: 4px 10px; font-weight: bold;
 #road-views-box { margin-top: 18px; font-size: 0.8em; color: var(--muted); }
 #road-views-box summary { cursor: pointer; width: max-content; }
 #road-views-box:not([open]) summary { opacity: 0.6; }
+/* The cursed blade's box: the liquid that gathers into it. */
+#weapons .cursed-box { display: block; width: 100%; height: auto; margin: 6px 0; cursor: crosshair; }
+body.arena #arena-result .round-end, body.arena #arena-result .round-start { margin: 0; font-size: 1.5em; font-weight: bold; }
+body.arena #arena-result .round-start { color: var(--focus); }

@@ -864,8 +864,7 @@ pub fn road_json(save_text: &str) -> Result<String, String> {
                 "level": st.level(),
                 "named_row": st.row.is_some(),
                 "rewards": rewards,
-                "weapon": st.weapon,
-                "weapon_name": st.weapon.as_deref().map(|w| content::weapons::carried_name_key(w, st.eight_arms, best)),
+                "weapon": st.weapon.as_deref().filter(|w| content::weapons::carried_shown(w, best)),
                 "open": content::road::open(st, best),
                 "won": won.is_some(),
                 "flawless": won.is_some_and(|b| b.losses == 0),
@@ -971,24 +970,44 @@ pub fn tutorial_json(save_text: &str) -> Result<String, String> {
 #[wasm_bindgen]
 pub fn weapons_json(save_text: &str) -> Result<String, String> {
     let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let best = &s.road.best;
+    // The weapons this player may see (content::weapons::shown): the sword,
+    // the cursed blade, and those won or heard of by rumor.
     let list: Vec<serde_json::Value> = content::weapons::weapons()
         .into_iter()
-        .filter(|w| !w.enemy_only)
+        .filter(|w| content::weapons::shown(w, best))
         .map(|w| {
-            // The cursed blade's way to be won is not shown until it is.
-            let unlock = w.unlock.as_ref().filter(|_| content::weapons::unlock_shown(&w, &s.road.best)).map(|r| {
+            let unlock = w.unlock.as_ref().filter(|_| content::weapons::unlock_shown(&w, best)).map(|r| {
                 let (key, vars) = r.sentence();
-                json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(&s.road.best) })
+                json!({ "stop": r.stop(), "key": key, "vars": vars, "met": r.met(best) })
             });
+            let rumor = match &w.rumor {
+                Some(content::weapons::Rumor::Start) if content::weapons::rumored(&w, best) => json!({ "from": null }),
+                Some(content::weapons::Rumor::Beat(id)) if content::weapons::rumored(&w, best) => json!({ "from": id }),
+                _ => serde_json::Value::Null,
+            };
             json!({
                 "id": w.id,
-                "unlocked": content::weapons::unlocked(&w, &s.road.best),
+                "unlocked": content::weapons::unlocked(&w, best),
                 "carried": s.weapon == w.id,
                 "unlock": unlock,
+                "rumor": rumor,
+                "prize": w.prize,
             })
         })
         .collect();
-    Ok(serde_json::Value::Array(list).to_string())
+    let (won, total) = content::weapons::prize_progress(best);
+    Ok(json!({ "weapons": list, "prize": { "won": won, "total": total, "found": content::weapons::prize_found(best) } }).to_string())
+}
+
+/// One step of the liquid in the cursed blade's box (content::slosh): the
+/// state as JSON in, moved toward `target` fullness and tipped by `push`,
+/// as JSON out.
+#[wasm_bindgen]
+pub fn slosh_step(json: &str, target: f64, push: f64) -> String {
+    let mut s: content::slosh::Slosh = serde_json::from_str(json).unwrap_or_else(|_| content::slosh::Slosh::new(target));
+    content::slosh::step(&mut s, target, push);
+    serde_json::to_string(&s).unwrap()
 }
 
 /// Whether the player has won four arms and fights with them, and what

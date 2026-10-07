@@ -43,5 +43,12 @@
     "wood": "#A9774E",
     "gold": "#E3B04B",
     "shadow": "#5B4A63"
+  },
+  "cursed": {
+    "_about": "The cursed blade (Sam, 2026-10-07): a blade of two strands twisting about each other, one black and one red, and the liquid that gathers in its box as the player wins. Sam asked for a red strand; the red band is closed to every palette color (crates/content/tests/palette.rs, CLAUDE.md), so strand_b is a deep violet until he rules on it.",
+    "strand_a": "#1E1A1F",
+    "strand_b": "#5E3A8A",
+    "liquid": "#3A2340",
+    "liquid_light": "#6A4A70"
   }
 }

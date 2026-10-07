@@ -159,11 +159,18 @@ pub fn opponent_body(bodies: &mut Vec<sim::body::BodyDef>, opponent: &str) -> u8
         bodies.push(b);
         seat1 = (bodies.len() - 1) as u8;
     }
-    // Four arms, and two of its weapon (the local deity).
+    // Four arms: its weapon in one pair of hands, and its second weapon, if
+    // it names one, in the other (the village deity).
     if crate::road::stop(opponent).is_some_and(|s| s.four_arms) {
         let mut b = crate::body::four_armed(false);
         if let Some(w) = crate::road::stop(opponent).and_then(|s| s.weapon).and_then(|w| crate::weapons::weapon(&w)) {
             reshape_all(&mut b, &w);
+        }
+        if let Some(w) = crate::road::stop(opponent).and_then(|s| s.second_weapon).and_then(|w| crate::weapons::weapon(&w)) {
+            let base = crate::body::four_armed(false);
+            for (sd, base) in b.more.iter_mut().zip(base.more.iter()) {
+                *sd = crate::weapons::reshape(base, &w);
+            }
         }
         bodies.push(b);
         seat1 = (bodies.len() - 1) as u8;

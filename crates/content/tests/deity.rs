@@ -123,17 +123,37 @@ fn beating_the_local_deity_wins_the_cursed_blade_and_four_arms() {
         s.road.best.insert(st.id, Best::won(0, 1, "sword"));
     }
     s.four_arms = true;
-    s.weapon = "longsword".into();
+    s.weapon = "cursed_blade".into();
     let back = decode(&encode(&s)).unwrap();
     assert!(!back.four_arms && back.weapon == "sword", "four arms or the cursed blade came before the local deity was beaten");
     s.road.best.insert("local_deity".into(), Best::won(0, 1, "sword"));
     let back = decode(&encode(&s)).unwrap();
-    assert!(back.four_arms && back.weapon == "longsword");
-    assert_eq!(content::weapons::weapon("longsword").unwrap().unlock, Some(Req::Beat("local_deity".into())));
+    assert!(back.four_arms && back.weapon == "cursed_blade");
+    assert_eq!(content::weapons::weapon("cursed_blade").unwrap().unlock, Some(Req::Beat("local_deity".into())));
     // And the yard and the road give a four-armed player two weapons.
-    let w = World::new(content::setup::road_with(1, sim::balance::DEFAULT_TUNING, "thresher", "longsword", true));
+    let w = World::new(content::setup::road_with(1, sim::balance::DEFAULT_TUNING, "thresher", "cursed_blade", true));
     assert_eq!(w.swords_of(0).len(), 2);
     assert_eq!(w.swords_of(1).len(), 1);
+}
+
+#[test]
+fn the_village_deity_wields_the_cursed_blade_and_a_short_sword_and_the_guardian_four_cursed_blades() {
+    // Sam, 2026-10-07: "the village deity should be wielding the cursed
+    // blade in one hand and the small blade in the other hand, and the
+    // guardian diety has 4 cursed blades".
+    let short = content::weapons::weapon("short_sword").unwrap();
+    let w = World::new(content::setup::road(1, sim::balance::DEFAULT_TUNING, "local_deity"));
+    let mine = w.swords_of(1);
+    assert_eq!(mine.len(), 2, "the village deity does not hold two weapons");
+    let cursed = mine.iter().filter(|&&k| w.swords[k].cursed).count();
+    assert_eq!(cursed, 1, "the village deity holds {cursed} cursed blades, not one");
+    let plain = mine.iter().find(|&&k| !w.swords[k].cursed).copied().unwrap();
+    let base = content::body::four_armed(false);
+    let want = content::weapons::reshape(&base.more[0], &short);
+    assert_eq!(w.swords[plain].len, (want.tip - want.butt).len(), "the village deity's other weapon is not the short sword");
+    let g = World::new(content::setup::road(1, sim::balance::DEFAULT_TUNING, "guardian_deity"));
+    let theirs = g.swords_of(1);
+    assert_eq!((theirs.len(), theirs.iter().filter(|&&k| g.swords[k].cursed).count()), (4, 4), "the guardian deity does not hold four cursed blades");
 }
 
 #[test]

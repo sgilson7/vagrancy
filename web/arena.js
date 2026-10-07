@@ -46,6 +46,12 @@ let showTrees = true;
 // How fast an exhibition plays, as the bot says (chat's !speed). A live
 // challenge stays at full speed: its other player is in real time.
 let speed = 1;
+// Each round's end played again slowly, closing in on the cut that decided
+// it, with the clock held, so one round reads apart from the next on stream
+// (Sam, 2026-10-07). The frames are the last ones core sent; nothing is
+// integrated. A live challenge is not held: its other player is in real time.
+const REPLAY_TICKS = 60, REPLAY_SPEED = 0.3;
+let recent = [], replay = null, holdUntil = 0, lastPhase = 'fight';
 
 function nameOf(f) { return f.id ? t(`opponents.${f.id}.name`) : (f.name || t('btlab.editor.unnamed')); }
 function treeFor(f) {
@@ -66,6 +72,10 @@ function begin() {
   cur = JSON.parse(game.frame());
   prev = null;
   acc = 0;
+  recent = [];
+  replay = null;
+  holdUntil = 0;
+  lastPhase = 'fight';
   reported = false;
   draw.reset();
   names();
@@ -84,6 +94,7 @@ function loop(now) {
   const tickMs = 1000 / N.ticks_per_second;
   if (game) {
     acc += Math.min(now - (last || now), 250) * (challenge ? 1 : speed);
+    if (!challenge && performance.now() < holdUntil) acc = 0;
     let n = 0;
     while (acc >= tickMs && n < 8) {
       if (challenge) {
@@ -97,19 +108,54 @@ function loop(now) {
         prev = cur; cur = JSON.parse(game.frame());
       }
       draw.events(cur);
+      recent.push(cur);
+      if (recent.length > REPLAY_TICKS) recent.shift();
+      if (cur.phase !== lastPhase) {
+        const was = lastPhase;
+        lastPhase = cur.phase;
+        if (was === 'fight') roundEnded();
+        else if (cur.phase === 'fight') roundCard(cur.round);
+        if (!challenge && performance.now() < holdUntil) { acc = 0; break; }
+      }
       acc -= tickMs;
       n += 1;
     }
     if (cur && cur.phase) {
       const traces = challenge ? [JSON.parse(challenge.sess.pilot_report())].filter(Boolean) : JSON.parse(game.report());
       draw.trees(!showTrees ? [] : traces.map((r) => ({ seat: r.seat, tree: challenge ? fighters[1].treeData : fighters[r.seat].treeData, trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })));
-      draw(prev || cur, cur, Math.min(1, acc / tickMs));
-      if (cur.phase === 'match_over' && !reported) finish();
+      if (replay && performance.now() < holdUntil) {
+        const f = ((performance.now() - replay.start) * REPLAY_SPEED) / tickMs;
+        const i = Math.min(replay.frames.length - 1, Math.floor(f)), j = Math.min(replay.frames.length - 1, i + 1);
+        draw(replay.frames[i], replay.frames[j], i === j ? 1 : f - i);
+      } else {
+        replay = null;
+        draw(prev || cur, cur, Math.min(1, acc / tickMs));
+      }
+      if (cur.phase === 'match_over' && !reported && performance.now() >= holdUntil) finish();
     }
   }
   if (!bot && !challenge && nextAt && now > nextAt) { nextAt = 0; randomExhibition(); }
   last = now;
   requestAnimationFrame(loop);
+}
+
+// A round has just ended: say how, and play its end again slowly toward
+// the deciding cut while the clock is held.
+function roundEnded() {
+  const said = JSON.parse(game.phase_text(''));
+  if (!said) return;
+  $('arena-result').replaceChildren(el('p', { class: 'round-end', 'data-copy': said.popup.key }, t(said.popup.key, said.popup.vars)));
+  if (challenge || !said.focus) return;
+  const start = performance.now();
+  const dur = (REPLAY_TICKS * 1000) / N.ticks_per_second / REPLAY_SPEED + 900;
+  holdUntil = start + dur;
+  replay = recent.length > 1 ? { frames: recent.slice(), start } : null;
+  draw.focus({ at: said.focus, start, dur, still: false });
+}
+// The next round named, so the stream can tell one round from the last.
+function roundCard(round) {
+  draw.focus(null);
+  $('arena-result').replaceChildren(el('p', { class: 'round-start', 'data-copy': 'hud.round' }, t('hud.round', { round })));
 }
 
 function finish() {
@@ -248,7 +294,7 @@ async function main() {
   if (url && /^ws:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(url)) connect(url);
   else randomExhibition();
   document.body.dataset.ready = '1';
-  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, speed }) };
+  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, speed, held: performance.now() < holdUntil, replaying: !!replay }) };
   requestAnimationFrame(loop);
 }
 main();
