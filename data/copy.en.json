@@ -124,7 +124,8 @@
     "arena": "new: arena (the stream page, all its strings)",
     "btlab.lesson": "new: every string; it replaces btlab.tour, whose demo and question strings moved into it unchanged",
     "weapons.longsword.villager_name, road.weapon_unfound, opponents.local_deity.place, opponents.local_deity.does": "new or rewritten (Sam, 2026-10-07): nothing says where the cursed blade is until it is found",
-    "btlab.lesson.<page>.ringed": "new: what each lesson page rings in the tree over its fight"
+    "btlab.lesson.<page>.ringed": "new: what each lesson page rings in the tree over its fight",
+    "tree.act.search": "new: the search move named in the BT Lab, whose readouts froze the page without it"
   },
   "_glossary": {
     "ink": {
@@ -1773,7 +1774,8 @@
       "throw_settle": "Stand still and square",
       "throw_wind": "Bring the blade back over the head",
       "throw_watch": "Swing forward with a step, watching the blade",
-      "throw_release": "Let go when its flight meets you, then follow through"
+      "throw_release": "Let go when its flight meets you, then follow through",
+      "search": "Search a short way ahead"
     },
     "search": "Search: look {horizon_ms} ms ahead, trying {branches} key combinations",
     "now": "Now: {node}",

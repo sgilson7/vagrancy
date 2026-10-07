@@ -1143,6 +1143,21 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     page.evaluate("document.getElementById('lesson-pose').scrollIntoView()")
     page.click("#lesson-pose .lesson-open")
     page.wait_for_selector('[data-copy="btlab.pose.rule"]', timeout=15000)
+    # Each page's fight opened in the lab, and left to run a moment: a move
+    # with no name once threw in the animation loop and froze the page.
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    for pid in page.evaluate("[...document.querySelectorAll('.lesson-page .lesson-open')].map(b => b.closest('.lesson-page').dataset.page)"):
+        page.evaluate(f"document.getElementById('lesson-{pid}').scrollIntoView()")
+        page.wait_for_timeout(500)
+        page.click(f"#lesson-{pid} .lesson-open")
+        page.wait_for_timeout(800)
+    if errors:
+        fails.append(f"{name}: opening the lesson's fights in the lab threw: {errors[:2]}")
+    before = page.evaluate("window.btlab.tick()")
+    page.wait_for_timeout(1500)
+    if not page.evaluate("window.btlab.state().paused") and page.evaluate("window.btlab.tick()") <= before:
+        fails.append(f"{name}: the lab stopped running after the lesson's fights were opened in it")
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a pose)")
     # The editor: a number out of range is refused with its rule named; a
     # tree that runs can be watched; a share code loads back the same tree.

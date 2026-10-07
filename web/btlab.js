@@ -11,7 +11,7 @@ import { renderer } from './draw.js';
 import { listen, bits, keyName } from './keys.js';
 
 const BUILD = '__BUILD__';
-let COPY, N, PAL, CONTROLS, ROSTER, MOVES, EDITOR, ACTION_BITS, draw;
+let COPY, N, PAL, CONTROLS, ROSTER, MOVES, EDITOR, ACTION_BITS, draw, WASM;
 
 const $ = (id) => document.getElementById(id);
 function t(key, vars = {}) {
@@ -90,6 +90,10 @@ function tickOnce() {
 }
 
 function loop(now) {
+  // The next frame is asked for first, so a frame that throws shows its
+  // error and the next one still runs: an uncaught error here once froze
+  // each fight on the page.
+  requestAnimationFrame(loop);
   const tickMs = 1000 / N.ticks_per_second;
   if (lab) {
     let n = 0;
@@ -103,9 +107,9 @@ function loop(now) {
     draw.trees(S.floating ? report.filter((r) => r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, S.paused ? 1 : Math.min(1, acc / tickMs));
   }
-  demoTick(now, now - (last || now));
+  const dt = now - (last || now);
   last = now;
-  requestAnimationFrame(loop);
+  demoTick(now, dt);
 }
 
 // --- the trees ---------------------------------------------------------------------
@@ -847,7 +851,7 @@ function renderEditor() {
 
 async function main() {
   try {
-    await init();
+    WASM = await init();
     COPY = JSON.parse(copy_json());
     N = JSON.parse(coreNumbers());
     PAL = JSON.parse(palette_json());
@@ -880,6 +884,8 @@ async function main() {
   // For the gate: what the lab shows and what core pressed.
   window.btlab = { report: () => report, keys: () => (lab ? Array.from(lab.keys()) : []), tick: () => (lab ? lab.tick() : 0), state: () => ({ ...S }),
     lesson: () => (demo ? { page: demo.pg.id, tick: demo.lab.tick(), seed: demo.seed, speed: demo.pg.demo.speed, rings: demo.draw.shown().rings } : null),
+    // How large core's memory has grown, in bytes: a leak shows here first.
+    memory: () => WASM.memory.buffer.byteLength,
     // Each page's ringed nodes, counted in its left fighter's tree.
     lessonRings: () => Object.fromEntries(LESSON.filter((pg) => pg.demo).map((pg) => [pg.id, ringedIds(pg).size])) };
   requestAnimationFrame(loop);
