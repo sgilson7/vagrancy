@@ -54,6 +54,8 @@ pub enum Event {
     Cut { seat: u8, part: u8, by: u8, at: V2, spilled: bool },
     /// Two blades met.
     Clash { at: V2 },
+    /// A shield stopped a blade that met it too fast (`BodyDef::shield`).
+    Shield { seat: u8, at: V2 },
     RoundEnd { result: RoundResult },
     MatchEnd { winner: u8 },
 }
@@ -177,6 +179,18 @@ impl World {
                     if speed < balance::MIN_CUT_SPEED {
                         break;
                     }
+                    // A shield stops a blade that comes too fast, where it
+                    // meets the part: the blade is held still this tick.
+                    if let Some(limit) = self.shield_of(&part) {
+                        if speed > limit {
+                            for &i in &self.swords[si].points.clone() {
+                                self.particles[i as usize].p = self.particles[i as usize].q;
+                            }
+                            let at = V2::lerp(self.particles[part.a as usize].p, self.particles[part.b as usize].p, hit.f);
+                            self.events.push(Event::Shield { seat: part.fighter, at });
+                            break;
+                        }
+                    }
                     let f = hit.f.clamp(Fx::ratio(1, 20), Fx::ratio(19, 20));
                     if let Some(far) = self.cut_by(pi, f, owner, !self.held(si)) {
                         now.push((si as u8, far));
@@ -186,6 +200,17 @@ impl World {
             }
         }
         self.touching = now;
+    }
+
+    /// The speed over which part `part`'s shield stops a blade: its body's
+    /// shield, while the part is still on that body.
+    fn shield_of(&self, part: &Part) -> Option<Fx> {
+        let f = self.fighters[part.fighter as usize].as_ref()?;
+        let on_body = part.attached && self.particles[part.a as usize].owner == crate::world::Owner::Body(part.fighter);
+        if !on_body {
+            return None;
+        }
+        self.setup.bodies[f.body as usize].shield
     }
 
     /// How fast the blade's touching point moves against the part's touching

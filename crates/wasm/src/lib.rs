@@ -61,6 +61,8 @@ pub fn numbers() -> String {
         // What the road's opponents wear and where each picture rides
         // (data/costumes.json, content::costumes).
         "costumes": serde_json::from_str::<serde_json::Value>(&content::costumes::page_json()).unwrap(),
+        // The scenery behind a fight (data/backgrounds.json).
+        "backgrounds": content::backgrounds::page_json(),
     })
     .to_string()
 }
@@ -491,6 +493,19 @@ pub struct Lab {
 
 #[wasm_bindgen]
 impl Lab {
+    /// A duel for a clip (content::setup::duel): the two pilots named, each
+    /// fighter carrying its weapon, shielded or not, to `rounds` won.
+    #[allow(clippy::too_many_arguments)]
+    pub fn duel(seed: u32, tuning: u8, left: &str, right: &str, left_weapon: &str, right_weapon: &str, shield: bool, rounds: u32) -> Lab {
+        Lab {
+            rec: Recording::new(content::setup::duel(seed as u64, tuning, [left_weapon, right_weapon], shield, rounds)),
+            pilots: [left, right].iter().map(|id| Some(pilot::build(&content::road::pilot(id)))).collect(),
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [left.to_string(), right.to_string()],
+            player: false,
+        }
+    }
+
     /// Two opponents, left against right.
     pub fn watch(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Lab {
         Lab {

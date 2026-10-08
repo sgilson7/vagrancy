@@ -93,6 +93,34 @@ pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
     s
 }
 
+/// A duel for a clip (Sam, 2026-10-08: a fight with Dune's shields, won
+/// 1 to 0): two fighters' bodies, each carrying its weapon (by name, or as
+/// a weapon's JSON), both with a
+/// shield when `shield`, to `rounds` won. Nobody on the road fights this.
+pub fn duel(seed: u64, tuning: u8, weapons: [&str; 2], shield: bool, rounds: u32) -> Setup {
+    let mut s = versus(seed, tuning);
+    s.rounds_to_win = rounds.max(1);
+    for (seat, w) in weapons.iter().enumerate() {
+        // A weapon by name, or one written out whole, as data/weapons.json
+        // writes one: a clip's own blade, which the road never carries.
+        let mut b = match serde_json::from_str::<crate::weapons::Weapon>(w) {
+            Ok(spec) => {
+                let mut b = s.bodies[FIGHTER as usize].clone();
+                reshape_all(&mut b, &spec);
+                b
+            }
+            Err(_) => {
+                let k = armed(&mut s.bodies, w) as usize;
+                s.bodies[k].clone()
+            }
+        };
+        b.shield = shield.then_some(balance::SHIELD_SPEED);
+        s.bodies.push(b);
+        s.seats[seat] = Some(Seat::at((s.bodies.len() - 1) as u8, balance::START_X));
+    }
+    s
+}
+
 /// The practice yard with the player carrying `weapon`.
 pub fn practice_with(seed: u64, tuning: u8, weapon: &str, four: bool) -> Setup {
     let mut s = practice(seed, tuning);

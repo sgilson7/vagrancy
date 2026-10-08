@@ -275,7 +275,8 @@ function loop(now) {
 function matchWatcher(opponent, endButtons, names = null) {
   // Each side's name on the score line: the fighters' colors unless the
   // caller names them (watch mode names the opponents).
-  const [leftName, rightName] = names || [t('fighters.left.name'), t('fighters.right.name')];
+  // On a road stop, the player and the opponent by name.
+  const [leftName, rightName] = names || (opponent ? [t('hud.you'), t(`opponents.${opponent}.name`)] : [t('fighters.left.name'), t('fighters.right.name')]);
   let phase = 'fight';
   document.body.dataset.phase = phase;
   const hud = $('hud');
@@ -1975,7 +1976,7 @@ function beginOnline(net) {
 
 function settings() {
   stop();
-  show(musicSection(), youtubeSection(), roundsSection(), costumesSection(), keysSection(), saveSection(), button('menu.back.label', menu));
+  show(musicSection(), youtubeSection(), roundsSection(), costumesSection(), backgroundsSection(), keysSection(), saveSection(), button('menu.back.label', menu));
 }
 
 // The end of each round: the replay can be turned off, which keeps the
@@ -1994,6 +1995,22 @@ function costumesSection() {
     el('h2', { 'data-copy': 'settings.costumes.title' }, t('settings.costumes.title')),
     el('p', {}, box, ' ', el('label', { for: 'costumes-shown', 'data-copy': 'settings.costumes.show' }, t('settings.costumes.show'))),
     say('settings.costumes.desc', {}, { class: 'desc' }));
+}
+
+// The scenery behind a fight can be turned off; on unless the player
+// turned it off.
+function backgroundsOn() {
+  try { return localStorage.getItem('vagrancy.backgrounds') !== 'off'; } catch { return true; }
+}
+function backgroundsSection() {
+  const box = el('input', { type: 'checkbox', id: 'backgrounds-shown', checked: backgroundsOn() || null, on: { change: (e) => {
+    try { localStorage.setItem('vagrancy.backgrounds', e.target.checked ? 'on' : 'off'); } catch { /* storage off */ }
+    if (draw) draw.backgrounds(e.target.checked);
+  } } });
+  return el('section', { id: 'backgrounds' },
+    el('h2', { 'data-copy': 'settings.backgrounds.title' }, t('settings.backgrounds.title')),
+    el('p', {}, box, ' ', el('label', { for: 'backgrounds-shown', 'data-copy': 'settings.backgrounds.show' }, t('settings.backgrounds.show'))),
+    say('settings.backgrounds.desc', {}, { class: 'desc' }));
 }
 
 function roundsSection() {
@@ -2145,6 +2162,7 @@ async function main() {
   listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
   draw.costumes(costumesOn());
+  draw.backgrounds(backgroundsOn());
   draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   // The arena: the canvas, and the card that comes up over it.
   const stage = $('stage');

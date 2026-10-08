@@ -212,6 +212,7 @@ fn build(b: BodyJson) -> BodyDef {
         elbow_keys_turn_upper: b.elbow_keys_turn_upper,
         armor: Vec::new(),
         costume: String::new(),
+        shield: None,
     }
 }
 

@@ -59,4 +59,8 @@ pub use world::World;
 /// 18: a body may wear plates of armor (`PlateDef`), rigid, held to its
 /// points, met by blades as a blade is and cutting nothing; a body names the
 /// costume the page draws. A match with no plate in it plays exactly as in 17.
-pub const SIM_VERSION: u32 = 18;
+/// 19: a body may have a shield (`BodyDef::shield`, Dune's, for a clip):
+/// a blade meeting it faster than `SHIELD_SPEED` is stopped and cuts
+/// nothing. No body on the road has one, so a road match plays exactly as
+/// in 18.
+pub const SIM_VERSION: u32 = 19;

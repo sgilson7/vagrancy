@@ -1,0 +1,59 @@
+{
+ "_about": "Backgrounds behind a fight (Sam, 2026-10-08): lightweight scenery drawn the way the costumes are, faint enough that the fighters and their costumes stay easy to read. Each scene is layers of pictures (web/art/scene/<scene>-<layer>.png, drawn by analysis/art/scenes.py), each covering `box` [x0, y0, x1, y1] in cm of the arena, the ground at y = 0. `depth` is how far a layer moves with the camera: 0 not at all, 1 as the fighters do; the far ones move least, which gives the scene its depth. `fights` names the scene for an opponent: seat 1's scene wins, then seat 0's. `shown` false draws none. A layer with `fade` [from, to] fades out as the view closes in from `from` to `to` times the whole arena's width: the village and the camp show only when the fight is seen whole (Sam: 'when it comes to close ups, the clear meadow field in the background doesnt need the village or camp to be in view').",
+ "shown": true,
+ "scenes": {
+  "clearing": {
+   "about": "A clearing in a forest: the village far off down the road on the left, a camp of soldiers in the trees on the right (Sam's picture of the woodcutter against the warden).",
+   "layers": [
+    {
+     "name": "hills",
+     "depth": 0.1,
+     "box": [
+      -1100,
+      -200,
+      1100,
+      420
+     ]
+    },
+    {
+     "name": "far",
+     "depth": 0.12,
+     "box": [
+      -1100,
+      -200,
+      1100,
+      420
+     ],
+     "fade": [
+      1.7,
+      2.2
+     ]
+    },
+    {
+     "name": "mid",
+     "depth": 0.4,
+     "box": [
+      -1100,
+      -200,
+      1100,
+      520
+     ]
+    },
+    {
+     "name": "near",
+     "depth": 0.8,
+     "box": [
+      -1100,
+      -200,
+      1100,
+      140
+     ]
+    }
+   ]
+  }
+ },
+ "fights": {
+  "woodcutter": "clearing",
+  "warden": "clearing"
+ }
+}

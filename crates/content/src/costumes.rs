@@ -91,20 +91,23 @@ pub fn plates(id: &str, body: &BodyDef) -> Vec<PlateDef> {
         .collect()
 }
 
-/// Dress opponent `id`'s body: its costume's name, for the page to draw,
-/// while the art switch is on, and its plates while the armor switch is.
+/// Dress opponent `id`'s body: its costume's name, for the page to draw
+/// (while the file's art switch is on) and to find its background by, and
+/// its plates while the armor switch is on.
 pub fn dress(id: &str, body: &mut BodyDef) {
     let f = file();
-    if f.art && f.costumes.contains_key(id) {
+    // The name stays even with the art off: the page finds the fight's
+    // background by it, and the art switch reaches the page in page_json.
+    if f.costumes.contains_key(id) {
         body.costume = id.to_string();
     }
     body.armor = plates(id, body);
 }
 
-/// Whether opponent `id` wears anything the switches leave on.
+/// Whether the file dresses opponent `id` at all.
 pub fn dressed(id: &str) -> bool {
     let f = file();
-    f.costumes.get(id).is_some_and(|c| f.art || (f.armor && !c.armor.is_empty()))
+    f.costumes.contains_key(id)
 }
 
 /// What the page needs to draw costumes, as JSON: the art switch; for each

@@ -79,6 +79,13 @@ pub const DEFAULT_TUNING: u8 = 2;
 /// made this Sam's question; the agent set it and carries it.
 pub const MIN_CUT_SPEED: Fx = Fx::int(6);
 
+/// The fastest a blade may meet a shielded body and still cut it (Sam,
+/// 2026-10-08, the shields of Dune: the slow blade gets through). Between
+/// MIN_CUT_SPEED and this a cut lands; over it the shield stops the blade.
+/// A swing's tip moves at about 20, so a cut through a shield is a
+/// deliberate, slow one. Only a body given a shield reads it.
+pub const SHIELD_SPEED: Fx = Fx::int(10);
+
 /// The jump, the air jump and the dodge (Sam, 2026-10-03; both jumps raised at
 /// his request). A jump raises the fighter's upward speed to 8.5 cm/tick,
 /// which at 0.2725 cm/tick² rises 8.5² / (2 · 0.2725) = 133 cm; the air jump

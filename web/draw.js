@@ -66,6 +66,7 @@ export function renderer(canvas, palette, numbers) {
   let sides = [0, 1, 1];
   const side = (seat) => sides[seat] ?? (seat === 0 ? 0 : 1);
   const fill = (part) => {
+    if (guest && guest.fills && guest.fills[part.fighter]) return guest.fills[part.fighter];
     if (part.body === 1) return palette.post;
     return side(part.fighter) === 0 ? palette.fighters.left.body : stripes;
   };
@@ -90,9 +91,15 @@ export function renderer(canvas, palette, numbers) {
   let costumesShown = true;
   draw.costumes = (on) => { costumesShown = on !== false; };
   draw.costumesShown = () => costumesShown;
+  // A clip's guests (clip.js): who each seat is dressed as, their slots,
+  // their scene, and their blades' colors, over the road's.
+  let guest = null;
+  draw.guests = (g) => { guest = g || null; };
+  const dressedAs = (cur, seat) => (guest && guest.seats ? guest.seats[seat] : cur.fighters[seat] && cur.fighters[seat].costume);
   function wearing(cur, seat) {
-    const f = cur.fighters[seat];
-    return costumesShown && dress.art && f && f.costume ? dress.costumes[f.costume] || null : null;
+    const id = dressedAs(cur, seat);
+    if (!costumesShown || !dress.art || !id) return null;
+    return (guest && guest.costumes && guest.costumes[id]) || dress.costumes[id] || null;
   }
   function wear(cur, pts, seat, slots) {
     const f = cur.fighters[seat];
@@ -101,7 +108,7 @@ export function renderer(canvas, palette, numbers) {
       if (!c.slots.includes(name)) continue;
       const slot = dress.slots[name];
       const part = cur.parts.find((p) => p.fighter === seat && p.def === slot.part && !p.stump);
-      const im = picture(f.costume, name);
+      const im = picture(dressedAs(cur, seat), name);
       if (!part || !im.complete || !im.naturalWidth) continue;
       const a = [sx(pts[part.a][0]), sy(pts[part.a][1])];
       const b = [sx(pts[part.b][0]), sy(pts[part.b][1])];
@@ -116,6 +123,57 @@ export function renderer(canvas, palette, numbers) {
       ctx.restore();
     }
   }
+  // Backgrounds (data/backgrounds.json, through core's numbers): a fight's
+  // scene is layers of pictures in the arena's centimeters. Each moves with
+  // the camera by its depth, a far one hardly at all, so the scene has
+  // depth as the view pans and closes in (Sam, 2026-10-08). The page can
+  // turn them off.
+  const scenery = numbers.backgrounds || { shown: false, scenes: {}, fights: {} };
+  let sceneryShown = scenery.shown !== false;
+  draw.backgrounds = (on) => { sceneryShown = on !== false; };
+  draw.backgroundsShown = () => sceneryShown;
+  const layerPics = new Map();
+  const layerPic = (scene, layer) => {
+    const k = `${scene}-${layer}`;
+    if (!layerPics.has(k)) { const im = new Image(); im.src = `art/scene/${k}.png`; layerPics.set(k, im); }
+    return layerPics.get(k);
+  };
+  function sceneOf(cur) {
+    if (guest && guest.scene) return guest.scene;
+    const ids = [1, 0, 2].map((s) => cur.fighters[s] && cur.fighters[s].costume).filter(Boolean);
+    const id = ids.find((x) => scenery.fights[x]);
+    return id ? scenery.fights[id] : null;
+  }
+  function backdrop(cur, M) {
+    if (!sceneryShown) return;
+    const name = sceneOf(cur);
+    const scene = name && ((guest && guest.scenes && guest.scenes[name]) || scenery.scenes[name]);
+    if (!scene) return;
+    for (const layer of scene.layers) {
+      const im = layerPic(name, layer.name);
+      if (!im.complete || !im.naturalWidth) continue;
+      const d = layer.depth;
+      // The view's zoom and its sideways pan taken only part of the way: a
+      // layer at depth d zooms and pans d of what the world does. Its ground
+      // stays on the world's ground line, where the scene meets the floor.
+      const z = 1 + (M.a - 1) * d;
+      // A layer that is only for the whole fight fades as the view closes in.
+      if (layer.fade) {
+        const [a, b] = layer.fade;
+        ctx.globalAlpha = Math.max(0, Math.min(1, (b - M.a) / (b - a)));
+        if (ctx.globalAlpha === 0) continue;
+      }
+      const floor = M.d * ground + M.f;
+      ctx.setTransform(z, 0, 0, z, M.e * d, floor - z * ground);
+      const [x0, y0, x1, y1] = layer.box;
+      const left = (x0 - camX * d + half) * scale;
+      ctx.drawImage(im, left, ground - y1 * scale, (x1 - x0) * scale, (y1 - y0) * scale);
+      ctx.globalAlpha = 1;
+    }
+    ctx.globalAlpha = 1;
+    ctx.setTransform(M);
+  }
+
   // A deity glows (Sam, 2026-10-08): soft rings of light round each part
   // still on its body, breathing slowly.
   function glow(cur, pts, seat, now) {
@@ -126,6 +184,30 @@ export function renderer(canvas, palette, numbers) {
         if (part.fighter !== seat || !part.attached) continue;
         capsule(pts[part.a], pts[part.b], part.r + one * (grow + 2 * breath), k ? palette.costume.glow_soft : palette.costume.glow);
       }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // A shield that stopped a blade shimmers round its fighter for a moment,
+  // brightest where the blade met it (sim BodyDef::shield, core's Shield
+  // event).
+  let flashes = [];
+  const FLASH_MS = 320;
+  function shimmer(cur, pts, now) {
+    flashes = flashes.filter((f) => now - f.t < FLASH_MS);
+    for (const f of flashes) {
+      const k = 1 - (now - f.t) / FLASH_MS;
+      ctx.globalAlpha = 0.35 * k;
+      for (const part of cur.parts) {
+        if (part.fighter !== f.seat || !part.attached) continue;
+        capsule(pts[part.a], pts[part.b], part.r + one * 7, palette.costume.shield);
+      }
+      ctx.globalAlpha = 0.8 * k;
+      ctx.strokeStyle = palette.costume.shield;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(sx(f.at[0]), sy(f.at[1]), (14 + 22 * (1 - k)) * scale, 0, Math.PI * 2);
+      ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
@@ -227,9 +309,11 @@ export function renderer(canvas, palette, numbers) {
       ctx.setTransform(z, 0, 0, z, tx - z * px, ty - z * py);
     }
     worldM = ctx.getTransform();
+    backdrop(cur, worldM);
     // The ground reaches past the canvas on each side and below, so a
-    // zoomed view never shows its edge.
-    ctx.fillStyle = palette.ground;
+    // zoomed view never shows its edge. It is drawn over a scene's layers
+    // too, so what the fighters stand on reads the same with or without one.
+    ctx.fillStyle = (guest && guest.ground) || palette.ground;
     ctx.fillRect(-W, ground, 3 * W, 3 * H);
     ctx.strokeStyle = palette.ground_line;
     ctx.lineWidth = 1;
@@ -275,6 +359,7 @@ export function renderer(canvas, palette, numbers) {
         capsule(pts[part.a], pts[part.b], part.r, fill(part));
       }
     };
+    shimmer(cur, pts, now);
     body(false);
     cur.fighters.forEach((f, seat) => { if (f && worn(seat)) { ctx.globalAlpha = dodging(seat) ? 0.4 : 1; wear(cur, pts, seat, ['waist', 'chest']); } });
     body(true);
@@ -310,7 +395,7 @@ export function renderer(canvas, palette, numbers) {
         const m = [p[0] + (q[0] - p[0]) * g, p[1] + (q[1] - p[1]) * g];
         // The cursed blade, which core marks, is its two strands.
         if (s.cursed) cursedStrands(ctx, [sx(m[0]), sy(m[1])], [sx(q[0]), sy(q[1])], Math.max(3, 3.4 * scale), palette);
-        else capsule(m, q, one * 1.1, palette.sword);
+        else capsule(m, q, one * 1.1, guest && guest.blades && guest.blades[s.fighter] ? palette.costume[guest.blades[s.fighter]] : palette.sword);
         if (g > 0) capsule(p, m, one * 1.6, palette.hilt);
       });
     }
@@ -520,13 +605,14 @@ export function renderer(canvas, palette, numbers) {
   }
 
   let lastPhase = 'fight';
-  draw.reset = () => { marks = []; lastPhase = 'fight'; trees = []; since.clear(); litBefore = new Set(); bubbleAt.clear(); };
+  draw.reset = () => { marks = []; flashes = []; lastPhase = 'fight'; trees = []; since.clear(); litBefore = new Set(); bubbleAt.clear(); };
   draw.events = (frame) => {
     // A new round stands both fighters back up; its marks start clean.
     if (lastPhase !== 'fight' && frame.phase === 'fight') marks = [];
     lastPhase = frame.phase;
     for (const e of frame.events) {
       if (e.Cut && e.Cut.spilled) marks.push({ at: [e.Cut.at.x, e.Cut.at.y], seat: e.Cut.seat });
+      if (e.Shield) flashes.push({ seat: e.Shield.seat, at: [e.Shield.at.x, e.Shield.at.y], t: clock() });
     }
   };
   return draw;

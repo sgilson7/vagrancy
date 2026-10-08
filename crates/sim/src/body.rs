@@ -176,6 +176,12 @@ pub struct BodyDef {
     /// empty for none. Nothing in the simulation reads it.
     #[serde(default)]
     pub costume: String,
+    /// A shield round the body (Sam, 2026-10-08, after Dune's: "if a blade
+    /// moves too fast it gets like locked in place"): a blade meeting a part
+    /// of it faster than this, in cm a tick, is stopped there and cuts
+    /// nothing; a slower one cuts as it would. `None` for no shield.
+    #[serde(default)]
+    pub shield: Option<Fx>,
 }
 
 /// A plate of armor, a helmet or a breastplate (Sam, 2026-10-08: "it should

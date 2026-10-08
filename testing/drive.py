@@ -1075,6 +1075,10 @@ def watch_mode_pits_two_beaten_opponents_and_lights_both_trees(page, name):
     for o in ("local_deity", "juggler"):
         if copy["opponents"][o]["name"] not in score:
             fails.append(f"{name}: the score line does not name {o}: {score!r}")
+    # Sam, 2026-10-08: "the shepard (2) against the sampler (1)".
+    import re as _re
+    if not _re.search(r"\(\d+\) against .+\(\d+\)", score):
+        fails.append(f"{name}: the score line does not give each side's rounds in brackets: {score!r}")
     # Hidden, no tree is drawn.
     click_copy(page, "watch.hide_trees.label")
     page.wait_for_timeout(300)
@@ -1249,9 +1253,9 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
         fails.append(f"{name}: the lesson's fights do not play at an eighth of full speed")
     # Sam, 2026-10-08: costumes off by default in the BT Lab. No costume
     # picture is asked for, the lab's fights and the lesson's both drawn.
-    worn = page.evaluate("""() => performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/art/costume/')).length""")
+    worn = page.evaluate("""() => performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/art/costume/') || n.includes('/art/scene/')).length""")
     if worn:
-        fails.append(f"{name}: the BT Lab drew costumes ({worn} pictures fetched)")
+        fails.append(f"{name}: the BT Lab drew costumes or scenery ({worn} pictures fetched)")
     if page.locator("#lesson-factor svg.lecture-fig").count() != 2:
         fails.append(f"{name}: the factoring page did not draw the lecture's two trees")
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a lesson page)")
@@ -1415,6 +1419,13 @@ def armored_fighters_wear_their_costumes_and_a_frame_stays_cheap(page, name):
     got = {u.rsplit("/", 1)[1] for u in pics}
     if want - got:
         fails.append(f"{name}: these costume pictures were never fetched: {sorted(want - got)}")
+    # The warden fights in the clearing (data/backgrounds.json): its layers load.
+    page.evaluate("s => window.clip.load(s)", {"left": "woodcutter", "right": "warden", "seed": 3, "from": 0})
+    page.evaluate("o => window.clip.frame(o)", {"ticks": 2})
+    page.wait_for_timeout(800)
+    scene = page.evaluate("""async () => { const urls = performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/art/scene/')); const ok = []; for (const u of urls) if ((await fetch(u)).ok) ok.push(u.split('/').pop()); return ok; }""")
+    if len(set(scene)) < 4:
+        fails.append(f"{name}: the clearing's layers did not all load: {sorted(set(scene))}")
     # Fetched is not loaded: each picture is asked for again and must be
     # there.
     broken = page.evaluate("""async (urls) => { const out = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) out.push(u.split('/').pop()); } return out; }""", pics)
@@ -1434,6 +1445,14 @@ def armored_fighters_wear_their_costumes_and_a_frame_stays_cheap(page, name):
         if page.evaluate("localStorage.getItem('vagrancy.costumes')") != "off":
             fails.append(f"{name}: turning the costumes off was not remembered")
         box.check()
+    scen = page.locator("#backgrounds-shown")
+    if not scen.count() or not scen.is_checked():
+        fails.append(f"{name}: the settings have no background switch, or it starts off")
+    else:
+        scen.uncheck()
+        if page.evaluate("localStorage.getItem('vagrancy.backgrounds')") != "off":
+            fails.append(f"{name}: turning the backgrounds off was not remembered")
+        scen.check()
     fails += every_visible_line_is_a_copy_string(page, name + " (settings, costumes)")
     click_copy(page, "menu.back.label")
     if not fails:
@@ -1452,6 +1471,10 @@ def the_arena_runs_fights_on_its_own_with_no_bot(page, name):
     st = page.evaluate("window.arena.state()")
     if st["tick"] < 20 or len(st["fighters"]) != 2:
         fails.append(f"{name}: the arena is not running a fight: {st}")
+    # Each name carries its rounds won (Sam, 2026-10-08).
+    marks = page.locator('#arena-names [data-copy="arena.wins"]').all_inner_texts()
+    if len(marks) != 2 or not all(m.startswith("(") for m in marks):
+        fails.append(f"{name}: the arena's names do not carry the rounds won: {marks}")
     fails += every_visible_line_is_a_copy_string(page, name + " (arena)")
     page.goto(ORIGIN + "/", wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)

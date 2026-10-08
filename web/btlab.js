@@ -594,6 +594,7 @@ function startDemo(pg, seed) {
   d.draw = canvas.renderer ||= renderer(canvas, PAL, N);
   // The lab is about the trees: the fighters are drawn plain.
   d.draw.costumes(false);
+  d.draw.backgrounds(false);
   // A third larger, unless the tree is big enough to cover its fighter.
   const count = (n) => 1 + n.children.reduce((a, k) => a + count(k), 0);
   d.draw.treeScale(count(pageTree(pg)) <= 20 ? 1.3 : 1);
@@ -690,7 +691,6 @@ function renderLesson() {
       el('div', { class: 'lecture' },
         say('btlab.lesson.page', { n: i + 1, count: LESSON.length }, { class: 'desc' }),
         el('h2', { 'data-copy': k(pg, 'title') }, t(k(pg, 'title'))),
-        el('h3', { 'data-copy': pg.beyond ? 'btlab.lesson.beyond' : 'btlab.lesson.lecture' }, t(pg.beyond ? 'btlab.lesson.beyond' : 'btlab.lesson.lecture')),
         ...lect, ...figs),
       el('div', { class: 'in-game' },
         el('h3', { 'data-copy': 'btlab.lesson.in_game' }, t('btlab.lesson.in_game')),
@@ -872,6 +872,7 @@ async function main() {
   listen((code) => S.mode === 'play' && Object.values(CONTROLS.solo).includes(code));
   draw = renderer($('stage'), PAL, N);
   draw.costumes(false);
+  draw.backgrounds(false);
   draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   // Space pauses and resumes; the full stop steps a tick while paused.
   window.addEventListener('keydown', (e) => {

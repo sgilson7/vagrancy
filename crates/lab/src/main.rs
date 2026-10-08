@@ -1232,6 +1232,64 @@ fn rounds(args: &[String]) {
     }
 }
 
+/// A shielded duel to one round won (content::setup::duel), over `seeds`
+/// seeds, as JSON lines: who won, when, and what the round held. `duels
+/// <left pilot> <right pilot> <left weapon> <right weapon> <seeds> [first]`.
+/// For picking a clip's fight.
+fn duels(args: &[String]) {
+    use sim::fight::{Event, Phase};
+    let (l, r, lw, rw) = (args[0].as_str(), args[1].as_str(), args[2].as_str(), args[3].as_str());
+    let seeds: u64 = args.get(4).and_then(|a| a.parse().ok()).unwrap_or(200);
+    let first: u64 = args.get(5).and_then(|a| a.parse().ok()).unwrap_or(0);
+    let threads = 8u64;
+    let rows: Vec<String> = std::thread::scope(|scope| {
+        let hs: Vec<_> = (0..threads).map(|k| scope.spawn(move || {
+            let mut out = Vec::new();
+            for seed in (first + k..first + seeds).step_by(threads as usize) {
+                let mut w = sim::World::new(content::setup::duel(seed, sim::balance::DEFAULT_TUNING, [lw, rw], true, 1));
+                let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+                let mut last = [Input::NONE; sim::body::SEATS];
+                let (mut clashes, mut stops, mut cuts) = (0u32, [0u32; 2], [0u32; 2]);
+                while w.tick < 60 * 60 && matches!(w.phase, Phase::Fight) {
+                    let mut i = [Input::NONE; sim::body::SEATS];
+                    for (k, p) in pilots.iter_mut().enumerate() {
+                        p.observe(last);
+                        i[k] = p.input(&w, k);
+                    }
+                    w.step_all(i);
+                    last = i;
+                    for e in &w.events {
+                        match e {
+                            Event::Clash { .. } => clashes += 1,
+                            Event::Shield { seat, .. } if (*seat as usize) < 2 => stops[*seat as usize] += 1,
+                            Event::Cut { seat, spilled: true, .. } if (*seat as usize) < 2 => cuts[*seat as usize] += 1,
+                            _ => {}
+                        }
+                    }
+                }
+                let (Phase::RoundOver { result, .. } | Phase::MatchOver { result }) = w.phase else { continue };
+                let Some(_) = result.loser else { continue };
+                let kill = w.tick;
+                let loser = result.seat;
+                let mut on = w.clone();
+                let mut after = 0;
+                for _ in 0..150 {
+                    on.step_all([Input::NONE; sim::body::SEATS]);
+                    after += on.events.iter().filter(|e| matches!(e, Event::Cut { seat, spilled: true, .. } if *seat == loser)).count();
+                }
+                let severed = w.parts.iter().filter(|p| p.fighter == loser && !p.attached).count();
+                out.push(serde_json::json!({ "seed": seed, "winner": 1 - loser, "by": result.by, "kill": kill, "cause": format!("{:?}", result.cause),
+                    "headshot": content::messages::headshot(&w, &result), "clashes": clashes, "stops": stops, "cuts": cuts, "severed": severed, "after": after, "thrown": result.thrown }).to_string());
+            }
+            out
+        })).collect();
+        hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
+    });
+    for r in rows {
+        println!("{r}");
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -1254,6 +1312,7 @@ fn main() {
         Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
         Some("armor") => armor(&args[1..]),
+        Some("duels") => duels(&args[1..]),
         Some("rounds") => rounds(&args[1..]),
         Some("profile") => profile(&args[1..]),
         Some("step-cost") => step_cost(&args[1..]),

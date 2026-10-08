@@ -7,6 +7,7 @@ pub mod copy;
 pub mod costumes;
 pub mod custom;
 pub mod agent;
+pub mod backgrounds;
 pub mod body;
 pub mod bubbles;
 pub mod setup;

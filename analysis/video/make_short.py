@@ -26,6 +26,7 @@ from pathlib import Path
 import imageio_ffmpeg
 from playwright.sync_api import sync_playwright
 
+ROOT = Path(__file__).resolve().parents[2]
 PAGE = "http://127.0.0.1:8766/clip.html"
 SITE = "sgilson7.github.io/vagrancy"
 FPS = 30
@@ -35,6 +36,9 @@ TICKS = 2  # sim ticks per frame at full speed (60 ticks a second)
 # (shorts.json says how they were chosen).
 import json
 VARIANTS = json.loads((Path(__file__).with_name("shorts.json")).read_text())["variants"]
+# And a local guest clip's own (analysis/video/guests/*.json, not in the repo).
+for _g in sorted(Path(__file__).with_name("guests").glob("*.json")):
+    VARIANTS.update(json.loads(_g.read_text()).get("variants", {}))
 
 
 def ease(x):
@@ -67,7 +71,7 @@ def impact_wav(path, times, length, soft=()):
         w.writeframes(b"".join(struct.pack("<h", int(32767 * 0.8 * x / peak)) for x in buf))
 
 
-def render(variant, out, music=None, music_start=None):
+def render(variant, out, music=None, music_start=None, gain=0.6):
     clips = VARIANTS[variant]
     out.parent.mkdir(parents=True, exist_ok=True)
     silent = out.with_suffix(".video.mp4")
@@ -83,14 +87,32 @@ def render(variant, out, music=None, music_start=None):
         page.goto(PAGE)
         page.wait_for_function("document.body.dataset.ready === '1'", timeout=60000)
         for c in clips:
-            page.evaluate("s => window.clip.load(s)", {"left": c["left"], "right": c["right"], "seed": c["seed"], "from": c["kill"] - int(c["lead"] * 60), "kill": c["kill"]})
+            # A guest clip (analysis/video/guests/<name>.json, local only):
+            # its own duel, and its pictures copied into the local build for
+            # this render alone.
+            guest = None
+            if c.get("guests"):
+                gdir = Path(__file__).with_name("guests")
+                g = json.loads((gdir / f"{c['guests']}.json").read_text())
+                for sub in ("costume", "scene"):
+                    for f in (gdir / "art" / sub).glob("*.png"):
+                        dest = ROOT / "dist" / "web" / "art" / sub / f.name
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        dest.write_bytes(f.read_bytes())
+                guest = g["page"]
+                c = {**c, "duel": {**c["duel"], "weapons": [g["weapons"].get(w) and json.dumps(g["weapons"][w]) or w for w in c["duel"]["weapons"]]}}
+            page.evaluate("s => window.clip.load(s)", {"left": c["left"], "right": c["right"], "seed": c["seed"], "from": c["kill"] - int(c["lead"] * 60), "kill": c["kill"],
+                                                      "duel": c.get("duel"), "guests": guest})
             if c.get("rank"):
                 cap = ["clip.rank", {"n": c["rank"]}, "big"]
             elif c.get("count"):
                 cap = ["clip.countdown", {"count": 5}, "loud"]
             else:
                 cap = [c.get("caption"), {"site": SITE, "pieces": c["pieces"], **c.get("vars", {})}, c.get("size", "loud" if c.get("loud") else "")]
-            page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", cap)
+            if c.get("say") is not None:
+                page.evaluate("([t, s]) => window.clip.say(t, s)", [c["say"], c.get("size", "")])
+            else:
+                page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", cap)
             trees = {"seat": c["trees"]} if c.get("half") and "trees" in c else False
             # Ticks a frame: full speed, half for a tree clip, or the clip's
             # own (an eighth of full speed is 0.25).
@@ -117,7 +139,7 @@ def render(variant, out, music=None, music_start=None):
                         break
                 pulse = 1 + 0.12 * max(0.0, 1 - (k - beat) / 10) if c.get("beats") and ended_at is None else 1
                 state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom * pulse, "punch": punch, "showTrees": trees, "treeScale": c.get("treeScale", 2.6)})
-                if c.get("beats") and ended_at is None and (state["clashes"] or state["cuts"]) and k - beat >= 10:
+                if c.get("beats") and ended_at is None and (state["clashes"] or state["cuts"] or state.get("shields")) and k - beat >= 10:
                     beat = k
                     if state["cuts"]:
                         soft.append(frames / FPS)
@@ -157,7 +179,7 @@ def render(variant, out, music=None, music_start=None):
             first = hits[-1] if music_start >= hits[-1] else first
         begin = max(0.0, music_start - first)
         mix = (f"[1:a]volume=0.6[h];[2:a]atrim={begin:.3f}:{begin + length:.3f},asetpts=PTS-STARTPTS,"
-               f"afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume=0.6[m];"
+               f"afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume={gain}[m];"
                f"[m][h]amix=inputs=2:normalize=0,alimiter=limit=0.89:level=disabled,atrim=0:{length:.2f}[a]")
         # A hit on a loud bar summed past full scale and broke up (Sam,
         # 2026-10-08: "some broken audio parts where it cuts out"): the
@@ -187,7 +209,8 @@ if __name__ == "__main__":
     ap.add_argument("variant", choices=sorted(VARIANTS))
     ap.add_argument("--music")
     ap.add_argument("--music-start", type=float, help="where in the song to start, in seconds (default: song_hook.py's choice)")
+    ap.add_argument("--gain", type=float, default=0.6, help="the song's level under the hits (a quiet track wants more)")
     ap.add_argument("--out")
     a = ap.parse_args()
     out = Path(a.out) if a.out else Path.home() / "Movies" / "Vagrancy" / f"short-{a.variant}.mp4"
-    render(a.variant, out, Path(a.music).expanduser() if a.music else None, a.music_start)
+    render(a.variant, out, Path(a.music).expanduser() if a.music else None, a.music_start, a.gain)

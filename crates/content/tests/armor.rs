@@ -141,3 +141,60 @@ fn no_two_opponents_in_the_same_hat_and_top_share_a_color() {
         }
     }
 }
+
+/// Seat 1, bare-handed and in the fighter's body, rises head first into
+/// seat 0's still blade at `speed` cm a tick, with a shield or without.
+/// Whether its head or neck was cut, and how many times a shield stopped
+/// the blade.
+fn rise_into_a_shield(shield: bool, speed: i32) -> (bool, usize) {
+    let mut s = content::setup::versus(1, sim::balance::DEFAULT_TUNING);
+    let mut b = s.bodies[0].clone();
+    b.sword = None;
+    b.shield = shield.then_some(sim::balance::SHIELD_SPEED);
+    s.bodies.push(b);
+    s.seats[1] = Some(Seat::at((s.bodies.len() - 1) as u8, Fx::int(200)));
+    s.physics.ground = false;
+    let mut w = World::new(s);
+    let f1 = w.fighters[1].clone().unwrap();
+    let head = (f1.base + w.setup.bodies[f1.body as usize].roles.head.unwrap() as u16) as usize;
+    let k = w.swords_of(0)[0];
+    let (butt, tip) = (w.particles[w.swords[k].butt as usize].p, w.particles[w.swords[k].tip as usize].p);
+    let at = V2::lerp(butt, tip, Fx::ratio(2, 3));
+    let shift = V2::new(at.x - w.particles[head].p.x, at.y - Fx::int(11 + 4) - w.particles[head].p.y);
+    for p in w.particles.iter_mut() {
+        if p.owner == Owner::Body(1) {
+            p.p += shift;
+            p.q = p.p - V2::new(Fx(0), Fx::int(speed));
+        }
+    }
+    let (mut cut, mut stopped) = (false, 0);
+    for _ in 0..20 {
+        for p in w.particles.iter_mut() {
+            if matches!(p.owner, Owner::Body(0) | Owner::Sword(0)) {
+                p.q = p.p;
+            }
+        }
+        w.step([Input::NONE, Input::NONE]);
+        for e in &w.events {
+            match *e {
+                Event::Cut { seat: 1, part, .. } if part == HEAD || part == NECK => cut = true,
+                Event::Shield { seat: 1, .. } => stopped += 1,
+                _ => {}
+            }
+        }
+    }
+    (cut, stopped)
+}
+
+#[test]
+fn a_shield_stops_a_fast_blade_and_lets_a_slow_one_through() {
+    // Sam, 2026-10-08, after Dune: "if a blade moves too fast it gets like
+    // locked in place". 14 cm a tick is over SHIELD_SPEED; 8 is between it
+    // and MIN_CUT_SPEED.
+    let (bare, _) = rise_into_a_shield(false, 14);
+    assert!(bare, "the control failed: a fast blade did not cut a bare head");
+    let (fast, stopped) = rise_into_a_shield(true, 14);
+    assert!(stopped > 0 && !fast, "a shield let a fast blade through (stopped {stopped} times)");
+    let (slow, _) = rise_into_a_shield(true, 8);
+    assert!(slow, "a shield stopped a slow blade");
+}

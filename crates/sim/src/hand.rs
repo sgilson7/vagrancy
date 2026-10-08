@@ -26,6 +26,7 @@ pub(crate) fn lone_point() -> BodyDef {
         elbow_keys_turn_upper: false,
         armor: Vec::new(),
         costume: String::new(),
+        shield: None,
     }
 }
 
@@ -95,6 +96,7 @@ fn figure(ink: i32) -> BodyDef {
         elbow_keys_turn_upper: false,
         armor: Vec::new(),
         costume: String::new(),
+        shield: None,
     }
 }
 

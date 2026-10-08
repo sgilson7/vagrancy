@@ -91,7 +91,11 @@ function begin() {
 function names() {
   const box = $('arena-names');
   if (!fighters.length) { box.replaceChildren(); return; }
+  // Each name with its rounds won (Sam, 2026-10-08: "the shepard (2)
+  // against the sampler (1)").
+  const wins = cur ? cur.wins : [0, 0];
   const side = (f, k) => el('div', { class: `fighter-name side-${k}` }, el('strong', { 'data-fill': '' }, nameOf(f)),
+    ' ', el('span', { class: 'wins', 'data-copy': 'arena.wins' }, t('arena.wins', { wins: wins[k] })),
     f.by ? el('span', {}, ' ', el('span', { 'data-copy': 'arena.by' }, t('arena.by')), ' ', fill(f.by)) : null);
   box.replaceChildren(side(fighters[0], 0), say('arena.versus', {}, { class: 'versus' }), side(fighters[1], 1));
 }
@@ -129,6 +133,8 @@ function loop(now) {
         prev = cur; cur = JSON.parse(game.frame());
       }
       draw.events(cur);
+      // The names carry the rounds won: redrawn when a round is won.
+      if (prev && (prev.wins[0] !== cur.wins[0] || prev.wins[1] !== cur.wins[1])) names();
       recent.push(cur);
       if (recent.length > KEEP) recent.shift();
       if (cur.phase !== lastPhase) {

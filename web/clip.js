@@ -62,13 +62,21 @@ function treeOf(id) {
 window.clip = {
   // A match from its start, played on without drawing to tick `from`; the
   // next round starts at once, as on the stream before its round ends.
-  load({ left, right, seed, from, kill }) {
+  // A clip may bring its own duel (core's Lab.duel: each side's weapon, a
+  // shield, the rounds to win) and its own guests: costumes, a scene, blade
+  // colors and names that are not the road's, for a clip made outside the
+  // game (analysis/video/make_short.py).
+  load({ left, right, seed, from, kill, duel = null, guests = null }) {
     if (lab) lab.free();
     ids = [left, right];
+    const start = () => duel
+      ? Lab.duel(seed, N.default_tuning, left, right, duel.weapons[0], duel.weapons[1], !!duel.shield, duel.rounds || N.rounds_to_win)
+      : Lab.watch(seed, N.default_tuning, left, right, 'flat');
+    draw.guests(guests);
     // The round the cut ends began somewhere before it: a first run to the
     // cut finds where, so the clip never opens in the round before.
     if (kill) {
-      const probe = Lab.watch(seed, N.default_tuning, left, right, 'flat');
+      const probe = start();
       let f = JSON.parse(probe.frame()), began = 0;
       while (probe.tick() < kill - 1) {
         const was = f.phase;
@@ -79,7 +87,7 @@ window.clip = {
       probe.free();
       from = Math.max(from, began + 6);
     }
-    lab = Lab.watch(seed, N.default_tuning, left, right, 'flat');
+    lab = start();
     cur = JSON.parse(lab.frame());
     while (lab.tick() < from) {
       lab.step(cur.phase !== 'fight' ? N.ready_bit : 0, 0);
@@ -87,10 +95,11 @@ window.clip = {
     }
     prev = null; acc = 0; mid = null; focus = null; spread = 0;
     draw.reset();
+    const named = (k, id) => (guests && guests.names ? guests.names[k] : t(`opponents.${id}.name`));
     $('clip-names').replaceChildren(
-      el('span', { 'data-fill': '', class: 'side-0' }, t(`opponents.${left}.name`)), ' ',
+      el('span', { 'data-fill': '', class: 'side-0' }, named(0, left)), ' ',
       el('span', { 'data-copy': 'arena.versus' }, t('arena.versus')), ' ',
-      el('span', { 'data-fill': '', class: 'side-1' }, t(`opponents.${right}.name`)));
+      el('span', { 'data-fill': '', class: 'side-1' }, named(1, right)));
     return { tick: lab.tick(), phase: cur.phase };
   },
   // `ticks` forward (a fraction is carried), and the frame drawn at `dt` ms
@@ -101,7 +110,7 @@ window.clip = {
     acc += ticks;
     // What happened in the ticks this frame stepped: blades meeting, and
     // cuts (for the edit's beats on a long fight).
-    let clashes = 0, cuts = 0;
+    let clashes = 0, cuts = 0, shields = 0;
     while (acc >= 1) {
       const was = cur.phase;
       lab.step(0, 0);
@@ -109,6 +118,7 @@ window.clip = {
       for (const e of cur.events) {
         if (e.Clash) clashes += 1;
         if (e.Cut && e.Cut.spilled) cuts += 1;
+        if (e.Shield) shields += 1;
       }
       acc -= 1;
       if (was === 'fight' && cur.phase !== 'fight') {
@@ -129,11 +139,16 @@ window.clip = {
     const report = JSON.parse(lab.report());
     draw.trees(showTrees ? report.filter((r) => (showTrees.seat === 'both' ? r.seat < 2 : r.seat === showTrees.seat) && r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, Math.min(1, acc));
-    return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null, clashes, cuts };
+    return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null, clashes, cuts, shields };
   },
   caption(key, vars = {}, size = '') {
     $('clip-caption').className = size;
     $('clip-caption').replaceChildren(key ? el('span', { 'data-copy': key }, t(key, vars)) : '');
+  },
+  // A guest clip's own words, from its file rather than the game's copy.
+  say(text, size = '') {
+    $('clip-caption').className = size;
+    $('clip-caption').replaceChildren(text ? el('span', { 'data-fill': '' }, text) : '');
   },
   ended: null,
 };

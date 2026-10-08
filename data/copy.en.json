@@ -143,7 +143,9 @@
     "clip": "new: the words burned into the short clips (Sam, 2026-10-07)",
     "settings.costumes, arena.how.costumes": "new: every string (Sam, 2026-10-08: a way to turn off all costumes)",
     "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added",
-    "clip.get_past": "new: a framing for the hectic short (Sam, 2026-10-08: 'like the pilgrim needing to battle his way into the temple, or the woodcutter protecting his village')"
+    "clip.get_past": "new: a framing for the hectic short (Sam, 2026-10-08: 'like the pilgrim needing to battle his way into the temple, or the woodcutter protecting his village')",
+    "settings.backgrounds": "new: every string (Sam, 2026-10-08: the backgrounds should be toggleable)",
+    "hud.score, hud.you, arena.wins": "hud.score rewritten in Sam's form (2026-10-08: 'the shepard (2) against the sampler (1)'); hud.you and arena.wins new"
   },
   "_glossary": {
     "ink": {
@@ -338,9 +340,10 @@
   "hud": {
     "ink": "Ink",
     "round": "Round {round}",
-    "score": "{left_name} {left_wins}, {right_name} {right_wins}",
+    "score": "{left_name} ({left_wins}) against {right_name} ({right_wins})",
     "delay": "Input delay: {delay_ms} ms",
-    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps, {key.dodge} dodges, {key.stand} stands you up and {key.throw} throws your sword."
+    "keys": "Your keys: {key.shoulder_up} and {key.shoulder_down} turn the shoulder, {key.elbow_in} and {key.elbow_out} bend and straighten the elbow, {key.step_left} and {key.step_right} move, {key.jump} jumps, {key.dodge} dodges, {key.stand} stands you up and {key.throw} throws your sword.",
+    "you": "You"
   },
   "fighters": {
     "left": {
@@ -1347,6 +1350,11 @@
       "title": "Costumes",
       "show": "Draw the costumes the opponents wear",
       "desc": "Off, the fighters are drawn plain, and a plate of armor is drawn as a band of steel. A plate stops a blade either way."
+    },
+    "backgrounds": {
+      "title": "Backgrounds",
+      "show": "Draw the scenery behind a fight",
+      "desc": "Off, the fights are drawn on plain paper. The simulation does not read the scenery, so a fight plays the same with it or without it."
     }
   },
   "replay": {
@@ -1976,7 +1984,7 @@
   },
   "btlab": {
     "title": "BT Lab",
-    "subtitle": "How a behavior tree becomes key presses, one tick at a time, with the opponents from {game}. Watch two of them fight, or fight one yourself, and see which part of its tree ran and which keys it pressed because of it.",
+    "subtitle": "The opponents in {game} use behavior trees to choose game inputs. This lab lets you slow a fight down and inspect that connection: which part of a tree ran on a given tick, and which keys the opponent pressed. Watch two opponents fight, or control one fighter yourself.",
     "game_link": "Play {game}",
     "setup": {
       "heading": "What to run"
@@ -2146,11 +2154,9 @@
     },
     "lesson": {
       "heading": "The lesson",
-      "intro": "Scroll through the pages. Each one starts from the lecture on behavior trees and then shows the same idea running in a sword fight, with the tree drawn over the fighter who runs it.",
+      "intro": "Scroll through the pages. Each one takes an idea about behavior trees and then shows the same idea running in a sword fight, with the tree drawn over the fighter who runs it.",
       "page": "Page {n} of {count}",
       "contents": "Pages of the lesson",
-      "lecture": "From the lecture",
-      "beyond": "Past the lecture",
       "in_game": "In {game}",
       "discuss": "Discuss:",
       "open_lab": {
@@ -2169,7 +2175,7 @@
       "idle": "{opponent} runs no move this tick.",
       "keys": "Keys pressed",
       "page_tree": "The tree on this page",
-      "to_lab": "The lab",
+      "to_lab": "Inspect a fight, one tick at a time",
       "to_editor": "The editor",
       "label": {
         "opp_near": "Opponent near?",
@@ -2224,7 +2230,7 @@
         "ringed": "Ringed in the left fighter’s tree: its selector, the root."
       },
       "running": {
-        "title": "A behavior tree keeps its place",
+        "title": "A behavior tree resumes where it left off",
         "lecture_1": "A decision tree is stateless: each call starts at the root and ends at a leaf. A behavior tree is stateful: the first call starts at the root, and the next call starts at the leaf where the last one ended.",
         "lecture_2": "That one sentence is the design. The tree keeps its place, which is what a state machine gave us, and stays a tree, which is what made decision trees readable. An action that has not finished yet is still running, which is why working behavior trees have a third return value.",
         "demo": "A move takes many ticks. While it runs, the tree resumes it instead of choosing again, the way the reading's trees pick up at the leaf where the last call ended. A node with a dashed edge is checked on each tick anyway and can cut a running move short: watch the dyer dodge back when a point comes at her body, cutting short whatever she was doing.",
@@ -2316,7 +2322,8 @@
           "label": "Write a tree in the editor below"
         }
       },
-      "lab_intro": "Pick two fighters, slow them down, and step through a fight a tick at a time. The panels show which part of a tree ran and which keys it pressed because of it."
+      "lab_intro": "Choose two fighters and start a match. Slow the simulation down, or advance it one tick at a time. After each tick, compare the part of the behavior tree that ran with the keys the opponent pressed. When an opponent changes what it does, look for the change in the tree and ask what happened in the fight that could explain it.",
+      "lab_read": "Read one tick as a chain of evidence. Start with what is happening in the fight, follow the portion of the tree evaluated on that tick, and then look at the keys the agent pressed. Those inputs are how the agent's choice reaches the game. Step again to see whether the same path runs when the situation changes."
     }
   },
   "arena": {
@@ -2348,7 +2355,8 @@
     "kind": {
       "fight": "to fight",
       "tree": "with a tree"
-    }
+    },
+    "wins": "({wins})"
   },
   "clip": {
     "title": "{game} clips",

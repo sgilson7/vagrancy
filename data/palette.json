@@ -52,7 +52,7 @@
     "liquid_light": "#6A4A70"
   },
   "costume": {
-    "_about": "What the road's opponents wear (data/costumes.json, analysis/art/costumes.py), in the region art's manner: flat fills, plum ink lines. `armor` and `armor_edge` paint a plate of armor where the page draws it; `glow` rings a deity.",
+    "_about": "What the road's opponents wear (data/costumes.json, analysis/art/costumes.py), in the region art's manner: flat fills, plum ink lines. `armor` and `armor_edge` paint a plate of armor where the page draws it; `glow` rings a deity. `shield` is the shimmer of a shield that stops a blade.",
     "armor": "#9AA1AB",
     "armor_edge": "#4A505B",
     "steel": "#8D939C",
@@ -76,6 +76,26 @@
     "bone_dark": "#A8977A",
     "sky": "#8FB8D0",
     "glow": "#F5D77A",
-    "glow_soft": "#FBEFC4"
+    "glow_soft": "#FBEFC4",
+    "shield": "#8CC0E6"
+  },
+  "scenery": {
+    "_about": "Backgrounds (data/backgrounds.json, analysis/art/scenes.py): the region art's colors faded most of the way to the paper, so the scenery sits behind the fighters and never competes with them. Further layers are paler.",
+    "far_line": "#B8AC93",
+    "far_hill": "#E0D8C1",
+    "far_roof": "#D2B79C",
+    "far_wall": "#E6DCC6",
+    "far_tree": "#C9CDB2",
+    "far_tent": "#D8CAAE",
+    "far_smoke": "#E6E0D2",
+    "mid_line": "#B9B097",
+    "mid_tree": "#C6CCB1",
+    "mid_tree_dark": "#B7BFA2",
+    "mid_trunk": "#C9B8A0",
+    "mid_field": "#E0D6BE",
+    "near_line": "#ACA286",
+    "near_grass": "#CFCBA9",
+    "near_stump": "#C8B79C",
+    "road": "#E5DAC2"
   }
 }
