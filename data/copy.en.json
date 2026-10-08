@@ -93,6 +93,7 @@
   },
   "_universals": {
     "clip.hook": "Sam's own words for the clip's hook (2026-10-07): 'end it all' is an idiom, not a claim about the game to test",
+    "game.description": "tested: only_arm_bits_drive_a_joint_motor in crates/sim/tests/controls.rs; the tagline is the one already on /projects/vagrancy/",
     "clip.last_stand": "Sam's own words for the somber short (2026-10-08): 'all that stands between' is an idiom, not a claim about the game to test"
   },
   "_review": {
@@ -143,6 +144,7 @@
     "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree",
     "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)",
     "clip": "new: the words burned into the short clips (Sam, 2026-10-07)",
+    "game.tip_link, game.page_title, game.description": "new: the Ko-fi link in the footer, and the page title and description search shows (Sam, 2026-10-08: a low-key Ko-fi; the description is the tagline already on /projects/vagrancy/)",
     "settings.costumes, arena.how.costumes": "new: every string (Sam, 2026-10-08: a way to turn off all costumes)",
     "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added",
     "clip.get_past": "new: a framing for the hectic short (Sam, 2026-10-08: 'like the pilgrim needing to battle his way into the temple, or the woodcutter protecting his village')",
@@ -230,6 +232,9 @@
     "canvas_name": "{game} game",
     "about_link": "About {game}",
     "back_link": "Tools and games",
+    "tip_link": "Tip jar",
+    "page_title": "{game}: a two-player sword-fighting game",
+    "description": "A two-player physics sword-fighting game in which each player controls only their fighter's arms.",
     "build": "Build {hash}"
   },
   "menu": {
