@@ -135,16 +135,22 @@ def render(variant, out, music=None, music_start=None):
         delay = int(first * 1000)
         mix = (f"[2:a]atrim={music_start:.3f}:{music_start + body:.3f},asetpts=PTS-STARTPTS,"
                f"afade=t=out:st={max(0, body - 0.8):.2f}:d=0.8,volume=0.6,adelay={delay}|{delay}[m];"
-               "[m][1:a]amix=inputs=2:normalize=0[a]")
+               f"[m][1:a]amix=inputs=2:normalize=0,atrim=0:{length:.2f}[a]")
         print(f"  music from {music_start:.2f} s of the song, in at {first:.2f} s of the clip")
         cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-i", str(music),
-               "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{length:.2f}", str(out)]
+               "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", str(out)]
+        # (An output -t here left the mixed audio silent with this ffmpeg; the
+        # length is trimmed inside the mix instead.)
     else:
         cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(out)]
     subprocess.run(cmd, check=True)
+    level = subprocess.run([ff, "-hide_banner", "-i", str(out), "-vn", "-af", "volumedetect", "-f", "null", "-"], capture_output=True, text=True).stderr
+    mean = float(level.split("mean_volume:")[1].split("dB")[0]) if "mean_volume:" in level else -99.0
+    if mean < -40:
+        raise SystemExit(f"{out}: the audio is silent (mean {mean} dB)")
     silent.unlink()
     wav.unlink()
-    print(f"wrote {out}: {length:.1f} s, {len(hits)} kills{', with music' if music else ''}")
+    print(f"wrote {out}: {length:.1f} s, {len(hits)} kills{', with music' if music else ''}, audio mean {mean:.1f} dB")
 
 
 if __name__ == "__main__":
