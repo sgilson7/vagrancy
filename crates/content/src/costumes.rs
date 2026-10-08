@@ -47,10 +47,24 @@ pub struct Costume {
     pub armor: Vec<String>,
     #[serde(default)]
     pub glow: bool,
+    /// The opponent's own signature piece (analysis/art/signatures.py), and
+    /// the slot whose picture it is drawn into.
+    pub sig: String,
+    pub sig_on: String,
 }
 
 pub fn file() -> File {
     serde_json::from_str(COSTUMES_JSON).expect("data/costumes.json is valid")
+}
+
+/// What of data/costumes.json changes a fight: the armor switch, the plates,
+/// and who wears which. The measured tables' fingerprints read this, so a
+/// change to the pictures alone leaves them current.
+pub fn armor_text() -> String {
+    let f = file();
+    let plates: Vec<String> = f.plates.iter().map(|(n, p)| format!("{n}:{}:{:?}", p.part, p.points)).collect();
+    let worn: Vec<String> = f.costumes.iter().filter(|(_, c)| !c.armor.is_empty()).map(|(id, c)| format!("{id}:{}", c.armor.join("+"))).collect();
+    format!("armor={};{};{}", f.armor, plates.join(","), worn.join(","))
 }
 
 /// The costume opponent `id` wears, if the file gives it one.
@@ -136,7 +150,7 @@ pub fn page_json() -> String {
         .costumes
         .iter()
         .map(|(id, c)| {
-            let slots = [("head", &c.head), ("chest", &c.chest), ("waist", &c.waist)].iter().filter(|(_, piece)| piece.as_str() != "none").map(|(s, _)| s.to_string()).collect();
+            let slots = [("head", &c.head), ("chest", &c.chest), ("waist", &c.waist)].iter().filter(|(s, piece)| piece.as_str() != "none" || c.sig_on == *s).map(|(s, _)| s.to_string()).collect();
             (id.clone(), Worn { slots, glow: c.glow })
         })
         .collect();

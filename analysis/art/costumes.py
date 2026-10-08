@@ -12,7 +12,8 @@ so the page can lay it on the part it rides with one transform. The style is
 the region art's (regions.py, after Sam_Comm_final.png): flat fills and plum
 ink lines. A piece that is also a plate of armor (the helmet, the sombrero,
 the horns, the breastplate) is drawn on the plate's own points, so what is
-seen is what stops a blade.
+seen is what stops a blade. Each opponent also wears its own signature piece
+(signatures.py), so no two are told apart by color alone.
 
     python3 analysis/art/costumes.py            # writes web/art/costume/<id>-<slot>.png
     python3 analysis/art/costumes.py abbot      # just one costume
@@ -308,6 +309,29 @@ def waist_piece(piece, main, trim):
         o.append(poly([(-14, 118), (15, 118), (21, 72), (-19, 72)], main))
         for x in (-9, -2, 5, 12):
             o.append(line((x * 0.95, 116), (x * 1.35, 73), color=trim))
+    elif piece == "trousers":
+        # Wide trousers, split between the legs.
+        o.append(poly([(-14, 118), (15, 118), (21, 64), (5, 64), (1, 84), (-3, 64), (-19, 64)], main))
+        for x in (-10, 9):
+            o.append(line((x, 116), (x * 1.5, 66), color=trim))
+        o.append(poly([(-15, 114), (15, 114), (15, 119), (-15, 119)], trim, THIN))
+    elif piece == "workpants":
+        # Narrower, rolled up below the knee.
+        o.append(poly([(-14, 118), (15, 118), (17, 82), (4, 82), (1, 92), (-2, 82), (-16, 82)], main))
+        o.append(poly([(4, 78), (17.5, 78), (17, 83), (4, 83)], trim, THIN))
+        o.append(poly([(-16.5, 78), (-2, 78), (-2, 83), (-16, 83)], trim, THIN))
+        o.append(poly([(-15, 114), (15, 114), (15, 119), (-15, 119)], "brown_dark", THIN))
+    elif piece == "kilt":
+        # A short pleated skirt above the knee.
+        o.append(poly([(-14, 118), (15, 118), (19, 90), (-18, 90)], main))
+        for x in range(-14, 18, 4):
+            o.append(line((x * 0.95, 117), (x * 1.2, 91), color=trim))
+        o.append(poly([(-18, 90), (19, 90), (19, 93), (-18, 93)], trim, THIN))
+    elif piece == "coat":
+        # The skirts of a long coat, open at the front.
+        o.append(poly([(-15, 122), (14, 122), (12, 64), (-22, 64)], main))
+        o.append(poly([(9, 122), (14, 122), (12, 64), (7, 64)], trim, THIN))
+        o.append(line((-4, 118), (-8, 66), color=trim))
     elif piece == "plate_skirt":
         for k, x in enumerate((-16, -6, 4, 14)):
             o.append(poly([(x - 1, 116), (x + 9, 116), (x + 10, 82), (x - 2, 82)], main, THIN))
@@ -331,16 +355,23 @@ def waist_piece(piece, main, trim):
 
 PIECES = {"head": head_piece, "chest": chest_piece, "waist": waist_piece}
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import signatures  # noqa: E402
+
 
 def render(cid, slot):
     c = DATA["costumes"][cid]
     piece = c[slot]
-    if piece == "none":
+    sig = c.get("sig_on") == slot
+    if piece == "none" and not sig:
         return False
     x0, y0, x1, y1 = DATA["slots"][slot]["box"]
-    body = PIECES[slot](piece, c["main"], c["trim"])
-    if not body:
+    body = PIECES[slot](piece, c["main"], c["trim"]) if piece != "none" else []
+    if piece != "none" and not body:
         sys.exit(f"no {slot} piece named {piece} ({cid})")
+    if sig:
+        # The opponent's own piece, over the clothes (signatures.py).
+        body += signatures.SIG[c["sig"]][1](sys.modules[__name__], c["main"], c["trim"])
     tex = f"""\\documentclass[tikz,border=0pt]{{standalone}}
 \\usepackage{{tikz}}
 {colors()}

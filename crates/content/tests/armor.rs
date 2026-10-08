@@ -112,3 +112,18 @@ fn every_costume_and_plate_names_something_that_exists() {
     // Most of the road is dressed (Sam: "a majority of the enemies").
     assert!(f.costumes.len() * 10 >= ids.len() * 9, "{} costumes for {} opponents", f.costumes.len(), ids.len());
 }
+
+#[test]
+fn every_opponent_wears_a_signature_piece_of_its_own() {
+    // Sam, 2026-10-08: "a lot of them are wearing roughly the same japanese
+    // peasant type garb ... give enemy a signature piece".
+    let f = content::costumes::file();
+    let mut seen = std::collections::BTreeMap::new();
+    for (id, c) in &f.costumes {
+        assert!(!c.sig.is_empty(), "{id} wears no signature piece");
+        assert!(f.slots.contains_key(&c.sig_on), "{id}'s {} is drawn into a slot that does not exist: {}", c.sig, c.sig_on);
+        if let Some(other) = seen.insert(c.sig.clone(), id.clone()) {
+            panic!("{id} and {other} both wear the {}", c.sig);
+        }
+    }
+}

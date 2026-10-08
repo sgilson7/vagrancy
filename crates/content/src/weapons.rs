@@ -18,7 +18,7 @@ pub const PANEL: &[&str] = &["thresher", "drover", "lamplighter", "ferryman", "w
 /// What analysis/weapons.md was measured on.
 pub fn fingerprint() -> String {
     // The panel's armor changes their matches (data/costumes.json).
-    let data = format!("{}{}{}{}{}", WEAPONS_JSON, crate::road::PILOTS_JSON, PANEL.join(","), crate::costumes::COSTUMES_JSON, sim::SIM_VERSION);
+    let data = format!("{}{}{}{}{}", WEAPONS_JSON, crate::road::PILOTS_JSON, PANEL.join(","), crate::costumes::armor_text(), sim::SIM_VERSION);
     format!("{:016x}", sim::world::fnv1a(data.as_bytes()))
 }
 

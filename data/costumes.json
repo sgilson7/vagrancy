@@ -1,5 +1,5 @@
 {
- "_about": "Costumes and armor for the road's opponents (Sam, 2026-10-08). `art` and `armor` switch the whole change off without touching code: art false draws no costume; armor false wears no plate, and the fights are as before. A plate is rigid, meets a blade as another blade does and cuts nothing (sim PlateDef); its points are in cm in the fighter's rest pose facing +x, riding rigidly on `part`. A slot's picture (web/art/costume/<id>-<slot>.png, drawn by analysis/art/costumes.py) covers `box` [x0, y0, x1, y1] in the same cm and rides on `part`. `main` and `trim` name colors in palette.json's costume and art sets.",
+ "_about": "Costumes and armor for the road's opponents (Sam, 2026-10-08). `art` and `armor` switch the whole change off without touching code: art false draws no costume; armor false wears no plate, and the fights are as before. A plate is rigid, meets a blade as another blade does and cuts nothing (sim PlateDef); its points are in cm in the fighter's rest pose facing +x, riding rigidly on `part`. A slot's picture (web/art/costume/<id>-<slot>.png, drawn by analysis/art/costumes.py) covers `box` [x0, y0, x1, y1] in the same cm and rides on `part`. `main` and `trim` name colors in palette.json's costume and art sets. `sig` is the opponent's own signature piece (analysis/art/signatures.py), drawn into the `sig_on` slot's picture: no two opponents share one.",
  "art": true,
  "armor": true,
  "plates": {
@@ -102,7 +102,7 @@
    "part": "head",
    "box": [
     -34,
-    148,
+    128,
     34,
     236
    ]
@@ -110,19 +110,19 @@
   "chest": {
    "part": "chest",
    "box": [
-    -24,
-    96,
-    28,
-    172
+    -40,
+    74,
+    34,
+    226
    ]
   },
   "waist": {
    "part": "waist",
    "box": [
-    -22,
-    64,
-    26,
-    120
+    -32,
+    60,
+    30,
+    124
    ]
   }
  },
@@ -133,7 +133,9 @@
    "waist": "mino",
    "main": "straw",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "crow",
+   "sig_on": "head"
   },
   "gatekeeper": {
    "head": "skullcap",
@@ -143,39 +145,49 @@
    "trim": "steel",
    "armor": [
     "skullcap"
-   ]
+   ],
+   "sig": "keys",
+   "sig_on": "chest"
   },
   "thresher": {
    "head": "headband",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "straw",
    "trim": "indigo",
-   "armor": []
+   "armor": [],
+   "sig": "flail",
+   "sig_on": "chest"
   },
   "ferryman": {
    "head": "kasa",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "indigo",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "rope_coil",
+   "sig_on": "chest"
   },
   "vaulter": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "sage",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "vault_pole",
+   "sig_on": "chest"
   },
   "windmill": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "cream",
    "trim": "wood",
-   "armor": []
+   "armor": [],
+   "sig": "pinwheel",
+   "sig_on": "head"
   },
   "sampler": {
    "head": "scarf",
@@ -183,87 +195,109 @@
    "waist": "skirt",
    "main": "teal",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "tea_set",
+   "sig_on": "chest"
   },
   "reader": {
    "head": "cap",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "plum",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "spectacles",
+   "sig_on": "head"
   },
   "drover": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "brown",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "crook",
+   "sig_on": "chest"
   },
   "lamplighter": {
    "head": "cap",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "indigo",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "lantern",
+   "sig_on": "chest"
   },
   "cooper": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "brown",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "hoops",
+   "sig_on": "chest"
   },
   "bellringer": {
    "head": "hood",
    "chest": "monk",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "slate",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "hood_bell",
+   "sig_on": "head"
   },
   "courier": {
    "head": "cap",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "parcel",
+   "sig_on": "chest"
   },
   "ropewalker": {
    "head": "headband",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "peach",
    "trim": "indigo",
-   "armor": []
+   "armor": [],
+   "sig": "parasol",
+   "sig_on": "head"
   },
   "salt_trader": {
    "head": "kasa",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "white",
    "trim": "slate",
-   "armor": []
+   "armor": [],
+   "sig": "salt_sack",
+   "sig_on": "chest"
   },
   "smith": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "black",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "tongs",
+   "sig_on": "chest"
   },
   "archivist": {
    "head": "cap",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "indigo",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "quill",
+   "sig_on": "head"
   },
   "watchman": {
    "head": "helmet",
@@ -273,15 +307,19 @@
    "trim": "steel",
    "armor": [
     "helmet"
-   ]
+   ],
+   "sig": "horn",
+   "sig_on": "chest"
   },
   "dyer": {
    "head": "scarf",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "indigo",
    "trim": "teal",
-   "armor": []
+   "armor": [],
+   "sig": "skeins",
+   "sig_on": "chest"
   },
   "potter": {
    "head": "headband",
@@ -289,23 +327,29 @@
    "waist": "skirt",
    "main": "peach",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "pots",
+   "sig_on": "chest"
   },
   "carpenter": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "wood",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "square",
+   "sig_on": "chest"
   },
   "mason": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "stone",
    "trim": "slate",
-   "armor": []
+   "armor": [],
+   "sig": "stone_block",
+   "sig_on": "chest"
   },
   "weaver": {
    "head": "scarf",
@@ -313,31 +357,39 @@
    "waist": "skirt",
    "main": "teal",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "spool",
+   "sig_on": "chest"
   },
   "falconer": {
    "head": "feather",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "brown",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "falcon",
+   "sig_on": "chest"
   },
   "boatwright": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "teal_dark",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "oar",
+   "sig_on": "chest"
   },
   "brewer": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "olive",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "mug",
+   "sig_on": "chest"
   },
   "herbalist": {
    "head": "leaves",
@@ -345,31 +397,39 @@
    "waist": "leaves",
    "main": "leaf",
    "trim": "leaf_dark",
-   "armor": []
+   "armor": [],
+   "sig": "herb_basket",
+   "sig_on": "chest"
   },
   "cartographer": {
    "head": "cap",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "sage",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "map_quiver",
+   "sig_on": "chest"
   },
   "magistrate": {
    "head": "eboshi",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "black",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "seal",
+   "sig_on": "head"
   },
   "abbot": {
    "head": "mitre",
    "chest": "monk",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "saffron",
    "trim": "plum",
-   "armor": []
+   "armor": [],
+   "sig": "crozier",
+   "sig_on": "chest"
   },
   "warden": {
    "head": "helmet",
@@ -379,7 +439,9 @@
    "trim": "steel",
    "armor": [
     "helmet"
-   ]
+   ],
+   "sig": "shackles",
+   "sig_on": "chest"
   },
   "hermit": {
    "head": "hood",
@@ -387,23 +449,29 @@
    "waist": "skirt",
    "main": "brown",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "beard",
+   "sig_on": "head"
   },
   "tanner": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "brown_dark",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "pelt",
+   "sig_on": "chest"
   },
   "tinker": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "olive",
    "trim": "steel",
-   "armor": []
+   "armor": [],
+   "sig": "whetstone",
+   "sig_on": "chest"
   },
   "pilgrim": {
    "head": "pilgrim",
@@ -411,65 +479,81 @@
    "waist": "pilgrim",
    "main": "white",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "walking_staff",
+   "sig_on": "chest"
   },
   "knife_grinder": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "slate",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "goggles",
+   "sig_on": "head"
   },
   "ox_herd": {
    "head": "horns",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "brown",
    "trim": "straw",
    "armor": [
     "horns"
-   ]
+   ],
+   "sig": "cowbell",
+   "sig_on": "head"
   },
   "eel_fisher": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal_dark",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "eel_trap",
+   "sig_on": "chest"
   },
   "bargeman": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "indigo",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "pipe",
+   "sig_on": "head"
   },
   "rice_broker": {
    "head": "eboshi",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "gold",
    "trim": "black",
-   "armor": []
+   "armor": [],
+   "sig": "abacus",
+   "sig_on": "chest"
   },
   "bell_founder": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "black",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "mask",
+   "sig_on": "head"
   },
   "porter": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "peach",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "carrier",
+   "sig_on": "chest"
   },
   "lacquerer": {
    "head": "scarf",
@@ -477,15 +561,19 @@
    "waist": "skirt",
    "main": "black",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "brushes",
+   "sig_on": "head"
   },
   "post_rider": {
    "head": "cap",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "teal",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "saddlebag",
+   "sig_on": "chest"
   },
   "paper_maker": {
    "head": "scarf",
@@ -493,15 +581,19 @@
    "waist": "skirt",
    "main": "white",
    "trim": "sage",
-   "armor": []
+   "armor": [],
+   "sig": "paper_frame",
+   "sig_on": "chest"
   },
   "gambler": {
    "head": "topknot",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "plum",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "dice",
+   "sig_on": "chest"
   },
   "monk": {
    "head": "none",
@@ -509,7 +601,9 @@
    "waist": "skirt",
    "main": "saffron",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "alms_bowl",
+   "sig_on": "chest"
   },
   "general": {
    "head": "general",
@@ -520,39 +614,49 @@
    "armor": [
     "helmet",
     "breastplate"
-   ]
+   ],
+   "sig": "banner",
+   "sig_on": "chest"
   },
   "duelist": {
    "head": "topknot",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "black",
    "trim": "white",
-   "armor": []
+   "armor": [],
+   "sig": "scabbard",
+   "sig_on": "chest"
   },
   "roofer": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "stone",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "tiles",
+   "sig_on": "chest"
   },
   "well_digger": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "brown",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "bucket",
+   "sig_on": "chest"
   },
   "charcoal_burner": {
    "head": "scarf",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "black",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "charcoal",
+   "sig_on": "chest"
   },
   "tea_picker": {
    "head": "kasa",
@@ -560,7 +664,9 @@
    "waist": "skirt",
    "main": "sage",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "tea_basket",
+   "sig_on": "chest"
   },
   "bridge_keeper": {
    "head": "sombrero",
@@ -570,71 +676,89 @@
    "trim": "steel",
    "armor": [
     "sombrero"
-   ]
+   ],
+   "sig": "cape",
+   "sig_on": "chest"
   },
   "kite_maker": {
    "head": "headband",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "sky",
    "trim": "indigo",
-   "armor": []
+   "armor": [],
+   "sig": "kite",
+   "sig_on": "chest"
   },
   "net_mender": {
    "head": "scarf",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "net",
+   "sig_on": "chest"
   },
   "stone_cutter": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "stone",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "axe",
+   "sig_on": "chest"
   },
   "shrine_keeper": {
    "head": "eboshi",
    "chest": "monk",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "white",
    "trim": "plum",
-   "armor": []
+   "armor": [],
+   "sig": "streamers_paper",
+   "sig_on": "chest"
   },
   "toll_collector": {
    "head": "cap",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "slate",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "coins",
+   "sig_on": "chest"
   },
   "juggler": {
    "head": "cap",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "peach",
    "trim": "teal",
-   "armor": []
+   "armor": [],
+   "sig": "diamonds",
+   "sig_on": "chest"
   },
   "woodcutter": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "olive",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "ladder",
+   "sig_on": "chest"
   },
   "harpooner": {
    "head": "headband",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal_dark",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "harpoon",
+   "sig_on": "chest"
   },
   "bird_scarer": {
    "head": "feather",
@@ -642,55 +766,69 @@
    "waist": "mino",
    "main": "straw",
    "trim": "black",
-   "armor": []
+   "armor": [],
+   "sig": "cloth_strips",
+   "sig_on": "head"
   },
   "hare_hunter": {
    "head": "feather",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "brown",
    "trim": "olive",
-   "armor": []
+   "armor": [],
+   "sig": "hare",
+   "sig_on": "chest"
   },
   "reed_cutter": {
    "head": "kasa",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "sage",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "reeds",
+   "sig_on": "chest"
   },
   "crow_watcher": {
    "head": "feather",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "black",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "spyglass",
+   "sig_on": "chest"
   },
   "shepherd": {
    "head": "hood",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "cream",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "fleece",
+   "sig_on": "head"
   },
   "drum_maker": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "wood",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "drum",
+   "sig_on": "chest"
   },
   "wind_reader": {
    "head": "scarf",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "sky",
    "trim": "white",
-   "armor": []
+   "armor": [],
+   "sig": "prayer_flags",
+   "sig_on": "chest"
   },
   "local_deity": {
    "head": "halo",
@@ -699,7 +837,9 @@
    "main": "gold",
    "trim": "white",
    "armor": [],
-   "glow": true
+   "glow": true,
+   "sig": "jewels",
+   "sig_on": "head"
   },
   "guardian_deity": {
    "head": "halo",
@@ -708,23 +848,29 @@
    "main": "plum",
    "trim": "gold",
    "armor": [],
-   "glow": true
+   "glow": true,
+   "sig": "third_eye",
+   "sig_on": "head"
   },
   "hoop_roller": {
    "head": "cap",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "peach",
    "trim": "steel",
-   "armor": []
+   "armor": [],
+   "sig": "hoop",
+   "sig_on": "chest"
   },
   "coin_minter": {
    "head": "cap",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "gold",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "medallion",
+   "sig_on": "head"
   },
   "bangle_seller": {
    "head": "scarf",
@@ -732,31 +878,39 @@
    "waist": "skirt",
    "main": "gold",
    "trim": "teal",
-   "armor": []
+   "armor": [],
+   "sig": "bangles",
+   "sig_on": "chest"
   },
   "wheelwright": {
    "head": "headband",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "wood",
    "trim": "steel",
-   "armor": []
+   "armor": [],
+   "sig": "wheel",
+   "sig_on": "chest"
   },
   "moon_watcher": {
    "head": "hood",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "indigo",
    "trim": "white",
-   "armor": []
+   "armor": [],
+   "sig": "crescent",
+   "sig_on": "head"
   },
   "quoit_thrower": {
    "head": "headband",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "sage",
    "trim": "cream",
-   "armor": []
+   "armor": [],
+   "sig": "quoits",
+   "sig_on": "head"
   },
   "sun_priest": {
    "head": "sun",
@@ -764,23 +918,29 @@
    "waist": "skirt",
    "main": "saffron",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "rays",
+   "sig_on": "head"
   },
   "ring_keeper": {
    "head": "cap",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "slate",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "earring",
+   "sig_on": "head"
   },
   "hay_mower": {
    "head": "kasa",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "straw",
    "trim": "sage",
-   "armor": []
+   "armor": [],
+   "sig": "sickle",
+   "sig_on": "chest"
   },
   "gleaner": {
    "head": "scarf",
@@ -788,39 +948,49 @@
    "waist": "skirt",
    "main": "straw",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "wheat",
+   "sig_on": "chest"
   },
   "thatcher": {
    "head": "kasa",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "straw",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "straw_cape",
+   "sig_on": "chest"
   },
   "orchard_keeper": {
    "head": "leaves",
    "chest": "apron",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "sage",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "pears",
+   "sig_on": "chest"
   },
   "grave_digger": {
    "head": "hood",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "black",
    "trim": "stone",
-   "armor": []
+   "armor": [],
+   "sig": "spade",
+   "sig_on": "chest"
   },
   "field_warden": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "olive",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "clapper",
+   "sig_on": "chest"
   },
   "harvest_keeper": {
    "head": "kasa",
@@ -828,39 +998,49 @@
    "waist": "skirt",
    "main": "gold",
    "trim": "brown",
-   "armor": []
+   "armor": [],
+   "sig": "grain_measure",
+   "sig_on": "chest"
   },
   "stilt_walker": {
    "head": "cap",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "peach",
    "trim": "indigo",
-   "armor": []
+   "armor": [],
+   "sig": "tall_hat",
+   "sig_on": "head"
   },
   "acrobat": {
    "head": "headband",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "ribbons",
+   "sig_on": "chest"
   },
   "lion_dancer": {
    "head": "lion",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "trousers",
    "main": "gold",
    "trim": "teal",
-   "armor": []
+   "armor": [],
+   "sig": "mane",
+   "sig_on": "chest"
   },
   "punt_poler": {
    "head": "kasa",
    "chest": "vest",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "teal",
    "trim": "straw",
-   "armor": []
+   "armor": [],
+   "sig": "towel",
+   "sig_on": "head"
   },
   "temple_guard": {
    "head": "helmet",
@@ -870,7 +1050,9 @@
    "trim": "steel",
    "armor": [
     "helmet"
-   ]
+   ],
+   "sig": "rope_belt",
+   "sig_on": "chest"
   },
   "fan_dancer": {
    "head": "scarf",
@@ -878,31 +1060,39 @@
    "waist": "skirt",
    "main": "plum",
    "trim": "gold",
-   "armor": []
+   "armor": [],
+   "sig": "fans",
+   "sig_on": "chest"
   },
   "festival_master": {
    "head": "eboshi",
    "chest": "robe",
-   "waist": "skirt",
+   "waist": "coat",
    "main": "gold",
    "trim": "indigo",
-   "armor": []
+   "armor": [],
+   "sig": "lantern_crown",
+   "sig_on": "head"
   },
   "sword_dancer": {
    "head": "topknot",
    "chest": "sash",
-   "waist": "skirt",
+   "waist": "kilt",
    "main": "indigo",
    "trim": "white",
-   "armor": []
+   "armor": [],
+   "sig": "silk",
+   "sig_on": "chest"
   },
   "sheaf_binder": {
    "head": "kasa",
    "chest": "mino",
-   "waist": "skirt",
+   "waist": "workpants",
    "main": "straw",
    "trim": "olive",
-   "armor": []
+   "armor": [],
+   "sig": "sheaf",
+   "sig_on": "chest"
   }
  }
 }
