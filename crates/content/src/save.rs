@@ -33,7 +33,9 @@ pub const FORMAT: &str = "vagrancy.save";
 /// no blade in hand. A version 9 file reads as it is, with none.
 /// 11: the most chapters cleared in one full run of story mode. A version
 /// 10 file reads as it is, with none.
-pub const VERSION: u32 = 11;
+/// 12: the outfit the player wears, one won from an opponent beaten in
+/// arcade mode (Sam, 2026-10-08). A version 11 file reads as it is, plain.
+pub const VERSION: u32 = 12;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -56,6 +58,10 @@ pub struct SaveState {
     /// only when there are some.
     #[serde(default)]
     pub story_full: u32,
+    /// The outfit the player wears, by the id of the opponent it was won
+    /// from (content::costumes::outfits). Written only when one is worn.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outfit: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize, Deserialize)]
@@ -117,6 +123,7 @@ pub fn fresh() -> SaveState {
         story: 0,
         four_arms: false,
         story_full: 0,
+        outfit: None,
     }
 }
 
@@ -141,7 +148,7 @@ pub fn finished(unwon: &[&str]) -> SaveState {
 
 /// The file's text.
 pub fn encode(s: &SaveState) -> String {
-    let SaveState { road, bindings, options, tutorial, weapon, story, four_arms, story_full } = s;
+    let SaveState { road, bindings, options, tutorial, weapon, story, four_arms, story_full, outfit } = s;
     let Road { best } = road;
     let Bindings { solo, left, right } = bindings;
     let Options { music_volume, remember_track } = options;
@@ -163,6 +170,9 @@ pub fn encode(s: &SaveState) -> String {
     }
     if *story_full > 0 {
         body["state"]["story_full"] = json!(story_full);
+    }
+    if let Some(o) = outfit {
+        body["state"]["outfit"] = json!(o);
     }
     serde_json::to_string_pretty(&body).expect("a save always encodes")
 }
@@ -262,17 +272,17 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
         let v1: FileV1 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV1 { road, bindings, options } = v1.state;
         let best = road.cleared.into_iter().map(|id| (id, crate::road::Best::UNKNOWN)).collect();
-        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
+        SaveState { road: Road { best }, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0, outfit: None }
     } else if version < 3 {
         // No tutorial yet.
         let v2: FileV2 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV2 { road, bindings, options } = v2.state;
-        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
+        SaveState { road, bindings, options, tutorial: Vec::new(), weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0, outfit: None }
     } else if version < 4 {
         // No weapon chosen yet: the sword.
         let v3: FileV3 = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         let StateV3 { road, bindings, options, tutorial } = v3.state;
-        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0 }
+        SaveState { road, bindings, options, tutorial, weapon: crate::weapons::DEFAULT.into(), story: 0, four_arms: false, story_full: 0, outfit: None }
     } else {
         let file: File = serde_json::from_str(text).map_err(|_| SaveError::Damaged)?;
         file.state
@@ -308,6 +318,10 @@ pub fn decode(text: &str) -> Result<SaveState, SaveError> {
     s.weapon = crate::weapons::usable(&s.weapon, &s.road.best);
     // Four arms not yet won are two.
     s.four_arms &= crate::road::four_arms_open(&s.road.best);
+    // An outfit not won is none.
+    if s.outfit.as_ref().is_some_and(|o| !crate::costumes::outfits(&s.road.best).contains(o)) {
+        s.outfit = None;
+    }
     validate(&s).then_some(s).ok_or(SaveError::Damaged)
 }
 

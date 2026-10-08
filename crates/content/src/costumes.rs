@@ -110,6 +110,15 @@ pub fn dressed(id: &str) -> bool {
     f.costumes.contains_key(id)
 }
 
+/// The outfits a player has won (Sam, 2026-10-08: "in arcade mode, you
+/// should obtain the outfit of whoever you defeat"): each beaten opponent's
+/// costume, in the road's order. An outfit is how the player looks and
+/// nothing about how it fights: its plates stay the opponent's.
+pub fn outfits(best: &BTreeMap<String, crate::road::Best>) -> Vec<String> {
+    let f = file();
+    crate::road::road().into_iter().map(|s| s.id).filter(|id| best.contains_key(id) && f.costumes.contains_key(id)).collect()
+}
+
 /// What the page needs to draw costumes, as JSON: the art switch; for each
 /// slot, the part it rides on (by index into the fighter's parts) and that
 /// part's ends and the picture's box in the rest pose, in cm; which parts

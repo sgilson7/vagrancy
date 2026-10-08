@@ -4,7 +4,7 @@
 // to show for an outcome is chosen by core (content::messages).
 import init, {
   copy_json, palette_json, controls_json, numbers as coreNumbers, script_checksum, Game, Online, Road, Mission, StoryRun, Exhibition, story_json,
-  road_json, tutorial_json, weapons_json, slosh_step, agent_next, maps_json, tree_json, save_choose_weapon, save_fresh, save_read,
+  road_json, tutorial_json, weapons_json, slosh_step, agent_next, maps_json, tree_json, save_choose_weapon, save_choose_outfit, outfits_json, duels_json, Lab, save_fresh, save_read,
   arms_json, save_choose_arms, bubbles_step, story_extra_json,
 } from './pkg/vagrancy_wasm.js';
 import * as rtc from './rtc.js';
@@ -190,6 +190,10 @@ function popupHide() {
 
 function stop() {
   popupHide();
+  // Only arcade fights, practice and the wardrobe dress the player, and
+  // only a duel brings its own guests.
+  if (draw && draw.playerOutfit) draw.playerOutfit(null);
+  if (draw && draw.guests) draw.guests(null);
   if (draw && draw.trees) draw.trees([]);
   game = null;
   SPEED = 1;
@@ -474,6 +478,31 @@ function practice() {
       button('menu.back.label', menu)),
   );
   start(Game.practice(seed(), tuning(), SAVE.state.weapon, !!SAVE.state.four_arms), () => [bits(binding, ACTION_BITS), 0]);
+  draw.playerOutfit(SAVE.state.outfit);
+}
+
+// The wardrobe (Sam, 2026-10-08): the fighter alone, in the outfits won from
+// the opponents it has beaten; try one on, then wear it into arcade mode.
+function wardrobe(trying = undefined) {
+  const info = JSON.parse(outfits_json(JSON.stringify(SAVE)));
+  const on = trying === undefined ? (info.wearing || null) : trying;
+  const name = (id) => (id ? t(`opponents.${id}.name`) : t('wardrobe.plain'));
+  const pick = (id) => el('button', { type: 'button', class: id === on ? 'on' : '', 'data-outfit': id || '', 'data-fill': '', on: { click: () => wardrobe(id) } }, name(id));
+  show(
+    el('h2', { 'data-copy': 'wardrobe.title' }, t('wardrobe.title')),
+    say('wardrobe.desc', {}, { class: 'desc' }),
+    say('wardrobe.wearing', { outfit: name(info.wearing) }, { id: 'wardrobe-wearing' }),
+    info.outfits.length ? el('div', { class: 'actions', id: 'wardrobe-list' }, pick(null), ...info.outfits.map(pick)) : say('wardrobe.empty', {}, { class: 'desc' }),
+    el('div', { class: 'actions' },
+      button('wardrobe.wear', () => {
+        SAVE = JSON.parse(save_choose_outfit(JSON.stringify(SAVE), on || ''));
+        persist();
+        wardrobe(on);
+      }),
+      button('results.to_road.label', road)),
+  );
+  start(Game.alone(seed(), tuning()), () => [bits(BINDINGS.solo, ACTION_BITS), 0]);
+  draw.playerOutfit(on);
 }
 
 // `?tuning=0|1|2` picks one of the candidate tunings in sim::balance, so Sam
@@ -1076,7 +1105,8 @@ function road() {
   };
   // The fight picked last, or the first open one not yet won.
   const first = (ROAD_PICK && byId.get(ROAD_PICK)) || stops.find((s) => s.open && !s.won) || stops[0];
-  const before = [say('road.quest', {}, { class: 'desc', id: 'road-quest' }), weaponPanel(road)];
+  const before = [say('road.quest', {}, { class: 'desc', id: 'road-quest' }), weaponPanel(road),
+    el('div', { class: 'actions' }, button('road.wardrobe.label', () => wardrobe()))];
   if (view === 'chapters') chaptersScreen({ stops, detail, first: first.id, before });
   else mapScreen({ nodes, rowLabel, detail, first: first.id, attr: 'data-stop', before, layout: view === 'chart' || view === 'sunburst' ? view : 'rows' });
   $('screen').append(viewSwitch());
@@ -1305,6 +1335,7 @@ function fight(id, goal = null) {
     : Road.with_agent(AGENT + AGENT_PLAYED, tuning(), id, SAVE.state.weapon, !!SAVE.state.four_arms, AGENT_PLAYED);
   if (AGENT !== null) AGENT_PLAYED += 1;
   start(g, withReady(() => [AGENT === null ? bits(BINDINGS.solo, ACTION_BITS) : 0, 0]), (f) => {
+    draw.playerOutfit(SAVE.state.outfit);
     // Kept before the result is drawn, so the result can name what opened.
     if (!won && game && game.won && game.won()) {
       won = true;
@@ -1358,13 +1389,38 @@ function storyMode() {
     else kids.push(say('story.extra.needs', { count: x.needs }, { class: 'desc' }));
     return el('article', { class: `chapter ${x.open ? 'open' : 'locked'}`, 'data-extra': String(i) }, ...kids);
   });
+  // Duels (data/duels.json): Paul against Feyd-Rautha, opened by the first
+  // chapter (Sam, 2026-10-08).
+  const duels = JSON.parse(duels_json(JSON.stringify(SAVE))).map((d) => {
+    const k = (x) => `duels.${d.id}.${x}`;
+    return el('article', { class: `chapter ${d.open ? 'open' : 'locked'}`, 'data-duel': d.id },
+      el('h3', { 'data-copy': k('title') }, t(k('title'))),
+      say(k('desc'), {}, { class: 'desc' }),
+      d.open ? el('div', { class: 'actions' }, button(k('start'), () => duelFight(d))) : say(k('locked'), {}, { class: 'desc' }));
+  });
   show(say('story.intro', { seconds: st.fight_seconds }, { class: 'desc' }),
     full,
     el('section', { id: 'story-chapters' }, ...chapters),
+    el('section', { id: 'story-duels' },
+      el('h3', { 'data-copy': 'story.duels.heading' }, t('story.duels.heading')),
+      say('story.duels.intro', {}, { class: 'desc' }), ...duels),
     el('section', { id: 'story-extra' },
       el('h3', { 'data-copy': 'story.extra.heading' }, t('story.extra.heading')),
       say('story.extra.intro', {}, { class: 'desc' }), ...extras),
     el('div', { class: 'actions' }, button('menu.back.label', menu)));
+}
+
+// A duel of data/duels.json, the player in seat 0, in the duel's own
+// costumes and scene.
+function duelFight(d) {
+  READY = false;
+  const k = (x) => `duels.${d.id}.${x}`;
+  const watch = matchWatcher('', () => [el('div', { class: 'actions' },
+    button('results.again.label', () => duelFight(d)),
+    button('menu.back.label', storyMode))], [t(k('left')), t(k('right'))]);
+  show(watch.panel, keysLine(BINDINGS.solo), el('div', { class: 'actions' }, button('menu.back.label', storyMode)));
+  start(Lab.duel_play(seed(), tuning(), d.id, JSON.stringify(SAVE)), withReady(() => [bits(BINDINGS.solo, ACTION_BITS), 0]), (f) => watch.tick(f));
+  draw.guests(d.page);
 }
 
 function storyPlay(chapter) {

@@ -198,3 +198,21 @@ fn a_shield_stops_a_fast_blade_and_lets_a_slow_one_through() {
     let (slow, _) = rise_into_a_shield(true, 8);
     assert!(slow, "a shield stopped a slow blade");
 }
+
+#[test]
+fn a_beaten_opponents_outfit_can_be_worn_and_an_unbeaten_ones_cannot() {
+    // Sam, 2026-10-08: "in arcade mode, you should obtain the outfit of
+    // whoever you defeat ... set your player character to have that outfit".
+    use content::save;
+    let mut s = save::fresh();
+    assert!(content::costumes::outfits(&s.road.best).is_empty(), "a fresh save has outfits");
+    s.road.best.insert("herbalist".into(), content::road::Best::UNKNOWN);
+    assert_eq!(content::costumes::outfits(&s.road.best), vec!["herbalist".to_string()]);
+    // Worn, it survives the file; one not won does not.
+    s.outfit = Some("herbalist".into());
+    let back = save::decode(&save::encode(&s)).expect("the save reads back");
+    assert_eq!(back.outfit.as_deref(), Some("herbalist"));
+    s.outfit = Some("general".into());
+    let back = save::decode(&save::encode(&s)).expect("the save reads back");
+    assert_eq!(back.outfit, None, "an outfit not won was kept");
+}

@@ -1,0 +1,98 @@
+{
+ "_about": "Duels that are not on the road: a pair of fighters with their own weapons, shields, costumes and scene, opened by progress elsewhere (Sam, 2026-10-08: Paul against Feyd-Rautha, story mode's prize for its first chapter, the player as Paul). `weapons` are written out as data/weapons.json writes one; `pilot` flies the opponent; `page` is what the page draws, as a clip's guests are (web/clip.js): costumes by seat, the scene, blade and body colors. The pictures are drawn by analysis/art/duel_arrakeen.py.",
+ "duels": {
+  "arrakeen": {
+   "unlock": {
+    "story": 1
+   },
+   "pilot": "duelist",
+   "weapons": [
+    {
+     "id": "crysknife",
+     "length_pct": 55,
+     "mass_pct": 50,
+     "hilt_pct": 70,
+     "shape": {
+      "curve": [
+       [
+        60,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "id": "emperor_knife",
+     "length_pct": 62,
+     "mass_pct": 55,
+     "hilt_pct": 80,
+     "shape": {
+      "straight": {}
+     }
+    }
+   ],
+   "shield": true,
+   "rounds": 1,
+   "gap": 240,
+   "page": {
+    "seats": [
+     "paul",
+     "feyd"
+    ],
+    "costumes": {
+     "paul": {
+      "slots": [
+       "head",
+       "chest",
+       "waist"
+      ],
+      "glow": false
+     },
+     "feyd": {
+      "slots": [
+       "head",
+       "chest",
+       "waist"
+      ],
+      "glow": false
+     }
+    },
+    "scene": "arrakeen",
+    "scenes": {
+     "arrakeen": {
+      "layers": [
+       {
+        "name": "hall",
+        "depth": 0.06,
+        "box": [
+         -1100,
+         -200,
+         1100,
+         2000
+        ]
+       },
+       {
+        "name": "court",
+        "depth": 0.3,
+        "box": [
+         -1100,
+         -200,
+         1100,
+         300
+        ]
+       }
+      ]
+     }
+    },
+    "blades": {
+     "0": "bone"
+    },
+    "fills": {
+     "0": "#7D7163",
+     "1": "#1C1A1E"
+    },
+    "ground": "#B99A74"
+   }
+  }
+ }
+}

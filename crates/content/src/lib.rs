@@ -6,6 +6,7 @@
 pub mod copy;
 pub mod costumes;
 pub mod custom;
+pub mod duels;
 pub mod agent;
 pub mod backgrounds;
 pub mod body;

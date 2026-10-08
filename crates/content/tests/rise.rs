@@ -119,3 +119,45 @@ fn a_tree_pilot_holds_the_stand_key_until_it_is_up_and_then_lets_go() {
     let gone = let_go.expect("the smith never let go of the stand key");
     assert!(gone <= up + 20 + reaction, "the smith let go of the stand key {} ticks after standing", gone - up);
 }
+
+#[test]
+fn a_search_pilot_holds_the_stand_key_while_it_is_down() {
+    // Sam, 2026-10-08: the fighters' "ability to land and re-center should be
+    // a bit more fluid". A search pilot (the yardstick) left on the ground
+    // holds the stand key and is up within two seconds.
+    let mut s = content::setup::practice(1, sim::balance::DEFAULT_TUNING);
+    s.seats[1] = None;
+    let mut w = World::new(s);
+    let f = w.fighters[0].clone().unwrap();
+    let pel = w.particles[(f.base + w.setup.bodies[f.body as usize].roles.pelvis.unwrap() as u16) as usize].p;
+    let ours = |p: &sim::world::Particle| matches!(p.owner, Owner::Body(0) | Owner::Sword(0));
+    for p in w.particles.iter_mut().filter(|p| ours(p)) {
+        let d = p.p - pel;
+        p.p = V2::new(pel.x + d.y, pel.y - d.x);
+    }
+    let low = w.particles.iter().filter(|p| ours(p)).map(|p| p.p.y - p.rad).min().unwrap();
+    for p in w.particles.iter_mut().filter(|p| ours(p)) {
+        p.p.y -= low;
+        p.q = p.p;
+    }
+    let mut pilot = pilot::build(&content::road::pilot("yardstick"));
+    let mut last = [Input::NONE; sim::body::SEATS];
+    let (mut up_at, mut held) = (None, 0u32);
+    for t in 0..240u32 {
+        pilot.observe(last);
+        let i = pilot.input(&w, 0);
+        if i.has(Input::STAND) {
+            held += 1;
+        }
+        w.step([i, Input::NONE]);
+        last = [i, Input::NONE, Input::NONE];
+        if !w.knocked_down(0) && w.fighters[0].as_ref().unwrap().rising == 0 {
+            up_at = Some(t);
+            break;
+        }
+    }
+    let up = up_at.expect("the yardstick never got up");
+    assert!(held >= 30, "the yardstick held the stand key {held} ticks: it was not rising");
+    // Two seconds of rise, and its reaction time to see that it is down.
+    assert!(up <= 180, "the yardstick took {up} ticks to get up");
+}

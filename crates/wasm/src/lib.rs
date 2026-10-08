@@ -506,6 +506,23 @@ impl Lab {
         }
     }
 
+    /// A duel of data/duels.json with the player in seat 0, if it is open
+    /// in the save.
+    pub fn duel_play(seed: u32, tuning: u8, id: &str, save_text: &str) -> Result<Lab, String> {
+        let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+        let d = content::duels::duel(id).ok_or_else(|| "no such duel".to_string())?;
+        if !content::duels::open(&d, &s) {
+            return Err("the duel is not open".into());
+        }
+        Ok(Lab {
+            rec: Recording::new(content::duels::setup(seed as u64, tuning, &d)),
+            pilots: vec![None, Some(pilot::build(&content::road::pilot(&d.pilot)))],
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [String::new(), d.pilot.clone()],
+            player: true,
+        })
+    }
+
     /// Two opponents, left against right.
     pub fn watch(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Lab {
         Lab {
@@ -1078,6 +1095,34 @@ pub fn arms_json(save_text: &str) -> Result<String, String> {
 pub fn save_choose_arms(save_text: &str, four: bool) -> Result<String, String> {
     let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
     s.four_arms = four && content::road::four_arms_open(&s.road.best);
+    Ok(content::save::encode(&s))
+}
+
+/// The duels of data/duels.json, whether each is open in the save, and what
+/// the page draws for each.
+#[wasm_bindgen]
+pub fn duels_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    let all: Vec<serde_json::Value> = content::duels::duels()
+        .into_iter()
+        .map(|(id, d)| json!({ "id": id, "open": content::duels::open(&d, &s), "story": d.unlock.story, "page": d.page }))
+        .collect();
+    Ok(serde_json::to_string(&all).unwrap())
+}
+
+/// The outfits the player has won and the one worn (Sam, 2026-10-08: the
+/// wardrobe).
+#[wasm_bindgen]
+pub fn outfits_json(save_text: &str) -> Result<String, String> {
+    let s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    Ok(json!({ "outfits": content::costumes::outfits(&s.road.best), "wearing": s.outfit }).to_string())
+}
+
+/// The save with outfit `id` worn, if it has been won; empty for plain.
+#[wasm_bindgen]
+pub fn save_choose_outfit(save_text: &str, id: &str) -> Result<String, String> {
+    let mut s = content::save::decode(save_text).map_err(|e| e.message().to_string())?;
+    s.outfit = Some(id.to_string()).filter(|o| content::costumes::outfits(&s.road.best).contains(o));
     Ok(content::save::encode(&s))
 }
 

@@ -124,6 +124,7 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
             zoom = c.get("zoom", 1.45 if trees else 3.1)
             low = c.get("ramp", 0.35)
             ended_at, k, beat = None, 0, -99
+            said = set()
             limit = int((c["lead"] * TICKS / speed + c["slow"]) * FPS) + 90
             while k < limit:
                 if ended_at is None:
@@ -143,6 +144,11 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
                         break
                 pulse = 1 + 0.12 * max(0.0, 1 - (k - beat) / 10) if c.get("beats") and ended_at is None else 1
                 state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom * pulse, "punch": punch, "showTrees": trees, "treeScale": c.get("treeScale", 2.6)})
+                # A guest clip's lines at given ticks of the fight (`says`).
+                for at, text in c.get("says", []):
+                    if state["tick"] >= at and at not in said:
+                        said.add(at)
+                        page.evaluate("([t, s]) => window.clip.say(t, s)", [text, c.get("size", "")])
                 if c.get("beats") and ended_at is None and (state["clashes"] or state["cuts"] or state.get("shields")) and k - beat >= 10:
                     beat = k
                     if state["cuts"]:

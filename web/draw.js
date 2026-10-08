@@ -95,7 +95,13 @@ export function renderer(canvas, palette, numbers) {
   // their scene, and their blades' colors, over the road's.
   let guest = null;
   draw.guests = (g) => { guest = g || null; };
-  const dressedAs = (cur, seat) => (guest && guest.seats ? guest.seats[seat] : cur.fighters[seat] && cur.fighters[seat].costume);
+  // What the player's own fighter (seat 0) wears, from the wardrobe (Sam,
+  // 2026-10-08): only drawn, so a fight plays the same in any outfit.
+  let outfit = null;
+  draw.playerOutfit = (id) => { outfit = id || null; };
+  const dressedAs = (cur, seat) => (guest && guest.seats ? guest.seats[seat]
+    : seat === 0 && outfit ? outfit
+    : cur.fighters[seat] && cur.fighters[seat].costume);
   function wearing(cur, seat) {
     const id = dressedAs(cur, seat);
     if (!costumesShown || !dress.art || !id) return null;

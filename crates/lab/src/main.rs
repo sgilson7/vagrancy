@@ -1256,6 +1256,12 @@ fn duels(args: &[String]) {
                 let mut last = [Input::NONE; sim::body::SEATS];
                 let (mut clashes, mut stops, mut cuts) = (0u32, [0u32; 2], [0u32; 2]);
                 let (mut jumps, mut first_cut, mut clash_ticks) = ([0u32; 2], [None::<u32>; 2], Vec::new());
+                // How the duel looks: ticks each spends with no foot down, or
+                // down, and with the two on the wrong sides, facing away
+                // (Sam, 2026-10-08: "their eyes are always looking at each
+                // other"); and how far each torso turns, in quarter turns.
+                let (mut air, mut downs, mut crossed, mut turn) = ([0u32; 2], [0u32; 2], 0u32, [0i64; 2]);
+                let mut lean_was = [None::<i64>; 2];
                 while w.tick < max && matches!(w.phase, Phase::Fight) {
                     let mut i = [Input::NONE; sim::body::SEATS];
                     for (k, p) in pilots.iter_mut().enumerate() {
@@ -1269,6 +1275,35 @@ fn duels(args: &[String]) {
                     }
                     w.step_all(i);
                     last = i;
+                    for s in 0..2usize {
+                        let Some(f) = w.fighters[s].as_ref() else { continue };
+                        let def = &w.setup.bodies[f.body as usize];
+                        let on = def.roles.feet.iter().any(|&k| { let p = &w.particles[(f.base + k as u16) as usize]; p.p.y <= p.rad + sim::fx::Fx::int(1) });
+                        if !on {
+                            air[s] += 1;
+                        }
+                        if w.knocked_down(s) {
+                            downs[s] += 1;
+                        }
+                        // The torso's angle, pelvis to shoulder, in whole
+                        // degrees, and how far it turned this tick.
+                        if let (Some(pe), Some(sh)) = (def.roles.pelvis, def.roles.shoulder) {
+                            let (a, b) = (w.particles[(f.base + pe as u16) as usize].p, w.particles[(f.base + sh as u16) as usize].p);
+                            let deg = ((b.y - a.y).0 as f64).atan2((b.x - a.x).0 as f64).to_degrees() as i64;
+                            if let Some(was) = lean_was[s] {
+                                let mut d = deg - was;
+                                if d > 180 { d -= 360; }
+                                if d < -180 { d += 360; }
+                                turn[s] += d.abs();
+                            }
+                            lean_was[s] = Some(deg);
+                        }
+                    }
+                    if let (Some(a), Some(b)) = (pilot::pelvis(&w, 0), pilot::pelvis(&w, 1)) {
+                        if a.x > b.x {
+                            crossed += 1;
+                        }
+                    }
                     for e in &w.events {
                         match e {
                             Event::Clash { .. } => { clashes += 1; clash_ticks.push(w.tick); }
@@ -1289,7 +1324,7 @@ fn duels(args: &[String]) {
                     after += on.events.iter().filter(|e| matches!(e, Event::Cut { seat, spilled: true, .. } if *seat == loser)).count();
                 }
                 let severed = w.parts.iter().filter(|p| p.fighter == loser && !p.attached).count();
-                out.push(serde_json::json!({ "seed": seed, "gap": gap, "jumps": jumps, "first_cut": first_cut, "clash_ticks": clash_ticks, "winner": 1 - loser, "by": result.by, "kill": kill, "cause": format!("{:?}", result.cause),
+                out.push(serde_json::json!({ "seed": seed, "gap": gap, "jumps": jumps, "air": air, "down": downs, "crossed": crossed, "turn": turn.map(|t| t / 90), "first_cut": first_cut, "clash_ticks": clash_ticks, "winner": 1 - loser, "by": result.by, "kill": kill, "cause": format!("{:?}", result.cause),
                     "headshot": content::messages::headshot(&w, &result), "clashes": clashes, "stops": stops, "cuts": cuts, "severed": severed, "after": after, "thrown": result.thrown }).to_string());
             }
             out

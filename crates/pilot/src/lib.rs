@@ -728,12 +728,19 @@ impl Pilot for Search {
         if let Some(i) = between(w) {
             return i;
         }
+        // Down, or rising: hold the stand key, the rise's sticky feet and
+        // spring, and leave the legs to it (Sam, 2026-10-08: the fighters'
+        // "ability to land and re-center should be a bit more fluid"). Left
+        // to the balance rule, a fallen search pilot flailed and flipped.
+        let base = self.seen.front().unwrap();
+        let down = base.knocked_down(seat) || base.fighters[seat].as_ref().is_some_and(|f| f.rising > 0);
+        let up = |k: Input| if down { Input((k.0 & !(Input::STEP_LEFT | Input::STEP_RIGHT | Input::JUMP | Input::DODGE)) | Input::STAND) } else { k };
         if self.left > 0 {
             self.left -= 1;
             self.why.keeps = self.left;
-            return self.chosen;
+            self.why.chosen = up(self.chosen).0;
+            return up(self.chosen);
         }
-        let base = self.seen.front().unwrap();
         let mut best = (i64::MIN, Input::NONE);
         let mut tried = Vec::new();
         for c in self.candidates(base, seat) {
@@ -771,8 +778,9 @@ impl Pilot for Search {
         }
         self.chosen = best.1;
         self.left = self.period - 1;
-        self.why = moves::SearchWhy { tried, chosen: self.chosen.0, keeps: self.left, horizon: self.horizon };
-        self.chosen
+        // What it says it chose is what it presses, the stand key included.
+        self.why = moves::SearchWhy { tried, chosen: up(self.chosen).0, keeps: self.left, horizon: self.horizon };
+        up(self.chosen)
     }
 }
 

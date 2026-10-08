@@ -1461,6 +1461,54 @@ def armored_fighters_wear_their_costumes_and_a_frame_stays_cheap(page, name):
 
 
 @check
+def the_wardrobe_dresses_the_player_and_the_first_chapter_opens_the_arrakeen_match(page, name):
+    # Sam, 2026-10-08: a beaten opponent's outfit can be worn, from a
+    # wardrobe; and Paul against Feyd-Rautha opens with story mode's first
+    # chapter, the player as Paul.
+    fails = []
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["road"]["best"] = {"herbalist": {"losses": 0, "ticks": 1, "with": ["sword"]}}
+    save["state"]["story"] = 0
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.road.label")
+    click_copy(page, "road.wardrobe.label")
+    page.click('[data-outfit="herbalist"]')
+    click_copy(page, "wardrobe.wear")
+    if page.evaluate("window.vagrancy.save().state.outfit") != "herbalist":
+        fails.append(f"{name}: wearing the herbalist's outfit was not saved")
+    fails += every_visible_line_is_a_copy_string(page, name + " (wardrobe)")
+    click_copy(page, "results.to_road.label")
+    click_copy(page, "menu.back.label")
+    # The match is shut before the first chapter and open after.
+    click_copy(page, "menu.story.label")
+    if page.locator('[data-copy="duels.arrakeen.start"]').count():
+        fails.append(f"{name}: the arrakeen match was open before the first chapter")
+    click_copy(page, "menu.back.label")
+    save = page.evaluate("window.vagrancy.save()")
+    save["state"]["story"] = 1
+    page.evaluate("s => localStorage.setItem('vagrancy.autosave', JSON.stringify(s))", save)
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.story.label")
+    click_copy(page, "duels.arrakeen.start")
+    page.wait_for_timeout(1500)
+    pics = page.evaluate("""() => performance.getEntriesByType('resource').map((e) => e.name.split('/').pop()).filter((n) => n.startsWith('paul-') || n.startsWith('feyd-') || n.startsWith('arrakeen-'))""")
+    if len(set(pics)) < 8:
+        fails.append(f"{name}: the arrakeen match drew {sorted(set(pics))}, not both costumes and the hall")
+    fails += every_visible_line_is_a_copy_string(page, name + " (arrakeen)")
+    click_copy(page, "menu.back.label")
+    click_copy(page, "menu.back.label")
+    page.evaluate("localStorage.removeItem('vagrancy.autosave')")
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the wardrobe wears a won outfit, and the first chapter opens Paul against Feyd-Rautha in the Arrakeen hall")
+    return fails
+
+
+@check
 def the_arena_runs_fights_on_its_own_with_no_bot(page, name):
     # The stream's page (Sam, 2026-10-07): with no bot it runs exhibitions,
     # so the stream always has a fight; its words are the copy file's.
