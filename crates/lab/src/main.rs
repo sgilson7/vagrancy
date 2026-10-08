@@ -494,6 +494,8 @@ fn highlights(args: &[String]) {
     use sim::fight::{Event, Phase};
     let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(400);
     let top: usize = args.get(1).and_then(|a| a.parse().ok()).unwrap_or(12);
+    // Where the seeds start, for fresh footage past an earlier scan.
+    let first: u64 = args.get(2).and_then(|a| a.parse().ok()).unwrap_or(0);
     let ids: Vec<String> = content::road::road().into_iter().filter(|s| !s.secret && s.companion.is_none() && !s.four_arms && !s.eight_arms).map(|s| s.id).collect();
     let threads = 8u64;
     let mut rows: Vec<(i64, String)> = std::thread::scope(|scope| {
@@ -502,7 +504,7 @@ fn highlights(args: &[String]) {
                 let ids = ids.clone();
                 scope.spawn(move || {
                     let mut out = Vec::new();
-                    for seed in (k..matches).step_by(threads as usize) {
+                    for seed in (first + k..first + matches).step_by(threads as usize) {
                         let n = ids.len() as u64;
                         let (l, r) = (&ids[(seed * 7919 % n) as usize], &ids[((seed * 104729 + 13) % n) as usize]);
                         if l == r {
@@ -512,6 +514,9 @@ fn highlights(args: &[String]) {
                         let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
                         let mut last = [Input::NONE; sim::body::SEATS];
                         let mut round = 1u32;
+                        // Within the round under way: when it began, blades
+                        // meeting, and the cuts each fighter took.
+                        let (mut began, mut clashes, mut cut) = (0u32, 0u32, [0u32; 2]);
                         while w.tick < 60 * 150 && !matches!(w.phase, Phase::MatchOver { .. }) {
                             let mut i = [Input::NONE; sim::body::SEATS];
                             for (k, p) in pilots.iter_mut().enumerate() {
@@ -521,6 +526,16 @@ fn highlights(args: &[String]) {
                             let was_fight = matches!(w.phase, Phase::Fight);
                             w.step_all(i);
                             last = i;
+                            if !was_fight && matches!(w.phase, Phase::Fight) {
+                                (began, clashes, cut) = (w.tick, 0, [0; 2]);
+                            }
+                            for e in &w.events {
+                                match e {
+                                    Event::Clash { .. } => clashes += 1,
+                                    Event::Cut { seat, spilled: true, .. } if (*seat as usize) < 2 => cut[*seat as usize] += 1,
+                                    _ => {}
+                                }
+                            }
                             if !was_fight || matches!(w.phase, Phase::Fight) {
                                 continue;
                             }
@@ -539,7 +554,8 @@ fn highlights(args: &[String]) {
                             let score = severed * 3 + after * 2 + if head { 6 } else { 0 } + if result.thrown { 5 } else { 0 };
                             let killer = if result.by == 0 { l } else { r };
                             let nodes = pilot::view::walk(&pilot::view::describe(&content::road::pilot(killer))).len();
-                            out.push((score, serde_json::json!({ "left": l, "right": r, "seed": seed, "round": round, "kill": w.tick, "by": result.by, "killer_nodes": nodes,
+                            out.push((score, serde_json::json!({ "left": l, "right": r, "seed": seed, "round": round, "kill": w.tick, "by": result.by, "killer_nodes": nodes, "killer_kind": content::road::pilot(killer).kind(),
+                                "began": began, "clashes": clashes, "cuts": cut,
                                 "severed": severed, "after": after, "headshot": head, "thrown": result.thrown, "score": score }).to_string()));
                             round += 1;
                         }

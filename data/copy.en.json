@@ -2345,6 +2345,7 @@
     "cta": "Free in your browser: {site}",
     "pieces": "Cut into {pieces} pieces.",
     "countdown": "The {count} worst ways to lose in {game}",
-    "rank": "{n}"
+    "rank": "{n}",
+    "long": "One fight, start to finish. Watch it swing back and forth."
   }
 }

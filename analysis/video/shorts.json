@@ -1,5 +1,5 @@
 {
- "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree.",
+ "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json).",
  "variants": {
   "fast": [
    {
@@ -300,6 +300,153 @@
     "lead": 1.2,
     "slow": 2.8,
     "caption": "clip.cta"
+   }
+  ],
+  "stroll": [
+   {
+    "left": "dyer",
+    "right": "general",
+    "seed": 12697,
+    "kill": 263,
+    "pieces": 57,
+    "lead": 3.4,
+    "slow": 2.0,
+    "trees": 1,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "gambler",
+    "right": "vaulter",
+    "seed": 13689,
+    "kill": 242,
+    "pieces": 83,
+    "lead": 0.8,
+    "slow": 2.2,
+    "caption": "clip.hook"
+   },
+   {
+    "left": "potter",
+    "right": "sampler",
+    "seed": 10356,
+    "kill": 448,
+    "pieces": 67,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "wheelwright",
+    "right": "sun_priest",
+    "seed": 12652,
+    "kill": 1174,
+    "pieces": 53,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "festival_master",
+    "right": "reader",
+    "seed": 12074,
+    "kill": 533,
+    "pieces": 48,
+    "lead": 1.2,
+    "slow": 2.8,
+    "caption": "clip.cta"
+   }
+  ],
+  "match": [
+   {
+    "left": "watchman",
+    "right": "sword_dancer",
+    "seed": 13315,
+    "kill": 60,
+    "pieces": 19,
+    "lead": 1.1,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "clip.long",
+    "vars": {
+     "round": 1
+    },
+    "size": ""
+   },
+   {
+    "left": "watchman",
+    "right": "sword_dancer",
+    "seed": 13315,
+    "kill": 364,
+    "pieces": 16,
+    "lead": 5.1499999999999995,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 2
+    },
+    "size": "big"
+   },
+   {
+    "left": "watchman",
+    "right": "sword_dancer",
+    "seed": 13315,
+    "kill": 639,
+    "pieces": 16,
+    "lead": 4.666666666666666,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 3
+    },
+    "size": "big"
+   },
+   {
+    "left": "watchman",
+    "right": "sword_dancer",
+    "seed": 13315,
+    "kill": 982,
+    "pieces": 21,
+    "lead": 5.8,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 4
+    },
+    "size": "big"
+   },
+   {
+    "left": "watchman",
+    "right": "sword_dancer",
+    "seed": 13315,
+    "kill": 1150,
+    "pieces": 14,
+    "lead": 2.8833333333333333,
+    "slow": 2.6,
+    "beats": true,
+    "caption": "clip.cta",
+    "vars": {
+     "round": 5
+    },
+    "size": ""
+   }
+  ],
+  "slow_trees": [
+   {
+    "left": "bangle_seller",
+    "right": "brewer",
+    "seed": 10638,
+    "kill": 690,
+    "pieces": 27,
+    "lead": 3.4166666666666665,
+    "slow": 1.6,
+    "trees": "both",
+    "half": true,
+    "ticks": 0.25,
+    "ramp": 0.1,
+    "zoom": 1.6,
+    "caption": "clip.trees",
+    "treeScale": 1.7
    }
   ]
  }

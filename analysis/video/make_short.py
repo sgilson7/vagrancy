@@ -41,20 +41,21 @@ def ease(x):
     return x * x * (3 - 2 * x)
 
 
-def impact_wav(path, times, length):
+def impact_wav(path, times, length, soft=()):
     """A low thump and a short hiss at each kill, synthesized: a sine that
-    falls in pitch and fades, over a burst of noise."""
+    falls in pitch and fades, over a burst of noise; a lighter one, at a
+    third of the strength, at each cut of a long fight (`soft`)."""
     rate = 44100
     n = int(length * rate) + rate
     buf = [0.0] * n
     rng = random.Random(7)
-    for t0 in times:
+    for t0, gain in [(t, 1.0) for t in times] + [(t, 0.33) for t in soft]:
         start = int(t0 * rate)
         for k in range(int(0.45 * rate)):
             if start + k >= n:
                 break
             t = k / rate
-            buf[start + k] += math.sin(2 * math.pi * (70 - 40 * t) * t) * math.exp(-t * 9) * 0.9 + (rng.random() * 2 - 1) * math.exp(-t * 40) * 0.35
+            buf[start + k] += gain * (math.sin(2 * math.pi * (70 - 40 * t) * t) * math.exp(-t * 9) * 0.9 + (rng.random() * 2 - 1) * math.exp(-t * 40) * 0.35)
     peak = max(1e-9, max(abs(x) for x in buf))
     with wave.open(str(path), "wb") as w:
         w.setnchannels(1)
@@ -70,7 +71,7 @@ def render(variant, out, music=None, music_start=None):
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     enc = subprocess.Popen([ff, "-y", "-loglevel", "error", "-f", "image2pipe", "-vcodec", "png", "-r", str(FPS), "-i", "-",
                             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", str(silent)], stdin=subprocess.PIPE)
-    hits, frames = [], 0
+    hits, soft, frames = [], [], 0
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_page(viewport={"width": 1080, "height": 1920})
@@ -85,17 +86,25 @@ def render(variant, out, music=None, music_start=None):
             elif c.get("count"):
                 cap = ["clip.countdown", {"count": 5}, "loud"]
             else:
-                cap = [c.get("caption"), {"site": SITE, "pieces": c["pieces"]}, "loud" if c.get("loud") else ""]
+                cap = [c.get("caption"), {"site": SITE, "pieces": c["pieces"], **c.get("vars", {})}, c.get("size", "loud" if c.get("loud") else "")]
             page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", cap)
             trees = {"seat": c["trees"]} if c.get("half") and "trees" in c else False
-            speed = 1 if c.get("half") else TICKS
-            zoom = 1.45 if trees else 3.1
+            # Ticks a frame: full speed, half for a tree clip, or the clip's
+            # own (an eighth of full speed is 0.25).
+            speed = c.get("ticks", 1 if c.get("half") else TICKS)
+            zoom = c.get("zoom", 1.45 if trees else 3.1)
             low = c.get("ramp", 0.35)
-            ended_at, k = None, 0
-            limit = int((c["lead"] + c["slow"]) * FPS * (2 if speed == 1 else 1)) + 90
+            ended_at, k, beat = None, 0, -99
+            limit = int((c["lead"] * TICKS / speed + c["slow"]) * FPS) + 90
             while k < limit:
                 if ended_at is None:
                     ticks, punch = speed, 0.0
+                    # On a long fight, each clash and cut gets a beat: a
+                    # third of a second slowed, the camera pushing in a
+                    # little and easing back.
+                    if c.get("beats") and k - beat < 10:
+                        e = 1 - (k - beat) / 10
+                        ticks = speed * (1 - 0.6 * e)
                 else:
                     # The kill: ramp into slow motion and punch in, over a
                     # fifth of a second, then hold.
@@ -103,7 +112,14 @@ def render(variant, out, music=None, music_start=None):
                     ticks, punch = speed + (low - speed) * ease(r), ease(r)
                     if k - ended_at >= int(c["slow"] * FPS):
                         break
-                state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom, "punch": punch, "showTrees": trees, "treeScale": 2.6})
+                pulse = 1 + 0.12 * max(0.0, 1 - (k - beat) / 10) if c.get("beats") and ended_at is None else 1
+                state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom * pulse, "punch": punch, "showTrees": trees, "treeScale": c.get("treeScale", 2.6)})
+                if c.get("beats") and ended_at is None and (state["clashes"] or state["cuts"]) and k - beat >= 10:
+                    beat = k
+                    if state["cuts"]:
+                        soft.append(frames / FPS)
+                if ended_at is None and state["ended"] and c.get("caption_end"):
+                    page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", [c["caption_end"], {"site": SITE, "pieces": c["pieces"]}, ""])
                 if ended_at is None and state["ended"]:
                     if state["ended"]["tick"] < c["kill"] - 2:
                         print(f"  {c['left']} v {c['right']}: a round ended at {state['ended']['tick']}, before the chosen cut at {c['kill']}", flush=True)
@@ -122,7 +138,7 @@ def render(variant, out, music=None, music_start=None):
     enc.wait()
     length = frames / FPS
     wav = out.with_suffix(".hits.wav")
-    impact_wav(wav, hits, length)
+    impact_wav(wav, hits, length, soft)
     if music:
         # The song plays from the first frame (Sam: "the music should start at
         # the very beginning instant of the video"), started early by the
@@ -132,6 +148,10 @@ def render(variant, out, music=None, music_start=None):
             import song_hook
             music_start = song_hook.analyse(music)["start"]
         first = hits[0] if hits else 0.0
+        if all(c.get("beats") for c in clips) and hits:
+            # One long fight: its punchiest bar lands on the kill at its end,
+            # unless that would start the song before its beginning.
+            first = hits[-1] if music_start >= hits[-1] else first
         begin = max(0.0, music_start - first)
         mix = (f"[2:a]atrim={begin:.3f}:{begin + length:.3f},asetpts=PTS-STARTPTS,"
                f"afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume=0.6[m];"

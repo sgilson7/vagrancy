@@ -99,10 +99,17 @@ window.clip = {
   frame({ ticks = 2, dt = 1000 / 30, zoom = 2.3, punch = 0, y = 0.58, showTrees = false, treeScale = 1.5 }) {
     time += dt;
     acc += ticks;
+    // What happened in the ticks this frame stepped: blades meeting, and
+    // cuts (for the edit's beats on a long fight).
+    let clashes = 0, cuts = 0;
     while (acc >= 1) {
       const was = cur.phase;
       lab.step(0, 0);
       frameNow();
+      for (const e of cur.events) {
+        if (e.Clash) clashes += 1;
+        if (e.Cut && e.Cut.spilled) cuts += 1;
+      }
       acc -= 1;
       if (was === 'fight' && cur.phase !== 'fight') {
         const said = JSON.parse(lab.phase_text(''));
@@ -120,9 +127,9 @@ window.clip = {
     draw.view({ at, zoom: z * (1 + 0.6 * punch), y });
     draw.treeScale(treeScale);
     const report = JSON.parse(lab.report());
-    draw.trees(showTrees ? report.filter((r) => r.seat === showTrees.seat && r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
+    draw.trees(showTrees ? report.filter((r) => (showTrees.seat === 'both' ? r.seat < 2 : r.seat === showTrees.seat) && r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, Math.min(1, acc));
-    return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null };
+    return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null, clashes, cuts };
   },
   caption(key, vars = {}, size = '') {
     $('clip-caption').className = size;
