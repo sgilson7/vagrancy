@@ -391,3 +391,5 @@ body.clip #clip-names .side-0 { color: var(--fighters-left-ink); font-weight: bo
 body.clip #clip-names .side-1 { color: var(--fighters-right-stripe); font-weight: bold; }
 body.clip #stage { width: 1080px; height: 1440px; display: block; }
 body.clip #clip-caption { margin: 0; padding: 20px 60px 0; font-size: 46px; line-height: 1.25; text-align: center; font-weight: bold; }
+body.clip #clip-caption.big { font-size: 120px; line-height: 1; padding-top: 10px; }
+body.clip #clip-caption.loud { font-size: 58px; }

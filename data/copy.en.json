@@ -52,7 +52,8 @@
     "command, left, right, cost": "a chat command and what a turn costs, sent by the stream's bot (vagrancy-arena), drawn as data",
     "first_pct, second_pct": "the chance, as a percent, of the first and second close rules in the BT Lab’s random page, from that page’s tree in web/btlab.js",
     "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data",
-    "site": "the game's address, filled by analysis/video/make_short.py"
+    "site": "the game's address, filled by analysis/video/make_short.py",
+    "pieces": "how many pieces a fighter was cut into, from lab highlights, filled by analysis/video/make_short.py"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -2339,6 +2340,9 @@
     "title": "{game} clips",
     "hook": "Each limb is simulated. A cut takes off whatever it crosses.",
     "trees": "Each fighter runs its own behavior tree. The lit branch is the move it chose.",
-    "cta": "Free in your browser: {site}"
+    "cta": "Free in your browser: {site}",
+    "pieces": "Cut into {pieces} pieces.",
+    "countdown": "The {count} worst ways to lose in {game}",
+    "rank": "{n}"
   }
 }

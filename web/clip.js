@@ -33,14 +33,20 @@ function frameNow() {
 }
 // The fighters' middle, from the frame's attached parts, smoothed so the
 // camera drifts and does not jitter.
+let spread = 0;
 function middle() {
-  let sx = 0, sy = 0, n = 0;
+  let sx = 0, sy = 0, n = 0, lo = Infinity, hi = -Infinity;
   for (const p of cur.parts) {
     if (!p.attached) continue;
     const q = cur.points[p.a];
     sx += q[0]; sy += q[1]; n += 1;
+    lo = Math.min(lo, q[0]); hi = Math.max(hi, q[0]);
   }
   if (!n) return mid;
+  // How far apart the fighters stand, in world units, smoothed like the
+  // middle: the camera pulls back to keep both in the frame.
+  const s = (hi - lo) / one();
+  spread = spread ? spread + (s - spread) * 0.15 : s;
   const m = [sx / n, sy / n];
   mid = mid ? [mid[0] + (m[0] - mid[0]) * 0.15, mid[1] + (m[1] - mid[1]) * 0.15] : m;
   return mid;
@@ -65,7 +71,7 @@ window.clip = {
       lab.step(cur.phase !== 'fight' ? N.ready_bit : 0, 0);
       cur = JSON.parse(lab.frame());
     }
-    prev = null; acc = 0; mid = null; focus = null;
+    prev = null; acc = 0; mid = null; focus = null; spread = 0;
     draw.reset();
     $('clip-names').replaceChildren(
       el('span', { 'data-fill': '', class: 'side-0' }, t(`opponents.${left}.name`)), ' ',
@@ -91,16 +97,21 @@ window.clip = {
       }
     }
     const m = middle();
-    // A punch blends the camera's point toward the cut and closes in.
+    // A punch blends the camera's point toward the cut and closes in. The
+    // zoom is held back far enough to keep both fighters in the frame.
+    const half = N.arena_half / one();
+    const fit = (0.8 * 2 * half) / Math.max(1, spread + 80);
+    const z = Math.min(zoom, Math.max(1, fit));
     const at = focus && punch > 0 ? [m[0] + (focus[0] - m[0]) * punch, m[1] + (focus[1] - m[1]) * punch] : m;
-    draw.view({ at, zoom: zoom * (1 + 0.6 * punch), y });
+    draw.view({ at, zoom: z * (1 + 0.6 * punch), y });
     draw.treeScale(treeScale);
     const report = JSON.parse(lab.report());
     draw.trees(showTrees ? report.filter((r) => r.seat === showTrees.seat && r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, Math.min(1, acc));
     return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null };
   },
-  caption(key, vars = {}) {
+  caption(key, vars = {}, size = '') {
+    $('clip-caption').className = size;
     $('clip-caption').replaceChildren(key ? el('span', { 'data-copy': key }, t(key, vars)) : '');
   },
   ended: null,
