@@ -393,3 +393,22 @@ body.clip #stage { width: 1080px; height: 1440px; display: block; }
 body.clip #clip-caption { margin: 0; padding: 20px 60px 0; font-size: 46px; line-height: 1.25; text-align: center; font-weight: bold; }
 body.clip #clip-caption.big { font-size: 120px; line-height: 1; padding-top: 10px; }
 body.clip #clip-caption.loud { font-size: 58px; }
+
+/* A move's keys over its ticks, on the script lesson page. Bars carry the
+   spans and the key name sits beside each lane, so the picture reads without
+   colour: a lane with no bar held no key over that stretch. */
+.key-chart { width: 100%; height: auto; margin: 0.6rem 0 0; display: block; }
+.key-chart .chart-grid { stroke: var(--rule, #C9CFD3); stroke-width: 1; }
+.key-chart .chart-tick,
+.key-chart .chart-axis { font: 11px/1.2 var(--sans, sans-serif); fill: var(--muted, #6B6457); }
+.key-chart .chart-bar { fill: var(--focus, #3E4A89); stroke: var(--line, #2B2A28); stroke-width: 1; }
+.key-chart .chart-bar-step { fill: var(--post, #8A7A5C); }
+.key-chart .chart-key { font: 12px/1.3 var(--sans, sans-serif); color: var(--line, #2B2A28); text-align: right; }
+.key-chart .chart-key { display: flex; gap: 6px; align-items: baseline; justify-content: flex-end; }
+.key-chart .chart-key kbd { font: inherit; font-weight: 700; border: 1px solid var(--line, #2B2A28); border-radius: 3px; padding: 0 4px; }
+.key-chart .chart-act { font-size: 10px; color: var(--muted, #6B6457); text-align: right; line-height: 1.1; }
+.key-chart .chart-step { font-style: italic; }
+@media (forced-colors: active) {
+  .key-chart .chart-bar { fill: Highlight; stroke: CanvasText; }
+  .key-chart .chart-bar-step { fill: Canvas; stroke: CanvasText; stroke-dasharray: 3 2; }
+}

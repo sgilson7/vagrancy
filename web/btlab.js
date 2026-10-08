@@ -453,18 +453,21 @@ function keyVars() {
 // conditions and actions, diamonds for decorators.
 const leaf = (label) => ({ label });
 const node = (kind, ...kids) => ({ kind, kids });
+// Every figure is drawn from moves and conditions a tree in this game can
+// actually name (content::custom::CONDITIONS and pilot::moves::MOVES), so the
+// shapes a reader studies here are the shapes they can write in the editor.
 const FIGURES = {
-  tasks: [node('seq', leaf('opp_near'), leaf('swing'))],
-  sequence: [node('seq', leaf('move_to_door'), leaf('unlock'), leaf('open'), leaf('enter'))],
-  selector: [node('sel', leaf('cover'), leaf('flee'), leaf('fight'))],
+  tasks: [node('seq', leaf('gap_below'), leaf('thrust'))],
+  sequence: [node('seq', leaf('me_grounded'), leaf('gap_below'), leaf('armed'), leaf('thrust'))],
+  selector: [node('sel', leaf('dodge_away'), leaf('high_guard'), leaf('approach'))],
   factor: [
-    node('sel', node('seq', leaf('door_open'), leaf('enter')), node('seq', leaf('move_to_door'), leaf('unlock'), leaf('open'), leaf('enter'))),
-    node('seq', node('sel', leaf('door_open'), node('seq', leaf('move_to_door'), leaf('open'))), leaf('enter')),
+    node('sel', node('seq', leaf('gap_below'), leaf('overhead')), node('seq', leaf('approach'), leaf('overhead'))),
+    node('seq', node('sel', leaf('gap_below'), leaf('approach')), leaf('overhead')),
   ],
-  random: [{ ...node('rsel', leaf('smoke'), leaf('patrol'), leaf('chat')), weights: ['rare', 'common', 'sometimes'] }],
-  decorator: [node('until_fail', node('seq', leaf('visible'), leaf('shoot')))],
-  parallel: [node('par', leaf('reload'), leaf('take_cover'))],
-  script: [node('seq', leaf('pathfind'), leaf('follow'))],
+  random: [{ ...node('rsel', leaf('overhead'), leaf('low_sweep'), leaf('thrust')), weights: ['rare', 'common', 'sometimes'] }],
+  decorator: [node('until_fail', node('seq', leaf('gap_below'), leaf('thrust')))],
+  parallel: [node('par', leaf('retreat'), leaf('high_guard'))],
+  script: [node('seq', leaf('gap_below'), leaf('overhead'))],
 };
 // The trees the lesson writes in the editor's own shape (content::custom).
 const FACTOR_TREE = { reaction_ticks: 10, rules: [
@@ -522,6 +525,63 @@ const labStep = (pg) => ({ mode: 'watch', left: pg.demo.left, right: pg.demo.rig
 
 const FIG_COL = 150, FIG_ROW = 84, LEAF_W = 136, LEAF_H = 44;
 const SYMBOL = { seq: '→', sel: '?', rsel: '~?', par: '⇉' };
+// A move's keys over its ticks: one lane per key the move uses, a bar where
+// that key is held, and the tick axis along the bottom. Everything is read from
+// the move's own recipe (pilot::moves), so the spans are the ones the fight
+// runs and no number is written into the copy.
+const CH_LANE = 30, CH_LEFT = 132, CH_TOP = 24, CH_RIGHT = 16;
+
+function keyChart(moveId, ariaKey) {
+  const r = recipeOf(moveId);
+  if (!r || r.kind !== 'script' || !r.beats.length) return null;
+  const last = Math.max(...r.beats.map((b) => b.to));
+  const span = last + 1;
+  const used = keyRows(false).filter((row) => r.beats.some((b) => b.keys & row.bit));
+  const stepped = r.beats.some((b) => b.step !== 'none');
+  const lanes = used.length + (stepped ? 1 : 0);
+  const W = 760, H = CH_TOP + lanes * CH_LANE + 34;
+  const plot = W - CH_LEFT - CH_RIGHT;
+  const x = (tick) => CH_LEFT + (tick / span) * plot;
+  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'key-chart', role: 'img', 'aria-label': t(ariaKey) });
+
+  // Tick gridlines, every ten ticks, so the axis is readable without clutter.
+  for (let tk = 0; tk <= last; tk += 10) {
+    root.append(svg('line', { x1: x(tk), y1: CH_TOP - 6, x2: x(tk), y2: CH_TOP + lanes * CH_LANE, class: 'chart-grid' }));
+    const lab = svg('text', { x: x(tk), y: CH_TOP + lanes * CH_LANE + 16, 'text-anchor': 'middle', class: 'chart-tick' });
+    lab.textContent = String(tk);
+    root.append(lab);
+  }
+  const axis = svg('text', { x: CH_LEFT, y: H - 4, class: 'chart-axis', 'data-copy': 'btlab.chart.axis' });
+  axis.textContent = t('btlab.chart.axis', { hz: N.ticks_per_second, ms: Math.round(1000 / N.ticks_per_second) });
+  root.append(axis);
+
+  used.forEach((row, i) => {
+    const y = CH_TOP + i * CH_LANE;
+    const fo = svg('foreignObject', { x: 0, y: y + 2, width: CH_LEFT - 10, height: CH_LANE - 6 });
+    // The bound key first, because that is what a player presses, with the
+    // action beside it so the lane still reads if the key is rebound.
+    fo.append(el('div', { class: 'chart-key' },
+      row.key ? el('kbd', {}, row.key) : null,
+      el('span', { class: 'chart-act' }, fill(row.label))));
+    root.append(fo);
+    r.beats.forEach((b) => {
+      if (!(b.keys & row.bit)) return;
+      root.append(svg('rect', { x: x(b.from), y: y + 4, width: Math.max(2, x(b.to + 1) - x(b.from)), height: CH_LANE - 12, rx: 3, class: 'chart-bar' }));
+    });
+  });
+  if (stepped) {
+    const y = CH_TOP + used.length * CH_LANE;
+    const fo = svg('foreignObject', { x: 0, y: y + 2, width: CH_LEFT - 10, height: CH_LANE - 6 });
+    fo.append(el('div', { class: 'chart-key chart-step', 'data-copy': 'btlab.chart.legs' }, t('btlab.chart.legs')));
+    root.append(fo);
+    r.beats.forEach((b) => {
+      if (b.step === 'none') return;
+      root.append(svg('rect', { x: x(b.from), y: y + 4, width: Math.max(2, x(b.to + 1) - x(b.from)), height: CH_LANE - 12, rx: 3, class: 'chart-bar chart-bar-step' }));
+    });
+  }
+  return root;
+}
+
 function figure(spec, ariaKey) {
   const pos = new Map();
   let next = 0, depth = 0;
@@ -664,8 +724,14 @@ function renderLesson() {
   const k = (pg, f) => `btlab.lesson.${pg.id}.${f}`;
   const pages = LESSON.map((pg, i) => {
     const lect = [];
-    for (let n = 1; COPY.btlab.lesson[pg.id][`lecture_${n}`]; n += 1) lect.push(say(k(pg, `lecture_${n}`)));
+    // keyVars() so lesson prose can name the keys a reader actually has bound.
+    for (let n = 1; COPY.btlab.lesson[pg.id][`lecture_${n}`]; n += 1) lect.push(say(k(pg, `lecture_${n}`), keyVars()));
     const figs = (FIGURES[pg.id] || []).map((f) => figure(f, k(pg, 'figure')));
+    // The script page also shows the move's keys over its ticks.
+    if (pg.id === 'script') {
+      const chart = keyChart('overhead', 'btlab.lesson.script.chart');
+      if (chart) figs.push(chart);
+    }
     const actions = [];
     if (pg.id === 'yours') {
       actions.push(button('btlab.lesson.yours.fight.label', () => goToLab({ mode: 'play', opp: pg.opp, inspect: 1, speed: 1 }), { opponent_mid: t(`opponents.${pg.opp}.name_mid`) }, { id: 'lesson-fight' }),

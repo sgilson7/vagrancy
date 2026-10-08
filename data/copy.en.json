@@ -55,7 +55,8 @@
     "site": "the game's address, filled by analysis/video/make_short.py",
     "pieces": "how many pieces a fighter was cut into, from lab highlights, filled by analysis/video/make_short.py",
     "hero": "the trade of the fighter a short follows, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py",
-    "villain": "the trade of the fighter a short's hero faces, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py"
+    "villain": "the trade of the fighter a short's hero faces, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py",
+    "hz, ms": "the tick rate from sim (N.ticks_per_second) and the same rate as milliseconds per tick, both computed by the page"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -2179,34 +2180,25 @@
       "to_lab": "Inspect a fight, one tick at a time",
       "to_editor": "The editor",
       "label": {
-        "opp_near": "Opponent near?",
-        "swing": "Swing",
-        "move_to_door": "Move to door",
-        "unlock": "Unlock door",
-        "open": "Open door",
-        "enter": "Move into room",
-        "door_open": "Door open?",
-        "cover": "Take cover",
-        "flee": "Flee",
-        "fight": "Fight",
-        "smoke": "Smoke",
-        "patrol": "Patrol",
-        "chat": "Chat",
         "rare": "rarely",
         "common": "often",
         "sometimes": "now and then",
         "until_fail": "until fail",
-        "visible": "Target visible?",
-        "shoot": "Shoot",
-        "reload": "Reload",
-        "take_cover": "Take cover",
-        "pathfind": "Find a path",
-        "follow": "Follow the path"
+        "gap_below": "Closer than the gap?",
+        "me_grounded": "It is on the ground",
+        "armed": "It holds its sword",
+        "approach": "Approach",
+        "retreat": "Back away",
+        "high_guard": "Guard high",
+        "dodge_away": "Dodge away",
+        "overhead": "Overhead swing",
+        "low_sweep": "Sweep low",
+        "thrust": "Thrust"
       },
       "tasks": {
         "title": "A tree is made of tasks",
         "lecture_1": "A behavior tree is built from tasks. A condition checks the value of a variable. An action makes a change in the world. A composite is a task made of other tasks, so a whole subtree can stand where a single condition could.",
-        "lecture_2": "Each task returns true or false. An action returns true when its effect happens: a pathfind is true when it finds a path, and following the path is true when the goal is reached. The leaves of a tree are conditions and actions.",
+        "lecture_2": "Each task returns true or false. An action returns true when its effect happens: an approach is true when the gap closes, and a thrust is true when the move plays to its end. The leaves of a tree are conditions and actions.",
         "figure": "A sequence over a condition, opponent near, and an action, swing.",
         "demo": "Each node is a task: a condition checks something, an action does something, and a composite runs other tasks. The drover's tree has two rules, to walk in and to sweep low. Watch which one lights up as he closes in on the scarecrow.",
         "question": "Point to a condition, an action and a composite. What does each one return when it finishes?",
@@ -2215,8 +2207,8 @@
       "sequence": {
         "title": "A sequence is a plan",
         "lecture_1": "A sequence, drawn as an oval with an arrow, runs its children in order until one is false. If one is false, the sequence is false; if each is true, the sequence is true. It is AND.",
-        "lecture_2": "Read it as a plan: move to the door, unlock it, open it, move into the room, and stop at the first step that fails.",
-        "figure": "A sequence over move to door, unlock door, open door and move into room.",
+        "lecture_2": "Read it as a plan: it is on the ground, it is close enough, it still holds its sword, then thrust, and stop at the first step that fails.",
+        "figure": "A sequence over it is on the ground, closer than the gap, it holds its sword, and thrust.",
         "demo": "A sequence, marked with an arrow, runs its children in order and stops at the first that fails: the conditions first, then the action. The cooper jumps to strike when the conditions before it hold, and not otherwise.",
         "question": "Why put the conditions before the action in a sequence? What happens if the action comes first?",
         "ringed": "Ringed in the left fighter’s tree: its sequences."
@@ -2224,8 +2216,8 @@
       "selector": {
         "title": "A selector is a fallback list",
         "lecture_1": "A selector, drawn as an oval with a question mark, runs its children in order until one is true. If one is true, the selector is true; if each is false, the selector is false. It is OR.",
-        "lecture_2": "The lecture’s example keeps a character alive: take cover; if that fails, flee; if that fails, fight. The order of the children is the behavior.",
-        "figure": "A selector over take cover, flee and fight.",
+        "lecture_2": "Consider a behavior that keeps a fighter whole: dodge away; if that will not run, guard high; if that will not run either, approach. The order of the children is the behavior.",
+        "figure": "A selector over dodge away, guard high and approach.",
         "demo": "The root, marked with a question mark, tries its children from left to right and runs the first one that can run. The lamplighter backs off, thrusts, walks in or guards high, in that order of preference.",
         "question": "If the first child fails, does a selector try the next one or give up? What would change if high guard came first?",
         "ringed": "Ringed in the left fighter’s tree: its selector, the root."
@@ -2234,42 +2226,42 @@
         "title": "A behavior tree resumes where it left off",
         "lecture_1": "A decision tree is stateless: each call starts at the root and ends at a leaf. A behavior tree is stateful: the first call starts at the root, and the next call starts at the leaf where the last one ended.",
         "lecture_2": "That one sentence is the design. The tree keeps its place, which is what a state machine gave us, and stays a tree, which is what made decision trees readable. An action that has not finished yet is still running, which is why working behavior trees have a third return value.",
-        "demo": "A move takes many ticks. While it runs, the tree resumes it instead of choosing again, the way the reading's trees pick up at the leaf where the last call ended. A node with a dashed edge is checked on each tick anyway and can cut a running move short: watch the dyer dodge back when a point comes at her body, cutting short whatever she was doing.",
+        "demo": "A move takes many ticks. While it runs, the tree resumes it instead of choosing again, picking up at the leaf where the last call ended. A node with a dashed edge is checked on each tick anyway and can cut a running move short: watch the dyer dodge back when a point comes at her body, cutting short whatever she was doing.",
         "question": "True and false cannot say \"still running\". How does this game get around that, and what does it cost?",
         "ringed": "Ringed in the left fighter’s tree: the nodes with a dashed edge, checked on each tick even while a move runs."
       },
       "factor": {
-        "title": "One behavior, factored",
-        "lecture_1": "The lecture builds one behavior, move into a room, more than one way. A selector over two sequences works, and writes move into room twice, so a change to how a character enters a room has to be made twice.",
-        "lecture_2": "The factored tree is a sequence: first make sure the door is open, with a selector that finds it open or goes and opens it, then move into the room once. A selector under a selector collapses into one selector, and a sequence under a sequence into one sequence, so a useful tree alternates the two down its levels.",
-        "figure": "Two trees for moving into a room. The first is a selector over two sequences, with move into room in both. The second is a sequence over a selector and move into room, written once.",
-        "demo": "This tree was written in the editor at the bottom of the page, where each rule is a sequence of conditions and then a move, under one selector. Two of its rules test the same distance, the way the lecture’s first tree wrote move into room twice.",
+        "title": "The same step, written once",
+        "lecture_1": "Consider one behavior, swinging overhead at an opponent, built more than one way. A selector over two sequences works, and writes the overhead swing twice, so a change to how the swing is thrown has to be made twice.",
+        "lecture_2": "The factored tree is a sequence: first make sure the gap is closed, with a selector that finds it already close or approaches, then swing once. A selector under a selector collapses into one selector, and a sequence under a sequence into one sequence, so a useful tree alternates the two down its levels.",
+        "figure": "Two trees: a selector over two sequences that each end in an overhead swing, and the factored sequence that closes the gap first and swings once.",
+        "demo": "This tree was written in the editor at the bottom of the page, where each rule is a sequence of conditions and then a move, under one selector. Two of its rules test the same distance, the way the first tree above wrote the overhead swing twice.",
         "question": "How would you factor the repeated distance test, and what does the factored tree cost when you read it aloud?",
         "ringed": "Ringed in this tree: the distance test it writes twice."
       },
       "random": {
-        "title": "Random composites",
+        "title": "Random composites shuffle the order",
         "lecture_1": "A random selector tries its children in a shuffled order until one is true; a random sequence runs them in a shuffled order until one is false. Sequence and selector impose a total order, and the random composites give partial orders.",
-        "lecture_2": "Random does not have to mean uniform. Weights on the branches say how likely each child is to go first: a guard who is idle might patrol often, chat now and then, and smoke rarely.",
-        "figure": "A random selector over smoke, patrol and chat, weighted rarely, often and now and then.",
+        "lecture_2": "Random does not have to mean uniform. Weights on the branches say how likely each child is to go first: an opponent might sweep low often, thrust now and then, and swing overhead rarely.",
+        "figure": "A random selector over overhead swing, sweep low and thrust, weighted rarely, often and now and then.",
         "demo": "{game} has no random composite. It has a chance condition instead. In this tree, the first close rule passes its chance test {first_pct} percent of the time, and the rule after it {second_pct} percent of the time it is reached.",
         "question": "When the first rule fails its chance, the second gets its turn. How often does the second rule run, out of the fighter’s close decisions, and how would you give it the share you meant?",
         "ringed": "Ringed in this tree: its chance conditions."
       },
       "decorator": {
-        "title": "Decorators",
+        "title": "A decorator wraps one child",
         "lecture_1": "The name comes from object-oriented programming, where a decorator wraps a class, keeps its interface and changes what it does. In a behavior tree a decorator is a composite with one child, drawn as a diamond.",
-        "lecture_2": "The lecture lists limit, which runs its child a number of times; until fail, a while loop; until succeed; and the semaphore, which lets one subtree at a time hold a resource.",
-        "figure": "An until fail decorator over a sequence: target visible, then shoot.",
+        "lecture_2": "Common decorators are limit, which runs its child a number of times; until fail, a while loop; until succeed; and the semaphore, which lets one subtree at a time hold a resource.",
+        "figure": "An until fail decorator over a sequence: closer than the gap, then thrust.",
         "demo": "The thresher has no conditions. A repeat node runs the sequence of raise, swing and pause again and again, while a second branch walks toward the opponent.",
-        "question": "Which of the reading's decorators is this closest to, and what would make it stop?",
+        "question": "Which of those decorators is this closest to, and what would make it stop?",
         "ringed": "Ringed in the left fighter’s tree: its repeat, the decorator."
       },
       "parallel": {
-        "title": "Parallel",
+        "title": "A parallel composite runs its children at once",
         "lecture_1": "A parallel composite runs its children at the same time. A parallel sequence ends when each child succeeds or the first one fails; a parallel selector ends when each child fails or the first one succeeds.",
-        "lecture_2": "Children that run at once can reach for the same resource. If reload and take cover both change the character’s animation, which one wins depends on timing, and the semaphore decorator is what keeps them apart.",
-        "figure": "A parallel sequence over reload and take cover.",
+        "lecture_2": "Children that run at once can reach for the same resource. Backing away drives the legs and guarding high drives the arm, so those two can run together; two children that both want the arm cannot, and the semaphore decorator is what stands between them.",
+        "figure": "A parallel sequence over back away and guard high.",
         "demo": "The village deity runs its trees at once: one for each pair of arms and one for the legs. Each presses its own keys, and the body receives them together on the same tick.",
         "question": "What could go wrong if two of the trees pressed the same key? How is that kept from happening here?",
         "ringed": "Ringed in the left fighter’s tree: its parallel node, over a tree for each pair of arms and one for the legs."
@@ -2284,11 +2276,12 @@
       },
       "script": {
         "title": "From an action to keys: a script",
-        "lecture_1": "An action makes a change in the world, and the lecture’s actions are things like pathfind and follow the path. In a fighting game the change is made with key presses, so each action has to become keys, tick by tick.",
-        "figure": "A sequence over find a path and follow the path.",
+        "lecture_1": "An action makes a change in the world, and here the change is made with key presses, so a move a rule names has to become keys, tick by tick. The simplest way to do that is a script: a list of beats, where a beat holds one group of keys over a span of ticks and says whether the legs step toward the opponent or away. In the overhead swing the shoulder rises while {key.shoulder_up} is held, and then the shoulder comes down with {key.shoulder_down} while the elbow straightens with {key.elbow_out}.",
+        "figure": "A sequence over closer than the gap and the overhead swing.",
         "demo": "Pause, then step one tick at a time. The hay mower's overhead swing is a script: the shoulder key up for a span of ticks, then down with the elbow straightened. The keys panel highlights the line that is playing.",
         "question": "Why does a swing need many ticks of the same key, rather than one press?",
-        "ringed": "Ringed in the left fighter’s tree: the overhead swing, an action played as a script."
+        "ringed": "Ringed in the left fighter’s tree: the overhead swing, an action played as a script.",
+        "chart": "The overhead swing drawn as keys over ticks: one row for each key the move holds, a bar across the ticks it is held for, and the tick axis below."
       },
       "pose": {
         "title": "From an action to keys: a controller",
@@ -2313,7 +2306,7 @@
       },
       "yours": {
         "title": "Your turn",
-        "lecture_1": "The editor at the bottom of the page writes a tree of your own. Its trees are a selector over rules, and each rule is a sequence of conditions and then a move, the shape the lecture drew for moving into a room.",
+        "lecture_1": "The editor at the bottom of the page writes a tree of your own. Its trees are a behavior tree one level deep: a selector over rules, where each rule is a sequence of conditions and then a move.",
         "demo": "Fight the lamplighter with the keys and watch its tree answer you. Stand still for a while, then walk in, then back away.",
         "question": "Which of your moves made it change rules, and why that rule?",
         "fight": {
@@ -2325,6 +2318,10 @@
       },
       "lab_intro": "Choose two fighters and start a match. Slow the simulation down, or advance it one tick at a time. After each tick, compare the part of the behavior tree that ran with the keys the opponent pressed. When an opponent changes what it does, look for the change in the tree and ask what happened in the fight that could explain it.",
       "lab_read": "Read one tick as a chain of evidence. Start with what is happening in the fight, follow the portion of the tree evaluated on that tick, and then look at the keys the agent pressed. Those inputs are how the agent's choice reaches the game. Step again to see whether the same path runs when the situation changes."
+    },
+    "chart": {
+      "axis": "Ticks. The fight runs {hz} of them a second, so one tick is about {ms} milliseconds.",
+      "legs": "legs"
     },
     "rise": {
       "intro": "The stand move holds the stand key while the fighter is down. Its feet hold to the ground and a spring brings it up over a second or two. The move lets go of the key once the fighter stands."
