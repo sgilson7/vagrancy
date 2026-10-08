@@ -50,7 +50,6 @@ struct BodyJson {
 
 #[derive(Clone, Deserialize)]
 struct PartJson {
-    #[allow(dead_code)]
     id: String,
     copy: String,
     near: String,
@@ -211,7 +210,17 @@ fn build(b: BodyJson) -> BodyDef {
         sword,
         more,
         elbow_keys_turn_upper: b.elbow_keys_turn_upper,
+        armor: Vec::new(),
+        costume: String::new(),
     }
+}
+
+/// Where part `id` of the fighter's body (data/body.json) is in its list of
+/// parts, which every fighter body begins with: four and eight arms add
+/// theirs after.
+pub fn part_index(id: &str) -> Option<u8> {
+    let f: File = serde_json::from_str(BODY_JSON).expect("data/body.json is valid");
+    f.fighter.parts.iter().position(|p| p.id == id).map(|k| k as u8)
 }
 
 /// The fighter's body and the post's, in that order: `Seat::body` 0 and 1.
@@ -283,6 +292,11 @@ pub fn scaled(def: &BodyDef, num: i64, den: i64) -> BodyDef {
         s.mass = (s.mass as i64 * num / den) as i32;
         for e in &mut s.extra {
             *e = e.scale(num, den);
+        }
+    }
+    for p in &mut b.armor {
+        for at in &mut p.points {
+            *at = at.scale(num, den);
         }
     }
     b

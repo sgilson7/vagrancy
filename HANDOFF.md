@@ -1,5 +1,31 @@
 # Handoff
 
+## 0. Costumes and armor (2026-10-08, SIM_VERSION 18), the newest deploy
+
+Every opponent on the road wears a costume. Seven wear plates of armor:
+- helmets on the watchman, warden and temple guard;
+- a skullcap on the gatekeeper;
+- a helmet and a breastplate on the general;
+- a steel sombrero on the bridge keeper;
+- horns on the ox herd.
+
+The pieces of the change:
+- **Data.** `data/costumes.json` holds the costumes, the plates, and two switches, `art` and `armor`.
+- **Art.** `analysis/art/costumes.py` draws the pictures into `web/art/costume/`.
+- **Simulation.** A plate is an entry in `World::swords` with `armor` set. `wear_armor` lays it on its part each tick; it weighs nothing and cuts nothing, and blades meet it in `clash()`.
+- **Page.** `web/draw.js` draws the clothes over the trunk, the arms over the clothes, and the hats over the head.
+- **Measurements.** `lab armor <matches> [ids]` writes `analysis/armor.md`: lag and gameplay, dressed against bare. `lab step-cost` and `lab profile` time the step and the pilots.
+
+To undo it:
+- Set `"armor": false`, or `"art": false`, in data/costumes.json and rebuild. Then run `make weapons`, and `make ladder` when it next runs: both fingerprints include the file.
+- Or go back to the tag `pre-costumes` (d4d86c3).
+
+Notebook: SECOND-ORDER-M5 rows 103–106. Still open:
+- whether the armor is fun is Sam's to judge;
+- the ladder is pending (`analysis/ladder.pending`).
+
+The rest of this file is from the flanked-fights deploy and is older.
+
 Written for a reader with none of this session's context, and rewritten at every deploy gate. This one is for the flanked-fights deploy (2026-10-05): ten fights with an opponent on each side of the player, ledges, and weapon and ground choices online.
 
 ## 1. What this is

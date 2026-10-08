@@ -4,6 +4,7 @@
 //! a human-written file lives here.
 
 pub mod copy;
+pub mod costumes;
 pub mod custom;
 pub mod agent;
 pub mod body;

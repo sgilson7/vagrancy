@@ -175,6 +175,14 @@ pub fn opponent_body(bodies: &mut Vec<sim::body::BodyDef>, opponent: &str) -> u8
         bodies.push(b);
         seat1 = (bodies.len() - 1) as u8;
     }
+    // Its costume and armor (data/costumes.json), on a copy: the body may be
+    // the player's own.
+    if crate::costumes::dressed(opponent) {
+        let mut b = bodies[seat1 as usize].clone();
+        crate::costumes::dress(opponent, &mut b);
+        bodies.push(b);
+        seat1 = (bodies.len() - 1) as u8;
+    }
     seat1
 }
 

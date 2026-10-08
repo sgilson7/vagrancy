@@ -56,4 +56,7 @@ pub use world::World;
 /// elbow keys; a throw lets go of every weapon in hand.
 /// 16: a body's weapons past the first are a list (the guardian deity's
 /// eight arms hold four). A match plays exactly as in 15.
-pub const SIM_VERSION: u32 = 17;
+/// 18: a body may wear plates of armor (`PlateDef`), rigid, held to its
+/// points, met by blades as a blade is and cutting nothing; a body names the
+/// costume the page draws. A match with no plate in it plays exactly as in 17.
+pub const SIM_VERSION: u32 = 18;

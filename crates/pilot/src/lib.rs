@@ -248,7 +248,7 @@ fn facing(w: &World, seat: usize) -> i32 {
 }
 
 fn tip(w: &World, seat: usize) -> Option<V2> {
-    w.swords.iter().find(|s| s.fighter as usize == seat).map(|s| w.particles[s.tip as usize].p)
+    w.swords.iter().find(|s| s.fighter as usize == seat && s.armor.is_none()).map(|s| w.particles[s.tip as usize].p)
 }
 
 /// Horizontal distance between the two pelvises, in whole cm.
@@ -286,7 +286,7 @@ pub fn on_ledge(w: &World, seat: usize) -> bool {
 
 /// A hand of `seat`'s holds its sword.
 pub fn armed(w: &World, seat: usize) -> bool {
-    w.swords.iter().position(|s| s.fighter as usize == seat).is_some_and(|si| w.held(si))
+    w.swords.iter().position(|s| s.fighter as usize == seat && s.armor.is_none()).is_some_and(|si| w.held(si))
 }
 
 /// The fighter `seat` fights: the nearest one on the other side still in

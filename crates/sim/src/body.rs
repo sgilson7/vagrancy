@@ -168,6 +168,28 @@ pub struct BodyDef {
     /// elbow controls are instead shoulder controls for your other arms").
     #[serde(default)]
     pub elbow_keys_turn_upper: bool,
+    /// Rigid plates of armor worn over the body (`PlateDef`). Empty for a
+    /// body that wears none.
+    #[serde(default)]
+    pub armor: Vec<PlateDef>,
+    /// Which costume the page draws over this body, from data/costumes.json;
+    /// empty for none. Nothing in the simulation reads it.
+    #[serde(default)]
+    pub costume: String,
+}
+
+/// A plate of armor, a helmet or a breastplate (Sam, 2026-10-08: "it should
+/// act like a sword in the sense that its rigid, and should defend the area
+/// beneath it from getting cut"). Its points, in the rest pose, are joined
+/// in order into edges. It rides rigidly on the part from `near` to `far`
+/// (`World::wear_armor`), weighs nothing and pushes nothing. A blade meets
+/// it as it meets another blade (D10), and it cuts nothing. When a cut takes
+/// `far` off the body, the plate goes with it.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct PlateDef {
+    pub points: Vec<V2>,
+    pub near: u8,
+    pub far: u8,
 }
 
 impl BodyDef {

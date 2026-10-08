@@ -1391,6 +1391,40 @@ def the_clip_frame_plays_a_round_to_its_cut_in_the_copy_files_words(page, name):
 
 
 @check
+def armored_fighters_wear_their_costumes_and_a_frame_stays_cheap(page, name):
+    # Sam, 2026-10-08: costumes for the road's opponents, plates of armor on
+    # some, and "a large emphasis on testing for whether the changes cause
+    # the game to lag". Two armored opponents fight in the clip frame: every
+    # costume picture they wear loads from the site itself, and a frame (two
+    # ticks of the simulation, both pilots and the drawing) stays well inside
+    # a sixtieth of a second.
+    fails = []
+    page.goto(ORIGIN + "/clip.html", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.evaluate("s => window.clip.load(s)", {"left": "bridge_keeper", "right": "general", "seed": 3, "from": 0})
+    page.evaluate("o => window.clip.frame(o)", {"ticks": 2})
+    page.wait_for_timeout(800)
+    ms = page.evaluate("""() => { const t0 = performance.now(); for (let k = 0; k < 120; k += 1) window.clip.frame({ ticks: 2 }); return (performance.now() - t0) / 120; }""")
+    pics = page.evaluate("""() => performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/art/costume/'))""")
+    want = {f"{who}-{slot}.png" for who in ("bridge_keeper", "general") for slot in ("head", "chest", "waist")}
+    got = {u.rsplit("/", 1)[1] for u in pics}
+    if want - got:
+        fails.append(f"{name}: these costume pictures were never fetched: {sorted(want - got)}")
+    # Fetched is not loaded: each picture is asked for again and must be
+    # there.
+    broken = page.evaluate("""async (urls) => { const out = []; for (const u of urls) { const r = await fetch(u); if (!r.ok) out.push(u.split('/').pop()); } return out; }""", pics)
+    if broken:
+        fails.append(f"{name}: these costume pictures did not load: {sorted(set(broken))}")
+    if ms > 8:
+        fails.append(f"{name}: a frame of two armored fighters took {ms:.1f} ms")
+    page.goto(ORIGIN + "/", wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    if not fails:
+        print(f"ok: {name}: the bridge keeper and the general wore all six pictures; a frame took {ms:.2f} ms")
+    return fails
+
+
+@check
 def the_arena_runs_fights_on_its_own_with_no_bot(page, name):
     # The stream's page (Sam, 2026-10-07): with no bot it runs exhibitions,
     # so the stream always has a fight; its words are the copy file's.

@@ -155,6 +155,10 @@ pub struct Sword {
     pub grips: Vec<Constraint>,
     /// The cursed blade, drawn with its two strands (`SwordDef::cursed`).
     pub cursed: bool,
+    /// A plate of armor (`PlateDef`), not a weapon: the body point it goes
+    /// with when a cut drops it. It meets blades and cuts nothing, and no
+    /// hand holds it.
+    pub armor: Option<u16>,
 }
 
 /// A held joint key this tick: the servo's target and who it turns.
@@ -319,7 +323,7 @@ impl World {
             } else {
                 sd.edges.iter().map(|e| (butt + e.a as u16, butt + e.b as u16, e.from)).collect()
             };
-            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false, returns: sd.returns, back_at: None, turned: false, grips: Vec::new(), cursed: sd.cursed });
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: sd.hilt, points, edges, flying: false, returns: sd.returns, back_at: None, turned: false, grips: Vec::new(), cursed: sd.cursed, armor: None });
             let extra = sd.extra.len() as u8;
             for g in &sd.grips {
                 let hand = base + g.hand as u16;
@@ -330,6 +334,23 @@ impl World {
                 }
             }
             sword = sword.or(Some(si));
+        }
+        // Armor after the weapons, so a fighter's first sword is still its
+        // first weapon. A plate's points weigh nothing and nothing holds
+        // them: each tick `wear_armor` sets them where the plate sits on its
+        // part. Held by sticks, with weight, a plate made every look-ahead
+        // pilot five times slower (SECOND-ORDER-M5).
+        for pd in &def.armor {
+            let first = self.particles.len() as u16;
+            for &e in &pd.points {
+                let p = place(e);
+                self.particles.push(Particle { p, q: p, m: 0, rad: Fx(0), grip: balance::GRIP_BODY, foot: false, owner: Owner::Body(seat) });
+            }
+            let points: Vec<u16> = (first..self.particles.len() as u16).collect();
+            let (butt, tip) = (first, *points.last().unwrap_or(&first));
+            let edges = points.windows(2).map(|w| (w[0], w[1], Fx(0))).collect();
+            let len = (*pd.points.last().unwrap_or(&V2::ZERO) - *pd.points.first().unwrap_or(&V2::ZERO)).len();
+            self.swords.push(Sword { fighter: seat, butt, tip, len, hilt: Fx(0), points, edges, flying: false, returns: false, back_at: None, turned: false, grips: Vec::new(), cursed: false, armor: Some(base + pd.far as u16) });
         }
         let r = &def.roles;
         let dist = |a: Option<u8>, b: Option<u8>| match (a, b) {
@@ -397,6 +418,7 @@ impl World {
         for _ in 0..ITERATIONS {
             self.relax(&drives);
         }
+        self.wear_armor();
         self.clash(&drives);
         self.cuts();
         self.land_thrown();
@@ -715,7 +737,56 @@ impl World {
     /// Fighter `seat`'s weapons, by index into `swords`, in the order its
     /// body lists them (`BodyDef::weapons`).
     pub fn swords_of(&self, seat: usize) -> Vec<usize> {
-        (0..self.swords.len()).filter(|&k| self.swords[k].fighter as usize == seat).collect()
+        (0..self.swords.len()).filter(|&k| self.swords[k].fighter as usize == seat && self.swords[k].armor.is_none()).collect()
+    }
+
+    /// Every plate of armor where it sits now and sat last tick: on the part
+    /// whose far end it goes with, turned as that part is turned, the far
+    /// end held still (`PlateDef`). After a cut, on the piece that end fell
+    /// with. A plate is rigid and has no weight, so it stops a blade and
+    /// pushes nothing.
+    pub(crate) fn wear_armor(&mut self) {
+        for seat in 0..SEATS {
+            let Some(f) = self.fighters[seat].as_ref() else { continue };
+            let (base, facing) = (f.base, f.facing as i64);
+            let def = &self.setup.bodies[f.body as usize];
+            if def.armor.is_empty() {
+                continue;
+            }
+            let plates: Vec<(crate::body::PlateDef, usize)> = def.armor.iter().cloned().zip(self.armor_of(seat)).collect();
+            let rest = |i: u8| def.points[i as usize].at;
+            let rests: Vec<(V2, V2)> = plates.iter().map(|(pd, _)| (rest(pd.near), rest(pd.far))).collect();
+            for ((pd, si), (near, far)) in plates.into_iter().zip(rests) {
+                let at = base + pd.far as u16;
+                let Some(part) = self.parts.iter().find(|p| p.fighter as usize == seat && p.b == at) else { continue };
+                let a = part.a as usize;
+                let axis_def = far - near;
+                let n = axis_def.len_sq_raw().max(1);
+                let lay = |pa: V2, pb: V2| -> Option<Vec<V2>> {
+                    let d = pb - pa;
+                    if d.len_sq_raw() == 0 {
+                        return None;
+                    }
+                    let axis = d.with_len(axis_def.len());
+                    Some(pd.points.iter().map(|&e| {
+                        let o = e - far;
+                        pb + axis.scale(axis_def.dot_raw(o), n) + axis.perp().scale(axis_def.cross_raw(o) * facing, n)
+                    }).collect())
+                };
+                let (pa, pb) = (&self.particles[a], &self.particles[at as usize]);
+                let (Some(now), Some(then)) = (lay(pa.p, pb.p), lay(pa.q, pb.q)) else { continue };
+                for (k, &i) in self.swords[si].points.clone().iter().enumerate() {
+                    self.particles[i as usize].p = now[k];
+                    self.particles[i as usize].q = then[k];
+                }
+            }
+        }
+    }
+
+    /// Fighter `seat`'s plates of armor, by index into `swords`, in the
+    /// order its body lists them (`BodyDef::armor`).
+    pub fn armor_of(&self, seat: usize) -> Vec<usize> {
+        (0..self.swords.len()).filter(|&k| self.swords[k].fighter as usize == seat && self.swords[k].armor.is_some()).collect()
     }
 
     /// A returning weapon out of the hand: in its last HOMING_TICKS it flies

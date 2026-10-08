@@ -71,6 +71,59 @@ export function renderer(canvas, palette, numbers) {
   };
   const inkColor = (seat) => (side(seat) === 0 ? palette.fighters.left.ink : palette.fighters.right.ink);
 
+  // Costumes (data/costumes.json, through core's numbers): each picture is
+  // drawn in the fighter's rest-pose centimeters and rides on one part, laid
+  // on with the turn that takes the part's rest direction to where it points
+  // now, about its far end; mirrored for a fighter facing -x. The pictures
+  // load once and are skipped until they have.
+  const dress = numbers.costumes || { art: false, slots: {}, under: [], costumes: {} };
+  const under = new Set(dress.under);
+  const pictures = new Map();
+  const picture = (id, slot) => {
+    const k = `${id}-${slot}`;
+    if (!pictures.has(k)) { const im = new Image(); im.src = `art/costume/${k}.png`; pictures.set(k, im); }
+    return pictures.get(k);
+  };
+  function wearing(cur, seat) {
+    const f = cur.fighters[seat];
+    return dress.art && f && f.costume ? dress.costumes[f.costume] || null : null;
+  }
+  function wear(cur, pts, seat, slots) {
+    const f = cur.fighters[seat];
+    const c = wearing(cur, seat);
+    for (const name of slots) {
+      if (!c.slots.includes(name)) continue;
+      const slot = dress.slots[name];
+      const part = cur.parts.find((p) => p.fighter === seat && p.def === slot.part && !p.stump);
+      const im = picture(f.costume, name);
+      if (!part || !im.complete || !im.naturalWidth) continue;
+      const a = [sx(pts[part.a][0]), sy(pts[part.a][1])];
+      const b = [sx(pts[part.b][0]), sy(pts[part.b][1])];
+      const dx = slot.far[0] - slot.near[0], dy = slot.far[1] - slot.near[1];
+      const turn = Math.atan2(b[1] - a[1], b[0] - a[0]) - Math.atan2(-dy, f.facing * dx);
+      const [x0, y0, x1, y1] = slot.box;
+      ctx.save();
+      ctx.translate(b[0], b[1]);
+      ctx.rotate(turn);
+      ctx.scale(f.facing * scale, scale);
+      ctx.drawImage(im, x0 - slot.far[0], slot.far[1] - y1, x1 - x0, y1 - y0);
+      ctx.restore();
+    }
+  }
+  // A deity glows (Sam, 2026-10-08): soft rings of light round each part
+  // still on its body, breathing slowly.
+  function glow(cur, pts, seat, now) {
+    const breath = 0.5 + 0.5 * Math.sin(now / 420);
+    for (const [k, grow] of [[0, 9], [1, 5]]) {
+      ctx.globalAlpha = (k ? 0.28 : 0.16) * (0.7 + 0.3 * breath);
+      for (const part of cur.parts) {
+        if (part.fighter !== seat || !part.attached) continue;
+        capsule(pts[part.a], pts[part.b], part.r + one * (grow + 2 * breath), k ? palette.costume.glow_soft : palette.costume.glow);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
   // Where cuts landed this round, as core reported them. They are drawn
   // where they happened and do not move: the page does not integrate.
   let marks = [];
@@ -204,10 +257,22 @@ export function renderer(canvas, palette, numbers) {
     }
     // A dodging fighter is drawn see-through for the moment it cannot be cut.
     const dodging = (seat) => cur.fighters[seat] && cur.fighters[seat].dodging;
-    for (const part of cur.parts) {
-      ctx.globalAlpha = part.attached && dodging(part.fighter) ? 0.4 : 1;
-      capsule(pts[part.a], pts[part.b], part.r, fill(part));
-    }
+    // A costumed fighter's trunk and legs, then its clothes, then its arms
+    // over them, then what it wears on its head; anyone else as before.
+    const worn = (seat) => wearing(cur, seat);
+    const now = clock();
+    cur.fighters.forEach((f, seat) => { if (f && worn(seat) && worn(seat).glow) glow(cur, pts, seat, now); });
+    const body = (over) => {
+      for (const part of cur.parts) {
+        if (over !== Boolean(worn(part.fighter) && !under.has(part.def))) continue;
+        ctx.globalAlpha = part.attached && dodging(part.fighter) ? 0.4 : 1;
+        capsule(pts[part.a], pts[part.b], part.r, fill(part));
+      }
+    };
+    body(false);
+    cur.fighters.forEach((f, seat) => { if (f && worn(seat)) { ctx.globalAlpha = dodging(seat) ? 0.4 : 1; wear(cur, pts, seat, ['waist', 'chest']); } });
+    body(true);
+    cur.fighters.forEach((f, seat) => { if (f && worn(seat)) { ctx.globalAlpha = dodging(seat) ? 0.4 : 1; wear(cur, pts, seat, ['head']); } });
     ctx.globalAlpha = 1;
     // A stump's cut end: the paper inside, ringed with that fighter's ink.
     for (const part of cur.parts) {
@@ -220,6 +285,15 @@ export function renderer(canvas, palette, numbers) {
     // sat inside the part it was cut from and none could be seen.
     for (const m of marks) dot(m.at, 4, inkColor(m.seat));
     for (const s of cur.swords) {
+      // A plate of armor: drawn by its costume's picture when there is one,
+      // and otherwise as a band of steel along its edges.
+      if (s.armor) {
+        if (!worn(s.fighter)) {
+          for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 2.2, palette.costume.armor_edge);
+          for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 1.4, palette.costume.armor);
+        }
+        continue;
+      }
       // A turned boomerang is ringed in its thrower's own ink: it is
       // coming back for them.
       if (s.turned) for (const [i, j] of s.edges) capsule(pts[i], pts[j], one * 2.4, inkColor(s.fighter));

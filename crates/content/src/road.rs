@@ -450,6 +450,7 @@ pub fn ladder_fingerprint() -> String {
     // A stop's condition changes its matches; its requirements do not.
     let mut stops: Vec<String> = road().iter().map(|s| format!("{}:{:?}:{:?}:{:?}:{:?}", s.id, s.condition, s.weapon, s.companion, s.map)).collect();
     stops.sort();
-    let data = format!("{}{}{}{}", PILOTS_JSON, stops.join(","), crate::maps::MAPS_JSON, sim::SIM_VERSION);
+    // What the opponents wear: a plate of armor changes their matches.
+    let data = format!("{}{}{}{}{}", PILOTS_JSON, stops.join(","), crate::maps::MAPS_JSON, crate::costumes::COSTUMES_JSON, sim::SIM_VERSION);
     format!("{:016x}", sim::world::fnv1a(data.as_bytes()))
 }

@@ -961,6 +961,232 @@ fn film(args: &[String]) {
     println!("{a} vs {b}: seed {seed}, wins {:?}, {changes} changes of lead, loser's rounds {close}, {ticks} ticks -> {out}", rec.world.wins);
 }
 
+/// Costumes and armor, measured (Sam, 2026-10-08: "place a large emphasis on
+/// testing for whether the changes cause the game to lag, or the gameplay to
+/// change meaningfully moment to moment, and whether the new armor is
+/// actually any fun at all"). For each opponent that wears a plate, and for
+/// a few that wear only a costume: the yardstick against it on the road, the
+/// same seeds dressed and undressed. Writes analysis/armor.md.
+fn armor(args: &[String]) {
+    use sim::body::Cause;
+    use sim::fight::{Event, Phase};
+    let matches: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(100);
+    let max_ticks = 60 * 120;
+    let f = content::costumes::file();
+    // The opponents named after the count, or every armored one and four
+    // in costume only.
+    let mut ids: Vec<String> = args[1.min(args.len())..].to_vec();
+    if ids.is_empty() {
+        ids = f.costumes.iter().filter(|(_, c)| !c.armor.is_empty()).map(|(id, _)| id.clone()).collect();
+        ids.extend(["herbalist", "abbot", "scarecrow", "pilgrim"].iter().map(|s| s.to_string()));
+    }
+    #[derive(Default, Clone)]
+    struct Tally {
+        won: u32,
+        unfinished: u32,
+        ticks: u64,
+        rounds: u32,
+        neck: u32,
+        heart: u32,
+        ink: u32,
+        plate_hits: u32,
+        clashes: u32,
+        cuts_taken: u32,
+        nanos: u128,
+        trace: Vec<(u32, u32)>,
+    }
+    let run = |id: &str, dressed: bool| -> Tally {
+        let mut t = Tally::default();
+        for seed in 0..matches {
+            let mut s = content::setup::road(seed, sim::balance::DEFAULT_TUNING, id);
+            if !dressed {
+                for seat in 1..sim::body::SEATS {
+                    if let Some(b) = s.seats[seat].map(|x| x.body as usize) {
+                        s.bodies[b].armor.clear();
+                        s.bodies[b].costume.clear();
+                    }
+                }
+            }
+            let mut w = sim::World::new(s);
+            let mut pilots = content::road::lineup(&content::road::pilot("yardstick"), id);
+            let mut last = [Input::NONE; sim::body::SEATS];
+            let plates: Vec<u8> = (0..w.swords.len()).filter(|&k| w.swords[k].armor.is_some()).map(|k| k as u8).collect();
+            let t0 = std::time::Instant::now();
+            while w.tick < max_ticks && !matches!(w.phase, Phase::MatchOver { .. }) {
+                let mut i = [Input::NONE; sim::body::SEATS];
+                for (k, p) in pilots.iter_mut().enumerate() {
+                    p.observe(last);
+                    i[k] = p.input(&w, k);
+                }
+                let before = w.clashing.clone();
+                let was_fight = matches!(w.phase, Phase::Fight);
+                w.step_all(i);
+                last = i;
+                for pair in &w.clashing {
+                    if !before.contains(pair) && (plates.contains(&pair.0) || plates.contains(&pair.1)) {
+                        t.plate_hits += 1;
+                    }
+                }
+                for e in &w.events {
+                    match e {
+                        Event::Clash { .. } => t.clashes += 1,
+                        Event::Cut { seat, spilled: true, .. } if *seat != 0 => t.cuts_taken += 1,
+                        _ => {}
+                    }
+                }
+                if was_fight && !matches!(w.phase, Phase::Fight) {
+                    if let Phase::RoundOver { result, .. } | Phase::MatchOver { result } = w.phase {
+                        if result.loser.is_some() {
+                            t.rounds += 1;
+                            if result.loser == Some(1) {
+                                match result.cause {
+                                    Cause::Neck => t.neck += 1,
+                                    Cause::Heart => t.heart += 1,
+                                    _ => t.ink += 1,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            t.nanos += t0.elapsed().as_nanos();
+            t.ticks += w.tick as u64;
+            t.trace.push((w.tick, w.wins[0] * 10 + w.wins[1]));
+            if !matches!(w.phase, Phase::MatchOver { .. }) {
+                t.unfinished += 1;
+            } else if w.wins[0] > w.wins[1] {
+                t.won += 1;
+            }
+        }
+        t
+    };
+    let rows: Vec<(String, Tally, Tally)> = std::thread::scope(|scope| {
+        let hs: Vec<_> = ids.iter().map(|id| { let id = id.clone(); scope.spawn(move || { let on = run(&id, true); let off = run(&id, false); (id, on, off) }) }).collect();
+        hs.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    let pct = |a: u32, b: u32| if b == 0 { 0.0 } else { 100.0 * a as f64 / b as f64 };
+    let mut md = format!("# Armor\n\nWritten by `lab armor {matches}` (SIM_VERSION {}). The yardstick against each opponent on the road, the same {matches} seeds with the opponent dressed (data/costumes.json as it stands) and undressed (no plate, no costume). A plate hit is a blade first meeting a plate. Step time is the simulation alone plus both pilots, per tick, on this machine, threads running side by side.\n\n", sim::SIM_VERSION);
+    md += "| opponent | plates | yardstick wins (dressed / bare) | mean ticks a match | rounds lost to the head or neck | plate hits a round | cuts it took a round | µs a tick (dressed / bare) | same matches |\n|---|---|---|---|---|---|---|---|---|\n";
+    for (id, on, off) in &rows {
+        let plates = f.costumes[id].armor.join(", ");
+        let us = |t: &Tally| t.nanos as f64 / 1000.0 / t.ticks.max(1) as f64;
+        let lost = |t: &Tally| t.neck + t.heart + t.ink;
+        let same = on.trace.iter().zip(&off.trace).filter(|(a, b)| a == b).count();
+        md += &format!(
+            "| {id} | {} | {} ({:.0} %) / {} ({:.0} %) | {} / {} | {:.0} % / {:.0} % | {:.2} | {:.2} / {:.2} | {:.1} / {:.1} | {same} of {matches} |\n",
+            if plates.is_empty() { "none".to_string() } else { plates },
+            on.won, pct(on.won, matches as u32), off.won, pct(off.won, matches as u32),
+            on.ticks / matches, off.ticks / matches,
+            pct(on.neck, lost(on)), pct(off.neck, lost(off)),
+            on.plate_hits as f64 / on.rounds.max(1) as f64,
+            on.cuts_taken as f64 / on.rounds.max(1) as f64, off.cuts_taken as f64 / off.rounds.max(1) as f64,
+            us(on), us(off),
+        );
+    }
+    print!("{md}");
+    if args.len() <= 1 {
+        std::fs::write(concat!(env!("CARGO_MANIFEST_DIR"), "/../../analysis/armor.md"), md).unwrap();
+    }
+}
+
+/// The checksum each of `n` exhibitions ends on, for showing that a change
+/// to the simulation that should change nothing changes nothing: armored
+/// opponents against each other and against the rest.
+fn checksums(args: &[String]) {
+    let n: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(24);
+    let ids = ["gatekeeper", "watchman", "general", "bridge_keeper", "ox_herd", "duelist", "herbalist", "smith"];
+    for seed in 0..n {
+        let (l, r) = (ids[(seed % 8) as usize], ids[((seed * 3 + 1) % 8) as usize]);
+        let mut w = sim::World::new(content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat"));
+        let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+        let mut last = [Input::NONE; sim::body::SEATS];
+        while w.tick < 60 * 40 {
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in pilots.iter_mut().enumerate() {
+                p.observe(last);
+                i[k] = p.input(&w, k);
+            }
+            w.step_all(i);
+            last = i;
+        }
+        println!("{seed} {l} {r} {:016x}", w.checksum());
+    }
+}
+
+/// What a tick of the simulation alone costs, pilots left out, with the
+/// opponents dressed and bare: the lag the page would feel (Sam,
+/// 2026-10-08). The inputs are recorded from the dressed run's pilots and
+/// replayed into both.
+fn step_cost(args: &[String]) {
+    let n: u64 = args.first().and_then(|a| a.parse().ok()).unwrap_or(20);
+    let pairs = [["general", "bridge_keeper"], ["watchman", "gatekeeper"], ["ox_herd", "temple_guard"], ["warden", "general"]];
+    let (mut on, mut off, mut ticks) = (0u128, 0u128, 0u64);
+    for seed in 0..n {
+        let [l, r] = pairs[(seed % 4) as usize];
+        let setup = content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat");
+        let mut w = sim::World::new(setup.clone());
+        let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+        let mut last = [Input::NONE; sim::body::SEATS];
+        let mut inputs = Vec::new();
+        while w.tick < 60 * 60 {
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in pilots.iter_mut().enumerate() {
+                p.observe(last);
+                i[k] = p.input(&w, k);
+            }
+            w.step_all(i);
+            last = i;
+            inputs.push(i);
+        }
+        let mut bare = setup.clone();
+        for b in bare.bodies.iter_mut() {
+            b.armor.clear();
+        }
+        for (s, out) in [(setup, &mut on), (bare, &mut off)] {
+            let mut w = sim::World::new(s);
+            let t0 = std::time::Instant::now();
+            for i in &inputs {
+                w.step_all(*i);
+            }
+            *out += t0.elapsed().as_nanos();
+        }
+        ticks += inputs.len() as u64;
+    }
+    let us = |x: u128| x as f64 / 1000.0 / ticks as f64;
+    println!("{ticks} ticks of armored pairs: {:.1} us a tick dressed, {:.1} us bare ({:+.0} %); a frame at 60 a second has 16667 us", us(on), us(off), 100.0 * (us(on) / us(off) - 1.0));
+}
+
+/// Where a fight's time goes, tick by tick: the simulation and each pilot,
+/// dressed or bare. `profile <left> <right> <seed> [bare]`.
+fn profile(args: &[String]) {
+    let (l, r) = (args[0].as_str(), args[1].as_str());
+    let seed: u64 = args[2].parse().unwrap();
+    let mut s = content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat");
+    if args.get(3).is_some() {
+        for b in s.bodies.iter_mut() {
+            b.armor.clear();
+        }
+    }
+    let mut w = sim::World::new(s);
+    let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+    let mut last = [Input::NONE; sim::body::SEATS];
+    let mut t = [0u128; 3];
+    while w.tick < 240 {
+        let mut i = [Input::NONE; sim::body::SEATS];
+        for (k, p) in pilots.iter_mut().enumerate() {
+            let t0 = std::time::Instant::now();
+            p.observe(last);
+            i[k] = p.input(&w, k);
+            t[1 + k] += t0.elapsed().as_nanos();
+        }
+        let t0 = std::time::Instant::now();
+        w.step_all(i);
+        t[0] += t0.elapsed().as_nanos();
+        last = i;
+    }
+    println!("{l} v {r} seed {seed}: us a tick: sim {:.0}, {l} {:.0}, {r} {:.0}", t[0] as f64 / 240e3, t[1] as f64 / 240e3, t[2] as f64 / 240e3);
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -982,6 +1208,10 @@ fn main() {
         Some("ladder-pending") => ladder_pending(),
         Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
+        Some("armor") => armor(&args[1..]),
+        Some("profile") => profile(&args[1..]),
+        Some("step-cost") => step_cost(&args[1..]),
+        Some("checksums") => checksums(&args[1..]),
         Some("weapons") => weapons(&args[1..]),
         Some("fixture-headshot") => fixture_headshot(),
         Some("agent-run") => agent_run(),

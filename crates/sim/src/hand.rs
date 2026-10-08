@@ -24,6 +24,8 @@ pub(crate) fn lone_point() -> BodyDef {
         sword: None,
         more: Vec::new(),
         elbow_keys_turn_upper: false,
+        armor: Vec::new(),
+        costume: String::new(),
     }
 }
 
@@ -91,6 +93,8 @@ fn figure(ink: i32) -> BodyDef {
         sword: None,
         more: Vec::new(),
         elbow_keys_turn_upper: false,
+        armor: Vec::new(),
+        costume: String::new(),
     }
 }
 
@@ -251,4 +255,33 @@ fn the_match_ends_when_a_fighter_wins_enough_rounds() {
     }
     assert!(matches!(w.phase, Phase::MatchOver { .. }), "{:?}", w.phase);
     assert_eq!(w.wins, [w.setup.rounds_to_win, 0]);
+}
+
+/// A plate of armor goes with the point it is worn on: cut the neck and the
+/// helmet falls with the head; cut an arm and it stays on (Sam, 2026-10-08).
+#[test]
+fn a_helmet_falls_with_the_head_and_stays_when_an_arm_is_cut() {
+    let mut body = figure(1000);
+    body.armor.push(crate::body::PlateDef { points: vec![V2::cm(-8, 180), V2::cm(8, 180)], near: 0, far: 2 });
+    let mut w = test_world(vec![body], ONE_SEAT, Fx(0));
+    let plate = w.armor_of(0)[0];
+    let pts = w.swords[plate].points.clone();
+    w.cut(3, Fx::ratio(1, 2), 0);
+    for &i in &pts {
+        assert_eq!(w.particles[i as usize].owner, Owner::Body(0), "a cut forearm took the helmet");
+    }
+    w.cut(1, Fx::ratio(1, 2), 0);
+    let fallen = w.parts.iter().find(|p| p.def == 1 && !p.stump).map(|p| w.particles[p.b as usize].owner).unwrap();
+    assert!(matches!(fallen, Owner::Piece(_)), "the head stayed on");
+    for &i in &pts {
+        assert_eq!(w.particles[i as usize].owner, fallen, "the helmet stayed on the body when the head fell");
+    }
+    // Nothing still holds it to the body.
+    for c in &w.cons {
+        if let crate::world::Con::Stick { a, b, .. } = c.con {
+            if pts.contains(&a) || pts.contains(&b) {
+                assert_eq!(w.particles[a as usize].owner, w.particles[b as usize].owner, "a stick still joins the fallen helmet to the body");
+            }
+        }
+    }
 }

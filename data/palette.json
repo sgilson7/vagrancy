@@ -50,5 +50,32 @@
     "strand_b": "#5E3A8A",
     "liquid": "#3A2340",
     "liquid_light": "#6A4A70"
+  },
+  "costume": {
+    "_about": "What the road's opponents wear (data/costumes.json, analysis/art/costumes.py), in the region art's manner: flat fills, plum ink lines. `armor` and `armor_edge` paint a plate of armor where the page draws it; `glow` rings a deity.",
+    "armor": "#9AA1AB",
+    "armor_edge": "#4A505B",
+    "steel": "#8D939C",
+    "steel_dark": "#5A606B",
+    "steel_light": "#C3C8CF",
+    "leaf": "#7FA85A",
+    "leaf_dark": "#4E7A3A",
+    "pumpkin": "#E08A2E",
+    "pumpkin_dark": "#B0661C",
+    "straw": "#D9BE73",
+    "straw_dark": "#A88F4E",
+    "indigo": "#3F4F7A",
+    "indigo_light": "#6C7FAD",
+    "black": "#2E2C33",
+    "white": "#EDE6D6",
+    "saffron": "#E3A33B",
+    "plum": "#6B4A72",
+    "brown": "#7A5A3C",
+    "brown_dark": "#523B27",
+    "bone": "#E7DCC0",
+    "bone_dark": "#A8977A",
+    "sky": "#8FB8D0",
+    "glow": "#F5D77A",
+    "glow_soft": "#FBEFC4"
   }
 }

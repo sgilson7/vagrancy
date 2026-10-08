@@ -29,6 +29,9 @@ pub struct Frame {
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct PartView {
+    /// Index into its body's `parts`: the page hangs a costume's pieces on
+    /// parts by it.
+    pub def: u8,
     pub a: u16,
     pub b: u16,
     pub r: i32,
@@ -59,6 +62,8 @@ pub struct SwordView {
     pub cut_from: Vec<i32>,
     /// The cursed blade: the page draws its two strands.
     pub cursed: bool,
+    /// A plate of armor: the page draws it as a plate, not a blade.
+    pub armor: bool,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq, Eq)]
@@ -70,6 +75,8 @@ pub struct FighterView {
     pub ink: i32,
     pub ink_max: i32,
     pub dodging: bool,
+    /// The costume the page draws over this fighter (`BodyDef::costume`).
+    pub costume: String,
 }
 
 pub fn frame(w: &World) -> Frame {
@@ -80,6 +87,7 @@ pub fn frame(w: &World) -> Frame {
             .parts
             .iter()
             .map(|p| PartView {
+                def: p.def,
                 a: p.a,
                 b: p.b,
                 r: p.radius.0,
@@ -104,6 +112,7 @@ pub fn frame(w: &World) -> Frame {
                 flying: s.flying,
                 turned: s.turned && s.flying,
                 cursed: s.cursed,
+                armor: s.armor.is_some(),
             })
             .collect(),
         fighters: w
@@ -117,6 +126,7 @@ pub fn frame(w: &World) -> Frame {
                     ink: f.ink,
                     ink_max: w.setup.bodies[f.body as usize].ink,
                     dodging: f.dodge > 0,
+                    costume: w.setup.bodies[f.body as usize].costume.clone(),
                 })
             })
             .collect(),

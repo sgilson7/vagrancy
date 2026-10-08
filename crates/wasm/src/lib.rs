@@ -58,6 +58,9 @@ pub fn numbers() -> String {
         "ready_bit": Input::READY,
         "tunings": balance::TUNINGS.len(),
         "default_tuning": balance::DEFAULT_TUNING,
+        // What the road's opponents wear and where each picture rides
+        // (data/costumes.json, content::costumes).
+        "costumes": serde_json::from_str::<serde_json::Value>(&content::costumes::page_json()).unwrap(),
     })
     .to_string()
 }

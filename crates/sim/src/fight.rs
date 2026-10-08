@@ -259,6 +259,14 @@ impl World {
                 }
             }
         }
+        // A plate of armor goes with the point it is worn on.
+        let plates: Vec<u16> = self
+            .swords
+            .iter()
+            .filter(|s| s.armor.is_some_and(|far| dropped.contains(&far)) && self.particles[s.butt as usize].owner == owner)
+            .flat_map(|s| s.points.iter().copied())
+            .collect();
+        dropped.extend(plates);
         for &d in &dropped {
             self.particles[d as usize].owner = piece;
         }
@@ -341,13 +349,41 @@ impl World {
             for ib in ia + 1..n {
                 // A four-armed fighter's two weapons pass through each
                 // other, as its own body passes through them.
-                if ghost(self, ia) || ghost(self, ib) || self.swords[ia].fighter == self.swords[ib].fighter {
+                // Two plates of armor do not meet: armor stops blades.
+                let plates = self.swords[ia].armor.is_some() && self.swords[ib].armor.is_some();
+                if ghost(self, ia) || ghost(self, ib) || plates || self.swords[ia].fighter == self.swords[ib].fighter {
+                    self.set_clashing(ia, ib, false);
+                    continue;
+                }
+                // Two weapons whose points, where they were and where they
+                // are, lie further apart than the gap cannot meet this tick:
+                // skipping them finds what `clash_pair` would, sooner. Each
+                // plate of armor adds pairs to look at (SECOND-ORDER-M5).
+                if !self.boxes_near(ia, ib) {
                     self.set_clashing(ia, ib, false);
                     continue;
                 }
                 self.clash_pair(ia, ib, drives);
             }
         }
+    }
+
+    /// Whether the boxes round two weapons' points, now and last tick, come
+    /// within `BLADE_GAP` of each other.
+    fn boxes_near(&self, ia: usize, ib: usize) -> bool {
+        let bounds = |si: usize| {
+            let mut b = (i32::MAX, i32::MAX, i32::MIN, i32::MIN);
+            for &i in &self.swords[si].points {
+                let pt = &self.particles[i as usize];
+                for v in [pt.p, pt.q] {
+                    b = (b.0.min(v.x.0), b.1.min(v.y.0), b.2.max(v.x.0), b.3.max(v.y.0));
+                }
+            }
+            b
+        };
+        let (a, b) = (bounds(ia), bounds(ib));
+        let g = BLADE_GAP.0 + 1;
+        a.0 <= b.2 + g && b.0 <= a.2 + g && a.1 <= b.3 + g && b.1 <= a.3 + g
     }
 
     fn is_clashing(&self, ia: usize, ib: usize) -> bool {
