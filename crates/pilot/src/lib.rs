@@ -1071,7 +1071,10 @@ impl Tree {
             Cond::MeAirborne => airborne(me),
             Cond::MeGrounded => !airborne(me),
             Cond::OppAirborne => airborne(them),
-            Cond::MeDown => w.knocked_down(me),
+            // Still down while a rise has hold of the legs: a tree that
+            // threw or swung from the crouch of a half-done rise missed
+            // (Sam, 2026-10-08: the trees work with the held stand key).
+            Cond::MeDown => w.knocked_down(me) || w.fighters[me].as_ref().is_some_and(|f| f.rising > 0),
             Cond::Armed => armed(w, me),
             Cond::Unarmed => !armed(w, me),
             Cond::OppDown => w.knocked_down(them),

@@ -151,27 +151,32 @@ fn a_stage_to_cross_is_won_by_walking_to_its_end() {
 #[test]
 fn in_a_team_fight_the_ally_fights_the_opponent_and_never_the_player() {
     let sc = scene("c3_team");
-    let mut w = World::new(setup(1, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
-    assert_eq!((w.side_of(0), w.side_of(1), w.side_of(2)), (0, 1, 0));
-    assert_eq!(pilot::foe(&w, 2), 1, "the ally does not fight the opponent");
-    let mut ps: Vec<Box<dyn pilot::Pilot>> = content::story::crew(&sc, 0).iter().map(pilot::build).collect();
-    let mut last = [Input::NONE; sim::body::SEATS];
+    // A few seeds: with the stand key a hold (SIM_VERSION 20) one round can
+    // end before the ally lands a cut. What is asked is that the ally fights
+    // the opponent, and never the player, in any of them.
     let mut ally_cuts = 0;
-    while w.tick < 60 * 30 && matches!(w.phase, sim::fight::Phase::Fight) {
-        let mut i = [Input::NONE; sim::body::SEATS];
-        for (k, p) in ps.iter_mut().enumerate() {
-            p.observe(last);
-            i[k + 1] = p.input(&w, k + 1);
-        }
-        w.step_all(i);
-        last = i;
-        for e in &w.events {
-            if let Event::Cut { seat, by: 2, .. } = *e {
-                assert_ne!(seat, 0, "the ally cut the player at tick {}", w.tick);
-                ally_cuts += 1;
+    for seed in 1..=4u64 {
+        let mut w = World::new(setup(seed, sim::balance::DEFAULT_TUNING, &sc, 0, "sword", false));
+        assert_eq!((w.side_of(0), w.side_of(1), w.side_of(2)), (0, 1, 0));
+        assert_eq!(pilot::foe(&w, 2), 1, "the ally does not fight the opponent");
+        let mut ps: Vec<Box<dyn pilot::Pilot>> = content::story::crew(&sc, 0).iter().map(pilot::build).collect();
+        let mut last = [Input::NONE; sim::body::SEATS];
+        while w.tick < 60 * 30 && matches!(w.phase, sim::fight::Phase::Fight) {
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in ps.iter_mut().enumerate() {
+                p.observe(last);
+                i[k + 1] = p.input(&w, k + 1);
             }
-            if let Event::RoundEnd { result } = e {
-                assert!(result.loser != Some(0) || w.out(2) || w.fighters[2].as_ref().unwrap().out_at.is_some(), "the player's side lost with the ally still in");
+            w.step_all(i);
+            last = i;
+            for e in &w.events {
+                if let Event::Cut { seat, by: 2, .. } = *e {
+                    assert_ne!(seat, 0, "the ally cut the player at tick {}", w.tick);
+                    ally_cuts += 1;
+                }
+                if let Event::RoundEnd { result } = e {
+                    assert!(result.loser != Some(0) || w.out(2) || w.fighters[2].as_ref().unwrap().out_at.is_some(), "the player's side lost with the ally still in");
+                }
             }
         }
     }
