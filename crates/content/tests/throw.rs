@@ -139,9 +139,13 @@ fn the_throwers_let_go_in_the_window_so_most_throws_reach_the_player() {
     // the player (pilot::throw_window). Against the yardstick, most throws
     // cut the player before they are down; the throw before this one cut
     // with 42 % of throws, and 39 % went into the ground.
+    // Eight seeds each: over three, the rate moved more with the fights'
+    // luck than with the throw. With the stand key a hold it fell to 6 of 11
+    // there, and over these sixteen fights it is 22 of 35, as it was before
+    // (24 of 38).
     let (mut throws, mut hits) = (0, 0);
     for id in ["harpooner", "wind_reader"] {
-        for seed in 0..3u64 {
+        for seed in 0..8u64 {
             let mut w = World::new(content::setup::road(seed, sim::balance::DEFAULT_TUNING, id));
             let mut ps = content::road::lineup(&content::road::pilot("yardstick"), id);
             let mut last = [Input::NONE; sim::body::SEATS];
