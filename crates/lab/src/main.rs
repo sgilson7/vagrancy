@@ -1187,6 +1187,42 @@ fn profile(args: &[String]) {
     println!("{l} v {r} seed {seed}: us a tick: sim {:.0}, {l} {:.0}, {r} {:.0}", t[0] as f64 / 240e3, t[1] as f64 / 240e3, t[2] as f64 / 240e3);
 }
 
+/// Every round of the exhibition `left` against `right` over `seeds` seeds,
+/// as JSON lines: seed, the rounds' winners (0 left, 1 right), and each
+/// round's start and deciding tick. For picking one whole match for a short.
+fn rounds(args: &[String]) {
+    use sim::fight::Phase;
+    let (l, r) = (args[0].as_str(), args[1].as_str());
+    let seeds: u64 = args.get(2).and_then(|a| a.parse().ok()).unwrap_or(200);
+    for seed in 0..seeds {
+        let mut w = sim::World::new(content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat"));
+        let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
+        let mut last = [Input::NONE; sim::body::SEATS];
+        let (mut out, mut began) = (Vec::new(), 0u32);
+        while w.tick < 60 * 150 && !matches!(w.phase, Phase::MatchOver { .. }) {
+            let mut i = [Input::NONE; sim::body::SEATS];
+            for (k, p) in pilots.iter_mut().enumerate() {
+                p.observe(last);
+                i[k] = p.input(&w, k);
+            }
+            let was = matches!(w.phase, Phase::Fight);
+            w.step_all(i);
+            last = i;
+            if !was && matches!(w.phase, Phase::Fight) {
+                began = w.tick;
+            }
+            if was && !matches!(w.phase, Phase::Fight) {
+                if let Phase::RoundOver { result, .. } | Phase::MatchOver { result } = w.phase {
+                    if result.loser.is_some() {
+                        out.push(serde_json::json!({ "by": result.by, "began": began, "kill": w.tick, "severed": w.parts.iter().filter(|p| p.fighter == result.seat && !p.attached).count() }));
+                    }
+                }
+            }
+        }
+        println!("{}", serde_json::json!({ "left": l, "right": r, "seed": seed, "wins": w.wins, "rounds": out }));
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -1209,6 +1245,7 @@ fn main() {
         Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
         Some("armor") => armor(&args[1..]),
+        Some("rounds") => rounds(&args[1..]),
         Some("profile") => profile(&args[1..]),
         Some("step-cost") => step_cost(&args[1..]),
         Some("checksums") => checksums(&args[1..]),

@@ -53,7 +53,8 @@
     "first_pct, second_pct": "the chance, as a percent, of the first and second close rules in the BT Lab’s random page, from that page’s tree in web/btlab.js",
     "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data",
     "site": "the game's address, filled by analysis/video/make_short.py",
-    "pieces": "how many pieces a fighter was cut into, from lab highlights, filled by analysis/video/make_short.py"
+    "pieces": "how many pieces a fighter was cut into, from lab highlights, filled by analysis/video/make_short.py",
+    "hero": "the trade of the fighter a short follows, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -88,7 +89,8 @@
     "online.ready.you": "the Ready message (net::wire, PROTO 3); the_match_starts_only_when_both_players_are_ready_and_each_sees_the_other"
   },
   "_universals": {
-    "clip.hook": "Sam's own words for the clip's hook (2026-10-07): 'end it all' is an idiom, not a claim about the game to test"
+    "clip.hook": "Sam's own words for the clip's hook (2026-10-07): 'end it all' is an idiom, not a claim about the game to test",
+    "clip.last_stand": "Sam's own words for the somber short (2026-10-08): 'all that stands between' is an idiom, not a claim about the game to test"
   },
   "_review": {
     "_about": "Strings the agent wrote for the build and Sam has not yet accepted (PLANNING-BRIEF 0.6). settings.keys.solo.heading carries its own marker.",
@@ -138,7 +140,8 @@
     "arena.how.submit, arena.how.speed, arena.how.trees": "new or rewritten (Sam, 2026-10-07): the speed and trees commands in the stream’s side panel, and the cost of submitting a tree",
     "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)",
     "clip": "new: the words burned into the short clips (Sam, 2026-10-07)",
-    "settings.costumes, arena.how.costumes": "new: every string (Sam, 2026-10-08: a way to turn off all costumes)"
+    "settings.costumes, arena.how.costumes": "new: every string (Sam, 2026-10-08: a way to turn off all costumes)",
+    "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added"
   },
   "_glossary": {
     "ink": {
@@ -2353,6 +2356,7 @@
     "pieces": "Cut into {pieces} pieces.",
     "countdown": "The {count} worst ways to lose in {game}",
     "rank": "{n}",
-    "long": "One fight, start to finish. Watch it swing back and forth."
+    "long": "One fight, start to finish. Watch it swing back and forth.",
+    "last_stand": "The brave {hero} is all that stands between the villagers and certain death."
   }
 }

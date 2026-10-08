@@ -1,5 +1,5 @@
 {
- "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json). costume_fast, costume_stroll and costume_match (2026-10-08) come from SIM_VERSION 18 scans, with the costumes and the armor: lab highlights 6000 from seed 0 and every round of 3000 from seed 20000, sharing no matchup with any variant before them or each other, armored and plainly costumed opponents preferred.",
+ "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json). costume_fast, costume_stroll and costume_match (2026-10-08) come from SIM_VERSION 18 scans, with the costumes and the armor: lab highlights 6000 from seed 0 and every round of 3000 from seed 20000, sharing no matchup with any variant before them or each other, armored and plainly costumed opponents preferred. last_stand (Sam, 2026-10-08: a somber one, a heroic character against a villainous one, lost 3 to 2, the whole battle at half speed) is the woodcutter against the warden, seed 215, from lab rounds: the woodcutter leads 2 to 1 and loses the last two.",
  "variants": {
   "fast": [
    {
@@ -682,6 +682,94 @@
      "round": 5
     },
     "size": ""
+   }
+  ],
+  "last_stand": [
+   {
+    "left": "woodcutter",
+    "right": "warden",
+    "seed": 215,
+    "kill": 102,
+    "pieces": 15,
+    "lead": 1.8,
+    "slow": 1.4,
+    "ticks": 1,
+    "zoom": 2.0,
+    "ramp": 0.3,
+    "caption": "clip.last_stand",
+    "vars": {
+     "hero": "woodcutter"
+    },
+    "size": ""
+   },
+   {
+    "left": "woodcutter",
+    "right": "warden",
+    "seed": 215,
+    "kill": 285,
+    "pieces": 12,
+    "lead": 3.13,
+    "slow": 1.4,
+    "ticks": 1,
+    "zoom": 2.0,
+    "ramp": 0.3,
+    "caption": "hud.round",
+    "vars": {
+     "round": 2
+    },
+    "size": "big"
+   },
+   {
+    "left": "woodcutter",
+    "right": "warden",
+    "seed": 215,
+    "kill": 484,
+    "pieces": 15,
+    "lead": 3.4,
+    "slow": 1.4,
+    "ticks": 1,
+    "zoom": 2.0,
+    "ramp": 0.3,
+    "caption": "hud.round",
+    "vars": {
+     "round": 3
+    },
+    "size": "big"
+   },
+   {
+    "left": "woodcutter",
+    "right": "warden",
+    "seed": 215,
+    "kill": 751,
+    "pieces": 11,
+    "lead": 4.53,
+    "slow": 1.4,
+    "ticks": 1,
+    "zoom": 2.0,
+    "ramp": 0.3,
+    "caption": "hud.round",
+    "vars": {
+     "round": 4
+    },
+    "size": "big"
+   },
+   {
+    "left": "woodcutter",
+    "right": "warden",
+    "seed": 215,
+    "kill": 862,
+    "pieces": 19,
+    "lead": 1.93,
+    "slow": 3.4,
+    "ticks": 1,
+    "zoom": 2.0,
+    "ramp": 0.3,
+    "caption": "hud.round",
+    "vars": {
+     "round": 5
+    },
+    "size": "big",
+    "caption_end": "clip.cta"
    }
   ]
  }
