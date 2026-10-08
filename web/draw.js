@@ -84,9 +84,15 @@ export function renderer(canvas, palette, numbers) {
     if (!pictures.has(k)) { const im = new Image(); im.src = `art/costume/${k}.png`; pictures.set(k, im); }
     return pictures.get(k);
   };
+  // The page can turn the costumes off (Sam, 2026-10-08: "a way to turn
+  // off all costumes"): the fighters are then drawn plain and a plate as
+  // a band of steel, as with the art switch off.
+  let costumesShown = true;
+  draw.costumes = (on) => { costumesShown = on !== false; };
+  draw.costumesShown = () => costumesShown;
   function wearing(cur, seat) {
     const f = cur.fighters[seat];
-    return dress.art && f && f.costume ? dress.costumes[f.costume] || null : null;
+    return costumesShown && dress.art && f && f.costume ? dress.costumes[f.costume] || null : null;
   }
   function wear(cur, pts, seat, slots) {
     const f = cur.fighters[seat];

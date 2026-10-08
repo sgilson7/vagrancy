@@ -592,6 +592,8 @@ function startDemo(pg, seed) {
   const canvas = box.querySelector('canvas');
   const d = { pg, box, seed: seed ?? ((Math.random() * 0xffffffff) >>> 0), acc: 0, prev: null, report: [], over: 0, paused: false, shown: -1 };
   d.draw = canvas.renderer ||= renderer(canvas, PAL, N);
+  // The lab is about the trees: the fighters are drawn plain.
+  d.draw.costumes(false);
   // A third larger, unless the tree is big enough to cover its fighter.
   const count = (n) => 1 + n.children.reduce((a, k) => a + count(k), 0);
   d.draw.treeScale(count(pageTree(pg)) <= 20 ? 1.3 : 1);
@@ -869,6 +871,7 @@ async function main() {
   }
   listen((code) => S.mode === 'play' && Object.values(CONTROLS.solo).includes(code));
   draw = renderer($('stage'), PAL, N);
+  draw.costumes(false);
   draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   // Space pauses and resumes; the full stop steps a tick while paused.
   window.addEventListener('keydown', (e) => {

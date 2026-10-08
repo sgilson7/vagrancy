@@ -1,5 +1,5 @@
 {
- "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json).",
+ "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json). costume_fast, costume_stroll and costume_match (2026-10-08) come from SIM_VERSION 18 scans, with the costumes and the armor: lab highlights 6000 from seed 0 and every round of 3000 from seed 20000, sharing no matchup with any variant before them or each other, armored and plainly costumed opponents preferred.",
  "variants": {
   "fast": [
    {
@@ -447,6 +447,241 @@
     "zoom": 1.6,
     "caption": "clip.trees",
     "treeScale": 1.7
+   }
+  ],
+  "costume_fast": [
+   {
+    "left": "temple_guard",
+    "right": "dyer",
+    "seed": 4643,
+    "kill": 554,
+    "pieces": 42,
+    "lead": 0.3,
+    "slow": 1.1,
+    "caption": "clip.hook",
+    "ramp": 0.22
+   },
+   {
+    "left": "eel_fisher",
+    "right": "ox_herd",
+    "seed": 648,
+    "kill": 252,
+    "pieces": 28,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "hermit",
+    "right": "festival_master",
+    "seed": 5889,
+    "kill": 440,
+    "pieces": 36,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "lacquerer",
+    "right": "stilt_walker",
+    "seed": 2833,
+    "kill": 288,
+    "pieces": 44,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "porter",
+    "right": "pilgrim",
+    "seed": 2562,
+    "kill": 501,
+    "pieces": 30,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "harpooner",
+    "right": "warden",
+    "seed": 3861,
+    "kill": 857,
+    "pieces": 48,
+    "lead": 2.4,
+    "slow": 1.1,
+    "trees": 0,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "hay_mower",
+    "right": "falconer",
+    "seed": 2553,
+    "kill": 300,
+    "pieces": 38,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "cartographer",
+    "right": "courier",
+    "seed": 1978,
+    "kill": 531,
+    "pieces": 36,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "lion_dancer",
+    "right": "boatwright",
+    "seed": 5180,
+    "kill": 340,
+    "pieces": 34,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "salt_trader",
+    "right": "bird_scarer",
+    "seed": 1355,
+    "kill": 580,
+    "pieces": 35,
+    "lead": 0.6,
+    "slow": 1.8,
+    "caption": "clip.cta",
+    "ramp": 0.22
+   }
+  ],
+  "costume_stroll": [
+   {
+    "left": "carpenter",
+    "right": "gambler",
+    "seed": 3572,
+    "kill": 399,
+    "pieces": 43,
+    "lead": 3.4,
+    "slow": 2.0,
+    "trees": 0,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "rice_broker",
+    "right": "knife_grinder",
+    "seed": 360,
+    "kill": 225,
+    "pieces": 43,
+    "lead": 0.8,
+    "slow": 2.2,
+    "caption": "clip.hook"
+   },
+   {
+    "left": "smith",
+    "right": "juggler",
+    "seed": 5720,
+    "kill": 343,
+    "pieces": 40,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "brewer",
+    "right": "thresher",
+    "seed": 5923,
+    "kill": 347,
+    "pieces": 38,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "magistrate",
+    "right": "scarecrow",
+    "seed": 1900,
+    "kill": 536,
+    "pieces": 28,
+    "lead": 1.2,
+    "slow": 2.8,
+    "caption": "clip.cta"
+   }
+  ],
+  "costume_match": [
+   {
+    "left": "pilgrim",
+    "right": "temple_guard",
+    "seed": 20336,
+    "kill": 63,
+    "pieces": 6,
+    "lead": 1.15,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "clip.long",
+    "vars": {
+     "round": 1
+    },
+    "size": ""
+   },
+   {
+    "left": "pilgrim",
+    "right": "temple_guard",
+    "seed": 20336,
+    "kill": 128,
+    "pieces": 20,
+    "lead": 1.17,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 2
+    },
+    "size": "big"
+   },
+   {
+    "left": "pilgrim",
+    "right": "temple_guard",
+    "seed": 20336,
+    "kill": 316,
+    "pieces": 9,
+    "lead": 3.22,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 3
+    },
+    "size": "big"
+   },
+   {
+    "left": "pilgrim",
+    "right": "temple_guard",
+    "seed": 20336,
+    "kill": 381,
+    "pieces": 20,
+    "lead": 1.17,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 4
+    },
+    "size": "big"
+   },
+   {
+    "left": "pilgrim",
+    "right": "temple_guard",
+    "seed": 20336,
+    "kill": 542,
+    "pieces": 7,
+    "lead": 2.77,
+    "slow": 2.6,
+    "beats": true,
+    "caption": "clip.cta",
+    "vars": {
+     "round": 5
+    },
+    "size": ""
    }
   ]
  }

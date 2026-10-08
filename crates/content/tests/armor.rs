@@ -127,3 +127,17 @@ fn every_opponent_wears_a_signature_piece_of_its_own() {
         }
     }
 }
+
+#[test]
+fn no_two_opponents_in_the_same_hat_and_top_share_a_color() {
+    // Sam, 2026-10-08: "vary some of the costume colors to make some similar
+    // looking enemies a bit more differentiatable".
+    let f = content::costumes::file();
+    let mut seen = std::collections::BTreeMap::new();
+    for (id, c) in &f.costumes {
+        let key = (c.head.clone(), c.chest.clone(), c.main.clone());
+        if let Some(other) = seen.insert(key, id.clone()) {
+            panic!("{id} and {other} wear the same {} and {}, both in {}", c.head, c.chest, c.main);
+        }
+    }
+}

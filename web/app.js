@@ -1975,11 +1975,27 @@ function beginOnline(net) {
 
 function settings() {
   stop();
-  show(musicSection(), youtubeSection(), roundsSection(), keysSection(), saveSection(), button('menu.back.label', menu));
+  show(musicSection(), youtubeSection(), roundsSection(), costumesSection(), keysSection(), saveSection(), button('menu.back.label', menu));
 }
 
 // The end of each round: the replay can be turned off, which keeps the
 // pause after the deciding cut.
+// The costumes the opponents wear can be turned off; on unless the player
+// turned them off.
+function costumesOn() {
+  try { return localStorage.getItem('vagrancy.costumes') !== 'off'; } catch { return true; }
+}
+function costumesSection() {
+  const box = el('input', { type: 'checkbox', id: 'costumes-shown', checked: costumesOn() || null, on: { change: (e) => {
+    try { localStorage.setItem('vagrancy.costumes', e.target.checked ? 'on' : 'off'); } catch { /* storage off */ }
+    if (draw) draw.costumes(e.target.checked);
+  } } });
+  return el('section', { id: 'costumes' },
+    el('h2', { 'data-copy': 'settings.costumes.title' }, t('settings.costumes.title')),
+    el('p', {}, box, ' ', el('label', { for: 'costumes-shown', 'data-copy': 'settings.costumes.show' }, t('settings.costumes.show'))),
+    say('settings.costumes.desc', {}, { class: 'desc' }));
+}
+
 function roundsSection() {
   const box = el('input', { type: 'checkbox', id: 'round-replays', checked: replaysOn() || null, on: { change: (e) => {
     try { localStorage.setItem('vagrancy.roundReplays', e.target.checked ? 'on' : 'off'); } catch { /* storage off */ }
@@ -2128,6 +2144,7 @@ async function main() {
   restore();
   listen((code) => game && Object.values(BINDINGS).some((b) => Object.values(b).includes(code)));
   draw = renderer($('stage'), PALETTE, N);
+  draw.costumes(costumesOn());
   draw.bubbleLayout((list, w, h) => JSON.parse(bubbles_step(JSON.stringify(list), w, h)));
   // The arena: the canvas, and the card that comes up over it.
   const stage = $('stage');

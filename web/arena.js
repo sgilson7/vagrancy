@@ -255,7 +255,8 @@ function how(cmds) {
       el('li', { 'data-copy': 'arena.how.fight' }, t('arena.how.fight', { command: cmds.fight, cost: cmds.cost })),
       el('li', { 'data-copy': 'arena.how.submit' }, t('arena.how.submit', { command: cmds.submit, cost: cmds.submit_cost })),
       cmds.speed ? el('li', { 'data-copy': 'arena.how.speed' }, t('arena.how.speed', { command: cmds.speed, speeds: cmds.speeds, seconds: cmds.speed_lock })) : null,
-      cmds.trees_on ? el('li', { 'data-copy': 'arena.how.trees' }, t('arena.how.trees', { on: cmds.trees_on, off: cmds.trees_off, minutes: cmds.trees_minutes })) : null));
+      cmds.trees_on ? el('li', { 'data-copy': 'arena.how.trees' }, t('arena.how.trees', { on: cmds.trees_on, off: cmds.trees_off, minutes: cmds.trees_minutes })) : null,
+      cmds.costumes_on ? el('li', { 'data-copy': 'arena.how.costumes' }, t('arena.how.costumes', { on: cmds.costumes_on, off: cmds.costumes_off, seconds: cmds.costumes_lock })) : null));
 }
 function list(boxId, headKey, items, line) {
   $(boxId).replaceChildren(el('h2', { 'data-copy': headKey }, t(headKey)),
@@ -277,6 +278,7 @@ function connect(url) {
     else if (m.type === 'leaders') list('arena-leaders', 'arena.leaders', m.items, (q) => el('li', {}, fill(q.viewer), ' ', fill(q.xp)));
     else if (m.type === 'how') how(m);
     else if (m.type === 'trees') showTrees = !!m.show;
+    else if (m.type === 'costumes' && draw) draw.costumes(!!m.show);
     else if (m.type === 'speed' && [0.25, 0.5, 1, 2].includes(m.value)) speed = m.value;
     else if (m.type === 'check') send({ type: 'checked', id: m.id, ...JSON.parse(lab_check(m.tree)) });
   };
@@ -314,7 +316,7 @@ async function main() {
   if (url && /^ws:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/?$/.test(url)) connect(url);
   else randomExhibition();
   document.body.dataset.ready = '1';
-  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, speed, held: performance.now() < holdUntil, replaying: !!replay, ending: ending && ending.stage }) };
+  window.arena = { state: () => ({ fighters: fighters.map(nameOf), tick: cur ? cur.tick : 0, phase: cur && cur.phase, challenge: !!challenge, trees: showTrees, costumes: draw ? draw.costumesShown() : true, speed, held: performance.now() < holdUntil, replaying: !!replay, ending: ending && ending.stage }) };
   requestAnimationFrame(loop);
 }
 main();

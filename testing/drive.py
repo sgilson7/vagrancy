@@ -1247,6 +1247,11 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     page.wait_for_function("window.btlab.lesson().rings > 0", timeout=30000)
     if page.evaluate("window.btlab.lesson().speed") != 0.125:
         fails.append(f"{name}: the lesson's fights do not play at an eighth of full speed")
+    # Sam, 2026-10-08: costumes off by default in the BT Lab. No costume
+    # picture is asked for, the lab's fights and the lesson's both drawn.
+    worn = page.evaluate("""() => performance.getEntriesByType('resource').map((e) => e.name).filter((n) => n.includes('/art/costume/')).length""")
+    if worn:
+        fails.append(f"{name}: the BT Lab drew costumes ({worn} pictures fetched)")
     if page.locator("#lesson-factor svg.lecture-fig").count() != 2:
         fails.append(f"{name}: the factoring page did not draw the lecture's two trees")
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a lesson page)")
@@ -1419,8 +1424,20 @@ def armored_fighters_wear_their_costumes_and_a_frame_stays_cheap(page, name):
         fails.append(f"{name}: a frame of two armored fighters took {ms:.1f} ms")
     page.goto(ORIGIN + "/", wait_until="load")
     page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    # The settings turn the costumes off (Sam, 2026-10-08), and remember it.
+    click_copy(page, "menu.settings.label")
+    box = page.locator("#costumes-shown")
+    if not box.count() or not box.is_checked():
+        fails.append(f"{name}: the settings have no costume switch, or it starts off")
+    else:
+        box.uncheck()
+        if page.evaluate("localStorage.getItem('vagrancy.costumes')") != "off":
+            fails.append(f"{name}: turning the costumes off was not remembered")
+        box.check()
+    fails += every_visible_line_is_a_copy_string(page, name + " (settings, costumes)")
+    click_copy(page, "menu.back.label")
     if not fails:
-        print(f"ok: {name}: the bridge keeper and the general wore all six pictures; a frame took {ms:.2f} ms")
+        print(f"ok: {name}: the bridge keeper and the general wore all six pictures; a frame took {ms:.2f} ms; the settings turn the costumes off")
     return fails
 
 
