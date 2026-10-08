@@ -43,7 +43,10 @@ def ease(x):
 
 def impact_wav(path, times, length, soft=()):
     """A low thump and a short hiss at each kill, synthesized: a sine that
-    falls in pitch and fades, over a burst of noise; a lighter one, at a
+    falls in pitch from 110 Hz and fades (at 70 Hz, below what a phone's
+    speaker plays, it only set off the phone's own limiter, which pulled the
+    song down at each kill: Sam, 2026-10-08, "broken audio parts where it
+    cuts out"), over a burst of noise; a lighter one, at a
     third of the strength, at each cut of a long fight (`soft`)."""
     rate = 44100
     n = int(length * rate) + rate
@@ -55,7 +58,7 @@ def impact_wav(path, times, length, soft=()):
             if start + k >= n:
                 break
             t = k / rate
-            buf[start + k] += gain * (math.sin(2 * math.pi * (70 - 40 * t) * t) * math.exp(-t * 9) * 0.9 + (rng.random() * 2 - 1) * math.exp(-t * 40) * 0.35)
+            buf[start + k] += gain * (math.sin(2 * math.pi * (110 - 50 * t) * t) * math.exp(-t * 9) * 0.9 + (rng.random() * 2 - 1) * math.exp(-t * 40) * 0.35)
     peak = max(1e-9, max(abs(x) for x in buf))
     with wave.open(str(path), "wb") as w:
         w.setnchannels(1)
@@ -153,9 +156,12 @@ def render(variant, out, music=None, music_start=None):
             # unless that would start the song before its beginning.
             first = hits[-1] if music_start >= hits[-1] else first
         begin = max(0.0, music_start - first)
-        mix = (f"[2:a]atrim={begin:.3f}:{begin + length:.3f},asetpts=PTS-STARTPTS,"
+        mix = (f"[1:a]volume=0.6[h];[2:a]atrim={begin:.3f}:{begin + length:.3f},asetpts=PTS-STARTPTS,"
                f"afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume=0.6[m];"
-               f"[m][1:a]amix=inputs=2:normalize=0,atrim=0:{length:.2f}[a]")
+               f"[m][h]amix=inputs=2:normalize=0,alimiter=limit=0.89:level=disabled,atrim=0:{length:.2f}[a]")
+        # A hit on a loud bar summed past full scale and broke up (Sam,
+        # 2026-10-08: "some broken audio parts where it cuts out"): the
+        # limiter holds the mix a decibel under it.
         print(f"  music from {begin:.2f} s of the song, its punchiest bar ({music_start:.2f} s) on the first cut at {first:.2f} s")
         cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-i", str(music),
                "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", str(out)]
@@ -168,9 +174,12 @@ def render(variant, out, music=None, music_start=None):
     mean = float(level.split("mean_volume:")[1].split("dB")[0]) if "mean_volume:" in level else -99.0
     if mean < -40:
         raise SystemExit(f"{out}: the audio is silent (mean {mean} dB)")
+    peak = float(level.split("max_volume:")[1].split("dB")[0]) if "max_volume:" in level else 0.0
+    if peak > -0.1:
+        raise SystemExit(f"{out}: the audio clips (peak {peak} dB)")
     silent.unlink()
     wav.unlink()
-    print(f"wrote {out}: {length:.1f} s, {len(hits)} kills{', with music' if music else ''}, audio mean {mean:.1f} dB")
+    print(f"wrote {out}: {length:.1f} s, {len(hits)} kills{', with music' if music else ''}, audio mean {mean:.1f} dB, peak {peak:.1f} dB")
 
 
 if __name__ == "__main__":
