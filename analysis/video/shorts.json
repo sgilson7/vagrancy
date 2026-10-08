@@ -1,0 +1,306 @@
+{
+ "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree.",
+ "variants": {
+  "fast": [
+   {
+    "left": "herbalist",
+    "right": "monk",
+    "seed": 1370,
+    "kill": 454,
+    "pieces": 125,
+    "lead": 0.3,
+    "slow": 1.1,
+    "caption": "clip.hook",
+    "ramp": 0.22
+   },
+   {
+    "left": "grave_digger",
+    "right": "carpenter",
+    "seed": 3056,
+    "kill": 560,
+    "pieces": 62,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "gatekeeper",
+    "right": "duelist",
+    "seed": 5432,
+    "kill": 354,
+    "pieces": 58,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "bell_founder",
+    "right": "acrobat",
+    "seed": 6524,
+    "kill": 676,
+    "pieces": 59,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "drum_maker",
+    "right": "magistrate",
+    "seed": 4408,
+    "kill": 610,
+    "pieces": 58,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "post_rider",
+    "right": "tinker",
+    "seed": 3187,
+    "kill": 312,
+    "pieces": 82,
+    "lead": 2.4,
+    "slow": 1.1,
+    "trees": 1,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "hoop_roller",
+    "right": "archivist",
+    "seed": 4535,
+    "kill": 277,
+    "pieces": 55,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "weaver",
+    "right": "drover",
+    "seed": 4092,
+    "kill": 254,
+    "pieces": 54,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "falconer",
+    "right": "paper_maker",
+    "seed": 3616,
+    "kill": 469,
+    "pieces": 52,
+    "lead": 0.5,
+    "slow": 0.8,
+    "ramp": 0.22
+   },
+   {
+    "left": "hare_hunter",
+    "right": "watchman",
+    "seed": 1664,
+    "kill": 487,
+    "pieces": 49,
+    "lead": 0.6,
+    "slow": 1.8,
+    "caption": "clip.cta",
+    "ramp": 0.22
+   }
+  ],
+  "text_hook": [
+   {
+    "left": "field_warden",
+    "right": "potter",
+    "seed": 6669,
+    "kill": 595,
+    "pieces": 78,
+    "lead": 0.6,
+    "slow": 2.6,
+    "caption": "clip.pieces",
+    "loud": true
+   },
+   {
+    "left": "warden",
+    "right": "bell_founder",
+    "seed": 2962,
+    "kill": 980,
+    "pieces": 49,
+    "lead": 1.0,
+    "slow": 2.0,
+    "caption": "clip.pieces",
+    "loud": true
+   },
+   {
+    "left": "orchard_keeper",
+    "right": "bangle_seller",
+    "seed": 5690,
+    "kill": 307,
+    "pieces": 47,
+    "lead": 1.0,
+    "slow": 2.0,
+    "caption": "clip.pieces",
+    "loud": true
+   },
+   {
+    "left": "ferryman",
+    "right": "harpooner",
+    "seed": 1482,
+    "kill": 1602,
+    "pieces": 62,
+    "lead": 3.8,
+    "slow": 1.8,
+    "trees": 0,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "abbot",
+    "right": "porter",
+    "seed": 7732,
+    "kill": 398,
+    "pieces": 47,
+    "lead": 1.2,
+    "slow": 2.8,
+    "caption": "clip.cta"
+   }
+  ],
+  "loop": [
+   {
+    "left": "general",
+    "right": "tanner",
+    "seed": 785,
+    "kill": 373,
+    "pieces": 75,
+    "lead": 0.5,
+    "slow": 2.6,
+    "caption": "clip.hook"
+   },
+   {
+    "left": "sheaf_binder",
+    "right": "coin_minter",
+    "seed": 7394,
+    "kill": 835,
+    "pieces": 46,
+    "lead": 1.0,
+    "slow": 2.2,
+    "caption": "clip.hook"
+   },
+   {
+    "left": "stilt_walker",
+    "right": "herbalist",
+    "seed": 2563,
+    "kill": 511,
+    "pieces": 46,
+    "lead": 1.2,
+    "slow": 2.8,
+    "caption": "clip.cta"
+   }
+  ],
+  "countdown": [
+   {
+    "left": "tanner",
+    "right": "rice_broker",
+    "seed": 7239,
+    "kill": 266,
+    "pieces": 46,
+    "lead": 2.0,
+    "slow": 1.8,
+    "count": true
+   },
+   {
+    "left": "duelist",
+    "right": "sheaf_binder",
+    "seed": 807,
+    "kill": 450,
+    "pieces": 45,
+    "lead": 1.2,
+    "slow": 1.8,
+    "rank": 4
+   },
+   {
+    "left": "drover",
+    "right": "hare_hunter",
+    "seed": 4465,
+    "kill": 367,
+    "pieces": 51,
+    "lead": 3.6,
+    "slow": 1.8,
+    "trees": 0,
+    "half": true,
+    "rank": 3
+   },
+   {
+    "left": "moon_watcher",
+    "right": "mason",
+    "seed": 1137,
+    "kill": 326,
+    "pieces": 43,
+    "lead": 1.2,
+    "slow": 2.0,
+    "rank": 2
+   },
+   {
+    "left": "boatwright",
+    "right": "salt_trader",
+    "seed": 6245,
+    "kill": 620,
+    "pieces": 66,
+    "lead": 1.2,
+    "slow": 3.2,
+    "rank": 1
+   }
+  ],
+  "tree_first": [
+   {
+    "left": "mason",
+    "right": "post_rider",
+    "seed": 340,
+    "kill": 941,
+    "pieces": 44,
+    "lead": 3.4,
+    "slow": 2.0,
+    "trees": 0,
+    "half": true,
+    "caption": "clip.trees"
+   },
+   {
+    "left": "archivist",
+    "right": "lacquerer",
+    "seed": 7854,
+    "kill": 552,
+    "pieces": 66,
+    "lead": 0.8,
+    "slow": 2.2,
+    "caption": "clip.hook"
+   },
+   {
+    "left": "sun_priest",
+    "right": "cartographer",
+    "seed": 1264,
+    "kill": 216,
+    "pieces": 42,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "juggler",
+    "right": "hermit",
+    "seed": 165,
+    "kill": 784,
+    "pieces": 44,
+    "lead": 1.0,
+    "slow": 1.8
+   },
+   {
+    "left": "reader",
+    "right": "lamplighter",
+    "seed": 3047,
+    "kill": 146,
+    "pieces": 44,
+    "lead": 1.2,
+    "slow": 2.8,
+    "caption": "clip.cta"
+   }
+  ]
+ }
+}

@@ -87,7 +87,9 @@
     "game.about_link": "Part I question 5",
     "online.ready.you": "the Ready message (net::wire, PROTO 3); the_match_starts_only_when_both_players_are_ready_and_each_sees_the_other"
   },
-  "_universals": {},
+  "_universals": {
+    "clip.hook": "Sam's own words for the clip's hook (2026-10-07): 'end it all' is an idiom, not a claim about the game to test"
+  },
   "_review": {
     "_about": "Strings the agent wrote for the build and Sam has not yet accepted (PLANNING-BRIEF 0.6). settings.keys.solo.heading carries its own marker.",
     "settings.keys.actions.jump": "new",
@@ -2338,7 +2340,7 @@
   },
   "clip": {
     "title": "{game} clips",
-    "hook": "Each limb is simulated. A cut takes off whatever it crosses.",
+    "hook": "Each limb is simulated. One cut could end it all.",
     "trees": "Each fighter runs its own behavior tree. The lit branch is the move it chose.",
     "cta": "Free in your browser: {site}",
     "pieces": "Cut into {pieces} pieces.",

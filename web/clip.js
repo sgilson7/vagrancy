@@ -62,9 +62,23 @@ function treeOf(id) {
 window.clip = {
   // A match from its start, played on without drawing to tick `from`; the
   // next round starts at once, as on the stream before its round ends.
-  load({ left, right, seed, from }) {
+  load({ left, right, seed, from, kill }) {
     if (lab) lab.free();
     ids = [left, right];
+    // The round the cut ends began somewhere before it: a first run to the
+    // cut finds where, so the clip never opens in the round before.
+    if (kill) {
+      const probe = Lab.watch(seed, N.default_tuning, left, right, 'flat');
+      let f = JSON.parse(probe.frame()), began = 0;
+      while (probe.tick() < kill - 1) {
+        const was = f.phase;
+        probe.step(f.phase !== 'fight' ? N.ready_bit : 0, 0);
+        f = JSON.parse(probe.frame());
+        if (was !== 'fight' && f.phase === 'fight') began = probe.tick();
+      }
+      probe.free();
+      from = Math.max(from, began + 6);
+    }
     lab = Lab.watch(seed, N.default_tuning, left, right, 'flat');
     cur = JSON.parse(lab.frame());
     while (lab.tick() < from) {

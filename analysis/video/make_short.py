@@ -18,7 +18,7 @@ imageio-ffmpeg package) encodes it. Music is optional and comes from a file
 the caller names; it is mixed under the hits and never enters the repo.
 
     .venv-test/bin/python analysis/video/make_short.py VARIANT [--music FILE] [--out FILE]
-    VARIANT: original | loop | tree_first | text_hook | countdown | fast
+    VARIANT: one of shorts.json's (loop, tree_first, text_hook, countdown, fast)
 """
 import argparse, math, random, struct, subprocess, wave
 from pathlib import Path
@@ -31,67 +31,10 @@ SITE = "sgilson7.github.io/vagrancy"
 FPS = 30
 TICKS = 2  # sim ticks per frame at full speed (60 ticks a second)
 
-# Rounds from `lab highlights 1500` (seed, the tick of the deciding cut, and
-# how many pieces the loser was cut into).
-R = {
-    "herbalist": {"left": "herbalist", "right": "monk", "seed": 1370, "kill": 454, "pieces": 125},
-    "general": {"left": "general", "right": "tanner", "seed": 785, "kill": 373, "pieces": 75},
-    "ferryman": {"left": "ferryman", "right": "harpooner", "seed": 1482, "kill": 1602, "pieces": 62},
-    "bell": {"left": "bell_founder", "right": "acrobat", "seed": 548, "kill": 295, "pieces": 55},
-    "boatwright": {"left": "boatwright", "right": "salt_trader", "seed": 1348, "kill": 368, "pieces": 47},
-    "field": {"left": "field_warden", "right": "potter", "seed": 112, "kill": 497, "pieces": 45},
-    "duelist": {"left": "duelist", "right": "sheaf_binder", "seed": 807, "kill": 450, "pieces": 45},
-    "potter": {"left": "potter", "right": "sampler", "seed": 1475, "kill": 491, "pieces": 44},
-    "headshot": {"left": "herbalist", "right": "monk", "seed": 374, "kill": 689, "pieces": 64},
-    "drover": {"left": "drover", "right": "hare_hunter", "seed": 1311, "kill": 364, "pieces": 42, "trees": 0},
-}
-
-
-def clip(name, lead, slow, **kw):
-    return {**R[name], "lead": lead, "slow": slow, **kw}
-
-
-# The one clip with a tree: half speed, the killer's tree large.
-TREE = dict(caption="clip.trees", half=True)
-VARIANTS = {
-    # The first cut: hook, quick kills, the tree, quick kills, the finale.
-    "original": [
-        clip("herbalist", 0.45, 1.8, caption="clip.hook"), clip("general", 1.1, 1.3, caption="clip.hook"),
-        clip("headshot", 1.0, 1.4), clip("drover", 4.2, 1.6, **TREE), clip("bell", 1.0, 1.2), clip("field", 1.0, 1.2),
-        clip("ferryman", 1.2, 2.6, caption="clip.cta"),
-    ],
-    # 1. Shorter: the three wildest, about 12 s, so more viewers finish it
-    #    and it loops sooner.
-    "loop": [
-        clip("herbalist", 0.5, 2.6, caption="clip.hook"), clip("general", 1.0, 2.2, caption="clip.hook"),
-        clip("ferryman", 1.2, 2.8, caption="clip.cta"),
-    ],
-    # 2. The tree first: the lit branch is the hook, then the kills.
-    "tree_first": [
-        clip("drover", 3.4, 2.0, **TREE), clip("herbalist", 0.8, 2.2, caption="clip.hook"),
-        clip("general", 1.0, 1.8), clip("bell", 1.0, 1.8), clip("ferryman", 1.2, 2.8, caption="clip.cta"),
-    ],
-    # 3. A text hook: the count on screen from the first frame, and each
-    #    kill's count after.
-    "text_hook": [
-        clip("herbalist", 0.6, 2.6, caption="clip.pieces", loud=True), clip("general", 1.0, 2.0, caption="clip.pieces", loud=True),
-        clip("bell", 1.0, 2.0, caption="clip.pieces", loud=True), clip("drover", 3.8, 1.8, **TREE),
-        clip("ferryman", 1.2, 2.8, caption="clip.cta"),
-    ],
-    # 4. A countdown, the worst last: viewers stay to see number one.
-    "countdown": [
-        clip("field", 2.0, 1.8, count=True), clip("bell", 1.2, 1.8, rank=4),
-        clip("drover", 3.6, 1.8, rank=3, half=True), clip("general", 1.2, 2.0, rank=2),
-        clip("herbalist", 1.2, 3.2, rank=1),
-    ],
-    # 5. Faster: a cut every second or so, harder ramps.
-    "fast": [
-        clip("herbalist", 0.3, 1.1, caption="clip.hook", ramp=0.22), clip("general", 0.5, 0.8, ramp=0.22),
-        clip("headshot", 0.5, 0.8, ramp=0.22), clip("bell", 0.5, 0.8, ramp=0.22), clip("boatwright", 0.5, 0.8, ramp=0.22),
-        clip("drover", 2.4, 1.1, **TREE), clip("field", 0.5, 0.8, ramp=0.22), clip("duelist", 0.5, 0.8, ramp=0.22),
-        clip("potter", 0.5, 0.8, ramp=0.22), clip("ferryman", 0.6, 1.8, caption="clip.cta", ramp=0.22),
-    ],
-}
+# The cut lists, from `lab highlights`: one per variant, no clip in two
+# (shorts.json says how they were chosen).
+import json
+VARIANTS = json.loads((Path(__file__).with_name("shorts.json")).read_text())["variants"]
 
 
 def ease(x):
@@ -120,7 +63,7 @@ def impact_wav(path, times, length):
         w.writeframes(b"".join(struct.pack("<h", int(32767 * 0.8 * x / peak)) for x in buf))
 
 
-def render(variant, out, music=None):
+def render(variant, out, music=None, music_start=None):
     clips = VARIANTS[variant]
     out.parent.mkdir(parents=True, exist_ok=True)
     silent = out.with_suffix(".video.mp4")
@@ -136,7 +79,7 @@ def render(variant, out, music=None):
         page.goto(PAGE)
         page.wait_for_function("document.body.dataset.ready === '1'", timeout=60000)
         for c in clips:
-            page.evaluate("s => window.clip.load(s)", {"left": c["left"], "right": c["right"], "seed": c["seed"], "from": c["kill"] - int(c["lead"] * 60)})
+            page.evaluate("s => window.clip.load(s)", {"left": c["left"], "right": c["right"], "seed": c["seed"], "from": c["kill"] - int(c["lead"] * 60), "kill": c["kill"]})
             if c.get("rank"):
                 cap = ["clip.rank", {"n": c["rank"]}, "big"]
             elif c.get("count"):
@@ -162,6 +105,8 @@ def render(variant, out, music=None):
                         break
                 state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom, "punch": punch, "showTrees": trees, "treeScale": 2.6})
                 if ended_at is None and state["ended"]:
+                    if state["ended"]["tick"] < c["kill"] - 2:
+                        print(f"  {c['left']} v {c['right']}: a round ended at {state['ended']['tick']}, before the chosen cut at {c['kill']}", flush=True)
                     ended_at = k
                     hits.append(frames / FPS)
                 enc.stdin.write(page.locator("#clip-app").screenshot(type="png"))
@@ -179,10 +124,20 @@ def render(variant, out, music=None):
     wav = out.with_suffix(".hits.wav")
     impact_wav(wav, hits, length)
     if music:
-        # The music under the hits, faded in and out, the hits on top.
-        mix = (f"[2:a]atrim=0:{length:.2f},afade=t=in:d=0.3,afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume=0.55[m];"
+        # The song comes in as the first cut lands (Sam: "the song should
+        # start on the first cut as it lands"), from its punchiest bar
+        # (song_hook.py), and fades out at the end; the hits stay on top.
+        if music_start is None:
+            import song_hook
+            music_start = song_hook.analyse(music)["start"]
+        first = hits[0] if hits else 0.0
+        body = length - first
+        delay = int(first * 1000)
+        mix = (f"[2:a]atrim={music_start:.3f}:{music_start + body:.3f},asetpts=PTS-STARTPTS,"
+               f"afade=t=out:st={max(0, body - 0.8):.2f}:d=0.8,volume=0.6,adelay={delay}|{delay}[m];"
                "[m][1:a]amix=inputs=2:normalize=0[a]")
-        cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-stream_loop", "-1", "-i", str(music),
+        print(f"  music from {music_start:.2f} s of the song, in at {first:.2f} s of the clip")
+        cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-i", str(music),
                "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{length:.2f}", str(out)]
     else:
         cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", str(out)]
@@ -196,7 +151,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("variant", choices=sorted(VARIANTS))
     ap.add_argument("--music")
+    ap.add_argument("--music-start", type=float, help="where in the song to start, in seconds (default: song_hook.py's choice)")
     ap.add_argument("--out")
     a = ap.parse_args()
     out = Path(a.out) if a.out else Path.home() / "Movies" / "Vagrancy" / f"short-{a.variant}.mp4"
-    render(a.variant, out, Path(a.music).expanduser() if a.music else None)
+    render(a.variant, out, Path(a.music).expanduser() if a.music else None, a.music_start)
