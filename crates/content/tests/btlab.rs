@@ -62,6 +62,10 @@ fn what_a_tree_says_it_pressed_is_what_it_pressed_and_comes_from_its_recipe() {
                     assert!(e.throw_step.is_some(), "{id}: a throw without its step");
                     checked[3] += 1;
                 }
+                // The stand move holds the stand key and nothing else.
+                Recipe::Rise { .. } => {
+                    assert_eq!(keys.0, sim::Input::STAND, "{id}: the stand move pressed {:#b}", keys.0);
+                }
             }
         }
     }

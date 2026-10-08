@@ -95,9 +95,10 @@ pub fn exhibition(seed: u64, tuning: u8, ids: [&str; 2], map: &str) -> Setup {
 
 /// A duel for a clip (Sam, 2026-10-08: a fight with Dune's shields, won
 /// 1 to 0): two fighters' bodies, each carrying its weapon (by name, or as
-/// a weapon's JSON), both with a
+/// a weapon's JSON), `gap` cm apart at the start (0 for the usual), both
+/// with a
 /// shield when `shield`, to `rounds` won. Nobody on the road fights this.
-pub fn duel(seed: u64, tuning: u8, weapons: [&str; 2], shield: bool, rounds: u32) -> Setup {
+pub fn duel(seed: u64, tuning: u8, weapons: [&str; 2], shield: bool, rounds: u32, gap: i32) -> Setup {
     let mut s = versus(seed, tuning);
     s.rounds_to_win = rounds.max(1);
     for (seat, w) in weapons.iter().enumerate() {
@@ -116,7 +117,10 @@ pub fn duel(seed: u64, tuning: u8, weapons: [&str; 2], shield: bool, rounds: u32
         };
         b.shield = shield.then_some(balance::SHIELD_SPEED);
         s.bodies.push(b);
-        s.seats[seat] = Some(Seat::at((s.bodies.len() - 1) as u8, balance::START_X));
+        // Each starts half of `gap` cm from the middle, or where a duel
+        // always starts when it is 0.
+        let x = if gap > 0 { Fx::int(gap / 2) } else { balance::START_X };
+        s.seats[seat] = Some(Seat::at((s.bodies.len() - 1) as u8, x));
     }
     s
 }

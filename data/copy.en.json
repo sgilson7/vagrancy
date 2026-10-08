@@ -145,7 +145,8 @@
     "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added",
     "clip.get_past": "new: a framing for the hectic short (Sam, 2026-10-08: 'like the pilgrim needing to battle his way into the temple, or the woodcutter protecting his village')",
     "settings.backgrounds": "new: every string (Sam, 2026-10-08: the backgrounds should be toggleable)",
-    "hud.score, hud.you, arena.wins": "hud.score rewritten in Sam's form (2026-10-08: 'the shepard (2) against the sampler (1)'); hud.you and arena.wins new"
+    "hud.score, hud.you, arena.wins": "hud.score rewritten in Sam's form (2026-10-08: 'the shepard (2) against the sampler (1)'); hud.you and arena.wins new",
+    "btlab.rise": "new: the stand move's explanation, after the stand key became a hold (Sam, 2026-10-08)"
   },
   "_glossary": {
     "ink": {
@@ -2324,6 +2325,9 @@
       },
       "lab_intro": "Choose two fighters and start a match. Slow the simulation down, or advance it one tick at a time. After each tick, compare the part of the behavior tree that ran with the keys the opponent pressed. When an opponent changes what it does, look for the change in the tree and ask what happened in the fight that could explain it.",
       "lab_read": "Read one tick as a chain of evidence. Start with what is happening in the fight, follow the portion of the tree evaluated on that tick, and then look at the keys the agent pressed. Those inputs are how the agent's choice reaches the game. Step again to see whether the same path runs when the situation changes."
+    },
+    "rise": {
+      "intro": "The stand move holds the stand key while the fighter is down. Its feet hold to the ground and a spring brings it up over a second or two. The move lets go of the key once the fighter stands."
     }
   },
   "arena": {

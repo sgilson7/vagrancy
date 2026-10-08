@@ -114,6 +114,10 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
             else:
                 page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", cap)
             trees = {"seat": c["trees"]} if c.get("half") and "trees" in c else False
+            # Draw once without moving, so the pictures are asked for, and
+            # wait for them: the first frame of a clip showed the arena bare.
+            page.evaluate("o => window.clip.frame(o)", {"ticks": 0, "zoom": c.get("zoom", 3.1)})
+            page.wait_for_function("window.clip.picturesReady()", timeout=20000)
             # Ticks a frame: full speed, half for a tree clip, or the clip's
             # own (an eighth of full speed is 0.25).
             speed = c.get("ticks", 1 if c.get("half") else TICKS)

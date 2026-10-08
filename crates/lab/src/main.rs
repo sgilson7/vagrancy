@@ -1241,28 +1241,39 @@ fn duels(args: &[String]) {
     let (l, r, lw, rw) = (args[0].as_str(), args[1].as_str(), args[2].as_str(), args[3].as_str());
     let seeds: u64 = args.get(4).and_then(|a| a.parse().ok()).unwrap_or(200);
     let first: u64 = args.get(5).and_then(|a| a.parse().ok()).unwrap_or(0);
+    // Starting gaps to try, in cm (0 the usual): the seed alone moves the
+    // start only a little, so a pairing gives few different duels.
+    let gaps: Vec<i32> = args.get(6).map(|g| g.split(',').filter_map(|x| x.parse().ok()).collect()).unwrap_or(vec![0]);
+    let max: u32 = args.get(7).and_then(|a| a.parse().ok()).unwrap_or(60 * 60);
     let threads = 8u64;
     let rows: Vec<String> = std::thread::scope(|scope| {
-        let hs: Vec<_> = (0..threads).map(|k| scope.spawn(move || {
+        let hs: Vec<_> = (0..threads).map(|k| { let gaps = gaps.clone(); scope.spawn(move || {
             let mut out = Vec::new();
-            for seed in (first + k..first + seeds).step_by(threads as usize) {
-                let mut w = sim::World::new(content::setup::duel(seed, sim::balance::DEFAULT_TUNING, [lw, rw], true, 1));
+            for job in (k..seeds * gaps.len() as u64).step_by(threads as usize) {
+                let (seed, gap) = (first + job / gaps.len() as u64, gaps[(job % gaps.len() as u64) as usize]);
+                let mut w = sim::World::new(content::setup::duel(seed, sim::balance::DEFAULT_TUNING, [lw, rw], true, 1, gap));
                 let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
                 let mut last = [Input::NONE; sim::body::SEATS];
                 let (mut clashes, mut stops, mut cuts) = (0u32, [0u32; 2], [0u32; 2]);
-                while w.tick < 60 * 60 && matches!(w.phase, Phase::Fight) {
+                let (mut jumps, mut first_cut, mut clash_ticks) = ([0u32; 2], [None::<u32>; 2], Vec::new());
+                while w.tick < max && matches!(w.phase, Phase::Fight) {
                     let mut i = [Input::NONE; sim::body::SEATS];
                     for (k, p) in pilots.iter_mut().enumerate() {
                         p.observe(last);
                         i[k] = p.input(&w, k);
                     }
+                    for s in 0..2 {
+                        if i[s].has(Input::JUMP) && !last[s].has(Input::JUMP) {
+                            jumps[s] += 1;
+                        }
+                    }
                     w.step_all(i);
                     last = i;
                     for e in &w.events {
                         match e {
-                            Event::Clash { .. } => clashes += 1,
+                            Event::Clash { .. } => { clashes += 1; clash_ticks.push(w.tick); }
                             Event::Shield { seat, .. } if (*seat as usize) < 2 => stops[*seat as usize] += 1,
-                            Event::Cut { seat, spilled: true, .. } if (*seat as usize) < 2 => cuts[*seat as usize] += 1,
+                            Event::Cut { seat, spilled: true, .. } if (*seat as usize) < 2 => { cuts[*seat as usize] += 1; first_cut[*seat as usize].get_or_insert(w.tick); }
                             _ => {}
                         }
                     }
@@ -1278,15 +1289,54 @@ fn duels(args: &[String]) {
                     after += on.events.iter().filter(|e| matches!(e, Event::Cut { seat, spilled: true, .. } if *seat == loser)).count();
                 }
                 let severed = w.parts.iter().filter(|p| p.fighter == loser && !p.attached).count();
-                out.push(serde_json::json!({ "seed": seed, "winner": 1 - loser, "by": result.by, "kill": kill, "cause": format!("{:?}", result.cause),
+                out.push(serde_json::json!({ "seed": seed, "gap": gap, "jumps": jumps, "first_cut": first_cut, "clash_ticks": clash_ticks, "winner": 1 - loser, "by": result.by, "kill": kill, "cause": format!("{:?}", result.cause),
                     "headshot": content::messages::headshot(&w, &result), "clashes": clashes, "stops": stops, "cuts": cuts, "severed": severed, "after": after, "thrown": result.thrown }).to_string());
             }
             out
-        })).collect();
+        }) }).collect();
         hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
     });
     for r in rows {
         println!("{r}");
+    }
+}
+
+/// A fighter knocked flat and tumbling, then the stand key: every fifth
+/// tick, the body's parts as segments, as JSON lines, for looking at a rise
+/// (`analysis/video` draws them).
+fn rise_frames(args: &[String]) {
+    use sim::fx::{Fx, V2};
+    let speed: i32 = args.first().and_then(|a| a.parse().ok()).unwrap_or(0);
+    let mut s = content::setup::practice(1, sim::balance::DEFAULT_TUNING);
+    s.seats[1] = None;
+    let mut w = sim::World::new(s);
+    // Lay the body down on its side, still: a quarter turn about the pelvis,
+    // which keeps every length (as crates/sim/tests/moves.rs does), then down
+    // onto the ground.
+    let f = w.fighters[0].clone().unwrap();
+    let pel = w.particles[(f.base + w.setup.bodies[f.body as usize].roles.pelvis.unwrap() as u16) as usize].p;
+    let ours = |p: &sim::world::Particle| matches!(p.owner, sim::world::Owner::Body(0) | sim::world::Owner::Sword(0));
+    for p in w.particles.iter_mut().filter(|p| ours(p)) {
+        let d = p.p - pel;
+        p.p = V2::new(pel.x + d.y, pel.y - d.x);
+    }
+    let low = w.particles.iter().filter(|p| ours(p)).map(|p| p.p.y - p.rad).min().unwrap();
+    for p in w.particles.iter_mut().filter(|p| ours(p)) {
+        p.p.y -= low;
+        p.q = p.p;
+    }
+    for _ in 0..30 {
+        w.step([Input::NONE, Input::NONE]);
+    }
+    for i in f.base as usize..(f.base + f.n) as usize {
+        w.particles[i].q = w.particles[i].p - V2::new(Fx::int(speed), Fx(0));
+    }
+    for t in 0..150u32 {
+        w.step([if t == 0 { Input(Input::STAND) } else { Input::NONE }, Input::NONE]);
+        if t % 5 == 0 {
+            let segs: Vec<[f64; 4]> = w.parts.iter().filter(|p| p.fighter == 0).map(|p| [cm(w.particles[p.a as usize].p.x), cm(w.particles[p.a as usize].p.y), cm(w.particles[p.b as usize].p.x), cm(w.particles[p.b as usize].p.y)]).collect();
+            println!("{}", serde_json::json!({ "t": t, "rising": w.fighters[0].as_ref().unwrap().rising, "segs": segs }));
+        }
     }
 }
 
@@ -1312,6 +1362,7 @@ fn main() {
         Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
         Some("armor") => armor(&args[1..]),
+        Some("rise-frames") => rise_frames(&args[1..]),
         Some("duels") => duels(&args[1..]),
         Some("rounds") => rounds(&args[1..]),
         Some("profile") => profile(&args[1..]),

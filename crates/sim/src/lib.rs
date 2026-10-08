@@ -63,4 +63,7 @@ pub use world::World;
 /// a blade meeting it faster than `SHIELD_SPEED` is stopped and cuts
 /// nothing. No body on the road has one, so a road match plays exactly as
 /// in 18.
-pub const SIM_VERSION: u32 = 19;
+/// 20: the stand key no longer sets a knocked-down fighter back on its
+/// feet: it starts a rise, the feet sticking and a damped spring bringing
+/// the trunk, head and legs up over one to two seconds (`World::rise`).
+pub const SIM_VERSION: u32 = 20;

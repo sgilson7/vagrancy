@@ -290,6 +290,8 @@ function explainBlock(e, many) {
         el('tbody', {}, ...s.tried.map(([k, sc]) => el('tr', { class: k === s.chosen ? 'on' : '' }, el('td', {}, caps(k, many)), el('td', {}, fill(sc)))))));
     }
     kids.push(say('btlab.search.keeps', { n: s.keeps }, { class: 'desc' }));
+  } else if (r && r.kind === 'rise') {
+    kids.push(say('btlab.rise.intro', {}, { class: 'desc' }));
   } else if (r && r.kind === 'throw') {
     kids.push(say('btlab.throw.intro', {}, { class: 'desc' }));
     const steps = ['throw_settle', 'throw_wind', 'throw_watch', 'throw_release'];

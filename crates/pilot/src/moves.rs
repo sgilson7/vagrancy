@@ -46,6 +46,10 @@ pub enum Recipe {
     Search { ticks: u32 },
     /// The throw's steps: settle, wind, watch for the window, let go.
     Throw,
+    /// Hold the stand key while the fighter is down or still rising, for
+    /// at most `ticks`: the rise lasts as long as the key is held (sim
+    /// `World::rise`), so the move lets go once the fighter stands.
+    Rise { ticks: u32 },
 }
 
 use Step::{Away, None as Still, Toward};
@@ -66,7 +70,7 @@ static BOUNCE_STRIKE: [Beat; 4] = [
 static DODGE_AWAY: [Beat; 2] = [beat(0, 0, I::DODGE, Away), beat(1, 17, 0, Still)];
 static DODGE_IN: [Beat; 3] = [beat(0, 0, I::DODGE, Toward), beat(1, 17, 0, Still), beat(18, 35, I::SHOULDER_DOWN | I::ELBOW_OUT, Still)];
 static POGO: [Beat; 3] = [beat(0, 12, I::ELBOW_IN, Toward), beat(13, 21, 0, Toward), beat(22, 55, I::SHOULDER_DOWN | I::ELBOW_OUT, Toward)];
-static STAND: [Beat; 1] = [beat(0, 0, I::STAND, Still)];
+
 // Up onto the ledge overhead: a jump, and the stand key once the pelvis has
 // risen past the ledge's top (one jump lifts it about 120 cm in 27 ticks; by
 // tick 16 it has risen 100).
@@ -91,7 +95,9 @@ pub fn recipe(name: &str) -> Option<Recipe> {
         "dodge_away" => script(&DODGE_AWAY),
         "dodge_in" => script(&DODGE_IN),
         "pogo" => script(&POGO),
-        "stand" => script(&STAND),
+        // Held while down (sim `World::rise`, Sam 2026-10-08): the feet
+        // stick and a spring brings the fighter up over one to two seconds.
+        "stand" => Some(Recipe::Rise { ticks: 180 }),
         "climb" => script(&CLIMB),
         "wait" => script(&WAIT),
         "search" => Some(Recipe::Search { ticks: 11 }),

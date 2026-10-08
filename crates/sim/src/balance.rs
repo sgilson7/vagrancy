@@ -119,3 +119,26 @@ pub const HOMING_TICKS: u32 = 45;
 /// this covers in the time left): over MIN_CUT_SPEED, so a returning weapon
 /// that has not touched the ground still cuts what it meets.
 pub const HOMING_SPEED: Fx = Fx::int(12);
+
+/// Getting up (Sam, 2026-10-08: the stand key "gives you sticky feet, which
+/// act as a spring trying to get you upright enough to move ... like a
+/// second ... up to 2 seconds based on how much momentum you have"; held,
+/// not pressed). While a fighter holds the key down and rises, its feet hold to what they stand on and its trunk, head
+/// and legs are drawn toward the standing pose over them by a damped
+/// spring, pushed by the ground. RISE_KP pulls (per tick², toward the
+/// pose); RISE_KD damps (per tick, of the velocity): somewhat over
+/// critically damped, a natural frequency of 1/12 a tick (5 a second), so
+/// from rest the rise takes about a second, and a fighter tumbling fast first slows, then
+/// comes up. The rise ends once the fighter stands nearly straight and
+/// still (`World::stood`), or after RISE_TICKS.
+pub const RISE_KP: Fx = Fx::ratio(1, 144);
+pub const RISE_KD: Fx = Fx::ratio(1, 6);
+/// The fastest the spring moves a point of a rising fighter, cm a tick.
+/// Unlimited, a fighter coming up fast left the ground at the top of the
+/// rise and turned over in the air (SECOND-ORDER-M5).
+pub const RISE_MAX_SPEED: Fx = Fx::ratio(5, 2);
+/// The most the spring changes a rising point's velocity in a tick, cm a
+/// tick²: a fighter carrying speed slows over a moment and comes up after,
+/// rather than stopping dead, so more momentum is a longer rise.
+pub const RISE_MAX_ACCEL: Fx = Fx::ratio(2, 3);
+pub const RISE_TICKS: u8 = 180;

@@ -70,7 +70,7 @@ window.clip = {
     if (lab) lab.free();
     ids = [left, right];
     const start = () => duel
-      ? Lab.duel(seed, N.default_tuning, left, right, duel.weapons[0], duel.weapons[1], !!duel.shield, duel.rounds || N.rounds_to_win)
+      ? Lab.duel(seed, N.default_tuning, left, right, duel.weapons[0], duel.weapons[1], !!duel.shield, duel.rounds || N.rounds_to_win, duel.gap || 0)
       : Lab.watch(seed, N.default_tuning, left, right, 'flat');
     draw.guests(guests);
     // The round the cut ends began somewhere before it: a first run to the
@@ -150,6 +150,8 @@ window.clip = {
     $('clip-caption').className = size;
     $('clip-caption').replaceChildren(text ? el('span', { 'data-fill': '' }, text) : '');
   },
+  // Every costume and scene picture the last frame asked for has loaded.
+  picturesReady() { return draw.picturesReady(); },
   ended: null,
 };
 

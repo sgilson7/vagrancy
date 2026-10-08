@@ -174,6 +174,11 @@ export function renderer(canvas, palette, numbers) {
     ctx.setTransform(M);
   }
 
+  // Whether every picture asked for so far has loaded or failed: a clip
+  // waits for it before its first frame (Sam, 2026-10-08: "cut the very
+  // first like millisecond while the scene loads in").
+  draw.picturesReady = () => [...pictures.values(), ...layerPics.values()].every((im) => im.complete);
+
   // A deity glows (Sam, 2026-10-08): soft rings of light round each part
   // still on its body, breathing slowly.
   function glow(cur, pts, seat, now) {

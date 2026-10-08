@@ -1162,6 +1162,15 @@ impl Tree {
                 self.why.throw_step = self.throw_step().map(|st| st.index());
                 k
             }
+            moves::Recipe::Rise { ticks } => {
+                // Held from the first tick; let go once the fighter is up and
+                // the rise is over.
+                let rising = w.fighters[me].as_ref().is_some_and(|f| f.rising > 0);
+                if t > ticks || (t > 0 && !rising && !w.knocked_down(me)) {
+                    return None;
+                }
+                Input::STAND
+            }
         })
     }
 

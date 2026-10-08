@@ -496,9 +496,9 @@ impl Lab {
     /// A duel for a clip (content::setup::duel): the two pilots named, each
     /// fighter carrying its weapon, shielded or not, to `rounds` won.
     #[allow(clippy::too_many_arguments)]
-    pub fn duel(seed: u32, tuning: u8, left: &str, right: &str, left_weapon: &str, right_weapon: &str, shield: bool, rounds: u32) -> Lab {
+    pub fn duel(seed: u32, tuning: u8, left: &str, right: &str, left_weapon: &str, right_weapon: &str, shield: bool, rounds: u32, gap: i32) -> Lab {
         Lab {
-            rec: Recording::new(content::setup::duel(seed as u64, tuning, [left_weapon, right_weapon], shield, rounds)),
+            rec: Recording::new(content::setup::duel(seed as u64, tuning, [left_weapon, right_weapon], shield, rounds, gap)),
             pilots: [left, right].iter().map(|id| Some(pilot::build(&content::road::pilot(id)))).collect(),
             last: [Input::NONE; sim::body::SEATS],
             ids: [left.to_string(), right.to_string()],

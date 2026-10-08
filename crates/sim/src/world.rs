@@ -110,6 +110,9 @@ pub struct Fighter {
     pub dodge: u8,
     pub dodge_cooldown: u8,
     pub dodge_dir: i32,
+    /// Ticks left in a rise from the ground (`balance::RISE_TICKS`): the
+    /// stand key's sticky feet and spring. Zero when not rising.
+    pub rising: u8,
     /// Last tick's jump and dodge bits, so a held key acts once.
     pub held: u16,
     /// Rest distances the balance rule restores: shoulder over pelvis, head
@@ -372,6 +375,7 @@ impl World {
             dodge: 0,
             dodge_cooldown: 0,
             dodge_dir: 0,
+            rising: 0,
             held: 0,
             torso: dist(r.shoulder, r.pelvis),
             neck: dist(r.head, r.shoulder),
@@ -413,6 +417,9 @@ impl World {
                 drives.extend(self.drive_motors(seat, inputs[seat], &mut acc));
                 self.set_drive(seat, inputs[seat]);
             }
+        }
+        for seat in 0..SEATS {
+            self.rise(seat, &mut acc);
         }
         self.integrate(&acc);
         for _ in 0..ITERATIONS {
@@ -696,7 +703,8 @@ impl World {
     fn set_drive(&mut self, seat: usize, input: Input) {
         let balanced = self.balanced(seat);
         if let Some(f) = self.fighters[seat].as_mut() {
-            f.drive = if !balanced {
+            // Rising, the feet stick and the step keys wait for upright.
+            f.drive = if !balanced || f.rising > 0 {
                 Fx(0)
             } else if f.dodge > 0 {
                 balance::ROLL_SPEED * f.dodge_dir
@@ -982,7 +990,16 @@ impl World {
             Stand,
         }
         let mut act = Act::None;
-        if pressed & Input::STAND != 0 && (down || aloft) && f.dodge == 0 {
+        // The stand key held while down is the rise: sticky feet and a
+        // spring, for as long as it is held (Sam, 2026-10-08: "id prefer
+        // the player having to hold s to be in sticky feet mode"). Over a
+        // ledge in the air, a press sets the fighter on it, as before.
+        if !input.has(Input::STAND) {
+            f.rising = 0;
+        }
+        if input.has(Input::STAND) && down && f.rising == 0 && f.dodge == 0 && pressed & Input::STAND == 0 {
+            act = Act::Stand;
+        } else if pressed & Input::STAND != 0 && (down || aloft) && f.dodge == 0 {
             act = Act::Stand;
         } else if pressed & Input::DODGE != 0 && f.dodge == 0 && f.dodge_cooldown == 0 {
             f.dodge = balance::DODGE_TICKS;
@@ -1002,12 +1019,19 @@ impl World {
                 act = Act::AirJump;
             }
         }
+        // A jump or a dodge ends a rise: the fighter has chosen to move.
+        if matches!(act, Act::AirDodge | Act::GroundJump | Act::AirJump) || (f.dodge > 0 && f.dodge == balance::DODGE_TICKS) {
+            f.rising = 0;
+        }
         let dodging = f.dodge > 0;
         let pts = self.moving_with(seat);
         let v = self.com_velocity(&pts);
         match act {
             Act::None => {}
-            Act::Stand => self.stand_up(seat),
+            // Over a ledge in the air, the stand sets the fighter on it;
+            // on the ground it begins the rise (`rise`).
+            Act::Stand if aloft && !down => self.stand_up(seat),
+            Act::Stand => self.fighters[seat].as_mut().unwrap().rising = balance::RISE_TICKS,
             Act::AirDodge => {
                 let want = V2::new(balance::AIR_DODGE_SPEED * dir, Fx(0));
                 self.add_velocity(&pts, want - v);
@@ -1121,6 +1145,95 @@ impl World {
                     self.particles[i as usize].q = p;
                 }
             }
+        }
+    }
+
+    /// Up from a rise: on a foot, the torso within about 15° of upright, the
+    /// pelvis at 90 % of its standing height, and the body nearly still,
+    /// under a centimeter a tick.
+    fn stood(&self, seat: usize) -> bool {
+        let Some(f) = self.fighters[seat].as_ref() else { return true };
+        let def = &self.setup.bodies[f.body as usize];
+        let (Some(pe), Some(sh)) = (self.role(seat, |r| r.pelvis), self.role(seat, |r| r.shoulder)) else { return true };
+        let (pp, sp) = (self.particles[pe as usize].p, self.particles[sh as usize].p);
+        let rest = def.points[def.roles.pelvis.unwrap() as usize].at.y;
+        let lean = (sp.x - pp.x).abs().scale(4, 1) <= sp.y - pp.y;
+        let tall = (pp.y - self.floor_of(seat)).scale(10, 9) >= rest;
+        let pts = self.moving_with(seat);
+        let still = self.com_velocity(&pts).len() < ONE;
+        let on_feet = self.feet(seat).iter().any(|&i| self.grounded(i));
+        lean && tall && still && on_feet
+    }
+
+    /// One tick of a rise from the ground (`balance::RISE_KP`): the
+    /// fighter's trunk, head and legs are drawn toward the standing pose
+    /// over its feet, a spring with damping, the ground holding it up; the
+    /// arms are left free. The ground pushes, so this is a force from
+    /// outside the fighter, as the run drive is. Ends once the fighter is
+    /// upright.
+    fn rise(&mut self, seat: usize, acc: &mut [V2]) {
+        let Some(f) = self.fighters[seat].clone() else { return };
+        if f.rising == 0 {
+            return;
+        }
+        if self.stood(seat) || self.out(seat) || !matches!(self.phase, crate::fight::Phase::Fight) {
+            self.fighters[seat].as_mut().unwrap().rising = 0;
+            return;
+        }
+        self.fighters[seat].as_mut().unwrap().rising -= 1;
+        let def = self.setup.bodies[f.body as usize].clone();
+        // The ground pushes only what is on it: in the air the fighter
+        // falls as it would, and the rise takes hold once a foot or the
+        // pelvis is down. Pulled up in mid-air, a tumbling fighter floated
+        // and untwisted where it was (SECOND-ORDER-M5).
+        let pelvis_down = def.roles.pelvis.is_some_and(|k| self.grounded(f.base + k as u16) || self.particles[(f.base + k as u16) as usize].p.y <= self.floor_of(seat) + Fx::int(25));
+        if !self.feet(seat).iter().any(|&i| self.grounded(i)) && !pelvis_down {
+            return;
+        }
+        let mine = |w: &World, i: usize| w.particles[i].owner == Owner::Body(seat as u8) && w.particles[i].m != 0;
+        // The arms: everything beyond a part a motor turns.
+        let mut arms: Vec<u16> = Vec::new();
+        for (pi, part) in self.parts.iter().enumerate() {
+            if part.fighter as usize == seat && part.attached && def.parts[part.def as usize].motor.is_some() {
+                arms.extend(self.distal(pi));
+            }
+        }
+        // Where it stands: over its feet on the ground, or under its pelvis.
+        let feet: Vec<u16> = self.feet(seat).into_iter().filter(|&i| self.grounded(i)).collect();
+        let pe = def.roles.pelvis.map(|k| f.base + k as u16);
+        let x = if feet.is_empty() {
+            pe.map(|i| self.particles[i as usize].p.x).unwrap_or(Fx(0))
+        } else {
+            Fx(crate::fx::narrow(feet.iter().map(|&i| self.particles[i as usize].p.x.0 as i64).sum::<i64>() / feet.len() as i64))
+        };
+        let base = self.floor_of(seat);
+        let g = self.setup.physics.gravity;
+        // The ground carries the whole fighter while it rises, its arms and
+        // the weapon in its hand too: left to hang, their weight pulled the
+        // shoulders back and the rise stalled in a crouch (SECOND-ORDER-M5).
+        for i in self.moving_with(seat) {
+            acc[i] += V2::new(Fx(0), g);
+        }
+        for (k, pt) in def.points.iter().enumerate() {
+            let i = (f.base + k as u16) as usize;
+            if !mine(self, i) || arms.contains(&(i as u16)) {
+                continue;
+            }
+            let target = V2::new(x + pt.at.x * f.facing, base + pt.at.y);
+            let p = &self.particles[i];
+            let v = p.p - p.q;
+            let pull = (target - p.p) * balance::RISE_KP - v * balance::RISE_KD;
+            // No faster than RISE_MAX_SPEED: the velocity the pull would give,
+            // held to that speed, gravity carried by the ground.
+            let mut want = v + pull;
+            if want.len() > balance::RISE_MAX_SPEED {
+                want = want.with_len(balance::RISE_MAX_SPEED);
+            }
+            let mut dv = want - v;
+            if dv.len() > balance::RISE_MAX_ACCEL {
+                dv = dv.with_len(balance::RISE_MAX_ACCEL);
+            }
+            acc[i] += dv;
         }
     }
 
@@ -1256,7 +1369,10 @@ impl World {
 
     /// The balance rule, as pair shifts (D8).
     fn balance(&mut self, seat: usize) {
-        if !self.balanced(seat) {
+        // While a rise has hold of the body, its spring alone lifts it: the
+        // balance rule pulled the torso up at once and the rise was over in
+        // half a second (SECOND-ORDER-M5).
+        if !self.balanced(seat) || self.fighters[seat].as_ref().is_some_and(|f| f.rising > 0) {
             return;
         }
         let k = balance::BALANCE_K;

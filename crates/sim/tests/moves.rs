@@ -60,8 +60,9 @@ fn there_is_one_jump_in_the_air_and_no_second() {
     // A landing from two jumps up can knock a fighter over; stand first.
     assert_eq!(again.fighters[0].as_ref().unwrap().air_jumps, 1, "landing did not give the air jump back");
     // (The landing can leave it propped high on its own sword, so stand, then
-    // measure the jumps from where it stands.)
-    run(&mut again, &[(Input::STAND, 1), (0, 10)]);
+    // measure the jumps from where it stands. A rise takes one to two
+    // seconds: wait for it.)
+    run(&mut again, &[(Input::STAND, 1), (0, 130)]);
     let after = run(&mut again, &[(Input::JUMP, 1), (0, 20), (Input::JUMP, 1), (0, 80)]);
     assert!(after > single + Fx::int(30), "the air jump did not come back on landing: single {:?}, after {:?}, down {}", single.trunc(), after.trunc(), again.knocked_down(0));
 }
@@ -225,11 +226,12 @@ fn a_knocked_down_fighter_stands_up_on_the_key() {
     let mut w = alone();
     run(&mut w, &[(0, 20)]);
     knock_down(&mut w);
-    // Lying with its feet on the ground, a fighter is pulled upright by the
-    // balance rule over a second or so; the key is for getting up now.
+    // The key starts a rise: the feet stick and a spring brings the
+    // fighter up over about a second (Sam, 2026-10-08; crates/content/tests/
+    // rise.rs measures it). Twenty ticks in it is still coming up.
     run(&mut w, &[(0, 2)]);
     assert!(w.knocked_down(0), "the fighter should be down");
-    run(&mut w, &[(Input::STAND, 1), (0, 20)]);
+    run(&mut w, &[(Input::STAND, 1), (0, 90)]);
     assert!(!w.knocked_down(0), "the stand key did not stand the fighter up");
     assert!(pelvis(&w).y > Fx::int(80), "standing, the pelvis is only at {} cm", pelvis(&w).y.trunc());
 }
