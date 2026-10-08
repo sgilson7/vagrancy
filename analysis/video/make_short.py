@@ -124,19 +124,19 @@ def render(variant, out, music=None, music_start=None):
     wav = out.with_suffix(".hits.wav")
     impact_wav(wav, hits, length)
     if music:
-        # The song comes in as the first cut lands (Sam: "the song should
-        # start on the first cut as it lands"), from its punchiest bar
-        # (song_hook.py), and fades out at the end; the hits stay on top.
+        # The song plays from the first frame (Sam: "the music should start at
+        # the very beginning instant of the video"), started early by the
+        # time before the first cut, so its punchiest bar (song_hook.py)
+        # still lands on the cut; it fades out at the end, the hits on top.
         if music_start is None:
             import song_hook
             music_start = song_hook.analyse(music)["start"]
         first = hits[0] if hits else 0.0
-        body = length - first
-        delay = int(first * 1000)
-        mix = (f"[2:a]atrim={music_start:.3f}:{music_start + body:.3f},asetpts=PTS-STARTPTS,"
-               f"afade=t=out:st={max(0, body - 0.8):.2f}:d=0.8,volume=0.6,adelay={delay}|{delay}[m];"
+        begin = max(0.0, music_start - first)
+        mix = (f"[2:a]atrim={begin:.3f}:{begin + length:.3f},asetpts=PTS-STARTPTS,"
+               f"afade=t=out:st={max(0, length - 0.8):.2f}:d=0.8,volume=0.6[m];"
                f"[m][1:a]amix=inputs=2:normalize=0,atrim=0:{length:.2f}[a]")
-        print(f"  music from {music_start:.2f} s of the song, in at {first:.2f} s of the clip")
+        print(f"  music from {begin:.2f} s of the song, its punchiest bar ({music_start:.2f} s) on the first cut at {first:.2f} s")
         cmd = [ff, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(wav), "-i", str(music),
                "-filter_complex", mix, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", str(out)]
         # (An output -t here left the mixed audio silent with this ffmpeg; the
