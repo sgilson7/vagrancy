@@ -54,7 +54,8 @@
     "speeds, on, off, minutes": "the arena bot's words for its speed and trees commands, and how long a trees hold lasts, from vagrancy-arena's config.json, sent to the stream's page as data",
     "site": "the game's address, filled by analysis/video/make_short.py",
     "pieces": "how many pieces a fighter was cut into, from lab highlights, filled by analysis/video/make_short.py",
-    "hero": "the trade of the fighter a short follows, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py"
+    "hero": "the trade of the fighter a short follows, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py",
+    "villain": "the trade of the fighter a short's hero faces, lower case, from its cut list in analysis/video/shorts.json, filled by analysis/video/make_short.py"
   },
   "_depends": {
     "how.control.body": "D6, D7",
@@ -141,7 +142,8 @@
     "settings.rounds": "new: the switch for the end-of-round replays (Sam, 2026-10-07)",
     "clip": "new: the words burned into the short clips (Sam, 2026-10-07)",
     "settings.costumes, arena.how.costumes": "new: every string (Sam, 2026-10-08: a way to turn off all costumes)",
-    "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added"
+    "clip.last_stand": "new: Sam's wording, 2026-10-08, with 'that' added",
+    "clip.get_past": "new: a framing for the hectic short (Sam, 2026-10-08: 'like the pilgrim needing to battle his way into the temple, or the woodcutter protecting his village')"
   },
   "_glossary": {
     "ink": {
@@ -2357,6 +2359,7 @@
     "countdown": "The {count} worst ways to lose in {game}",
     "rank": "{n}",
     "long": "One fight, start to finish. Watch it swing back and forth.",
-    "last_stand": "The brave {hero} is all that stands between the villagers and certain death."
+    "last_stand": "The brave {hero} is all that stands between the villagers and certain death.",
+    "get_past": "The {hero} has to get past the {villain} to warn the village."
   }
 }

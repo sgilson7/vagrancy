@@ -1,5 +1,5 @@
 {
- "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json). costume_fast, costume_stroll and costume_match (2026-10-08) come from SIM_VERSION 18 scans, with the costumes and the armor: lab highlights 6000 from seed 0 and every round of 3000 from seed 20000, sharing no matchup with any variant before them or each other, armored and plainly costumed opponents preferred. last_stand (Sam, 2026-10-08: a somber one, a heroic character against a villainous one, lost 3 to 2, the whole battle at half speed) is the woodcutter against the warden, seed 215, from lab rounds: the woodcutter leads 2 to 1 and loses the last two.",
+ "_about": "The cut lists for analysis/video/make_short.py, from lab highlights 8000 (seeds 0 to 7999): no clip in two variants, no matchup twice, no killer twice. trees: the killer's seat, drawn large in the one half-speed clip. tree_first's tree clip is the mason and the post rider: the potter's pilot replays the last round mirrored, which says nothing of a tree. stroll, match and slow_trees come from lab highlights 8000 starting at seed 8000, sharing no matchup with the five before them or each other, and no denied pair (vagrancy-arena/deny_pairs.json). costume_fast, costume_stroll and costume_match (2026-10-08) come from SIM_VERSION 18 scans, with the costumes and the armor: lab highlights 6000 from seed 0 and every round of 3000 from seed 20000, sharing no matchup with any variant before them or each other, armored and plainly costumed opponents preferred. last_stand (Sam, 2026-10-08: a somber one, a heroic character against a villainous one, lost 3 to 2, the whole battle at half speed) is the woodcutter against the warden, seed 215, from lab rounds: the woodcutter leads 2 to 1 and loses the last two. hectic (Sam, 2026-10-08: a super hectic 3 to 2, a chakram thrower against a short sword, to Vagrancy, in costumes not in the posted shorts) is the paper maker against the hoop roller, seed 61, from lab rounds over every short sword and chakram pairing, 150 seeds each: the busiest of the matches that swing every round.",
  "variants": {
   "fast": [
    {
@@ -764,6 +764,85 @@
     "ticks": 1,
     "zoom": 2.0,
     "ramp": 0.3,
+    "caption": "hud.round",
+    "vars": {
+     "round": 5
+    },
+    "size": "big",
+    "caption_end": "clip.cta"
+   }
+  ],
+  "hectic": [
+   {
+    "left": "paper_maker",
+    "right": "hoop_roller",
+    "seed": 61,
+    "kill": 79,
+    "pieces": 18,
+    "lead": 1.42,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "clip.get_past",
+    "vars": {
+     "hero": "paper maker",
+     "villain": "hoop roller"
+    },
+    "size": ""
+   },
+   {
+    "left": "paper_maker",
+    "right": "hoop_roller",
+    "seed": 61,
+    "kill": 167,
+    "pieces": 15,
+    "lead": 1.55,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 2
+    },
+    "size": "big"
+   },
+   {
+    "left": "paper_maker",
+    "right": "hoop_roller",
+    "seed": 61,
+    "kill": 244,
+    "pieces": 20,
+    "lead": 1.37,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 3
+    },
+    "size": "big"
+   },
+   {
+    "left": "paper_maker",
+    "right": "hoop_roller",
+    "seed": 61,
+    "kill": 330,
+    "pieces": 1,
+    "lead": 1.52,
+    "slow": 1.0,
+    "beats": true,
+    "caption": "hud.round",
+    "vars": {
+     "round": 4
+    },
+    "size": "big"
+   },
+   {
+    "left": "paper_maker",
+    "right": "hoop_roller",
+    "seed": 61,
+    "kill": 498,
+    "pieces": 18,
+    "lead": 2.88,
+    "slow": 2.6,
+    "beats": true,
     "caption": "hud.round",
     "vars": {
      "round": 5

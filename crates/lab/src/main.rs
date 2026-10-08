@@ -1198,7 +1198,7 @@ fn rounds(args: &[String]) {
         let mut w = sim::World::new(content::setup::exhibition(seed, sim::balance::DEFAULT_TUNING, [l, r], "flat"));
         let mut pilots: Vec<Box<dyn pilot::Pilot>> = [l, r].iter().map(|id| pilot::build(&content::road::pilot(id))).collect();
         let mut last = [Input::NONE; sim::body::SEATS];
-        let (mut out, mut began) = (Vec::new(), 0u32);
+        let (mut out, mut began, mut clashes, mut cuts, mut throws) = (Vec::new(), 0u32, 0u32, 0u32, 0u32);
         while w.tick < 60 * 150 && !matches!(w.phase, Phase::MatchOver { .. }) {
             let mut i = [Input::NONE; sim::body::SEATS];
             for (k, p) in pilots.iter_mut().enumerate() {
@@ -1209,12 +1209,21 @@ fn rounds(args: &[String]) {
             w.step_all(i);
             last = i;
             if !was && matches!(w.phase, Phase::Fight) {
-                began = w.tick;
+                (began, clashes, cuts, throws) = (w.tick, 0, 0, 0);
             }
+            // How busy the round is: blades meeting, cuts, weapons thrown.
+            for e in &w.events {
+                match e {
+                    sim::fight::Event::Clash { .. } => clashes += 1,
+                    sim::fight::Event::Cut { spilled: true, .. } => cuts += 1,
+                    _ => {}
+                }
+            }
+            throws += w.swords.iter().filter(|s| s.flying).count() as u32;
             if was && !matches!(w.phase, Phase::Fight) {
                 if let Phase::RoundOver { result, .. } | Phase::MatchOver { result } = w.phase {
                     if result.loser.is_some() {
-                        out.push(serde_json::json!({ "by": result.by, "began": began, "kill": w.tick, "severed": w.parts.iter().filter(|p| p.fighter == result.seat && !p.attached).count() }));
+                        out.push(serde_json::json!({ "by": result.by, "began": began, "kill": w.tick, "clashes": clashes, "cuts": cuts, "flying_ticks": throws, "severed": w.parts.iter().filter(|p| p.fighter == result.seat && !p.attached).count() }));
                     }
                 }
             }
