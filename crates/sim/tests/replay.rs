@@ -83,3 +83,20 @@ fn a_golden_replay_ends_where_it_always_has() {
     assert!(r.ticks >= 1_200, "the golden replay is {} ticks long", r.ticks);
     replay::verify(&r).expect("the golden replay ends where it always has");
 }
+
+#[test]
+fn a_replay_run_on_past_its_end_keeps_the_world_moving_with_nobody_pressing() {
+    let rec = recorded(300);
+    let mut p = replay::Playback::new(replay::load(&rec.bytes()).expect("its own replay loads"));
+    for _ in 0..300 {
+        p.run_on();
+    }
+    assert_eq!(p.world.checksum(), rec.world.checksum(), "up to its end, it plays the recording");
+    let mut idle = rec.world.clone();
+    for _ in 0..120 {
+        p.run_on();
+        idle.step_all([Input(0); sim::body::SEATS]);
+    }
+    assert_eq!(p.world.tick, 420);
+    assert_eq!(p.world.checksum(), idle.checksum(), "past it, nobody presses anything");
+}

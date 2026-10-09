@@ -1375,6 +1375,47 @@ fn rise_frames(args: &[String]) {
     }
 }
 
+/// What happened in each played replay file named, as JSON lines: the
+/// fight's length and winner, and its action, tick by tick where it
+/// matters, for cutting takes together (Sam, 2026-10-08: "analyze them,
+/// cut them together into a good hectic fight").
+fn takes(args: &[String]) {
+    use sim::fight::{Event, Phase};
+    for path in args {
+        let Ok(bytes) = std::fs::read(path) else { continue };
+        let Ok(r) = sim::replay::load(&bytes) else { continue };
+        let mut p = sim::replay::Playback::new(r);
+        let (mut clashes, mut stops, mut cuts, mut jumps, mut dodges) = (Vec::new(), Vec::new(), Vec::new(), [0u32; 2], [0u32; 2]);
+        let mut end = None;
+        let mut last = [0u16; sim::body::SEATS];
+        while !p.done() {
+            let now = p.replay.inputs[p.world.tick as usize];
+            for s in 0..2 {
+                if now[s] & Input::JUMP != 0 && last[s] & Input::JUMP == 0 { jumps[s] += 1; }
+                if now[s] & Input::DODGE != 0 && last[s] & Input::DODGE == 0 { dodges[s] += 1; }
+            }
+            last = now;
+            let was = matches!(p.world.phase, Phase::Fight);
+            p.step();
+            let t = p.world.tick;
+            for e in &p.world.events {
+                match e {
+                    Event::Clash { .. } => clashes.push(t),
+                    Event::Shield { seat, .. } => stops.push((t, *seat)),
+                    Event::Cut { seat, spilled: true, .. } => cuts.push((t, *seat)),
+                    _ => {}
+                }
+            }
+            if was && !matches!(p.world.phase, Phase::Fight) && end.is_none() {
+                if let Phase::RoundOver { result, .. } | Phase::MatchOver { result } = p.world.phase {
+                    end = Some(serde_json::json!({ "tick": t, "loser": result.loser, "cause": format!("{:?}", result.cause), "headshot": content::messages::headshot(&p.world, &result) }));
+                }
+            }
+        }
+        println!("{}", serde_json::json!({ "file": path, "seed": p.replay.setup.seed, "ticks": p.replay.inputs.len(), "end": end, "clashes": clashes, "stops": stops, "cuts": cuts, "jumps": jumps, "dodges": dodges }));
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
@@ -1397,6 +1438,7 @@ fn main() {
         Some("trees") => trees(),
         Some("rate") => rate(&args[1..]),
         Some("armor") => armor(&args[1..]),
+        Some("takes") => takes(&args[1..]),
         Some("rise-frames") => rise_frames(&args[1..]),
         Some("duels") => duels(&args[1..]),
         Some("rounds") => rounds(&args[1..]),

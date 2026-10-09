@@ -79,6 +79,8 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
     enc = subprocess.Popen([ff, "-y", "-loglevel", "error", "-f", "image2pipe", "-vcodec", "png", "-r", str(FPS), "-i", "-",
                             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow", str(silent)], stdin=subprocess.PIPE)
     hits, soft, frames = [], [], 0
+    # Where each take was left, so a later segment can pick it up again.
+    left_at = {}
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_page(viewport={"width": 1080, "height": 1920})
@@ -101,8 +103,22 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
                         dest.write_bytes(f.read_bytes())
                 guest = g["page"]
                 c = {**c, "duel": {**c["duel"], "weapons": [g["weapons"].get(w) and json.dumps(g["weapons"][w]) or w for w in c["duel"]["weapons"]]}}
+            # A take a person played (record_take.py): its replay, cut from a
+            # second in to the end of its fight.
+            replay = None
+            if c.get("replay"):
+                replay = list(Path(c["replay"]).expanduser().read_bytes())
+                end = page.evaluate("r => window.clip.endOf(r)", replay)
+                # `"from": "continue"`: on from where the last segment stopped,
+                # in the same take (the vision's snap back to the real fight).
+                if c.get("from") == "continue":
+                    c = {**c, "from": left_at.get(c["replay"], 60)}
+                # A segment of a take: from `from` to `until`, or to the end
+                # of its fight.
+                stop = c.get("until", end)
+                c = {**c, "kill": stop, "lead": (stop - c.get("from", c.get("start", 60))) / 60}
             page.evaluate("s => window.clip.load(s)", {"left": c["left"], "right": c["right"], "seed": c["seed"], "from": c["kill"] - int(c["lead"] * 60), "kill": c["kill"],
-                                                      "duel": c.get("duel"), "guests": guest})
+                                                      "duel": c.get("duel"), "guests": guest, "replay": replay})
             if c.get("rank"):
                 cap = ["clip.rank", {"n": c["rank"]}, "big"]
             elif c.get("count"):
@@ -125,7 +141,9 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
             low = c.get("ramp", 0.35)
             ended_at, k, beat = None, 0, -99
             said = set()
-            limit = int((c["lead"] * TICKS / speed + c["slow"]) * FPS) + 90
+            banner_up = False
+            limit = c.get("frames") or int((c["lead"] * TICKS / speed + c["slow"]) * FPS) + 90
+            est = max(1.0, c["lead"] * 60 / speed)
             while k < limit:
                 if ended_at is None:
                     ticks, punch = speed, 0.0
@@ -143,7 +161,22 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
                     if k - ended_at >= int(c["slow"] * FPS):
                         break
                 pulse = 1 + 0.12 * max(0.0, 1 - (k - beat) / 10) if c.get("beats") and ended_at is None else 1
-                state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom * pulse, "punch": punch, "showTrees": trees, "treeScale": c.get("treeScale", 2.6)})
+                # A segment's own course: slowing toward `ticks_end`, the
+                # camera onto the head (`head` [from, to]), a vision, a flash in.
+                prog = min(1.0, k / (c.get("frames") or est))
+                if c.get("ticks_end") is not None and ended_at is None:
+                    ticks = speed + (c["ticks_end"] - speed) * ease(prog)
+                head = c["head"][0] + (c["head"][1] - c["head"][0]) * ease(prog) if c.get("head") else 0
+                flash = max(0.0, 1 - k / c["flash_in"]) if c.get("flash_in") else 0
+                state = page.evaluate("o => window.clip.frame(o)", {"ticks": ticks, "zoom": zoom * pulse, "punch": punch, "showTrees": trees, "treeScale": c.get("treeScale", 2.6),
+                                                                  "head": head, "headZoom": c.get("headZoom", 6), "vision": bool(c.get("vision")), "flash": flash})
+                if c.get("replay"):
+                    left_at[c["replay"]] = state["tick"]
+                # A segment that stops short of its fight's end: cut there.
+                if c.get("until") and state["tick"] >= c["until"]:
+                    enc.stdin.write(page.locator("#clip-app").screenshot(type="png"))
+                    frames += 1
+                    break
                 # A guest clip's lines at given ticks of the fight (`says`).
                 for at, text in c.get("says", []):
                     if state["tick"] >= at and at not in said:
@@ -153,6 +186,13 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
                     beat = k
                     if state["cuts"]:
                         soft.append(frames / FPS)
+                # The site banner, at the kill or `banner_after` seconds
+                # after it, so the fall is seen before the link covers it.
+                if c.get("end_banner") and state["ended"] and not banner_up:
+                    since = 0 if ended_at is None else (k - ended_at) / FPS
+                    if since >= c.get("banner_after", 0):
+                        banner_up = True
+                        page.evaluate("s => window.clip.banner(s)", SITE)
                 if ended_at is None and state["ended"] and c.get("caption_end"):
                     page.evaluate("([k, v, s]) => window.clip.caption(k, v, s)", [c["caption_end"], {"site": SITE, "pieces": c["pieces"]}, ""])
                 if ended_at is None and state["ended"]:
@@ -163,8 +203,10 @@ def render(variant, out, music=None, music_start=None, gain=0.6):
                 enc.stdin.write(page.locator("#clip-app").screenshot(type="png"))
                 frames += 1
                 k += 1
+            print(f"  segment done: {k} frames, tick {state["tick"]}, {frames / FPS:.1f}s so far", flush=True)
             page.evaluate("window.clip.ended = null")
-            if ended_at is None:
+            page.evaluate("window.clip.banner()")
+            if ended_at is None and not c.get("until"):
                 print(f"  {c['left']} v {c['right']}: the cut was NOT reached", flush=True)
         b.close()
         if errors:

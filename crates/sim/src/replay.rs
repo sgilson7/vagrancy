@@ -173,6 +173,14 @@ impl Playback {
     pub fn done(&self) -> bool {
         self.world.tick as usize >= self.replay.inputs.len()
     }
+    /// Step once, and past the replay's last input step on with nobody
+    /// pressing anything, so a body still falling when the recording
+    /// stopped finishes its fall (a clip's slow ending).
+    pub fn run_on(&mut self) {
+        if !self.step() {
+            self.world.step_all([Input(0); SEATS]);
+        }
+    }
 }
 
 /// A fixed input script: both seats, every arm key, both directions of

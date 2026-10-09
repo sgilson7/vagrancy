@@ -2255,6 +2255,9 @@ async function main() {
     trees: () => draw.shown(),
     platforms: () => curFrame && (curFrame.platforms || []).length,
     save: () => SAVE,
+    // The match under way as a replay file's bytes, for keeping a take
+    // (analysis/video/record_take.py).
+    replay: () => (game && game.replay_bytes ? Array.from(game.replay_bytes()) : null),
     online: () => NET && { status: JSON.parse(NET.sess.status()), tick: NET.sess.tick(), checksum: NET.sess.checksum() },
   };
   // Enter goes on: it presses the first button of a result, wherever the

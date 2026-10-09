@@ -152,7 +152,9 @@
     "hud.score, hud.you, arena.wins": "hud.score rewritten in Sam's form (2026-10-08: 'the shepard (2) against the sampler (1)'); hud.you and arena.wins new",
     "btlab.rise": "new: the stand move's explanation, after the stand key became a hold (Sam, 2026-10-08)",
     "road.wardrobe, wardrobe": "new: every string (Sam, 2026-10-08: the wardrobe)",
-    "story.duels, duels": "new: every string (Sam, 2026-10-08: Paul against Feyd-Rautha, opened by story mode's first chapter, the player as Paul)"
+    "story.duels, duels": "new: every string (Sam, 2026-10-08: Paul against Feyd-Rautha, opened by story mode's first chapter, the player as Paul)",
+    "clip.play_free": "new: the banner across a clip's end (Sam, 2026-10-08)",
+    "arena.played_by": "new: under a duel's names on the stream, the tree flying each side (Sam, 2026-10-08)"
   },
   "_glossary": {
     "ink": {
@@ -2345,6 +2347,7 @@
   "arena": {
     "title": "{game} arena",
     "by": "written by",
+    "played_by": "played by {opponent_mid}",
     "versus": "against",
     "won": "won, {wins} rounds to {losses}.",
     "draw": "The match ended in a draw.",
@@ -2384,7 +2387,8 @@
     "rank": "{n}",
     "long": "One fight, start to finish. Watch it swing back and forth.",
     "last_stand": "The brave {hero} is all that stands between the villagers and certain death.",
-    "get_past": "The {hero} has to get past the {villain} to warn the village."
+    "get_past": "The {hero} has to get past the {villain} to warn the village.",
+    "play_free": "Play free in your browser"
   },
   "wardrobe": {
     "title": "Wardrobe",

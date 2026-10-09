@@ -7,7 +7,7 @@
 // match; every word is a copy string, and viewers' names are drawn as data.
 import init, {
   copy_json, palette_json, numbers as coreNumbers, tree_json, Lab, Online, lab_roster_json, bubbles_step,
-  lab_check, lab_describe_json,
+  lab_check, lab_describe_json, duel_page_json,
 } from './pkg/vagrancy_wasm.js';
 import { renderer } from './draw.js';
 import * as rtc from './rtc.js';
@@ -58,17 +58,26 @@ let speed = 1;
 const RUN_ON_MS = 2500, REPLAY_BEFORE = 60, REPLAY_AFTER = 45, REPLAY_SPEED = 0.4, OUT_MS = 900, KEEP = 400;
 let recent = [], replay = null, holdUntil = 0, lastPhase = 'fight', ending = null; // ending: { stage, runUntil, killTick, at }
 
-function nameOf(f) { return f.id ? t(`opponents.${f.id}.name`) : (f.name || t('btlab.editor.unnamed')); }
+function nameOf(f) { return f.title ? t(f.title) : f.id ? t(`opponents.${f.id}.name`) : (f.name || t('btlab.editor.unnamed')); }
 function treeFor(f) {
   const fillText = (n) => { n.text = t(n.label.key, n.label.vars); n.children.forEach(fillText); return n; };
   return fillText(JSON.parse(f.id ? tree_json(f.id) : lab_describe_json(f.tree)));
 }
 
-function exhibition(left, right) {
+// `duel`: a match of data/duels.json, its two seats flown by the trees
+// named (the bot's `duel` setting; Sam, 2026-10-08: "just feyd vs paul for
+// a while w/ different behavior trees in the background"). The fighters
+// carry the duel's names, and the page draws its costumes and scene.
+function exhibition(left, right, duel = null) {
   endChallenge();
   const seed = (Math.random() * 0xffffffff) >>> 0;
-  if (left.tree) game = Lab.watch_custom(seed, N.default_tuning, left.tree, right.id, 'flat');
+  if (duel) {
+    game = Lab.duel_watch(seed, N.default_tuning, duel, left.id, right.id);
+    left = { ...left, title: `duels.${duel}.left` };
+    right = { ...right, title: `duels.${duel}.right` };
+  } else if (left.tree) game = Lab.watch_custom(seed, N.default_tuning, left.tree, right.id, 'flat');
   else game = Lab.watch(seed, N.default_tuning, left.id, right.id, 'flat');
+  if (draw) draw.guests(duel ? JSON.parse(duel_page_json(duel)) : null);
   fighters = [{ ...left, treeData: treeFor(left) }, { ...right, treeData: treeFor(right) }];
   begin();
 }
@@ -96,7 +105,8 @@ function names() {
   const wins = cur ? cur.wins : [0, 0];
   const side = (f, k) => el('div', { class: `fighter-name side-${k}` }, el('strong', { 'data-fill': '' }, nameOf(f)),
     ' ', el('span', { class: 'wins', 'data-copy': 'arena.wins' }, t('arena.wins', { wins: wins[k] })),
-    f.by ? el('span', {}, ' ', el('span', { 'data-copy': 'arena.by' }, t('arena.by')), ' ', fill(f.by)) : null);
+    f.by ? el('span', {}, ' ', el('span', { 'data-copy': 'arena.by' }, t('arena.by')), ' ', fill(f.by)) : null,
+    f.title && f.id ? el('div', { class: 'played-by', 'data-copy': 'arena.played_by' }, t('arena.played_by', { opponent_mid: t(`opponents.${f.id}.name_mid`) })) : null);
   box.replaceChildren(side(fighters[0], 0), say('arena.versus', {}, { class: 'versus' }), side(fighters[1], 1));
 }
 
@@ -224,6 +234,7 @@ function challengeRoom(code, viewer, opponent) {
   c.timer = setInterval(() => { c.sess.poll(performance.now()); c.flush(); }, 100);
   challenge = c;
   game = { report: () => '[]' };
+  if (draw) draw.guests(null);
   fighters = [{ name: viewer, by: null }, { id: opponent, treeData: treeFor({ id: opponent }) }];
   cur = null;
   reported = false;
@@ -277,7 +288,7 @@ function connect(url) {
   bot.onopen = () => send({ type: 'hello', build: BUILD, roster: ROSTER.map((r) => r.id) });
   bot.onmessage = (e) => {
     const m = JSON.parse(e.data);
-    if (m.type === 'exhibition') exhibition(m.left, m.right);
+    if (m.type === 'exhibition') exhibition(m.left, m.right, m.duel || null);
     else if (m.type === 'challenge') challengeRoom(m.code, m.viewer, m.opponent);
     else if (m.type === 'predict') predict(m);
     else if (m.type === 'queue') list('arena-queue', 'arena.queue', m.items, (q) => el('li', {}, fill(q.viewer), ' ', el('span', { 'data-copy': `arena.kind.${q.kind}` }, t(`arena.kind.${q.kind}`))));

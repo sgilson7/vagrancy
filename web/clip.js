@@ -5,7 +5,7 @@
 // one frame at a time: so many ticks forward (fewer for slow motion), with
 // a camera that holds the fighters large and can punch in on the cut. It
 // draws numbers core sends and decides nothing about the fight.
-import init, { copy_json, palette_json, numbers as coreNumbers, tree_json, Lab } from './pkg/vagrancy_wasm.js';
+import init, { copy_json, palette_json, numbers as coreNumbers, tree_json, Lab, Game } from './pkg/vagrancy_wasm.js';
 import { renderer } from './draw.js';
 
 let COPY, N, PAL, draw;
@@ -34,6 +34,41 @@ function frameNow() {
 // The fighters' middle, from the frame's attached parts, smoothed so the
 // camera drifts and does not jitter.
 let spread = 0;
+// Over the drawn frame: a vision's tint and its sand, blowing left to right
+// and a little up, each grain's path fixed by its number and the clip's
+// clock; and a flash of the paper.
+function overlay(vision, flash) {
+  const c = $('stage');
+  const g = c.getContext('2d');
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  if (vision) {
+    g.globalAlpha = 0.24;
+    g.fillStyle = PAL.costume.vision_tint;
+    g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = PAL.costume.vision_sand;
+    g.lineCap = 'round';
+    for (let i = 0; i < 320; i += 1) {
+      const speed = 0.25 + (i % 7) * 0.08;
+      const x = ((i * 7919) % (c.width + 200) + time * speed) % (c.width + 200) - 100;
+      const y = ((i * 104729) % c.height - time * speed * 0.18 % c.height + c.height) % c.height;
+      const len = 10 + (i % 4) * 8;
+      g.globalAlpha = 0.3 + (i % 5) * 0.12;
+      g.lineWidth = 2 + (i % 3);
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + len, y - len * 0.18);
+      g.stroke();
+    }
+  }
+  if (flash > 0) {
+    g.globalAlpha = Math.min(1, flash);
+    g.fillStyle = PAL.paper;
+    g.fillRect(0, 0, c.width, c.height);
+  }
+  g.restore();
+}
+
 function middle() {
   let sx = 0, sy = 0, n = 0, lo = Infinity, hi = -Infinity;
   for (const p of cur.parts) {
@@ -66,10 +101,14 @@ window.clip = {
   // shield, the rounds to win) and its own guests: costumes, a scene, blade
   // colors and names that are not the road's, for a clip made outside the
   // game (analysis/video/make_short.py).
-  load({ left, right, seed, from, kill, duel = null, guests = null }) {
+  // Or a replay a person played (`replay`, the file's bytes): played back
+  // as it was, no pilot in it (Sam, 2026-10-08: "I will play as paul").
+  load({ left, right, seed, from, kill, duel = null, guests = null, replay = null }) {
     if (lab) lab.free();
     ids = [left, right];
-    const start = () => duel
+    const start = () => replay
+      ? Game.load_replay(new Uint8Array(replay))
+      : duel
       ? Lab.duel(seed, N.default_tuning, left, right, duel.weapons[0], duel.weapons[1], !!duel.shield, duel.rounds || N.rounds_to_win, duel.gap || 0)
       : Lab.watch(seed, N.default_tuning, left, right, 'flat');
     draw.guests(guests);
@@ -105,7 +144,11 @@ window.clip = {
   // `ticks` forward (a fraction is carried), and the frame drawn at `dt` ms
   // of clip time. The next round is not asked for, so a round's end plays
   // out. Returns what the page knows.
-  frame({ ticks = 2, dt = 1000 / 30, zoom = 2.3, punch = 0, y = 0.58, showTrees = false, treeScale = 1.5 }) {
+  // `head` (0 to 1) blends the camera onto the left fighter's head at
+  // `headZoom`; `vision` lays blue sand blowing over a tinted scene, and
+  // `flash` (0 to 1) washes it with the paper (Sam, 2026-10-08: Paul seeing
+  // the fights where he dies, then snapping back to the real one).
+  frame({ ticks = 2, dt = 1000 / 30, zoom = 2.3, punch = 0, y = 0.58, showTrees = false, treeScale = 1.5, head = 0, headZoom = 6, vision = false, flash = 0 }) {
     time += dt;
     acc += ticks;
     // What happened in the ticks this frame stepped: blades meeting, and
@@ -113,7 +156,9 @@ window.clip = {
     let clashes = 0, cuts = 0, shields = 0;
     while (acc >= 1) {
       const was = cur.phase;
-      lab.step(0, 0);
+      // A played take runs on past its recording, so the fall is seen.
+      if (lab.run_on) lab.run_on();
+      else lab.step(0, 0);
       frameNow();
       for (const e of cur.events) {
         if (e.Clash) clashes += 1;
@@ -133,17 +178,44 @@ window.clip = {
     const half = N.arena_half / one();
     const fit = (0.8 * 2 * half) / Math.max(1, spread + 80);
     const z = Math.min(zoom, Math.max(1, fit));
-    const at = focus && punch > 0 ? [m[0] + (focus[0] - m[0]) * punch, m[1] + (focus[1] - m[1]) * punch] : m;
-    draw.view({ at, zoom: z * (1 + 0.6 * punch), y });
+    let at = focus && punch > 0 ? [m[0] + (focus[0] - m[0]) * punch, m[1] + (focus[1] - m[1]) * punch] : m;
+    let zz = z * (1 + 0.6 * punch);
+    if (head > 0) {
+      const hp = cur.parts.find((p) => p.fighter === 0 && p.def === 2 && !p.stump);
+      if (hp) {
+        const q = cur.points[hp.b];
+        at = [at[0] + (q[0] - at[0]) * head, at[1] + (q[1] - at[1]) * head];
+        zz = zz + (headZoom - zz) * head;
+      }
+    }
+    draw.view({ at, zoom: zz, y: y + (0.5 - y) * head });
     draw.treeScale(treeScale);
-    const report = JSON.parse(lab.report());
+    // A replay has no pilots, so no trees to report.
+    const report = lab.report ? JSON.parse(lab.report()) : [];
     draw.trees(showTrees ? report.filter((r) => (showTrees.seat === 'both' ? r.seat < 2 : r.seat === showTrees.seat) && r.id).map((r) => ({ seat: r.seat, tree: treeOf(r.id), trace: r, caption: (nd) => t('tree.now', { node: nd.text }) })) : []);
     draw(prev || cur, cur, Math.min(1, acc));
+    if (vision || flash > 0) overlay(vision, flash);
     return { tick: lab.tick(), phase: cur.phase, ended: this.ended || null, clashes, cuts, shields };
   },
   caption(key, vars = {}, size = '') {
     $('clip-caption').className = size;
     $('clip-caption').replaceChildren(key ? el('span', { 'data-copy': key }, t(key, vars)) : '');
+  },
+  // The tick a played replay's fight ends on: where to cut a take.
+  endOf(replay) {
+    const g = Game.load_replay(new Uint8Array(replay));
+    let f = JSON.parse(g.frame());
+    while (f.phase === 'fight' && !g.done()) { g.step(0, 0); f = JSON.parse(g.frame()); }
+    const tick = g.tick();
+    g.free();
+    return tick;
+  },
+  // Across the arena: the invitation to play, and the site, big (Sam,
+  // 2026-10-08). Shown with no arguments it is taken away.
+  banner(site = null) {
+    const b = $('clip-banner');
+    b.hidden = !site;
+    b.replaceChildren(...(site ? [el('p', { class: 'play', 'data-copy': 'clip.play_free' }, t('clip.play_free')), el('p', { class: 'site', 'data-fill': '' }, site)] : []));
   },
   // A guest clip's own words, from its file rather than the game's copy.
   say(text, size = '') {

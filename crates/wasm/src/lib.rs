@@ -129,6 +129,12 @@ impl Game {
     pub fn done(&self) -> bool {
         self.play.as_ref().is_some_and(|p| p.done())
     }
+    /// A replay stepped on past its end; see `Playback::run_on`.
+    pub fn run_on(&mut self) {
+        if let Some(p) = &mut self.play {
+            p.run_on();
+        }
+    }
     pub fn replay_bytes(&self) -> Vec<u8> {
         match (&self.rec, &self.play) {
             (Some(r), _) => r.bytes(),
@@ -523,6 +529,20 @@ impl Lab {
         })
     }
 
+    /// A duel of data/duels.json with both seats flown by road pilots: the
+    /// stream's Paul against Feyd-Rautha, a different pair of trees each
+    /// fight (Sam, 2026-10-08).
+    pub fn duel_watch(seed: u32, tuning: u8, id: &str, left: &str, right: &str) -> Result<Lab, String> {
+        let d = content::duels::duel(id).ok_or_else(|| "no such duel".to_string())?;
+        Ok(Lab {
+            rec: Recording::new(content::duels::setup(seed as u64, tuning, &d)),
+            pilots: [left, right].iter().map(|id| Some(pilot::build(&content::road::pilot(id)))).collect(),
+            last: [Input::NONE; sim::body::SEATS],
+            ids: [left.into(), right.into()],
+            player: false,
+        })
+    }
+
     /// Two opponents, left against right.
     pub fn watch(seed: u32, tuning: u8, left: &str, right: &str, map: &str) -> Lab {
         Lab {
@@ -620,6 +640,11 @@ impl Lab {
             content::messages::phase_text(&self.rec.world, content::messages::Audience::Road { opponent: &self.ids[1] }).to_string()
         } else {
             let ids = [self.ids[0].as_str(), self.ids[1].as_str()];
+            // A pilot that is not on the road (the yardstick, flying one
+            // side of a clip's duel) has no name to say: the colors instead.
+            if ids.iter().any(|id| content::road::stop(id).is_none()) {
+                return content::messages::phase_text(&self.rec.world, content::messages::Audience::Versus).to_string();
+            }
             content::messages::phase_text(&self.rec.world, content::messages::Audience::Exhibition { ids }).to_string()
         }
     }
@@ -1099,6 +1124,13 @@ pub fn save_choose_arms(save_text: &str, four: bool) -> Result<String, String> {
 }
 
 /// The duels of data/duels.json, whether each is open in the save, and what
+/// What the page draws for one duel (its `page`), with no save needed.
+#[wasm_bindgen]
+pub fn duel_page_json(id: &str) -> Result<String, String> {
+    let d = content::duels::duel(id).ok_or_else(|| "no such duel".to_string())?;
+    Ok(serde_json::to_string(&d.page).unwrap())
+}
+
 /// the page draws for each.
 #[wasm_bindgen]
 pub fn duels_json(save_text: &str) -> Result<String, String> {

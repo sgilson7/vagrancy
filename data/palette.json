@@ -52,7 +52,7 @@
     "liquid_light": "#6A4A70"
   },
   "costume": {
-    "_about": "What the road's opponents wear (data/costumes.json, analysis/art/costumes.py), in the region art's manner: flat fills, plum ink lines. `armor` and `armor_edge` paint a plate of armor where the page draws it; `glow` rings a deity. `shield` is the shimmer of a shield that stops a blade.",
+    "_about": "What the road's opponents wear (data/costumes.json, analysis/art/costumes.py), in the region art's manner: flat fills, plum ink lines. `armor` and `armor_edge` paint a plate of armor where the page draws it; `glow` rings a deity. `shield` is the shimmer of a shield that stops a blade. `vision_sand` and `vision_tint` are a clip's prescient visions: blue sand blowing over a tinted scene.",
     "armor": "#9AA1AB",
     "armor_edge": "#4A505B",
     "steel": "#8D939C",
@@ -77,7 +77,12 @@
     "sky": "#8FB8D0",
     "glow": "#F5D77A",
     "glow_soft": "#FBEFC4",
-    "shield": "#8CC0E6"
+    "shield": "#8CC0E6",
+    "stillsuit": "#7D7163",
+    "harkonnen": "#1C1A1E",
+    "hall_floor": "#B99A74",
+    "vision_sand": "#9CC7EC",
+    "vision_tint": "#3F6E9E"
   },
   "scenery": {
     "_about": "Backgrounds (data/backgrounds.json, analysis/art/scenes.py): the region art's colors faded most of the way to the paper, so the scenery sits behind the fighters and never competes with them. Further layers are paler.",

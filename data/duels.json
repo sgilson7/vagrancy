@@ -88,10 +88,10 @@
      "0": "bone"
     },
     "fills": {
-     "0": "#7D7163",
-     "1": "#1C1A1E"
+     "0": "stillsuit",
+     "1": "harkonnen"
     },
-    "ground": "#B99A74"
+    "ground": "hall_floor"
    }
   }
  }

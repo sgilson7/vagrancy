@@ -66,7 +66,7 @@ export function renderer(canvas, palette, numbers) {
   let sides = [0, 1, 1];
   const side = (seat) => sides[seat] ?? (seat === 0 ? 0 : 1);
   const fill = (part) => {
-    if (guest && guest.fills && guest.fills[part.fighter]) return guest.fills[part.fighter];
+    if (guest && guest.fills && guest.fills[part.fighter]) return palette.costume[guest.fills[part.fighter]];
     if (part.body === 1) return palette.post;
     return side(part.fighter) === 0 ? palette.fighters.left.body : stripes;
   };
@@ -324,7 +324,7 @@ export function renderer(canvas, palette, numbers) {
     // The ground reaches past the canvas on each side and below, so a
     // zoomed view never shows its edge. It is drawn over a scene's layers
     // too, so what the fighters stand on reads the same with or without one.
-    ctx.fillStyle = (guest && guest.ground) || palette.ground;
+    ctx.fillStyle = (guest && guest.ground && palette.costume[guest.ground]) || palette.ground;
     ctx.fillRect(-W, ground, 3 * W, 3 * H);
     ctx.strokeStyle = palette.ground_line;
     ctx.lineWidth = 1;
