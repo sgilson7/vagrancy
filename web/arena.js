@@ -68,7 +68,22 @@ function treeFor(f) {
 // named (the bot's `duel` setting; Sam, 2026-10-08: "just feyd vs paul for
 // a while w/ different behavior trees in the background"). The fighters
 // carry the duel's names, and the page draws its costumes and scene.
-function exhibition(left, right, duel = null) {
+// `guest`: a duel whose outfits the bot lends for one fight, `{duel, seats}`
+// with `seats` the outfit each seat wears or null (Sam, 2026-10-08: Paul and
+// Feyd as outfits a road fighter wears now and then). Only drawn: the fight
+// is the road fighters' own.
+function lend(guest) {
+  if (!guest) return null;
+  const page = JSON.parse(duel_page_json(guest.duel));
+  const fills = {};
+  guest.seats.forEach((id, seat) => {
+    const k = page.seats.indexOf(id);
+    if (id && page.fills && page.fills[k]) fills[seat] = page.fills[k];
+  });
+  return { seats: guest.seats, costumes: page.costumes, fills };
+}
+
+function exhibition(left, right, duel = null, guest = null) {
   endChallenge();
   const seed = (Math.random() * 0xffffffff) >>> 0;
   if (duel) {
@@ -77,7 +92,7 @@ function exhibition(left, right, duel = null) {
     right = { ...right, title: `duels.${duel}.right` };
   } else if (left.tree) game = Lab.watch_custom(seed, N.default_tuning, left.tree, right.id, 'flat');
   else game = Lab.watch(seed, N.default_tuning, left.id, right.id, 'flat');
-  if (draw) draw.guests(duel ? JSON.parse(duel_page_json(duel)) : null);
+  if (draw) draw.guests(duel ? JSON.parse(duel_page_json(duel)) : lend(guest));
   fighters = [{ ...left, treeData: treeFor(left) }, { ...right, treeData: treeFor(right) }];
   begin();
 }
@@ -288,7 +303,7 @@ function connect(url) {
   bot.onopen = () => send({ type: 'hello', build: BUILD, roster: ROSTER.map((r) => r.id) });
   bot.onmessage = (e) => {
     const m = JSON.parse(e.data);
-    if (m.type === 'exhibition') exhibition(m.left, m.right, m.duel || null);
+    if (m.type === 'exhibition') exhibition(m.left, m.right, m.duel || null, m.guest || null);
     else if (m.type === 'challenge') challengeRoom(m.code, m.viewer, m.opponent);
     else if (m.type === 'predict') predict(m);
     else if (m.type === 'queue') list('arena-queue', 'arena.queue', m.items, (q) => el('li', {}, fill(q.viewer), ' ', el('span', { 'data-copy': `arena.kind.${q.kind}` }, t(`arena.kind.${q.kind}`))));

@@ -99,9 +99,10 @@ export function renderer(canvas, palette, numbers) {
   // 2026-10-08): only drawn, so a fight plays the same in any outfit.
   let outfit = null;
   draw.playerOutfit = (id) => { outfit = id || null; };
-  const dressedAs = (cur, seat) => (guest && guest.seats ? guest.seats[seat]
-    : seat === 0 && outfit ? outfit
-    : cur.fighters[seat] && cur.fighters[seat].costume);
+  // A guest's seat left empty wears its own costume: the stream dresses one
+  // fighter as a guest for a single fight.
+  const dressedAs = (cur, seat) => (guest && guest.seats && guest.seats[seat])
+    || (seat === 0 && outfit ? outfit : cur.fighters[seat] && cur.fighters[seat].costume);
   function wearing(cur, seat) {
     const id = dressedAs(cur, seat);
     if (!costumesShown || !dress.art || !id) return null;
