@@ -2250,6 +2250,8 @@ async function main() {
     phase: () => curFrame && curFrame.phase,
     wins: () => curFrame && curFrame.wins,
     edges: () => curFrame && curFrame.swords.map((w) => w.edges.length),
+    // Whether the first fighter's sword is in hand, for the throw's check.
+    held: () => curFrame && curFrame.swords.filter((w) => w.fighter === 0).map((w) => w.held),
     fighters: () => curFrame && curFrame.fighters.filter(Boolean).length,
     traces: () => LAST_TRACES,
     trees: () => draw.shown(),

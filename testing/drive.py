@@ -1742,6 +1742,42 @@ def a_win_that_opens_nothing_names_the_next_goal(page, name):
     return fails
 
 
+@check
+def space_throws_the_sword_and_presses_no_focused_button(page, name):
+    # Sam (2026-10-10): one player throws with Space, not O. Space is also the
+    # key that presses a focused button, so during a fight the page has to
+    # take it: a throw that downloaded a replay too would be two actions.
+    fails = []
+    page.reload(wait_until="load")
+    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    click_copy(page, "menu.practice.label")
+    page.wait_for_selector('[data-copy="practice.step.shoulder"]')
+    page.wait_for_function("(window.vagrancy.held() || [])[0] === true", timeout=10000)
+    page.focus('[data-copy="replay.download.label"]')
+    pressed = []
+    on_download = lambda d: pressed.append(d.suggested_filename)
+    page.on("download", on_download)
+    page.keyboard.down("KeyI")
+    page.wait_for_timeout(500)
+    # Held as long as a quick tap (about 80 ms): the game reads held keys once
+    # a tick, and a press shorter than a tick is not a press it can see.
+    page.keyboard.down("Space")
+    page.wait_for_timeout(80)
+    page.keyboard.up("Space")
+    page.keyboard.up("KeyI")
+    try:
+        page.wait_for_function("window.vagrancy.held()[0] === false", timeout=5000)
+    except Exception:
+        fails.append(f"{name}: Space during a swing left the sword in hand")
+    page.wait_for_timeout(800)
+    page.remove_listener("download", on_download)
+    if pressed:
+        fails.append(f"{name}: Space during a fight also pressed the focused button: {pressed}")
+    if not fails:
+        print(f"ok: {name}: Space throws the sword, and a focused button is not pressed by it")
+    return fails
+
+
 def walk(browser, name):
     fails = []
     ctx, page, problems, offsite = open_page(browser)

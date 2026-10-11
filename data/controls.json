@@ -1,5 +1,5 @@
 {
-  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file. One player: the left hand moves (A and D step, W jumps, S stands up, Left Shift dodges) and the right hand drives the arm (I and K the shoulder, J and L the elbow), at Sam's request (2026-10-03). _solo_before is the earlier layout: a save still holding it exactly is moved to the new one. The throw (2026-10-05) is O for one player, beside the arm keys, T for the left player and M for the right.",
+  "_about": "Default key bindings (D6; jump and dodge added at Sam's request, 2026-10-03), as KeyboardEvent.code values. The action names are sim::Input::ACTIONS; the page reads the bits from there. A player's own bindings, once Settings has them, live in the save file. One player: the left hand moves (A and D step, W jumps, S stands up, Left Shift dodges) and the right hand drives the arm (I and K the shoulder, J and L the elbow), at Sam's request (2026-10-03). _solo_earlier lists the earlier one-player layouts, oldest first: a save still holding one of them exactly, on the keys that layout names, is moved to the current one, and a player's own choices stay. The throw (2026-10-05) was O for one player, beside the arm keys; it is Space at Sam's request (2026-10-10), so the right hand stays on the arm keys. It is T for the left player and M for the right.",
   "solo": {
     "shoulder_up": "KeyI",
     "shoulder_down": "KeyK",
@@ -10,7 +10,7 @@
     "jump": "KeyW",
     "dodge": "ShiftLeft",
     "stand": "KeyS",
-    "throw": "KeyO"
+    "throw": "Space"
   },
   "left": {
     "shoulder_up": "KeyQ",
@@ -36,15 +36,29 @@
     "stand": "KeyY",
     "throw": "KeyM"
   },
-  "_solo_before": {
-    "shoulder_up": "KeyQ",
-    "shoulder_down": "KeyW",
-    "elbow_in": "KeyO",
-    "elbow_out": "KeyP",
-    "step_left": "KeyA",
-    "step_right": "KeyD",
-    "jump": "Space",
-    "dodge": "ShiftLeft",
-    "stand": "KeyS"
-  }
+  "_solo_earlier": [
+    {
+      "shoulder_up": "KeyQ",
+      "shoulder_down": "KeyW",
+      "elbow_in": "KeyO",
+      "elbow_out": "KeyP",
+      "step_left": "KeyA",
+      "step_right": "KeyD",
+      "jump": "Space",
+      "dodge": "ShiftLeft",
+      "stand": "KeyS"
+    },
+    {
+      "shoulder_up": "KeyI",
+      "shoulder_down": "KeyK",
+      "elbow_in": "KeyJ",
+      "elbow_out": "KeyL",
+      "step_left": "KeyA",
+      "step_right": "KeyD",
+      "jump": "KeyW",
+      "dodge": "ShiftLeft",
+      "stand": "KeyS",
+      "throw": "KeyO"
+    }
+  ]
 }
