@@ -477,8 +477,8 @@
    "head": "pilgrim",
    "chest": "pilgrim",
    "waist": "pilgrim",
-   "main": "white",
-   "trim": "stone",
+   "main": "brown_dark",
+   "trim": "straw",
    "armor": [],
    "sig": "walking_staff",
    "sig_on": "chest"

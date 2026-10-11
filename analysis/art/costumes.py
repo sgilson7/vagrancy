@@ -192,13 +192,15 @@ def head_piece(piece, main, trim):
         o.append(line((0, 197), (0, 220), color="gold"))
         o.append(poly([(-9.5, 194), (9.5, 195.5), (9.5, 199), (-9.5, 197.5)], "gold", THIN))
     elif piece == "pilgrim":
-        # A tall pointed hood leaning back, its veil over the face, a ragged
-        # hem at the shoulders (Sam: "dressed like a pilgrim from elden ring").
-        o.append(f"\\filldraw[fill={name(main)}, {LINE}] {P(-17, 150)} -- {P(-14, 154)} -- {P(-16, 158)} .. controls {P(-16, 195)} .. {P(-14, 232)} .. controls {P(4, 214)} .. {P(13, 196)} -- {P(14, 168)} -- {P(11, 160)} -- {P(13, 154)} -- {P(8, 150)} -- cycle;")
-        o.append(curve([(-14, 230), (-4, 214), (6, 200)], color=trim))
-        o.append(poly([(5, 192), (14, 194), (15, 162), (12, 158), (9, 162), (6, 158)], trim, THIN))
-        o.append(line((8, 190), (9, 162), color="stone"))
-        o.append(line((11, 191), (12, 162), color="stone"))
+        # A rounded hood under a broad-brimmed felt hat with a shell on the
+        # brim: a traveller's hat, with the face open. Not a tall pointed hood
+        # with a veil over the face, which reads as a Klan hood (Sam,
+        # 2026-10-10: "the pilgrim looks like a kkk member dont do that").
+        o += head_piece("hood", main, trim)
+        o.append(f"\\filldraw[fill=brown, {LINE}] {P(-12, 197)} .. controls {P(-12, 210)} .. {P(-2, 212)} .. controls {P(8, 210)} .. {P(9, 197)} -- cycle;")
+        o.append(f"\\filldraw[fill=brown, {LINE}] {P(-28, 194)} .. controls {P(-24, 199)} .. {P(-4, 200)} .. controls {P(14, 200)} .. {P(22, 196)} .. controls {P(14, 192)} .. {P(-6, 192)} .. controls {P(-20, 192)} .. {P(-28, 194)} -- cycle;")
+        o.append(curve([(-11, 199), (-2, 200.5), (8, 199)], color=trim))
+        o.append(circ(4, 203, 2.4, "bone"))
     elif piece == "feather":
         o += head_piece("cap", main, trim)
         o.append(f"\\filldraw[fill=bone, {THIN}] {P(-6, 199)} .. controls {P(-16, 214)} .. {P(-30, 218)} .. controls {P(-20, 208)} .. {P(-9, 197)} -- cycle;")
