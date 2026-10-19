@@ -101,12 +101,37 @@ def expected_build():
     return (WEB / "build.txt").read_text().split()
 
 
+# Playwright's Linux WebKit (CI's) checks the inline styles of its own
+# <select> rendering against the page's Content-Security-Policy and refuses
+# them, on the BT Lab's editor; WebKit on macOS, Chromium and Firefox do not,
+# and the page sets no style attribute (2026-10-19, runs 39316964660 and
+# 39317728641; the event's target is the select, or the document when the
+# select is not yet in it). So WebKit's style-src-attr reports are not used:
+# Chromium and Firefox walk the same page and fail on any style attribute it
+# sets. Every other violation, in every engine, is reported by the listener
+# below and fails the gate, so the console line WebKit writes, which names no
+# directive or target, is not needed either.
+WEBKIT_UA_SELECT = "Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' does not appear in the style-src directive"
+CSP_LISTENER = """document.addEventListener('securitypolicyviolation', (e) => {
+    const t = e.target;
+    if (window.__policyBroken) window.__policyBroken(e.violatedDirective, e.blockedURI || '', (t && t.nodeName) || '', e.sourceFile || '');
+}, true);"""
+
+
+def webkit_ua_select(engine, directive, tag):
+    return engine == "webkit" and directive == "style-src-attr"
+
+
 def open_page(browser):
     ctx = browser.new_context(accept_downloads=True)
-    page = ctx.new_page()
+    engine = browser.browser_type.name
     problems, offsite = [], []
+    ctx.expose_function("__policyBroken", lambda d, u, tag, f: None if webkit_ua_select(engine, d, tag)
+                        else problems.append(f"policy violation: {d} refused {u or 'inline'} on {tag} ({f})"))
+    ctx.add_init_script(CSP_LISTENER)
+    page = ctx.new_page()
     page.on("console", lambda m: problems.append(f"console.{m.type}: {m.text}")
-            if m.type == "error" else None)
+            if m.type == "error" and not (engine == "webkit" and WEBKIT_UA_SELECT in m.text) else None)
     page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
     # blob: and data: URLs are the page talking to itself; anything else that
     # does not start with the origin has left it.
@@ -1341,8 +1366,9 @@ def the_bt_lab_keeps_to_its_policy_and_says_when_webassembly_is_blocked(page, na
     fails = []
     listen = """window.__csp = [];
         document.addEventListener('securitypolicyviolation',
-          (e) => window.__csp.push(e.violatedDirective + ' ' + e.blockedURI), true);"""
+          (e) => window.__csp.push([e.violatedDirective, e.blockedURI, (e.target && e.target.nodeName) || '']), true);"""
     browser = page.context.browser
+    engine = browser.browser_type.name
     for blocked in (False, True):
         ctx = browser.new_context()
         ctx.add_init_script(listen)
@@ -1365,7 +1391,7 @@ def the_bt_lab_keeps_to_its_policy_and_says_when_webassembly_is_blocked(page, na
                 p.wait_for_timeout(1500)
                 if p.is_visible("#wasm-blocked"):
                     fails.append(f"{name}: the BT Lab said WebAssembly is blocked on a normal load")
-            seen = p.evaluate("window.__csp")
+            seen = [f"{d} {u}" for d, u, tag in p.evaluate("window.__csp") if not webkit_ua_select(engine, d, tag)]
             if seen:
                 fails.append(f"{name}: the BT Lab broke its own policy: {seen[:3]}")
         finally:
