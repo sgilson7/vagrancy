@@ -921,8 +921,19 @@ function renderEditor() {
 
 // --- start ---------------------------------------------------------------------------------
 
+// Whether this failure is the browser refusing WebAssembly itself: a school's
+// policy that turns off the JIT (Chrome's DefaultJavaScriptJitSetting) leaves
+// no WebAssembly, or one that will not compile. Said plainly, because
+// "reload and try again" cannot help there, and the school's IT can.
+function wasmBlocked(e) {
+  if (typeof WebAssembly !== 'object' || WebAssembly === null) return true;
+  return [WebAssembly.CompileError, WebAssembly.LinkError, WebAssembly.RuntimeError]
+    .some((E) => typeof E === 'function' && e instanceof E);
+}
+
 async function main() {
   try {
+    if (typeof WebAssembly !== 'object' || WebAssembly === null) throw new Error('no WebAssembly');
     WASM = await init();
     COPY = JSON.parse(copy_json());
     N = JSON.parse(coreNumbers());
@@ -933,8 +944,15 @@ async function main() {
     EDITOR = JSON.parse(lab_conditions_json());
     ACTION_BITS = Object.fromEntries(N.actions);
   } catch (e) {
-    console.error(e);
-    $('loading-error').hidden = false;
+    if (wasmBlocked(e)) {
+      // Not a fault in the page, so not logged as one.
+      console.warn(e);
+      $('status').hidden = true;
+      $('wasm-blocked').hidden = false;
+    } else {
+      console.error(e);
+      $('loading-error').hidden = false;
+    }
     return;
   }
   listen((code) => S.mode === 'play' && Object.values(CONTROLS.solo).includes(code));

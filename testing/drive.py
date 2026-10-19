@@ -1213,8 +1213,11 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     # nodes get converted into controls execution, like how does the
     # behavior tree high guard get converted to inputs".
     fails = []
+    # The lab's page has a Content-Security-Policy without 'unsafe-eval', so
+    # every wait here is a function: Playwright evaluates a bare expression
+    # string with eval() in the page, which the policy refuses.
     page.goto(ORIGIN + "/bt-lab.html", wait_until="load")
-    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.wait_for_function("() => document.body.dataset.ready === '1'", timeout=30000)
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab)")
     if page.locator("#tree-panel .node").count() < 3:
         fails.append(f"{name}: the BT Lab drew no tree")
@@ -1224,7 +1227,7 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     for _ in range(12):
         before = page.evaluate("window.btlab.tick()")
         page.click("#lab-step")
-        page.wait_for_function(f"window.btlab.tick() > {before}", timeout=5000)
+        page.wait_for_function(f"() => window.btlab.tick() > {before}", timeout=5000)
         rep = page.evaluate("window.btlab.report()")
         keys = page.evaluate("window.btlab.keys()")
         st = page.evaluate("window.btlab.state()")
@@ -1247,8 +1250,8 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     if page.evaluate("window.btlab.state().speed") != 0.125:
         fails.append(f"{name}: the lab does not start at an eighth of full speed")
     page.evaluate("document.getElementById('lesson-factor').scrollIntoView()")
-    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'factor' && window.btlab.lesson().tick > 4", timeout=30000)
-    page.wait_for_function("window.btlab.lesson().rings > 0", timeout=30000)
+    page.wait_for_function("() => window.btlab.lesson() && window.btlab.lesson().page === 'factor' && window.btlab.lesson().tick > 4", timeout=30000)
+    page.wait_for_function("() => window.btlab.lesson().rings > 0", timeout=30000)
     if page.evaluate("window.btlab.lesson().speed") != 0.125:
         fails.append(f"{name}: the lesson's fights do not play at an eighth of full speed")
     # Sam, 2026-10-08: costumes off by default in the BT Lab. No costume
@@ -1261,14 +1264,14 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab, a lesson page)")
     # The page about chance plays the same fight again from the same start.
     page.evaluate("document.getElementById('lesson-chance').scrollIntoView()")
-    page.wait_for_function("window.btlab.lesson() && window.btlab.lesson().page === 'chance' && window.btlab.lesson().tick > 8", timeout=30000)
+    page.wait_for_function("() => window.btlab.lesson() && window.btlab.lesson().page === 'chance' && window.btlab.lesson().tick > 8", timeout=30000)
     seed = page.evaluate("window.btlab.lesson().seed")
     page.click("#lesson-chance .lesson-replay")
     again = page.evaluate("window.btlab.lesson()")
     if again["seed"] != seed or again["tick"] > 5:
         fails.append(f"{name}: playing again from the same start gave {again}, from seed {seed}")
     page.evaluate("document.getElementById('lab-section').scrollIntoView()")
-    page.wait_for_function("window.btlab.lesson() === null", timeout=5000)
+    page.wait_for_function("() => window.btlab.lesson() === null", timeout=5000)
     # The pose page opens the lab with high guard running, and shows its
     # controller.
     page.evaluate("document.getElementById('lesson-pose').scrollIntoView()")
@@ -1294,7 +1297,7 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     # tree that runs can be watched; a share code loads back the same tree.
     page.evaluate("localStorage.removeItem('vagrancy.btlab.tree')")
     page.reload(wait_until="load")
-    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.wait_for_function("() => document.body.dataset.ready === '1'", timeout=30000)
     page.wait_for_selector('#editor-status[data-copy="btlab.editor.ok"]')
     num = page.locator('#editor li.rule[data-rule="2"] input[type=number]').first
     num.fill("5000"); num.dispatch_event("change")
@@ -1307,7 +1310,7 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     page.click("#editor-watch")
     # The lab plays at an eighth of full speed, about eight ticks a second.
     try:
-        page.wait_for_function("window.btlab.tick() >= 8", timeout=15000)
+        page.wait_for_function("() => window.btlab.tick() >= 8", timeout=15000)
     except Exception:
         pass
     if page.evaluate("window.btlab.tick()") < 8 or page.locator("#tree-panel .node").count() < 4:
@@ -1322,11 +1325,54 @@ def the_bt_lab_shows_what_each_tree_ran_and_the_keys_it_pressed(page, name):
     fails += every_visible_line_is_a_copy_string(page, name + " (BT Lab editor)")
     page.evaluate("localStorage.removeItem('vagrancy.btlab.tree')")
     page.goto(ORIGIN + "/", wait_until="load")
-    page.wait_for_function("document.body.dataset.ready === '1'", timeout=30000)
+    page.wait_for_function("() => document.body.dataset.ready === '1'", timeout=30000)
     if not fails:
         print(f"ok: {name}: the BT Lab lesson plays the page in view and replays a start, the lab lights the tree and shows the keys core pressed tick by tick, the pose page stops on high guard, and the editor refuses, runs and shares a tree")
     return fails
 
+
+
+@check
+def the_bt_lab_keeps_to_its_policy_and_says_when_webassembly_is_blocked(page, name):
+    # 2026-10-19, for schools: the lab's page carries a Content-Security-Policy
+    # and nothing on it breaks it, and a browser with no WebAssembly (a
+    # school's policy that turns off the JIT) is told so in plain words
+    # rather than asked to reload. The line must not show on a normal load.
+    fails = []
+    listen = """window.__csp = [];
+        document.addEventListener('securitypolicyviolation',
+          (e) => window.__csp.push(e.violatedDirective + ' ' + e.blockedURI), true);"""
+    browser = page.context.browser
+    for blocked in (False, True):
+        ctx = browser.new_context()
+        ctx.add_init_script(listen)
+        if blocked:
+            ctx.add_init_script("delete window.WebAssembly;")
+        p = ctx.new_page()
+        try:
+            p.goto(ORIGIN + "/bt-lab.html", wait_until="load")
+            policy = p.get_attribute('meta[http-equiv="Content-Security-Policy"]', "content") or ""
+            if "default-src 'self'" not in policy or "unsafe-inline" in policy or "'unsafe-eval'" in policy:
+                fails.append(f"{name}: the BT Lab's policy is {policy!r}")
+            if blocked:
+                p.wait_for_selector("#wasm-blocked", state="visible", timeout=10000)
+                if p.inner_text("#wasm-blocked") != COPY["btlab"]["wasm_blocked"]["text"]:
+                    fails.append(f"{name}: with no WebAssembly the lab said {p.inner_text('#wasm-blocked')!r}")
+                if p.is_visible("#loading-error") or p.is_visible("#status"):
+                    fails.append(f"{name}: with no WebAssembly the lab also showed the loading line or the reload line")
+            else:
+                p.wait_for_function("() => document.body.dataset.ready === '1'", timeout=30000)
+                p.wait_for_timeout(1500)
+                if p.is_visible("#wasm-blocked"):
+                    fails.append(f"{name}: the BT Lab said WebAssembly is blocked on a normal load")
+            seen = p.evaluate("window.__csp")
+            if seen:
+                fails.append(f"{name}: the BT Lab broke its own policy: {seen[:3]}")
+        finally:
+            ctx.close()
+    if not fails:
+        print(f"ok: {name}: the BT Lab keeps to its policy, and says WebAssembly is blocked only when it is")
+    return fails
 
 @check
 def the_chart_marks_the_next_fight_over_region_art_and_chapters_show_what_is_left(page, name):

@@ -2005,6 +2005,10 @@
     "title": "BT Lab",
     "subtitle": "The opponents in {game} use behavior trees to choose game inputs. This lab lets you slow a fight down and inspect that connection: which part of a tree ran on a given tick, and which keys the opponent pressed. Watch two opponents fight, or control one fighter yourself.",
     "game_link": "Play {game}",
+    "wasm_blocked": {
+      "text": "The lab could not start because this browser blocks WebAssembly. A school's IT can allow it for sgilson7.github.io.",
+      "review": "new (2026-10-19: shown when WebAssembly cannot start, as under a school's policy that turns off the browser's JIT)"
+    },
     "setup": {
       "heading": "What to run"
     },

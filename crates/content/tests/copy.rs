@@ -47,7 +47,9 @@ const NUMBER_WORDS: &[&str] = &[
     "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
     "thousand", "million", "dozen",
 ];
-const DIGIT_ALLOWED: &[&str] = &["mp3"];
+// "sgilson7" is the site's host name in btlab.wasm_blocked, which a school's
+// IT types into its policy: a name, not a number core could fill.
+const DIGIT_ALLOWED: &[&str] = &["mp3", "sgilson7"];
 // Rule 13: a cut is described by its rule, not its sensation.
 const GORE: &[&str] = &[
     "gore", "gory", "guts", "flesh", "bleed", "bleeds", "bleeding", "pain", "painful", "agony",

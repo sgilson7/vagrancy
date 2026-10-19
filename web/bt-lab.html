@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- What the page may load, for a school's network (2026-10-19): its own
+     files only, wasm compiled from them, nothing framed and no form sent.
+     Builder's default policy; the lab needs nothing beyond it. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{btlab.title}}</title>
 <link rel="stylesheet" href="styles.css">
@@ -16,6 +21,7 @@
   </header>
   <p id="status" role="status">{{game.loading}}</p>
   <p id="loading-error" role="alert" hidden>{{game.loading_error}}</p>
+  <p id="wasm-blocked" role="alert" hidden>{{btlab.wasm_blocked.text}}</p>
   <noscript><p>{{game.fallback}}</p></noscript>
   <div id="lab" hidden>
     <div id="lesson"></div>
